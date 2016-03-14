@@ -32,7 +32,7 @@ exec(compile(open(METADATA).read(), METADATA, 'exec'))
 REQ = {'BASE': ['base58'],
        'TEST': ['pytest']}
 
-install_reqs = [ir.original_link.url for ir in parse_requirements("requirements.txt", session=False)]
+install_reqs = [ir.link.url for ir in parse_requirements("requirements.txt", session=False)]
 REQUIRES = set(sum(REQ.values(), []))
 EXTRAS = {}
 
