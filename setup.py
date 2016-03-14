@@ -40,14 +40,14 @@ for i in install_reqs:
     os.system('pip install {}'.format(i))
 
 setup(
-    name='Sovirin',
+    name='sovrin',
     version=__version__,
-    description='Sovirin',
-    long_description='Sovirin',
+    description='Sovrin Identity',
+    long_description='Sovrin Identity',
     author=__author__,
     author_email='dev@evernym.us',
     license=__license__,
-    keywords='Sovirin',
+    keywords='Sovrin identity plenum',
     packages=find_packages(exclude=['test', 'test.*',
                                     'docs', 'docs*']),
     package_data={
