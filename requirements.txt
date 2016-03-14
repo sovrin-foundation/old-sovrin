@@ -1,0 +1,2 @@
+git+https://github.com/evernym/plenum-priv.git@master#egg=plenum
+git+https://github.com/jettify/aiohttp_sse.git@master#egg=aiohttp_sse

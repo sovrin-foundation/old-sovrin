@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__
+*/__pycache__
+*.py[cod]
+.cache
+
+# PyCharm settings
+.idea/
+
+# Dolphin file manager (KDE)
+.directory
+
+# Mac directory attributes
+*.DS_Store
+
+# temporary files
+*~
+
+# Distribution / packaging
+*.egg-info/
