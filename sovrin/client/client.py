@@ -4,7 +4,8 @@ from plenum.client.client import Client as PlenumClient
 from plenum.common.request_types import OP_FIELD_NAME, Request
 from plenum.common.txn import REQACK, REPLY
 from plenum.common.util import getlogger
-from sovirin.client_storage import ClientStorage
+
+from sovrin.client.client_storage import ClientStorage
 
 
 logger = getlogger()

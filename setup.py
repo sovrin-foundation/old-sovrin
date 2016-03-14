@@ -25,7 +25,7 @@ if SETUP_DIRNAME != '':
 
 SETUP_DIRNAME = os.path.abspath(SETUP_DIRNAME)
 
-METADATA = os.path.join(SETUP_DIRNAME, 'sovirin', '__metadata__.py')
+METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 

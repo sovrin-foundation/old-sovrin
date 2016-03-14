@@ -1,12 +1,11 @@
-import logging
 from typing import Tuple
+
 import libnacl.secret
 import pytest
-
-from sovirin.txn import ASSIGN_AGENT, ADD_NYM, IDPROOF, txn
 from plenum.common.util import randomString
 
-from sovirin.test.helper import Scenario, Organization
+from sovrin.common.txn import ASSIGN_AGENT, ADD_NYM, IDPROOF, txn
+from sovrin.test.helper import Scenario
 
 
 @pytest.fixture(scope="module")

@@ -4,12 +4,12 @@ import pickle
 
 import plyvel
 
-import sovirin
+import sovrin
 
 
 class ClientStorage:
     dataLocation = "data/clients"
-    packagePath = sovirin.__file__
+    packagePath = sovrin.__file__
     currentPath = os.path.dirname(packagePath)
 
     def __init__(self, clientId):

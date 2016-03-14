@@ -8,23 +8,21 @@ from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, randomString
 from plenum.test.eventually import eventually
+from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkNodesConnected, \
     checkNodesAreReady, checkSufficientRepliesRecvd, checkLastClientReqForNode, \
     buildCompletedTxnFromReply, genHa, TestStack, \
     TestNodeCore, StackedTester
-from plenum.test.testable import Spyable
-from raet.raeting import AutoMode
-from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as genPlenumTestClientProvider
+from plenum.test.testable import Spyable
+from raet.raeting import AutoMode
 
-
-from sovirin.agent.agent import Agent
-from sovirin.client import Client
-from sovirin.client_storage import ClientStorage
-from sovirin.node import Node
-from sovirin.txn import ADD_ATTR
-from sovirin.wallet import Wallet, UserWallet
+from sovrin.client.client import Client
+from sovrin.client.client_storage import ClientStorage
+from sovrin.client.wallet import Wallet, UserWallet
+from sovrin.common.txn import ADD_ATTR
+from sovrin.server.node import Node
 
 
 class Scenario(ExitStack):
@@ -215,30 +213,30 @@ class Organization:
                 wallet.addCompletedTxn(txn)
 
 
-class TestAgent(Organization, Agent):
-    def __init__(self, aid: str, scenario: 'Scenario' = None):
-        self.aid = aid
-        ha = genHa()
-        stack = dict(name=aid,
-                     ha=ha,
-                     main=True,
-                     auto=AutoMode.always)
+# class TestAgent(Organization, Agent):
+#     def __init__(self, aid: str, scenario: 'Scenario' = None):
+#         self.aid = aid
+#         ha = genHa()
+#         stack = dict(name=aid,
+#                      ha=ha,
+#                      main=True,
+#                      auto=AutoMode.always)
+#
+#         if scenario.tmpdir:
+#             stack['basedirpath'] = scenario.tmpdir
+#
+#         cliNodeReg = scenario.nodeReg.extractCliNodeReg()
+#         # TODO Agent creates a client and yet we're creating a client for the organization? Only one client is needed.
+#         Agent.__init__(self, aid, nodeReg=cliNodeReg, stack=stack)
+#         self.client = genTestClientProvider(nodes=scenario.nodes,
+#                                             nodeReg=scenario.nodeReg.extractCliNodeReg(),
+#                                             tmpdir=scenario.tmpdir)
+#         Organization.__init__(self, self.client)
 
-        if scenario.tmpdir:
-            stack['basedirpath'] = scenario.tmpdir
 
-        cliNodeReg = scenario.nodeReg.extractCliNodeReg()
-        # TODO Agent creates a client and yet we're creating a client for the organization? Only one client is needed.
-        Agent.__init__(self, aid, nodeReg=cliNodeReg, stack=stack)
-        self.client = genTestClientProvider(nodes=scenario.nodes,
-                                            nodeReg=scenario.nodeReg.extractCliNodeReg(),
-                                            tmpdir=scenario.tmpdir)
-        Organization.__init__(self, self.client)
-
-
-def genTestAgent(s: 'Scenario'):
-    agentId = "testAgent{}".format(randomString(6))
-    return TestAgent(agentId, scenario=s)
+# def genTestAgent(s: 'Scenario'):
+#     agentId = "testAgent{}".format(randomString(6))
+#     return TestAgent(agentId, scenario=s)
 
 
 # noinspection PyShadowingNames,PyShadowingNames

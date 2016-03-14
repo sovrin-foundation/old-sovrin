@@ -1,19 +1,17 @@
 from collections import deque
 from typing import Dict, Any, Union
-from typing import List
 from typing import NamedTuple, Optional
 
 import base58
 import jsonpickle
 from libnacl import crypto_secretbox, crypto_secretbox_open, randombytes, \
     crypto_secretbox_NONCEBYTES, crypto_hash_sha256
-from raet.nacling import PrivateKey, SignedMessage, SigningKey, Signer
-from plenum.common.util import error
 from plenum.client.client import Client, ClientProvider
+from plenum.common.util import error
+from raet.nacling import PrivateKey, SignedMessage, SigningKey, Signer
+from sovrin.common.util import getSymmetricallyEncryptedVal
 
-from sovirin.txn import ADD_AGENT, ADD_ATTR, ADD_SPONSOR, txn
-from sovirin.util import getSymmetricallyEncryptedVal
-
+from sovrin.common.txn import ADD_AGENT, ADD_ATTR, ADD_SPONSOR, txn
 
 ENCODING = "utf-8"
 

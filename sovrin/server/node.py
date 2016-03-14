@@ -1,6 +1,6 @@
+import asyncio
 from _sha256 import sha256
 from typing import Dict, Iterable, Any
-import asyncio
 
 from plenum.common.request_types import Reply, Request
 from plenum.common.stacked import HA
@@ -9,7 +9,7 @@ from plenum.server.node import Node as PlenumNode
 from plenum.server.primary_decider import PrimaryDecider
 from plenum.storage.storage import Storage
 
-from sovirin.txn import getGenesisTxns
+from sovrin.common.txn import getGenesisTxns
 
 
 class Node(PlenumNode):
@@ -44,8 +44,9 @@ class Node(PlenumNode):
 
     def generateReply(self, viewNo: int, req: Request):
         operation = req.operation
-        txnId = sha256("{}{}".format(req.clientId, req.reqId).
-                       encode('utf-8')).hexdigest()
+
+        txnId = sha256(
+            "{}{}".format(req.clientId, req.reqId).encode()).hexdigest()
         result = {"txnId": txnId}
         return Reply(viewNo,
                       req.reqId,

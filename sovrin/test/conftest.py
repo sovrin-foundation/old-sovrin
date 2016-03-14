@@ -3,7 +3,7 @@ from plenum.test.conftest import getValueFromModule
 from plenum.test.conftest import tdir, looper, unstartedLooper, counter, \
     nodeReg, keySharedNodes
 
-from sovirin.test.helper import TestNodeSet, genTestClient
+from sovrin.test.helper import TestNodeSet, genTestClient
 
 
 @pytest.yield_fixture(scope="module")
