@@ -80,7 +80,7 @@ class Node(PlenumNode):
     def isSponsor(self, nym):
         for txnId, result in self.txnStore.getAllTxn().items():
             if nym == result[NYM]:
-                if self.isAddNymTxn(result) and self.isRoleSteward(result):
+                if self.isAddNymTxn(result) and self.isRoleSponsor(result):
                     return True
 
         return False
