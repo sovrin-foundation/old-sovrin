@@ -1,5 +1,6 @@
 from collections import deque
 from typing import Dict, Any, Union
+from typing import List
 from typing import NamedTuple, Optional
 
 import base58
@@ -7,6 +8,7 @@ import jsonpickle
 from libnacl import crypto_secretbox, crypto_secretbox_open, randombytes, \
     crypto_secretbox_NONCEBYTES, crypto_hash_sha256
 from plenum.client.client import Client, ClientProvider
+from plenum.client.signer import SimpleSigner
 from plenum.common.util import error
 from raet.nacling import PrivateKey, SignedMessage, SigningKey, Signer
 from sovrin.common.util import getSymmetricallyEncryptedVal
@@ -51,11 +53,16 @@ Cryptonym = str
 # TODO might want to use the name Keychain instead of Wallet
 
 
+# TODO use SimpleSigner in wallet
+# class SimpleSigner(Signer):
+#     def __init__(self, identifier, seed=None):
+
+
 class Wallet:
     clientNotPresentMsg = "The wallet does not have a client associated with it"
 
-    def __init__(self, client: Union[Client, ClientProvider]=None):
-        self._rootPrivKey = None        # type: PrivateKey
+    def __init__(self, client: Union[Client, ClientProvider]=None, rootSeed=None):
+        self._rootSeed = rootSeed       # type: PrivateKey
         self.i = 0                      # type: int
         # TODO Need to support multi value attributes, like multiple emails, phone numbers etc.
         # TODO Probably need to know from which sponsor the attributes came from?
@@ -63,6 +70,7 @@ class Wallet:
         self.pendingTxns = deque()              # type: deque[Dict[str, Any]]
         self.client = client                    # type: Client
         self.completedTxns = []                 # type: List[Dict[str, Any]]
+        self.signers = {}
 
     @staticmethod
     def decrypt(ec: EncryptedWallet, key: bytes) -> 'Wallet':
@@ -134,32 +142,32 @@ class Wallet:
         return self._getCryptonym(self.i)
 
     def _getCryptonym(self, i) -> Cryptonym:
-        newKey = self._getKey(i)
-        publicKey = newKey.public_key._public_key
-        b58 = base58.b58encode(publicKey)
         # TODO need to clear system memory of private keys, including the newly generated private key
         # TODO Need to have a wallet locking mechanism. Can't keep the wallet unlocked for long periods of time.
         # TODO Double locking mechanism? Like one key for general purpose, and another for accessing private keys?
         # TODO Perhaps an encrypted wallet could show the names of attributes, and how many attributes, and if any are pending
-        return b58
+        self.signers[i] = SimpleSigner(identifier=None, seed=self._getKey(i))
+        return self.signers[i].verstr
 
     def _getKey(self, i):
         self._checkRootPrivKeyIsSetup()
-        newKey = PrivateKey(crypto_hash_sha256(crypto_hash_sha256(
-                "{}:{}".format(i, base58.b58encode(self._rootPrivKey._private_key)))))
+        newKey = \
+            crypto_hash_sha256(
+                crypto_hash_sha256(
+                    "{}:{}".format(i, base58.b58encode(self._rootSeed))
+                )
+            )
         # TODO we know this is not the standard algorithm for heirarchical deterministic keys; need to determine the best approach
         return newKey
 
     def _checkRootPrivKeyIsSetup(self):
-        if self._rootPrivKey is None:
-            self._rootPrivKey = PrivateKey.generate()
+        if self._rootSeed is None:
+            self._rootSeed = randombytes(32)
 
     def signMessage(self, msg: Any, i: int=None) -> SignedMessage:
-        msg = msg if isinstance(msg, str) else jsonpickle.encode(msg)
-        key = self._getKey(i if i is not None else self.i)
-        sik = SigningKey(key._private_key)
-        signer = Signer(sik)
-        return signer.sign(msg)
+        signer = self.signers[i if i is not None else self.i]
+        sig = signer.sign(msg.__dict__)
+        return sig
 
     def processPendingTxnQueue(self):
         txnRequests = []

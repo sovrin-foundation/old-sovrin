@@ -29,7 +29,7 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
-reqs = ['git+https://github.com/evernym/plenum-priv.git@master#egg=plenum',
+reqs = ['git+https://github.com/evernym/plenum-priv.git@txn-using-leveldb#egg=plenum',
         'git+https://github.com/jettify/aiohttp_sse.git@master#egg=aiohttp_sse']
 
 for url in reqs:
@@ -44,8 +44,7 @@ setup(
     author_email='dev@evernym.us',
     license=__license__,
     keywords='Sovrin identity plenum',
-    packages=find_packages(exclude=['test', 'test.*',
-                                    'docs', 'docs*']),
+    packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']),
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
