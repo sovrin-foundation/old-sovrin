@@ -1,7 +1,8 @@
 import asyncio
 from _sha256 import sha256
 
-from plenum.common.exceptions import InvalidClientRequest
+from plenum.common.exceptions import InvalidClientRequest, \
+    UnauthorizedClientRequest
 from plenum.common.request_types import Reply, Request
 from plenum.server.node import Node as PlenumNode
 
@@ -30,31 +31,34 @@ class Node(PlenumNode):
                       req.reqId,
                       result)
 
-    def checkValidOperation(self, msg):
-        self.checkValidSovrinOperation(msg)
-        super().checkValidOperation(msg)
+    def checkValidOperation(self, clientId, reqId, msg):
+        self.checkValidSovrinOperation(clientId, reqId, msg)
+        super().checkValidOperation(clientId, reqId, msg)
 
-    def checkValidSovrinOperation(self, msg):
+    def checkValidSovrinOperation(self, clientId, reqId, msg):
         for k in msg.keys():
             if k not in allOpKeys:
-                raise InvalidClientRequest('invalid attribute "{}"'.format(k))
+                raise InvalidClientRequest(clientId, reqId,
+                                           'invalid attribute "{}"'.format(k))
 
         if msg[TXN_TYPE] not in validTxnTypes:
-            raise InvalidClientRequest('invalid {}: {}'.
+            raise InvalidClientRequest(clientId, reqId, 'invalid {}: {}'.
                                        format(TXN_TYPE, msg[TXN_TYPE]))
 
         if msg[TXN_TYPE] == ADD_ATTR:
             if TARGET_NYM not in msg:
-                raise InvalidClientRequest('{} operation requires {} attribute'.
+                raise InvalidClientRequest(clientId, reqId,
+                                           '{} operation requires {} attribute'.
                                            format(ADD_ATTR, TARGET_NYM))
 
-    async def checkRequestAuthorized(self, request):
+    async def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
         role = op.get(ROLE, None)
         if typ == ADD_NYM and role == SPONSOR:
             if not self.IsSteward(op[ORIGIN]):
-                raise InvalidClientRequest("Only stewards can add sponsors")
+                raise UnauthorizedClientRequest(request.clientId, request.reqId,
+                                                "Only stewards can add sponsors")
 
     def IsSteward(self, nym):
         for txnId, result in self.txnStore.getAllTxn().items():
@@ -66,7 +70,7 @@ class Node(PlenumNode):
     # TODO: Should go to transaction store
     @staticmethod
     def isAddNymTxn(result):
-        return TXN_TYPE in result and result [TXN_TYPE] == ADD_NYM
+        return TXN_TYPE in result and result[TXN_TYPE] == ADD_NYM
 
     # TODO: Should go to transaction store
     @staticmethod

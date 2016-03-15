@@ -1,6 +1,10 @@
+from functools import partial
+
 import pytest
 from plenum.client.signer import SimpleSigner
-from plenum.test.eventually import eventually
+from plenum.test.eventually import eventually, eventuallyAll
+
+from plenum.test.helper import checkReqAck
 
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA
@@ -38,11 +42,14 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper,
     steward.submit(op)
     # looper.runFor(5)
 
-    def chk():
-        with pytest.raises(AssertionError):
-            assert len(steward.getTxnsByAttribute(TXN_TYPE)) != txnCount
+    update = {'op': 'REQNACK',
+              'reason': "client request invalid: UnauthorizedClientRequest "
+                        "UnauthorizedClientRequest('Only stewards can "
+                        "add sponsors',)"}
 
-    looper.run(eventually(chk, retryWait=1, timeout=10))
+    coros2 = [partial(checkReqAck, steward, node, 1, update)
+              for node in nodeSet]
+    looper.run(eventuallyAll(*coros2, totalTimeout=5))
 
 
 def testStewardCreatesASponsor(genned, steward, stewardSigner, looper,
@@ -65,7 +72,9 @@ def testStewardCreatesASponsor(genned, steward, stewardSigner, looper,
     steward.submit(op)
 
     def chk():
-        assert len(steward.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
+        txns = steward.getTxnsByAttribute(TXN_TYPE)
+        print(txns)
+        assert len(txns) == txnCount + 1
 
     looper.run(eventually(chk, retryWait=1, timeout=15))
 
