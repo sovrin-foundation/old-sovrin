@@ -29,15 +29,11 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
-REQ = {'BASE': ['base58'],
-       'TEST': ['pytest']}
+reqs = ['git+https://github.com/evernym/plenum-priv.git@master#egg=plenum',
+        'git+https://github.com/jettify/aiohttp_sse.git@master#egg=aiohttp_sse']
 
-install_reqs = [ir.link.url for ir in parse_requirements("requirements.txt", session=False)]
-REQUIRES = set(sum(REQ.values(), []))
-EXTRAS = {}
-
-for i in install_reqs:
-    os.system('pip install {}'.format(i))
+for url in reqs:
+    os.system('pip install {}'.format(url))
 
 setup(
     name='sovrin',
@@ -53,11 +49,7 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
-    install_requires=REQUIRES,
-    extras_require=EXTRAS,
-    # dependency_links=['https://github.com/jettify/aiohttp_sse/tarball/master'
-    #                   '#egg=aiohttp_sse-1.0',
-    #                   'git+https://github.com/evernym/plenum-priv.git@master#egg=plenum',
-    #                   'https://github.com/evernym/plenum-priv/archive/master'
-    #                   '.zip#egg=plenum']
+    install_requires=['base58', 'plyvel'],
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest']
 )
