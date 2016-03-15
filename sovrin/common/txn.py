@@ -63,7 +63,7 @@ def newTxn(txnType, origin=None, target=None, data=None, role=None):
 # ROLE types
 STEWARD = "STEWARD"
 SPONSOR = "SPONSOR"
-
+USER = "USER"
 
 def storedTxn(txnTyp, nym, txnId, role=None, data=None):
     return {

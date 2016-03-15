@@ -49,9 +49,10 @@ class Client(PlenumClient):
         # TODO Implement this
         pass
 
-    def getTxnsByAttribute(self, attrName: str):
+    def getTxnsByAttribute(self, attrName: str, attrValue: Any=None):
         def cond(result):
-            return attrName in result
+            return attrName in result and (attrValue is None or attrValue ==
+                                           result[attrName])
 
         return self.getTxnsByCondition(condition=cond)
 

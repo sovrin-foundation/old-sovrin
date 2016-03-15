@@ -281,6 +281,17 @@ def genTestClient(nodes: TestNodeSet = None,
     return genPlenumTestClient(nodes, nodeReg, tmpdir, signer, testClientClass)
 
 
+def genConnectedTestClient(looper,
+                            nodes: TestNodeSet = None,
+                            nodeReg=None,
+                            tmpdir=None,
+                            signer=None) -> TestClient:
+    c = genTestClient(nodes, tmpdir=tmpdir, signer=signer)
+    looper.add(c)
+    looper.run(c.ensureConnectedToNodes())
+    return c
+
+
 def genTestClientProvider(nodes: TestNodeSet = None,
                           nodeReg=None,
                           tmpdir=None,

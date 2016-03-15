@@ -8,7 +8,7 @@ from plenum.server.node import Node as PlenumNode
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, ORIGIN
+    STEWARD, ORIGIN, USER, NYM
 
 
 class Node(PlenumNode):
@@ -28,8 +28,8 @@ class Node(PlenumNode):
         # TODO: Just for the time being. Remove ASAP
         result.update(operation)
         return Reply(viewNo,
-                      req.reqId,
-                      result)
+                     req.reqId,
+                     result)
 
     def checkValidOperation(self, clientId, reqId, msg):
         self.checkValidSovrinOperation(clientId, reqId, msg)
@@ -55,24 +55,47 @@ class Node(PlenumNode):
         op = request.operation
         typ = op[TXN_TYPE]
         role = op.get(ROLE, None)
-        if typ == ADD_NYM and role == SPONSOR:
-            if not self.IsSteward(op[ORIGIN]):
-                raise UnauthorizedClientRequest(request.clientId, request.reqId,
-                                                "Only stewards can add sponsors")
+        if typ == ADD_NYM:
+            if role == SPONSOR:
+                if not self.isSteward(op[ORIGIN]):
+                    raise UnauthorizedClientRequest(request.clientId,
+                                                    request.reqId,
+                                                    "Only stewards can add sponsors")
 
-    def IsSteward(self, nym):
+            if role == USER:
+                if not (self.isSteward(op[ORIGIN]) or self.isSponsor(op[ORIGIN])):
+                    raise UnauthorizedClientRequest(request.clientId,
+                                                    request.reqId,
+                                                    "Only stewards or sponsors can "
+                                                    "add sponsors")
+
+    def isSteward(self, nym):
         for txnId, result in self.txnStore.getAllTxn().items():
-            if self.isAddNymTxn(result) and self.isRoleSteward(result):
-                return True
+            if nym == result[NYM]:
+                if self.isAddNymTxn(result) and self.isRoleSteward(result):
+                    return True
 
         return False
 
-    # TODO: Should go to transaction store
+    def isSponsor(self, nym):
+        for txnId, result in self.txnStore.getAllTxn().items():
+            if nym == result[NYM]:
+                if self.isAddNymTxn(result) and self.isRoleSteward(result):
+                    return True
+
+        return False
+
+    # TODO: Should be inside transaction store
     @staticmethod
     def isAddNymTxn(result):
         return TXN_TYPE in result and result[TXN_TYPE] == ADD_NYM
 
-    # TODO: Should go to transaction store
+    # TODO: Should be inside transaction store
     @staticmethod
     def isRoleSteward(result):
         return ROLE in result and result[ROLE] == STEWARD
+
+    # TODO: Should be inside transaction store
+    @staticmethod
+    def isRoleSponsor(result):
+        return ROLE in result and result[ROLE] == SPONSOR

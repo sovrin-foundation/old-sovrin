@@ -7,7 +7,8 @@ from plenum.test.eventually import eventually, eventuallyAll
 from plenum.test.helper import checkReqAck
 
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
-    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA
+    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER
+from sovrin.test.helper import genTestClient, genConnectedTestClient
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +41,7 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper,
 
     # TODO Should submit add ORIGIN on its own
     steward.submit(op)
-    # looper.runFor(5)
+    looper.runFor(10)
 
     update = {'op': 'REQNACK',
               'reason': "client request invalid: UnauthorizedClientRequest "
@@ -53,10 +54,7 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper,
 
 
 def testStewardCreatesASponsor(genned, steward, stewardSigner, looper,
-                               nodeSet, tdir):
-    seed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner('sponsor', seed)
-
+                               nodeSet, tdir, sponsorSigner):
     sponsorNym = sponsorSigner.verstr
 
     op = {
@@ -116,18 +114,18 @@ def testStewardCreatesASponsor(genned, steward, stewardSigner, looper,
 
 
 def testTxnRetrievalByAttributeName(client1, looper):
-    # TODO: These are dummy transactions, just to verify the client retrieval
+    # These are dummy transactions, just to verify the client retrieval
     #  is working correctly
-    operations = [{DATA:
-                       "06b9a6eacd7a77b9361123fd19776455eb16b9c83426a1abbf514a414792b73f", TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {DATA:
-                       "6f186f0b9303e2affde0b5d5e6586a633460a224b2a47f2a645cd5674185cf0b", TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {DATA:
-                       "6f186f0b9303e2affde0b5d7f2a645cd5674185cf0b5e6586a633460a224b2a4", TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {ROLE:
-                       "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443", TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {ROLE:
-                       "6f4b6612125fba2c1fbd8f4433a0daecd2799dfd6c9c299424fd920f9b308110", TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'}]
+    h1 = "06b9a6eacd7a77b9361123fd19776455eb16b9c83426a1abbf514a414792b73f"
+    h2 = "6f186f0b9303e2affde0b5d5e6586a633460a224b2a47f2a645cd5674185cf0b"
+    h3 = "6f186f0b9303e2affde0b5d7f2a645cd5674185cf0b5e6586a633460a224b2a4"
+    h4 = "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443"
+    h5 = "6f4b6612125fba2c1fbd8f4433a0daecd2799dfd6c9c299424fd920f9b308110"
+    operations = [{DATA: h1, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
+                  {DATA: h2, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
+                  {DATA: h3, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
+                  {ROLE: h4, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
+                  {ROLE: h5, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'}]
 
     client1.submit(*operations)
 
@@ -138,4 +136,56 @@ def testTxnRetrievalByAttributeName(client1, looper):
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
 
+def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
+    sseed = b'this is a secret sponsor seed...'
+    sponsorSigner = SimpleSigner('user', sseed)
+    sponsor = genConnectedTestClient(looper, nodeSet, tmpdir=tdir,
+                                     signer=sponsorSigner)
+
+    useed = b'this is a secret apricot seed...'
+    userSigner = SimpleSigner('user', useed)
+
+    userNym = userSigner.verstr
+
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userNym,
+        TXN_TYPE: ADD_NYM,
+        ROLE: USER
+    }
+
+    txnCount = len(sponsor.getTxnsByAttribute(TXN_TYPE))
+
+    sponsor.submit(op)
+    looper.runFor(5)
+
+    def chk():
+        with pytest.raises(AssertionError):
+            assert len(sponsor.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
+
+    looper.run(eventually(chk, retryWait=1, timeout=15))
+
+
+def testSponsorCreatesAUser(genned, sponsor, sponsorSigner, looper,
+                               nodeSet, tdir):
+    seed = b'this is a secret apricot seed...'
+    userSigner = SimpleSigner('user', seed)
+
+    userNym = userSigner.verstr
+
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userNym,
+        TXN_TYPE: ADD_NYM,
+        ROLE: USER
+    }
+
+    txnCount = len(sponsor.getTxnsByAttribute(TXN_TYPE))
+
+    sponsor.submit(op)
+
+    def chk():
+        assert len(sponsor.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
+
+    looper.run(eventually(chk, retryWait=1, timeout=15))
 

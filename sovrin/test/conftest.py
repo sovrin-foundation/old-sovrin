@@ -53,15 +53,23 @@ def stewardSigner():
 
 
 @pytest.fixture(scope="module")
-def stewardSigner():
+def steward(looper, nodeSet, tdir, up, stewardSigner):
+    s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    return s
+
+
+@pytest.fixture(scope="module")
+def sponsorSigner():
     seed = b'8f787e886991e188659b244ab9a093ed0ca184198c0032e3e7654246a01e6907'
-    signer = SimpleSigner('steward', unhexlify(seed))
+    signer = SimpleSigner('sponsor', unhexlify(seed))
     return signer
 
 
 @pytest.fixture(scope="module")
-def steward(looper, nodeSet, tdir, up, stewardSigner):
-    s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
+def sponsor(looper, nodeSet, tdir, up, sponsorSigner):
+    s = genTestClient(nodeSet, signer=sponsorSigner, tmpdir=tdir)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
