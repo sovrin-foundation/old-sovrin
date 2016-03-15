@@ -44,10 +44,11 @@ class Node(PlenumNode):
 
     def generateReply(self, viewNo: int, req: Request):
         operation = req.operation
-
         txnId = sha256(
             "{}{}".format(req.clientId, req.reqId).encode()).hexdigest()
         result = {"txnId": txnId}
+        # TODO: Just for the time being. Remove ASAP
+        result.update(operation)
         return Reply(viewNo,
                       req.reqId,
                       result)
