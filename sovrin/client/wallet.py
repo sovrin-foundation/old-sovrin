@@ -13,7 +13,8 @@ from plenum.common.util import error
 from raet.nacling import PrivateKey, SignedMessage, SigningKey, Signer
 from sovrin.common.util import getSymmetricallyEncryptedVal
 
-from sovrin.common.txn import ADD_AGENT, ADD_ATTR, ADD_SPONSOR, txn
+from sovrin.common.txn import ADD_ATTR, ADD_SPONSOR, TXN_TYPE, ADD_AGENT, \
+    newTxn
 
 ENCODING = "utf-8"
 
@@ -93,8 +94,8 @@ class Wallet:
     def addAttribute(self, name: str, val: Any, userNym: Cryptonym, sponsorNym: Cryptonym, agentNym: Cryptonym,
                      commit: bool=False):
         encVal, sKey = getSymmetricallyEncryptedVal(val)
-        txnData = txn(txnType=ADD_ATTR,
-                      targetId=userNym,
+        txnData = newTxn(txnType=ADD_ATTR,
+                      targetNym=userNym,
                       sponsor=sponsorNym,
                       agent=agentNym,
                       data={name: encVal})
@@ -226,7 +227,7 @@ class Wallet:
             else list(self.pendingTxns) + self.completedTxns
 
         for txn in txnCollection:
-            if txn['txnType'] == ADD_ATTR:
+            if txn[TXN_TYPE] == ADD_ATTR:
                 if isinstance(txn['data'], dict) and attrName in txn['data']:
                     return txn
 
@@ -235,8 +236,8 @@ class Wallet:
 
 class UserWallet(Wallet):
     def add(self, txnType: str, userNym: Cryptonym, sponsorNym: Cryptonym=None, agentNym: Cryptonym=None, commit: bool=False):
-        txnData = txn(txnType=txnType,
-                      targetId=userNym,
+        txnData = newTxn(txnType=txnType,
+                      targetNym=userNym,
                       sponsor=sponsorNym,
                       agent=agentNym)
         self.addNewTxn(txnData, commit)

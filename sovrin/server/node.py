@@ -6,7 +6,8 @@ from plenum.common.request_types import Reply, Request
 from plenum.server.node import Node as PlenumNode
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
-    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR
+    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
+    STEWARD, ORIGIN
 
 
 class Node(PlenumNode):
@@ -49,7 +50,25 @@ class Node(PlenumNode):
 
     async def checkRequestAuthorized(self, request):
         op = request.operation
-        # if op['txnType'] == 'ADD_ATTR':
-        #     t = self.txnStore.getAll()
-        #
-        #     op['dest']
+        typ = op[TXN_TYPE]
+        role = op.get(ROLE, None)
+        if typ == ADD_NYM and role == SPONSOR:
+            if not self.IsSteward(op[ORIGIN]):
+                raise InvalidClientRequest("Only stewards can add sponsors")
+
+    def IsSteward(self, nym):
+        for txnId, result in self.txnStore.getAllTxn().items():
+            if self.isAddNymTxn(result) and self.isRoleSteward(result):
+                return True
+
+        return False
+
+    # TODO: Should go to transaction store
+    @staticmethod
+    def isAddNymTxn(result):
+        return TXN_TYPE in result and result [TXN_TYPE] == ADD_NYM
+
+    # TODO: Should go to transaction store
+    @staticmethod
+    def isRoleSteward(result):
+        return ROLE in result and result[ROLE] == STEWARD

@@ -4,6 +4,7 @@ import tempfile
 from contextlib import ExitStack
 from typing import Iterable
 
+import shutil
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, randomString
@@ -16,7 +17,6 @@ from plenum.test.helper import checkNodesConnected, \
 from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as genPlenumTestClientProvider
 from plenum.test.testable import Spyable
-from raet.raeting import AutoMode
 
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
@@ -213,32 +213,6 @@ class Organization:
                 wallet.addCompletedTxn(txn)
 
 
-# class TestAgent(Organization, Agent):
-#     def __init__(self, aid: str, scenario: 'Scenario' = None):
-#         self.aid = aid
-#         ha = genHa()
-#         stack = dict(name=aid,
-#                      ha=ha,
-#                      main=True,
-#                      auto=AutoMode.always)
-#
-#         if scenario.tmpdir:
-#             stack['basedirpath'] = scenario.tmpdir
-#
-#         cliNodeReg = scenario.nodeReg.extractCliNodeReg()
-#         # TODO Agent creates a client and yet we're creating a client for the organization? Only one client is needed.
-#         Agent.__init__(self, aid, nodeReg=cliNodeReg, stack=stack)
-#         self.client = genTestClientProvider(nodes=scenario.nodes,
-#                                             nodeReg=scenario.nodeReg.extractCliNodeReg(),
-#                                             tmpdir=scenario.tmpdir)
-#         Organization.__init__(self, self.client)
-
-
-# def genTestAgent(s: 'Scenario'):
-#     agentId = "testAgent{}".format(randomString(6))
-#     return TestAgent(agentId, scenario=s)
-
-
 # noinspection PyShadowingNames,PyShadowingNames
 @Spyable(methods=[Node.handleOneNodeMsg,
                   Node.processRequest,
@@ -284,6 +258,9 @@ class TestClientStorage(ClientStorage):
     def getDataLocation(cls, clientId):
         # TODO: Need some way to clear the tempdir
         return os.path.join(tempfile.gettempdir(), cls.dataLocation, clientId)
+
+    def __del__(self):
+        shutil.rmtree(self.__class__.getDataLocation(self.clientId))
 
 
 @Spyable(methods=[Client.handleOneNodeMsg])

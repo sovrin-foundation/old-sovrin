@@ -13,6 +13,7 @@ class ClientStorage:
     currentPath = os.path.dirname(packagePath)
 
     def __init__(self, clientId):
+        self.clientId = clientId
         self.clientDataLocation = self.__class__.getDataLocation(clientId)
         if not os.path.exists(self.clientDataLocation):
             os.makedirs(self.clientDataLocation)
