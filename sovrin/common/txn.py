@@ -3,12 +3,26 @@
 TXN_TYPE = 'type'
 TARGET_NYM = 'dest'
 ORIGIN = 'origin'
+ROLE = 'role'
 DATA = 'data'
 
-requiredOpKeys = [TXN_TYPE, TARGET_NYM]
-optionalOpKeys = [DATA]
-allOpKeys = requiredOpKeys + optionalOpKeys
+allOpKeys = [TXN_TYPE, TARGET_NYM, DATA, ROLE]
 
+# client transaction types
+ADD_NYM = "ADD_NYM"
+ADD_ATTR = "ADD_ATTR"
+IDPROOF = "IDPROOF"
+ASSIGN_AGENT = "ASSIGN_AGENT"
+
+# TXN_TYPE -> (requireds, optionals)
+fields = {ADD_NYM: ([TARGET_NYM],        [ROLE]),
+          ADD_ATTR: ([TARGET_NYM, DATA], []    )
+          }
+
+validTxnTypes = [ADD_NYM,
+                 ADD_ATTR,
+                 IDPROOF,
+                 ASSIGN_AGENT]
 
 def txn(txnType,
         targetId,
@@ -23,20 +37,6 @@ def txn(txnType,
             DATA: data}
 
 
-# client transaction types
-ADD_NYM = "ADD_NYM"
-ADD_ATTR = "ADD_ATTR"
-IDPROOF = "IDPROOF"
-ADD_SPONSOR = "ADD_SPONSOR"
-ADD_AGENT = "ADD_AGENT"
-ASSIGN_AGENT = "ASSIGN_AGENT"
-
-validTxnTypes = [ADD_NYM,
-                 ADD_ATTR,
-                 IDPROOF,
-                 ADD_SPONSOR,
-                 ADD_AGENT,
-                 ASSIGN_AGENT]
 
 # TODO: Move them to a separate file
 # ROLE types

@@ -2,9 +2,8 @@ import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.test.eventually import eventually
 
-from sovrin.common.txn import ADD_ATTR, ADD_NYM, getGenesisTxns, storedTxn, \
-    STEWARD
-from sovrin.test.helper import genTestClient
+from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
+    STEWARD, TARGET_NYM, TXN_TYPE, ROLE
 
 
 @pytest.fixture(scope="module")
@@ -25,14 +24,14 @@ def testNonStewardCannotCreateASponsor(steward, looper, nodeSet, tdir):
 
     sponsorNym = sponsorSigner.verstr
 
-    op = {"dest": sponsorNym, "txnType": ADD_NYM, "role": 'SPONSOR'}
+    op = {TARGET_NYM: sponsorNym, TXN_TYPE: ADD_NYM, ROLE: 'SPONSOR'}
 
-    assert len(steward.getTxnsByAttribute("txnType")) == 0
+    assert len(steward.getTxnsByAttribute(TXN_TYPE)) == 0
 
     steward.submit(op)
 
     def chk():
-        assert len(steward.getTxnsByAttribute("txnType")) == 1
+        assert len(steward.getTxnsByAttribute(TXN_TYPE)) == 1
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
@@ -43,14 +42,14 @@ def testStewardCreatesASponsor(genned, steward, looper, nodeSet, tdir):
 
     sponsorNym = sponsorSigner.verstr
 
-    op = {"dest": sponsorNym, "txnType": ADD_NYM, "role": 'SPONSOR'}
+    op = {TARGET_NYM: sponsorNym, TXN_TYPE: ADD_NYM, ROLE: 'SPONSOR'}
 
-    assert len(steward.getTxnsByAttribute("txnType")) == 0
+    assert len(steward.getTxnsByAttribute(TXN_TYPE)) == 0
 
     steward.submit(op)
 
     def chk():
-        assert len(steward.getTxnsByAttribute("txnType")) == 1
+        assert len(steward.getTxnsByAttribute(TXN_TYPE)) == 1
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
