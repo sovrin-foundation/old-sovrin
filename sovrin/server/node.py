@@ -51,3 +51,10 @@ class Node(PlenumNode):
         return Reply(viewNo,
                       req.reqId,
                       result)
+
+    def checkValidOperation(self, msg):
+        self.checkValidSovrinOperation(msg)
+        super().checkValidOperation(msg)
+
+    def checkValidSovrinOperation(self, msg):
+        pass

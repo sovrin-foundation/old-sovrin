@@ -1,5 +1,6 @@
 from typing import Mapping, List
 
+import pickle
 from plenum.client.client import Client as PlenumClient
 from plenum.common.request_types import OP_FIELD_NAME, Request
 from plenum.common.txn import REQACK, REPLY
@@ -35,6 +36,13 @@ class Client(PlenumClient):
             self.storage.addAck(msg['reqId'], sender)
         elif msg[OP_FIELD_NAME] == REPLY:
             result = msg['result']
-            self.storage.addReply(msg['reqId'], sender, result)
+            self.storage.addReply(msg['reqId'], sender, {'result': result})
         else:
             logger.debug("Invalid op message {}".format(msg))
+
+    def getRepliesFromAllNodes(self, reqId: int):
+        result = {k.split(b'-')[1].decode(): pickle.loads(v) for k,
+                                                    v in self.storage.replyStore.iterator(prefix=str(reqId).encode())}
+        return result
+
+
