@@ -1,14 +1,17 @@
+import random
 from functools import partial
 
 import pytest
 from plenum.client.signer import SimpleSigner
+from plenum.common.request_types import f
 from plenum.test.eventually import eventually, eventuallyAll
 
 from plenum.test.helper import checkReqAck
 
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER
-from sovrin.test.helper import genTestClient, genConnectedTestClient
+from sovrin.test.helper import genTestClient, genConnectedTestClient, \
+    clientFromSigner
 
 
 @pytest.fixture(scope="module")
@@ -23,8 +26,37 @@ def genesisTxns(stewardSigner):
 # TODO use wallet instead of SimpleSigner in client
 
 
-def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper,
-                                       nodeSet, tdir):
+def checkNacks(client, reqId, contains='', nodeCount=4):
+
+    reqs = [x for x, _ in client.inBox if x[f.REQ_ID.nm] == reqId]
+    for r in reqs:
+        assert r['op'] == 'REQNACK'
+        assert f.REASON.nm in r
+        assert contains in r[f.REASON.nm]
+    assert len(reqs) == nodeCount
+
+
+def submitAndCheck(looper, client, op):
+    txnCount = len(client.getTxnsByAttribute(TXN_TYPE))
+
+    client.submit(op)
+
+    def checkTxnCountAdvanced():
+        assert len(client.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
+
+    looper.run(eventually(checkTxnCountAdvanced, retryWait=1, timeout=15))
+
+
+def submitAndCheckNacks(looper, client, op,
+                        contains='UnauthorizedClientRequest'):
+    client.submit(op)
+    looper.run(eventually(checkNacks,
+                          client,
+                          client.lastReqId,
+                          contains))
+
+
+def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
     seed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner('sponsor', seed)
 
@@ -37,80 +69,43 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper,
         ROLE: SPONSOR
     }
 
-    txnCount = len(steward.getTxnsByAttribute(TXN_TYPE))
-
-    # TODO Should submit add ORIGIN on its own
-    steward.submit(op)
-    looper.runFor(10)
-
-    update = {'op': 'REQNACK',
-              'reason': "client request invalid: UnauthorizedClientRequest "
-                        "UnauthorizedClientRequest('Only stewards can "
-                        "add sponsors',)"}
-
-    coros2 = [partial(checkReqAck, steward, node, 1, update)
-              for node in nodeSet]
-    looper.run(eventuallyAll(*coros2, totalTimeout=5))
+    submitAndCheckNacks(looper, steward, op)
 
 
-def testStewardCreatesASponsor(genned, steward, stewardSigner, looper,
-                               nodeSet, tdir, sponsorSigner):
-    sponsorNym = sponsorSigner.verstr
-
+def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
+    nym = targetSigner.verstr
     op = {
-        ORIGIN: stewardSigner.verstr,
-        TARGET_NYM: sponsorNym,
+        ORIGIN: creatorSigner.verstr,
+        TARGET_NYM: nym,
         TXN_TYPE: ADD_NYM,
-        ROLE: SPONSOR
+        ROLE: role
     }
-
-    txnCount = len(steward.getTxnsByAttribute(TXN_TYPE))
-
-    # TODO Should submit add ORIGIN on its own to operation?
-    steward.submit(op)
-
-    def chk():
-        txns = steward.getTxnsByAttribute(TXN_TYPE)
-        print(txns)
-        assert len(txns) == txnCount + 1
-
-    looper.run(eventually(chk, retryWait=1, timeout=15))
+    submitAndCheck(looper, creatorClient, op)
+    return targetSigner
 
 
-    #
-    # s = genTestClient(nodeSet, signer=sponsorSigner, tmpdir=tdir)
-    # looper.add(s)
-    # looper.run(s.ensureConnectedToNodes())
-    #
-    # op = {"dest": "06b9a6eacd7a77b9361123fd19776455"
-    #               "eb16b9c83426a1abbf514a414792b73f",
-    #       "txnType": ADD_ATTR}
-    #
-    # client1.submit(op)
-    #
-    # op = {"txnType": ADD_NYM, 'ADDadd_nym, nym: bb1cb802, role: SPONSOR}
-    #
-    # def chk():
-    #     assert len(client1.getTxnsByAttribute("name")) == 3
-    #     assert len(client1.getTxnsByAttribute("age")) == 2
-    #
-    # looper.run(eventually(chk, retryWait=1, timeout=10))
+def addUser(looper, creatorClient, creatorSigner, name):
+    usigner = SimpleSigner(name)
+    return createNym(looper, usigner, creatorClient, creatorSigner, USER)
 
 
-# def testSponsorCreatesAnAttribute(client1, looper):
-#     op = {"dest": "06b9a6eacd7a77b9361123fd19776455"
-#                   "eb16b9c83426a1abbf514a414792b73f",
-#           "txnType": ADD_ATTR}
-#     client1.submit(op)
-#
-#     def chk():
-#         assert len(client1.getTxnsByAttribute("name")) == 3
-#         assert len(client1.getTxnsByAttribute("age")) == 2
-#
-#     looper.run(eventually(chk, retryWait=1, timeout=10))
-#
-#
-#
+@pytest.fixture(scope="module")
+def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
+    return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+
+
+def testStewardCreatesASponsor(addedSponsor):
+    pass
+
+
+@pytest.fixture(scope="module")
+def anotherSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
+    return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+
+
+def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
+                               nodeSet, tdir, sponsorSigner):
+    return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
 
 
 def testTxnRetrievalByAttributeName(client1, looper):
@@ -154,38 +149,71 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
         ROLE: USER
     }
 
-    txnCount = len(sponsor.getTxnsByAttribute(TXN_TYPE))
-
-    sponsor.submit(op)
-    looper.runFor(5)
-
-    def chk():
-        with pytest.raises(AssertionError):
-            assert len(sponsor.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
-
-    looper.run(eventually(chk, retryWait=1, timeout=15))
+    submitAndCheckNacks(looper, sponsor, op)
 
 
-def testSponsorCreatesAUser(genned, sponsor, sponsorSigner, looper,
-                               nodeSet, tdir):
-    seed = b'this is a secret apricot seed...'
-    userSigner = SimpleSigner('user', seed)
+@pytest.fixture(scope="module")
+def userSignerA(genned, sponsor, sponsorSigner, looper, addedSponsor):
+    return addUser(looper, sponsor, sponsorSigner, 'userA')
 
-    userNym = userSigner.verstr
+
+@pytest.fixture(scope="module")
+def userSignerB(genned, sponsor, sponsorSigner, looper, addedSponsor):
+    return addUser(looper, sponsor, sponsorSigner, 'userB')
+
+
+def testSponsorCreatesAUser(userSignerA):
+    pass
+
+
+@pytest.fixture(scope="module")
+def attrib(userSignerA, sponsor, sponsorSigner, looper):
+
+    data = {'name': 'Mario'}
 
     op = {
         ORIGIN: sponsorSigner.verstr,
-        TARGET_NYM: userNym,
-        TXN_TYPE: ADD_NYM,
-        ROLE: USER
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: data
     }
 
-    txnCount = len(sponsor.getTxnsByAttribute(TXN_TYPE))
+    submitAndCheck(looper, sponsor, op)
 
-    sponsor.submit(op)
 
-    def chk():
-        assert len(sponsor.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
+def testSponsorAddsAttributeForUser(attrib):
+    pass
 
-    looper.run(eventually(chk, retryWait=1, timeout=15))
 
+@pytest.mark.xfail(reason="attribute authorization is not in place yet")
+def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir):
+    rand = SimpleSigner('random')
+    randCli = clientFromSigner(rand, looper, nodeSet, tdir)
+#     userB = clientFromSigner(userSignerB, looper, nodeSet, tdir)
+#
+# anotherSponsor
+#
+#     # TODO other sponsor, but not the right sponsor
+#     # TODO steward
+
+    data = {'name': 'Mario'}
+
+    op = {
+        ORIGIN: rand.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: data
+    }
+
+    submitAndCheckNacks(looper, randCli, op)
+
+
+@pytest.mark.xfail()
+def testSponsorAddedAttributeIsEncrypted(attrib):
+    raise NotImplementedError
+
+
+@pytest.mark.xfail()
+def testSponsorAddedAttributeCanBeChanged(attrib):
+    # TODO but only by user and sponsor
+    raise NotImplementedError

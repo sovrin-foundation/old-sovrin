@@ -297,3 +297,10 @@ def genTestClientProvider(nodes: TestNodeSet = None,
                           tmpdir=None,
                           clientGnr=genTestClient):
     return genPlenumTestClientProvider(nodes, nodeReg, tmpdir, clientGnr)
+
+
+def clientFromSigner(signer, looper, nodeSet, tdir):
+    s = genTestClient(nodeSet, signer=signer, tmpdir=tdir)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    return s

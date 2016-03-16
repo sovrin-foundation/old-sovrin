@@ -8,7 +8,7 @@ from plenum.server.node import Node as PlenumNode
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, ORIGIN, USER, NYM
+    STEWARD, ORIGIN, USER
 
 
 class Node(PlenumNode):
@@ -54,24 +54,29 @@ class Node(PlenumNode):
     async def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
-        role = op.get(ROLE, None)
         if typ == ADD_NYM:
+            role = op.get(ROLE, None)
             if role == SPONSOR:
                 if not self.isSteward(op[ORIGIN]):
-                    raise UnauthorizedClientRequest(request.clientId,
-                                                    request.reqId,
-                                                    "Only stewards can add sponsors")
+                    raise UnauthorizedClientRequest(
+                        request.clientId,
+                        request.reqId,
+                        "Only stewards can add sponsors")
 
             if role == USER:
                 if not (self.isSteward(op[ORIGIN]) or self.isSponsor(op[ORIGIN])):
-                    raise UnauthorizedClientRequest(request.clientId,
-                                                    request.reqId,
-                                                    "Only stewards or sponsors can "
-                                                    "add sponsors")
+                    raise UnauthorizedClientRequest(
+                        request.clientId,
+                        request.reqId,
+                        "Only stewards or sponsors can "
+                        "add sponsors")
+        elif typ == ADD_ATTR:
+            # TODO check if the caller is authorized to add attributes
+            pass
 
     def isSteward(self, nym):
         for txnId, result in self.txnStore.getAllTxn().items():
-            if nym == result[NYM]:
+            if nym == result[TARGET_NYM]:
                 if self.isAddNymTxn(result) and self.isRoleSteward(result):
                     return True
 
@@ -79,7 +84,7 @@ class Node(PlenumNode):
 
     def isSponsor(self, nym):
         for txnId, result in self.txnStore.getAllTxn().items():
-            if nym == result[NYM]:
+            if nym == result[TARGET_NYM]:
                 if self.isAddNymTxn(result) and self.isRoleSponsor(result):
                     return True
 

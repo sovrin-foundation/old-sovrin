@@ -3,10 +3,11 @@
 TXN_TYPE = 'type'
 # TODO: Should probably be a called TARGET
 TARGET_NYM = 'dest'
-NYM = "nym"
 ORIGIN = 'origin'
 ROLE = 'role'
 DATA = 'data'
+
+TXN_ID = 'txnId'
 
 allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA]
 
@@ -65,19 +66,21 @@ STEWARD = "STEWARD"
 SPONSOR = "SPONSOR"
 USER = "USER"
 
-def storedTxn(txnTyp, nym, txnId, role=None, data=None):
+
+def storedTxn(txnTyp, dest, txnId, role=None, data=None):
     return {
-        "type": txnTyp,
-        "nym": nym,
-        "txnId": txnId,
-        "role": role,
-        "data": data
+        TXN_TYPE: txnTyp,
+        TARGET_NYM: dest,
+        TXN_ID: txnId,
+        ROLE: role,
+        DATA: data
     }
 
 
 def getGenesisTxns():
-    return [storedTxn(ADD_NYM,
-                    "a3716a7674d089456c603adb5575800bc2d4988e00bc297be7e595de2de61150",
-                    "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-                    role=STEWARD),
-            ]
+    return [storedTxn(
+        ADD_NYM,
+        "a3716a7674d089456c603adb5575800bc2d4988e00bc297be7e595de2de61150",
+        "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        role=STEWARD)
+    ]

@@ -8,7 +8,7 @@ from plenum.test.conftest import tdir, looper, unstartedLooper, counter, \
     preprepared1, propagated1, reqAcked1, request1, sent1, faultyNodes
 
 from sovrin.common.txn import getGenesisTxns
-from sovrin.test.helper import TestNodeSet, genTestClient
+from sovrin.test.helper import TestNodeSet, genTestClient, clientFromSigner
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +69,4 @@ def sponsorSigner():
 
 @pytest.fixture(scope="module")
 def sponsor(looper, nodeSet, tdir, up, sponsorSigner):
-    s = genTestClient(nodeSet, signer=sponsorSigner, tmpdir=tdir)
-    looper.add(s)
-    looper.run(s.ensureConnectedToNodes())
-    return s
+    return clientFromSigner(sponsorSigner, looper, nodeSet, tdir)
