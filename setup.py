@@ -29,7 +29,7 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
-reqs = ['git+https://github.com/evernym/plenum-priv.git@txn-using-leveldb#egg=plenum',
+reqs = ['git+ssh://git@github.com/evernym/plenum-priv.git@txn-using-leveldb#egg=plenum',
         'git+https://github.com/jettify/aiohttp_sse.git@master#egg=aiohttp_sse']
 
 for url in reqs:

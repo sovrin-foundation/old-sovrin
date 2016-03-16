@@ -18,7 +18,7 @@ class Node(PlenumNode):
             for idx, txn in enumerate(gt):
                 reply = Reply(0, idx, txn)
                 asyncio.ensure_future(
-                    self.txnStore.insertTxn("", reply, txn["txnId"]))
+                    self.txnStore.append("", reply, txn["txnId"]))
 
     def generateReply(self, viewNo: int, req: Request):
         operation = req.operation

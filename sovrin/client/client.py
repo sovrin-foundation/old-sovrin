@@ -1,8 +1,10 @@
-from typing import Mapping, List, Any
+from typing import Mapping, List, Any, Dict, Union, Tuple
 
 import pickle
 from plenum.client.client import Client as PlenumClient
+from plenum.client.signer import Signer
 from plenum.common.request_types import OP_FIELD_NAME, Request
+from plenum.common.stacked import HA
 from plenum.common.txn import REQACK, REPLY
 from plenum.common.util import getlogger, getMaxFailures
 
@@ -13,8 +15,21 @@ logger = getlogger()
 
 
 class Client(PlenumClient):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self,
+                 clientId: str,
+                 nodeReg: Dict[str, HA]=None,
+                 ha: Union[HA, Tuple[str, int]]=None,
+                 lastReqId: int = 0,
+                 signer: Signer=None,
+                 signers: Dict[str, Signer]=None,
+                 basedirpath: str=None):
+        super().__init__(clientId,
+                         nodeReg,
+                         ha,
+                         lastReqId,
+                         signer,
+                         signers,
+                         basedirpath)
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
 

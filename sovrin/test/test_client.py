@@ -1,15 +1,20 @@
+import json
 import random
 from functools import partial
 
+import base58
 import pytest
+import libnacl.public
 from plenum.client.signer import SimpleSigner
 from plenum.common.request_types import f
 from plenum.test.eventually import eventually, eventuallyAll
-
 from plenum.test.helper import checkReqAck
+from plenum.test.testing_utils import adict
 
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
-    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF
+    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
+    TXN_ID, NONCE
+from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, genConnectedTestClient, \
     clientFromSigner
 
@@ -37,14 +42,19 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
 
 
 def submitAndCheck(looper, client, op):
-    txnCount = len(client.getTxnsByAttribute(TXN_TYPE))
+    txnsBefore = client.getTxnsByAttribute(TXN_TYPE)
 
     client.submit(op)
 
+    txnsAfter = []
+
     def checkTxnCountAdvanced():
-        assert len(client.getTxnsByAttribute(TXN_TYPE)) == txnCount + 1
+        txnsAfter.extend(client.getTxnsByAttribute(TXN_TYPE))
+        assert len(txnsAfter) > len(txnsBefore)
 
     looper.run(eventually(checkTxnCountAdvanced, retryWait=1, timeout=15))
+    txnIdsBefore = [txn[TXN_ID] for txn in txnsBefore]
+    return [txn for txn in txnsAfter if txn[TXN_ID] not in txnIdsBefore]
 
 
 def submitAndCheckNacks(looper, client, op,
@@ -54,22 +64,6 @@ def submitAndCheckNacks(looper, client, op,
                           client,
                           client.lastReqId,
                           contains))
-
-
-def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
-    seed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner('sponsor', seed)
-
-    sponsorNym = sponsorSigner.verstr
-
-    op = {
-        ORIGIN: stewardSigner.verstr,
-        TARGET_NYM: sponsorNym,
-        TXN_TYPE: ADD_NYM,
-        ROLE: SPONSOR
-    }
-
-    submitAndCheckNacks(looper, steward, op)
 
 
 def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
@@ -94,13 +88,74 @@ def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
     return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
 
 
-def testStewardCreatesASponsor(addedSponsor):
-    pass
-
-
 @pytest.fixture(scope="module")
 def anotherSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
     return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+
+
+@pytest.fixture(scope="module")
+def userSignerA(genned, sponsor, sponsorSigner, looper, addedSponsor):
+    return addUser(looper, sponsor, sponsorSigner, 'userA')
+
+
+@pytest.fixture(scope="module")
+def userSignerB(genned, sponsor, sponsorSigner, looper, addedSponsor):
+    return addUser(looper, sponsor, sponsorSigner, 'userB')
+
+
+@pytest.fixture(scope="module")
+def attrib(userSignerA, sponsor, sponsorSigner, looper):
+
+    data = {'name': 'Mario'}
+
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: data
+    }
+
+    submitAndCheck(looper, sponsor, op)
+
+
+@pytest.fixture(scope="module")
+def encryptedAttrib(userSignerA, sponsor, sponsorSigner, looper, symEncData):
+
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: symEncData.data
+    }
+
+    return submitAndCheck(looper, sponsor, op)
+
+
+@pytest.fixture(scope="module")
+def symEncData():
+    data = json.dumps({'name': 'Mario'})
+    encVal, secretKey = getSymmetricallyEncryptedVal(data)
+    return adict(data=data, encVal=encVal, secretKey=secretKey)
+
+
+def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
+    seed = b'this is a secret sponsor seed...'
+    sponsorSigner = SimpleSigner('sponsor', seed)
+
+    sponsorNym = sponsorSigner.verstr
+
+    op = {
+        ORIGIN: stewardSigner.verstr,
+        TARGET_NYM: sponsorNym,
+        TXN_TYPE: ADD_NYM,
+        ROLE: SPONSOR
+    }
+
+    submitAndCheckNacks(looper, steward, op)
+
+
+def testStewardCreatesASponsor(addedSponsor):
+    pass
 
 
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
@@ -152,33 +207,8 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
     submitAndCheckNacks(looper, sponsor, op)
 
 
-@pytest.fixture(scope="module")
-def userSignerA(genned, sponsor, sponsorSigner, looper, addedSponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userA')
-
-
-@pytest.fixture(scope="module")
-def userSignerB(genned, sponsor, sponsorSigner, looper, addedSponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userB')
-
-
 def testSponsorCreatesAUser(userSignerA):
     pass
-
-
-@pytest.fixture(scope="module")
-def attrib(userSignerA, sponsor, sponsorSigner, looper):
-
-    data = {'name': 'Mario'}
-
-    op = {
-        ORIGIN: sponsorSigner.verstr,
-        TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: data
-    }
-
-    submitAndCheck(looper, sponsor, op)
 
 
 def testSponsorAddsAttributeForUser(attrib):
@@ -233,9 +263,39 @@ def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
     submitAndCheckNacks(looper, steward, op)
 
 
-@pytest.mark.xfail()
-def testSponsorAddedAttributeIsEncrypted(attrib):
-    raise NotImplementedError
+# def testSponsorAddedAttributeIsEncrypted(userSignerA, sponsor, sponsorSigner,
+#                                          looper, symEncData):
+#     op = {
+#         ORIGIN: sponsorSigner.verstr,
+#         TARGET_NYM: userSignerA.verstr,
+#         TXN_TYPE: ADD_ATTR,
+#         DATA: symEncData.data
+#     }
+#
+#     submitAndCheck(looper, sponsor, op)
+
+
+def testSponsorAddedAttributeIsEncrypted(encryptedAttrib):
+    pass
+
+
+def testSponsorDisclosesEncryptedAttribute(encryptedAttrib, symEncData, looper,
+                                           userSignerA, sponsorSigner, sponsor):
+    box = libnacl.public.Box(sponsorSigner.naclSigner.keyraw,
+                             userSignerA.naclSigner.verraw)
+
+    data = json.dumps({"key": symEncData.secretKey, TXN_ID: encryptedAttrib[
+        0][TXN_ID]})
+    nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
+
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        NONCE: base58.b58encode(nonce),
+        DATA: base58.b58encode(boxedMsg)
+    }
+    submitAndCheck(looper, sponsor, op)
 
 
 @pytest.mark.xfail()

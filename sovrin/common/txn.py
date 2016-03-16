@@ -6,6 +6,7 @@ TARGET_NYM = 'dest'
 ORIGIN = 'origin'
 ROLE = 'role'
 DATA = 'data'
+NONCE = 'nonce'
 
 TXN_ID = 'txnId'
 
@@ -18,6 +19,8 @@ IDPROOF = "IDPROOF"
 ASSIGN_AGENT = "ASSIGN_AGENT"
 ADD_SPONSOR = "ADD_SPONSOR"
 ADD_AGENT = "ADD_AGENT"
+DISCLOSE = "DISCLOSE"
+
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {ADD_NYM: ([TARGET_NYM],        [ROLE]),
