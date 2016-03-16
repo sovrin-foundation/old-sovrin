@@ -51,6 +51,7 @@ class Node(PlenumNode):
                                            '{} operation requires {} attribute'.
                                            format(ADD_ATTR, TARGET_NYM))
 
+    # TODO: DO not trust the ORIGIN in transaction
     async def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
@@ -71,8 +72,12 @@ class Node(PlenumNode):
                         "Only stewards or sponsors can "
                         "add sponsors")
         elif typ == ADD_ATTR:
-            # TODO check if the caller is authorized to add attributes
-            pass
+            if not self.isSponsorFor(op[ORIGIN], op[TARGET_NYM]):
+                raise UnauthorizedClientRequest(
+                        request.clientId,
+                        request.reqId,
+                        "Only user's sponsor can add attribute for that user"
+                )
 
     def isSteward(self, nym):
         for txnId, result in self.txnStore.getAllTxn().items():
@@ -89,6 +94,15 @@ class Node(PlenumNode):
                     return True
 
         return False
+
+    def isSponsorFor(self, sponsorNym, forNym):
+        for txnId, result in self.txnStore.getAllTxn().items():
+            if result[TXN_TYPE] == ADD_NYM and forNym == result[TARGET_NYM] \
+                    and result[ORIGIN] == sponsorNym and result[ROLE] == USER:
+                return True
+        return False
+
+
 
     # TODO: Should be inside transaction store
     @staticmethod

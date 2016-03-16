@@ -9,7 +9,7 @@ from plenum.test.eventually import eventually, eventuallyAll
 from plenum.test.helper import checkReqAck
 
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
-    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER
+    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF
 from sovrin.test.helper import genTestClient, genConnectedTestClient, \
     clientFromSigner
 
@@ -116,11 +116,11 @@ def testTxnRetrievalByAttributeName(client1, looper):
     h3 = "6f186f0b9303e2affde0b5d7f2a645cd5674185cf0b5e6586a633460a224b2a4"
     h4 = "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443"
     h5 = "6f4b6612125fba2c1fbd8f4433a0daecd2799dfd6c9c299424fd920f9b308110"
-    operations = [{DATA: h1, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {DATA: h2, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {DATA: h3, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {ROLE: h4, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'},
-                  {ROLE: h5, TXN_TYPE: ADD_ATTR, TARGET_NYM: 'n/a'}]
+    operations = [{DATA: h1, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
+                  {DATA: h2, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
+                  {DATA: h3, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
+                  {ROLE: h4, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
+                  {ROLE: h5, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'}]
 
     client1.submit(*operations)
 
@@ -185,17 +185,10 @@ def testSponsorAddsAttributeForUser(attrib):
     pass
 
 
-@pytest.mark.xfail(reason="attribute authorization is not in place yet")
 def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir):
     rand = SimpleSigner('random')
     randCli = clientFromSigner(rand, looper, nodeSet, tdir)
-#     userB = clientFromSigner(userSignerB, looper, nodeSet, tdir)
-#
-# anotherSponsor
-#
-#     # TODO other sponsor, but not the right sponsor
-#     # TODO steward
-
+    
     data = {'name': 'Mario'}
 
     op = {
@@ -208,6 +201,38 @@ def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir):
     submitAndCheckNacks(looper, randCli, op)
 
 
+def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
+                                        steward, stewardSigner, genned):
+    newSponsorSigner = SimpleSigner('new sponsor')
+    newSponsor = clientFromSigner(newSponsorSigner, looper, nodeSet, tdir)
+    anotherSponsor(genned, steward, stewardSigner, looper, newSponsorSigner)
+
+    data = {'name': 'Mario'}
+
+    op = {
+        ORIGIN: newSponsorSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: data
+    }
+
+    submitAndCheckNacks(looper, newSponsor, op)
+
+
+def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
+                                        steward, stewardSigner, genned):
+    data = {'name': 'Mario'}
+
+    op = {
+        ORIGIN: stewardSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: data
+    }
+
+    submitAndCheckNacks(looper, steward, op)
+
+
 @pytest.mark.xfail()
 def testSponsorAddedAttributeIsEncrypted(attrib):
     raise NotImplementedError
@@ -215,5 +240,6 @@ def testSponsorAddedAttributeIsEncrypted(attrib):
 
 @pytest.mark.xfail()
 def testSponsorAddedAttributeCanBeChanged(attrib):
-    # TODO but only by user and sponsor
+    # TODO but only by user(if user has taken control of his identity) and
+    # sponsor
     raise NotImplementedError
