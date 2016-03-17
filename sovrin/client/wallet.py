@@ -14,7 +14,7 @@ from raet.nacling import PrivateKey, SignedMessage, SigningKey, Signer
 from sovrin.common.util import getSymmetricallyEncryptedVal
 
 from sovrin.common.txn import ADD_ATTR, ADD_SPONSOR, TXN_TYPE, ADD_AGENT, \
-    newTxn
+    newTxn, ORIGIN
 
 ENCODING = "utf-8"
 
@@ -72,6 +72,8 @@ class Wallet:
         self.client = client                    # type: Client
         self.completedTxns = []                 # type: List[Dict[str, Any]]
         self.signers = {}
+        client.signers = self.signers
+        # TODO this is a bit messy; it steps on top of client's signers. Also, the default SimpleSigner doesn't need to be created.
 
     @staticmethod
     def decrypt(ec: EncryptedWallet, key: bytes) -> 'Wallet':
@@ -91,14 +93,18 @@ class Wallet:
 
     # TODO Should this also move to the user wallet? Or would the agent have attributes too?
     # TODO Find a better way of adding an attribute and managing keys
-    def addAttribute(self, name: str, val: Any, userNym: Cryptonym, sponsorNym: Cryptonym, agentNym: Cryptonym,
+    def addAttribute(self,
+                     name: str,
+                     val: Any,
+                     origin: Cryptonym,
+                     target: Cryptonym,
                      commit: bool=False):
+        # TODO val needs to be serialized first
         encVal, sKey = getSymmetricallyEncryptedVal(val)
         txnData = newTxn(txnType=ADD_ATTR,
-                         targetNym=userNym,
-                         sponsor=sponsorNym,
-                         agent=agentNym,
-                         data={name: encVal})
+                         origin=origin,
+                         target=target,
+                         data=encVal)
         # TODO Need to sign the transaction
 
         req = self.addNewTxn(txnData, commit)
@@ -135,20 +141,24 @@ class Wallet:
         self.attributeEncKeys[name] = sKey
 
     def newCryptonym(self):
-        nym = self._getCryptonym(self.i + 1)
+        nym = self._generateCryptonym(self.i + 1)
         self.i += 1
         return nym
 
     def lastCryptonym(self):
-        return self._getCryptonym(self.i)
+        return self._generateCryptonym(self.i)
 
-    def _getCryptonym(self, i) -> Cryptonym:
+    def _generateCryptonym(self, i) -> Cryptonym:
         # TODO need to clear system memory of private keys, including the newly generated private key
         # TODO Need to have a wallet locking mechanism. Can't keep the wallet unlocked for long periods of time.
         # TODO Double locking mechanism? Like one key for general purpose, and another for accessing private keys?
         # TODO Perhaps an encrypted wallet could show the names of attributes, and how many attributes, and if any are pending
-        self.signers[i] = SimpleSigner(identifier=None, seed=self._getKey(i))
-        return self.signers[i].verstr
+        ss = SimpleSigner(identifier=None, seed=self._getKey(i))
+        nym = ss.verstr
+        ss._identifier = nym
+        # TODO this is weird; do we need to store the identifier in SimpleSigner itself?
+        self.signers[nym] = ss
+        return nym
 
     def _getKey(self, i):
         self._checkRootPrivKeyIsSetup()
@@ -187,7 +197,7 @@ class Wallet:
         # and the wallet does not have a client, an error is raised.
         if self.client is None:
             error(self.clientNotPresentMsg)
-        request = self.client.submit(txnData)[0]
+        request = self.client.submit(txnData, txnData[ORIGIN])[0]
         return request
 
     def addNewTxn(self, txnData: Any, commit: bool=False):

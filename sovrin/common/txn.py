@@ -49,19 +49,19 @@ validTxnTypes = [ADD_NYM,
 
 # TODO: Change name to txn or some thing else after discussion
 def newTxn(txnType, origin=None, target=None, data=None, role=None):
-    data = {
+    txn = {
         TXN_TYPE: txnType
     }
     if origin:
-        data[ORIGIN] = origin
+        txn[ORIGIN] = origin
     if target:
-        data[TARGET_NYM] = target
+        txn[TARGET_NYM] = target
     if data:
-        data[DATA] = data
+        txn[DATA] = data
     if role:
-        data[ROLE] = role
+        txn[ROLE] = role
 
-    return data
+    return txn
 
 # TODO: Move them to a separate file
 # ROLE types

@@ -62,7 +62,7 @@ class TestWallet(TestCase):
         w2 = ew.decrypt(key)
         self.assertEquals(w2.i, len(crs))
         for i, cr in enumerate(crs):
-            x = w2._getCryptonym(i+1)
+            x = w2._generateCryptonym(i + 1)
             self.assertEquals(x, crs[i])
 
     # TODO we need to understand if libnacl.public.Box can help us
