@@ -16,14 +16,14 @@ logger = getlogger()
 
 class Client(PlenumClient):
     def __init__(self,
-                 clientId: str,
+                 name: str,
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
                  lastReqId: int = 0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None):
-        super().__init__(clientId,
+        super().__init__(name,
                          nodeReg,
                          ha,
                          lastReqId,
@@ -34,7 +34,7 @@ class Client(PlenumClient):
         self.lastReqId = self.storage.getLastReqId()
 
     def getStorage(self):
-        return ClientStorage(self.clientId)
+        return ClientStorage(self.name)
 
     def submit(self, *operations: Mapping) -> List[Request]:
         requests = super().submit(*operations)

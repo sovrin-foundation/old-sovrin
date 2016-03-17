@@ -95,10 +95,10 @@ class Wallet:
                      commit: bool=False):
         encVal, sKey = getSymmetricallyEncryptedVal(val)
         txnData = newTxn(txnType=ADD_ATTR,
-                      targetNym=userNym,
-                      sponsor=sponsorNym,
-                      agent=agentNym,
-                      data={name: encVal})
+                         targetNym=userNym,
+                         sponsor=sponsorNym,
+                         agent=agentNym,
+                         data={name: encVal})
         # TODO Need to sign the transaction
 
         req = self.addNewTxn(txnData, commit)

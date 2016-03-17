@@ -12,9 +12,9 @@ class ClientStorage:
     packagePath = sovrin.__file__
     currentPath = os.path.dirname(packagePath)
 
-    def __init__(self, clientId):
-        self.clientId = clientId
-        self.clientDataLocation = self.__class__.getDataLocation(clientId)
+    def __init__(self, clientName):
+        self.clientName = clientName
+        self.clientDataLocation = self.__class__.getDataLocation(clientName)
         if not os.path.exists(self.clientDataLocation):
             os.makedirs(self.clientDataLocation)
         self.store = plyvel.DB(self.clientDataLocation, create_if_missing=True)

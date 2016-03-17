@@ -255,12 +255,12 @@ class TestNodeSet(PlenumTestNodeSet):
 class TestClientStorage(ClientStorage):
 
     @classmethod
-    def getDataLocation(cls, clientId):
+    def getDataLocation(cls, clientName):
         # TODO: Need some way to clear the tempdir
-        return os.path.join(tempfile.gettempdir(), cls.dataLocation, clientId)
+        return os.path.join(tempfile.gettempdir(), cls.dataLocation, clientName)
 
     def __del__(self):
-        shutil.rmtree(self.__class__.getDataLocation(self.clientId))
+        shutil.rmtree(self.__class__.getDataLocation(self.clientName))
 
 
 @Spyable(methods=[Client.handleOneNodeMsg])
@@ -270,7 +270,7 @@ class TestClient(Client, StackedTester):
         return TestStack
 
     def getStorage(self):
-        return TestClientStorage(self.clientId)
+        return TestClientStorage(self.name)
 
 
 def genTestClient(nodes: TestNodeSet = None,
