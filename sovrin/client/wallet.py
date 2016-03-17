@@ -72,7 +72,10 @@ class Wallet:
         self.client = client                    # type: Client
         self.completedTxns = []                 # type: List[Dict[str, Any]]
         self.signers = {}
-        client.signers = self.signers
+        if self.client:
+            self.client.signers = self.signers
+            self.client.defaultIdentifier = None
+
         # TODO this is a bit messy; it steps on top of client's signers. Also, the default SimpleSigner doesn't need to be created.
 
     @staticmethod

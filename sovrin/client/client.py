@@ -33,6 +33,9 @@ class Client(PlenumClient):
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
 
+    def getSigners(self, signer=None, signers=None):
+        return None, None
+
     def getStorage(self):
         return ClientStorage(self.name)
 
@@ -56,8 +59,9 @@ class Client(PlenumClient):
             logger.debug("Invalid op message {}".format(msg))
 
     def getRepliesFromAllNodes(self, reqId: int):
-        result = {k.split(b'-')[1].decode(): pickle.loads(v) for k,
-                                                    v in self.storage.replyStore.iterator(prefix=str(reqId).encode())}
+        result = {k.split(b'-')[1].decode(): pickle.loads(v)
+                  for k, v in self.storage.replyStore.iterator(prefix=str(reqId)
+                                                               .encode())}
         return result
 
     def getTxnsByNym(self, nym: str):

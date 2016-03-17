@@ -8,7 +8,7 @@ from sovrin.client.wallet import Wallet
 
 
 class TestWallet(TestCase):
-    cmnArgs = dict(userNym=None, sponsorNym=None, agentNym=None)
+    cmnArgs = dict(target=None, origin=None)
 
     def test_encryptAndDecrypt(self):
         with self.subTest("encrypt"):
