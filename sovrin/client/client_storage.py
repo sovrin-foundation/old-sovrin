@@ -37,5 +37,5 @@ class ClientStorage:
                             pickle.dumps(result))
 
     @classmethod
-    def getDataLocation(cls, clientId):
-        return os.path.join(cls.currentPath, cls.dataLocation, clientId)
+    def getDataLocation(cls, clientName):
+        return os.path.join(cls.currentPath, cls.dataLocation, clientName)

@@ -23,7 +23,7 @@ class Node(PlenumNode):
     def generateReply(self, viewNo: int, req: Request):
         operation = req.operation
         txnId = sha256(
-            "{}{}".format(req.clientId, req.reqId).encode()).hexdigest()
+            "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
         result = {"txnId": txnId}
         # TODO: Just for the time being. Remove ASAP
         result.update(operation)
@@ -31,23 +31,24 @@ class Node(PlenumNode):
                      req.reqId,
                      result)
 
-    def checkValidOperation(self, clientId, reqId, msg):
-        self.checkValidSovrinOperation(clientId, reqId, msg)
-        super().checkValidOperation(clientId, reqId, msg)
+    def checkValidOperation(self, identifier, reqId, msg):
+        self.checkValidSovrinOperation(identifier, reqId, msg)
+        super().checkValidOperation(identifier, reqId, msg)
 
-    def checkValidSovrinOperation(self, clientId, reqId, msg):
+    @staticmethod
+    def checkValidSovrinOperation(identifier, reqId, msg):
         for k in msg.keys():
             if k not in allOpKeys:
-                raise InvalidClientRequest(clientId, reqId,
+                raise InvalidClientRequest(identifier, reqId,
                                            'invalid attribute "{}"'.format(k))
 
         if msg[TXN_TYPE] not in validTxnTypes:
-            raise InvalidClientRequest(clientId, reqId, 'invalid {}: {}'.
+            raise InvalidClientRequest(identifier, reqId, 'invalid {}: {}'.
                                        format(TXN_TYPE, msg[TXN_TYPE]))
 
         if msg[TXN_TYPE] == ADD_ATTR:
             if TARGET_NYM not in msg:
-                raise InvalidClientRequest(clientId, reqId,
+                raise InvalidClientRequest(identifier, reqId,
                                            '{} operation requires {} attribute'.
                                            format(ADD_ATTR, TARGET_NYM))
 
@@ -55,48 +56,56 @@ class Node(PlenumNode):
     async def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
+        allTxns = None
+
+        def getAllTxns():
+            allTxns = self.txnStore.getAllTxn()
+            return allTxns
+
         if typ == ADD_NYM:
             role = op.get(ROLE, None)
             if role == SPONSOR:
-                if not self.isSteward(op[ORIGIN]):
+                if not self.isSteward(op[ORIGIN], allTxns or getAllTxns()):
                     raise UnauthorizedClientRequest(
-                        request.clientId,
+                        request.identifier,
                         request.reqId,
                         "Only stewards can add sponsors")
 
             if role == USER:
-                if not (self.isSteward(op[ORIGIN]) or self.isSponsor(op[ORIGIN])):
+                if not (self.isSteward(op[ORIGIN], allTxns or getAllTxns()) or
+                            self.isSponsor(op[ORIGIN], allTxns or getAllTxns())):
                     raise UnauthorizedClientRequest(
-                        request.clientId,
+                        request.identifier,
                         request.reqId,
                         "Only stewards or sponsors can "
                         "add sponsors")
+
         elif typ == ADD_ATTR:
-            if not self.isSponsorFor(op[ORIGIN], op[TARGET_NYM]):
+            if not self.isSponsorFor(op[ORIGIN], op[TARGET_NYM], allTxns or getAllTxns()):
                 raise UnauthorizedClientRequest(
-                        request.clientId,
+                        request.identifier,
                         request.reqId,
                         "Only user's sponsor can add attribute for that user"
                 )
 
-    def isSteward(self, nym):
-        for txnId, result in self.txnStore.getAllTxn().items():
+    def isSteward(self, nym, allTxns):
+        for txnId, result in allTxns.items():
             if nym == result[TARGET_NYM]:
                 if self.isAddNymTxn(result) and self.isRoleSteward(result):
                     return True
 
         return False
 
-    def isSponsor(self, nym):
-        for txnId, result in self.txnStore.getAllTxn().items():
+    def isSponsor(self, nym, allTxns):
+        for txnId, result in allTxns.items():
             if nym == result[TARGET_NYM]:
                 if self.isAddNymTxn(result) and self.isRoleSponsor(result):
                     return True
 
         return False
 
-    def isSponsorFor(self, sponsorNym, forNym):
-        for txnId, result in self.txnStore.getAllTxn().items():
+    def isSponsorFor(self, sponsorNym, forNym, allTxns):
+        for txnId, result in allTxns.items():
             if result[TXN_TYPE] == ADD_NYM and forNym == result[TARGET_NYM] \
                     and result[ORIGIN] == sponsorNym and result[ROLE] == USER:
                 return True
