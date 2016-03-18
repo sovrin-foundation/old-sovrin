@@ -41,7 +41,7 @@ class Client(PlenumClient):
         return ClientStorage(self.name)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
-        requests = super().submit(*operations, identifier)
+        requests = super().submit(*operations, identifier=identifier)
         for r in requests:
             self.storage.addRequest(r)
         return requests

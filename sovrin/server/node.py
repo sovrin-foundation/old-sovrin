@@ -98,7 +98,7 @@ class Node(PlenumNode):
 
         if typ == ADD_NYM:
             role = op.get(ROLE, None)
-            authorizedAdder = self.authorizedAdders[ROLE]
+            authorizedAdder = self.authorizedAdders[role]
             if originRole not in authorizedAdder:
                 raise UnauthorizedClientRequest(
                     request.identifier,

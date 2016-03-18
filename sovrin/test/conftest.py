@@ -38,8 +38,16 @@ def startedNodes(nodeSet, looper):
 
 
 @pytest.fixture(scope="module")
-def client1(looper, nodeSet, tdir, up):
-    client = genTestClient(nodeSet, tmpdir=tdir)
+def client1Signer():
+    seed = b'client1Signer secret key........'
+    signer = SimpleSigner(seed=seed)
+    assert signer.verstr == 'TuIpuBcx6P4S0Ez5LUr3HVpWERVHK56XONixonwcAf4='
+    return signer
+
+
+@pytest.fixture(scope="module")
+def client1(client1Signer, looper, nodeSet, tdir, up):
+    client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
     return client
@@ -49,7 +57,7 @@ def client1(looper, nodeSet, tdir, up):
 def stewardSigner():
     seed = b'is a pit a seed, or somepin else'
     signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U='
+    assert signer.verstr == 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='
     return signer
 
 
@@ -63,8 +71,8 @@ def steward(looper, nodeSet, tdir, up, stewardSigner):
 
 @pytest.fixture(scope="module")
 def sponsorSigner():
-    seed = b'8f787e886991e188659b244ab9a093ed0ca184198c0032e3e7654246a01e6907'
-    signer = SimpleSigner('sponsor', unhexlify(seed))
+    seed = b'sponsors are people too.........'
+    signer = SimpleSigner(seed=seed)
     return signer
 
 
