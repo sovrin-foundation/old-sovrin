@@ -9,9 +9,38 @@ from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
     STEWARD, ORIGIN, USER
+from sovrin.persistence.chain_store import ChainStore
+from sovrin.persistence.memory_chain_store import MemoryChainStore
+from sovrin.server.client_authn import TxnBasedAuthNr
 
 
 class Node(PlenumNode):
+
+    def __init__(self,
+                 name,
+                 nodeRegistry,
+                 clientAuthNr=None,
+                 ha=None,
+                 cliname=None,
+                 cliha=None,
+                 basedirpath=None,
+                 primaryDecider=None,
+                 opVerifiers=None,
+                 storage=None):
+
+        store = storage or MemoryChainStore()
+
+        super().__init__(name=name,
+                         nodeRegistry=nodeRegistry,
+                         clientAuthNr=clientAuthNr,
+                         ha=ha,
+                         cliname=cliname,
+                         cliha=cliha,
+                         basedirpath=basedirpath,
+                         primaryDecider=primaryDecider,
+                         opVerifiers=opVerifiers,
+                         storage=store)
+
     def addGenesisTxns(self, genTxns=None):
         if self.txnStore.size() == 0:
             gt = genTxns or getGenesisTxns()
@@ -52,78 +81,40 @@ class Node(PlenumNode):
                                            '{} operation requires {} attribute'.
                                            format(ADD_ATTR, TARGET_NYM))
 
-    # TODO: DO not trust the ORIGIN in transaction
+    authorizedAdders = {
+        USER: (STEWARD, SPONSOR),
+        SPONSOR: (STEWARD,)
+    }
+
+    # TODO: Do not trust the ORIGIN in transaction
     async def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
-        allTxns = None
 
-        def getAllTxns():
-            allTxns = self.txnStore.getAllTxn()
-            return allTxns
+        s = self.txnStore  # type: ChainStore
+
+        origin = op[ORIGIN]
+        originRole = s.getRole(origin)
 
         if typ == ADD_NYM:
             role = op.get(ROLE, None)
-            if role == SPONSOR:
-                if not self.isSteward(op[ORIGIN], allTxns or getAllTxns()):
-                    raise UnauthorizedClientRequest(
-                        request.identifier,
-                        request.reqId,
-                        "Only stewards can add sponsors")
-
-            if role == USER:
-                if not (self.isSteward(op[ORIGIN], allTxns or getAllTxns()) or
-                            self.isSponsor(op[ORIGIN], allTxns or getAllTxns())):
-                    raise UnauthorizedClientRequest(
-                        request.identifier,
-                        request.reqId,
-                        "Only stewards or sponsors can "
-                        "add sponsors")
-
+            authorizedAdder = self.authorizedAdders[ROLE]
+            if originRole not in authorizedAdder:
+                raise UnauthorizedClientRequest(
+                    request.identifier,
+                    request.reqId,
+                    "{} cannot add {}".format(originRole, role))
         elif typ == ADD_ATTR:
-            if not self.isSponsorFor(op[ORIGIN], op[TARGET_NYM], allTxns or getAllTxns()):
+            if not s.getSponsorFor(op[TARGET_NYM]) == origin:
                 raise UnauthorizedClientRequest(
                         request.identifier,
                         request.reqId,
-                        "Only user's sponsor can add attribute for that user"
-                )
+                        "Only user's sponsor can add attribute for that user")
+        else:
+            raise UnauthorizedClientRequest(
+                    request.identifier,
+                    request.reqId,
+                    "Assuming no one is authorized for txn type {}".format(typ))
 
-    def isSteward(self, nym, allTxns):
-        for txnId, result in allTxns.items():
-            if nym == result[TARGET_NYM]:
-                if self.isAddNymTxn(result) and self.isRoleSteward(result):
-                    return True
-
-        return False
-
-    def isSponsor(self, nym, allTxns):
-        for txnId, result in allTxns.items():
-            if nym == result[TARGET_NYM]:
-                if self.isAddNymTxn(result) and self.isRoleSponsor(result):
-                    return True
-
-        return False
-
-    def isSponsorFor(self, sponsorNym, forNym, allTxns):
-        for txnId, result in allTxns.items():
-            if result[TXN_TYPE] == ADD_NYM and forNym == result[TARGET_NYM] \
-                    and result[ORIGIN] == sponsorNym and result[ROLE] == USER:
-                return True
-        return False
-
-
-
-    # TODO: Should be inside transaction store
-    @staticmethod
-    def isAddNymTxn(result):
-        return TXN_TYPE in result and result[TXN_TYPE] == ADD_NYM
-
-    # TODO: Should be inside transaction store
-    @staticmethod
-    def isRoleSteward(result):
-        return ROLE in result and result[ROLE] == STEWARD
-
-    # TODO: Should be inside transaction store
-    @staticmethod
-    def isRoleSponsor(result):
-        return ROLE in result and result[ROLE] == SPONSOR
+    def defaultAuthNr(self):
+        return TxnBasedAuthNr(self.txnStore)

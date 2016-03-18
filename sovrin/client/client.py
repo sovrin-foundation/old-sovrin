@@ -33,14 +33,15 @@ class Client(PlenumClient):
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
 
-    def getSigners(self, signer=None, signers=None):
-        return None, None
+    def setupDefaultSigner(self):
+        # Sovrin clients should use a wallet, which supplies the signers
+        pass
 
     def getStorage(self):
         return ClientStorage(self.name)
 
-    def submit(self, *operations: Mapping) -> List[Request]:
-        requests = super().submit(*operations)
+    def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
+        requests = super().submit(*operations, identifier)
         for r in requests:
             self.storage.addRequest(r)
         return requests

@@ -47,8 +47,9 @@ def client1(looper, nodeSet, tdir, up):
 
 @pytest.fixture(scope="module")
 def stewardSigner():
-    seed = b'84198c0032e3e7658f787e886991e188659b244ab9a093ed0ca14246a01e6907'
-    signer = SimpleSigner('steward', unhexlify(seed))
+    seed = b'is a pit a seed, or somepin else'
+    signer = SimpleSigner(seed=seed)
+    assert signer.verstr == 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U='
     return signer
 
 

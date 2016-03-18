@@ -1,21 +1,18 @@
 import json
-import random
-from functools import partial
 
 import base58
-import pytest
 import libnacl.public
+import pytest
+
 from plenum.client.signer import SimpleSigner
 from plenum.common.request_types import f
-from plenum.test.eventually import eventually, eventuallyAll
-from plenum.test.helper import checkReqAck
+from plenum.test.eventually import eventually
 from plenum.test.testing_utils import adict
-
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
     TXN_ID, NONCE
 from sovrin.common.util import getSymmetricallyEncryptedVal
-from sovrin.test.helper import genTestClient, genConnectedTestClient, \
+from sovrin.test.helper import genConnectedTestClient, \
     clientFromSigner
 
 
@@ -41,10 +38,10 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
     assert len(reqs) == nodeCount
 
 
-def submitAndCheck(looper, client, op):
+def submitAndCheck(looper, client, op, identifier):
     txnsBefore = client.getTxnsByAttribute(TXN_TYPE)
 
-    client.submit(op)
+    client.submit(op, identifier)
 
     txnsAfter = []
 
@@ -57,9 +54,9 @@ def submitAndCheck(looper, client, op):
     return [txn for txn in txnsAfter if txn[TXN_ID] not in txnIdsBefore]
 
 
-def submitAndCheckNacks(looper, client, op,
+def submitAndCheckNacks(looper, client, op, identifier,
                         contains='UnauthorizedClientRequest'):
-    client.submit(op)
+    client.submit(op, identifier=identifier)
     looper.run(eventually(checkNacks,
                           client,
                           client.lastReqId,
@@ -74,7 +71,7 @@ def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
         TXN_TYPE: ADD_NYM,
         ROLE: role
     }
-    submitAndCheck(looper, creatorClient, op)
+    submitAndCheck(looper, creatorClient, op, creatorSigner.identifier)
     return targetSigner
 
 
@@ -138,7 +135,7 @@ def symEncData():
     return adict(data=data, encVal=encVal, secretKey=secretKey)
 
 
-def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
+def testNonStewardCannotCreateASponsor(genned, steward, stewardSigner, looper, nodeSet):
     seed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner('sponsor', seed)
 
@@ -151,7 +148,7 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
         ROLE: SPONSOR
     }
 
-    submitAndCheckNacks(looper, steward, op)
+    submitAndCheckNacks(looper, steward, op, stewardSigner.identifier)
 
 
 def testStewardCreatesASponsor(addedSponsor):
