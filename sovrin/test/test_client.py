@@ -10,7 +10,7 @@ from plenum.test.eventually import eventually
 from plenum.test.testing_utils import adict
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
-    TXN_ID, NONCE
+    TXN_ID, NONCE, SKEY
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genConnectedTestClient, \
     clientFromSigner
@@ -135,9 +135,9 @@ def symEncData():
     return adict(data=data, encVal=encVal, secretKey=secretKey)
 
 
-def testNonStewardCannotCreateASponsor(genned, steward, stewardSigner, looper, nodeSet):
+def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
     seed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner('sponsor', seed)
+    sponsorSigner = SimpleSigner(seed)
 
     sponsorNym = sponsorSigner.verstr
 
@@ -148,8 +148,10 @@ def testNonStewardCannotCreateASponsor(genned, steward, stewardSigner, looper, n
         ROLE: SPONSOR
     }
 
+    for node in nodeSet:
+        node.whitelistClient(steward.name)
     submitAndCheckNacks(looper=looper, client=steward, op=op,
-                        identifier=stewardSigner.identifier)
+                        identifier=stewardSigner.identifier, contains="InvalidIdentifier")
 
 
 def testStewardCreatesASponsor(addedSponsor):
@@ -159,29 +161,6 @@ def testStewardCreatesASponsor(addedSponsor):
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
                                nodeSet, tdir, sponsorSigner):
     return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
-
-
-def testTxnRetrievalByAttributeName(client1, looper):
-    # These are dummy transactions, just to verify the client retrieval
-    #  is working correctly
-    h1 = "06b9a6eacd7a77b9361123fd19776455eb16b9c83426a1abbf514a414792b73f"
-    h2 = "6f186f0b9303e2affde0b5d5e6586a633460a224b2a47f2a645cd5674185cf0b"
-    h3 = "6f186f0b9303e2affde0b5d7f2a645cd5674185cf0b5e6586a633460a224b2a4"
-    h4 = "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443"
-    h5 = "6f4b6612125fba2c1fbd8f4433a0daecd2799dfd6c9c299424fd920f9b308110"
-    operations = [{DATA: h1, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
-                  {DATA: h2, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
-                  {DATA: h3, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
-                  {ROLE: h4, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'},
-                  {ROLE: h5, TXN_TYPE: IDPROOF, TARGET_NYM: 'n/a'}]
-
-    client1.submit(*operations)
-
-    def chk():
-        assert len(client1.getTxnsByAttribute(DATA)) == 3
-        assert len(client1.getTxnsByAttribute(ROLE)) == 2
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
 
 
 def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
@@ -204,7 +183,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
         ROLE: USER
     }
 
-    submitAndCheckNacks(looper, sponsor, op, sponsNym)
+    submitAndCheckNacks(looper, sponsor, op, sponsNym, contains="InvalidIdentifier")
 
 
 def testSponsorCreatesAUser(userSignerA):
@@ -216,7 +195,8 @@ def testSponsorAddsAttributeForUser(attrib):
 
 
 def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir):
-    rand = SimpleSigner('random')
+    seed = b'this is a not an apricot seed...'
+    rand = SimpleSigner(seed=seed)
     randCli = clientFromSigner(rand, looper, nodeSet, tdir)
 
     nym = rand.verstr
@@ -230,7 +210,7 @@ def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir):
         DATA: data
     }
 
-    submitAndCheckNacks(looper, randCli, op, nym)
+    submitAndCheckNacks(looper, randCli, op, nym, contains="InvalidIdentifier")
 
 
 def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
@@ -265,18 +245,6 @@ def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
     submitAndCheckNacks(looper, steward, op, stewardSigner.verstr)
 
 
-# def testSponsorAddedAttributeIsEncrypted(userSignerA, sponsor, sponsorSigner,
-#                                          looper, symEncData):
-#     op = {
-#         ORIGIN: sponsorSigner.verstr,
-#         TARGET_NYM: userSignerA.verstr,
-#         TXN_TYPE: ADD_ATTR,
-#         DATA: symEncData.data
-#     }
-#
-#     submitAndCheck(looper, sponsor, op)
-
-
 def testSponsorAddedAttributeIsEncrypted(encryptedAttrib):
     pass
 
@@ -286,7 +254,7 @@ def testSponsorDisclosesEncryptedAttribute(encryptedAttrib, symEncData, looper,
     box = libnacl.public.Box(sponsorSigner.naclSigner.keyraw,
                              userSignerA.naclSigner.verraw)
 
-    data = json.dumps({"key": symEncData.secretKey, TXN_ID: encryptedAttrib[
+    data = json.dumps({SKEY: symEncData.secretKey, TXN_ID: encryptedAttrib[
         0][TXN_ID]})
     nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
 

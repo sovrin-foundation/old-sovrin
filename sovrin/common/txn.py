@@ -9,6 +9,7 @@ DATA = 'data'
 NONCE = 'nonce'
 
 TXN_ID = 'txnId'
+SKEY = "secretKey"
 
 allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA]
 

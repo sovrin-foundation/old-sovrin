@@ -8,7 +8,7 @@ from plenum.server.node import Node as PlenumNode
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, ORIGIN, USER
+    STEWARD, USER
 from sovrin.persistence.chain_store import ChainStore
 from sovrin.persistence.memory_chain_store import MemoryChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -86,14 +86,13 @@ class Node(PlenumNode):
         SPONSOR: (STEWARD,)
     }
 
-    # TODO: Do not trust the ORIGIN in transaction
     async def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
 
         s = self.txnStore  # type: ChainStore
 
-        origin = op[ORIGIN]
+        origin = request.identifier
         originRole = s.getRole(origin)
 
         if typ == ADD_NYM:
