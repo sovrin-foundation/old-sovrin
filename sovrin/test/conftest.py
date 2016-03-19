@@ -1,15 +1,15 @@
-from binascii import unhexlify
-
 import pytest
+
 from plenum.client.signer import SimpleSigner
-from plenum.test.conftest import getValueFromModule
-from plenum.test.conftest import tdir, looper, unstartedLooper, counter, \
-    nodeReg, keySharedNodes, replied1, up, ready, committed1, prepared1, \
-    preprepared1, propagated1, reqAcked1, request1, sent1, faultyNodes
-
 from sovrin.common.txn import getGenesisTxns
-from sovrin.test.helper import TestNodeSet, genTestClient, clientFromSigner
+from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient
 
+from plenum.test.conftest import getValueFromModule
+
+from plenum.test.conftest import tdir, looper, counter, unstartedLooper
+    #
+    # nodeReg, keySharedNodes, replied1, up, ready, committed1, prepared1, \
+    # preprepared1, propagated1, reqAcked1, request1, sent1, faultyNodes
 
 @pytest.fixture(scope="module")
 def genesisTxns():
