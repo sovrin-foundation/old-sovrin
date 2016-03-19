@@ -38,8 +38,12 @@ class Client(PlenumClient):
                          basedirpath)
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
-        # Attributes stored as tuple of 3 elements origin, secretKey, txnId
-        self.attributes = {}    # type: Dict[int, List[Tuple[str, str, str]]]
+        # TODO: SHould i store values of attributes as non encrypted
+        # Dictionary of attribute requests
+        # Key is request id and values are stored as tuple of 3 elements
+        # origin, secretKey, attribute name, txnId
+        self.attributeReqs = {}    # type: Dict[int, List[Tuple[str, str, str, str]]]
+        self.autoDiscloseAttributes = False
 
     def setupDefaultSigner(self):
         # Sovrin clients should use a wallet, which supplies the signers
@@ -50,18 +54,24 @@ class Client(PlenumClient):
 
     def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
         keys = []
+        attributeNames = []
         for op in operations:
             if op[TXN_TYPE] == ADD_ATTR:
+                # Data is a json object with key as attribute name and value
+                # as attribute value
                 data = op[DATA]
                 encVal, secretKey = getSymmetricallyEncryptedVal(data)
                 op[DATA] = encVal
                 keys.append(secretKey)
+                anm = list(json.loads(data).keys())[0]
+                attributeNames.append(anm)
         requests = super().submit(*operations, identifier=identifier)
         for r in requests:
             self.storage.addRequest(r)
             operation = r.operation
             if operation[TXN_TYPE] == ADD_ATTR:
-                self.attributes[r.reqId] = (r.identifier, keys.pop(), None)
+                self.attributeReqs[r.reqId] = (r.identifier, keys.pop(0),
+                                               attributeNames.pop(0), None)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -75,15 +85,17 @@ class Client(PlenumClient):
             self.storage.addNack(msg, sender)
         elif msg[OP_FIELD_NAME] == REPLY:
             result = msg['result']
-            # TODO: This is just for now. As soon as the client finds out
-            # that the attribute is added it discloses it
-            reqId = msg["reqId"]
-            if reqId in self.attributes and not self.attributes[reqId][2]:
-                origin = self.attributes[reqId][0]
-                key = self.attributes[reqId][1]
-                txnId = result[TXN_ID]
-                self.attributes[reqId] = (origin, key, txnId)
-                self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
+            if self.autoDiscloseAttributes:
+                # TODO: This is just for now. As soon as the client finds out
+                # that the attribute is added it discloses it
+                reqId = msg["reqId"]
+                if reqId in self.attributeReqs and not self.attributeReqs[
+                    reqId][3]:
+                    origin = self.attributeReqs[reqId][0]
+                    key = self.attributeReqs[reqId][1]
+                    txnId = result[TXN_ID]
+                    self.attributeReqs[reqId] = (origin, key, txnId)
+                    self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
             self.storage.addReply(msg['reqId'], sender, {'result': result})
         else:
             logger.debug("Invalid op message {}".format(msg))
@@ -157,3 +169,22 @@ class Client(PlenumClient):
         }
         self.submit(op, identifier=identifier)
 
+    def getAttributeForIdentifier(self, identifier, attrName):
+        reqId = None
+        for rid, (idf, key, anm, tid) in self.attributeReqs.items():
+            if idf == identifier and anm == attrName:
+                reqId = rid
+                break
+        if reqId is None:
+            return None
+        else:
+            reply, error = self.replyIfConsensus(reqId)
+            if reply is None:
+                return None
+            else:
+                hexData = reply["result"][DATA]
+                data = bytes(bytearray.fromhex(hexData))
+                rawKey = bytes(bytearray.fromhex(key))
+                box = libnacl.secret.SecretBox(rawKey)
+                data = box.decrypt(data).decode()
+                return json.loads(data)
