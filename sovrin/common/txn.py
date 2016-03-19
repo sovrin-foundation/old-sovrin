@@ -48,6 +48,10 @@ validTxnTypes = [ADD_NYM,
 #     }
 
 
+def AddNym(target, role=None, origin=None):
+    return newTxn(txnType=ADD_NYM, origin=origin, target=target, role=role)
+
+
 # TODO: Change name to txn or some thing else after discussion
 def newTxn(txnType, origin=None, target=None, data=None, role=None):
     txn = {
@@ -61,7 +65,6 @@ def newTxn(txnType, origin=None, target=None, data=None, role=None):
         txn[DATA] = data
     if role:
         txn[ROLE] = role
-
     return txn
 
 # TODO: Move them to a separate file

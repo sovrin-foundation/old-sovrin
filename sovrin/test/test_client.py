@@ -10,7 +10,7 @@ from plenum.test.eventually import eventually
 from plenum.test.testing_utils import adict
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
-    TXN_ID, NONCE, SKEY
+    TXN_ID, NONCE, SKEY, newTxn, AddNym
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genConnectedTestClient, \
     clientFromSigner
@@ -65,12 +65,9 @@ def submitAndCheckNacks(looper, client, op, identifier,
 
 def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
     nym = targetSigner.verstr
-    op = {
-        ORIGIN: creatorSigner.verstr,
-        TARGET_NYM: nym,
-        TXN_TYPE: ADD_NYM,
-        ROLE: role
-    }
+    op = AddNym(origin=creatorSigner.verstr,
+                target=nym,
+                role=role)
     submitAndCheck(looper, creatorClient, op, creatorSigner.identifier)
     return targetSigner
 
