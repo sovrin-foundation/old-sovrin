@@ -6,6 +6,7 @@ import pytest
 
 from plenum.client.signer import SimpleSigner
 from plenum.common.request_types import f
+from plenum.common.util import adict
 from plenum.test.eventually import eventually
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \

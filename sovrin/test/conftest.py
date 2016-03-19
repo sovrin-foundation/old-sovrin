@@ -6,10 +6,8 @@ from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient
 
 from plenum.test.conftest import getValueFromModule
 
-from plenum.test.conftest import tdir, looper, counter, unstartedLooper
-    #
-    # nodeReg, keySharedNodes, replied1, up, ready, committed1, prepared1, \
-    # preprepared1, propagated1, reqAcked1, request1, sent1, faultyNodes
+from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
+    nodeReg, up, ready, keySharedNodes
 
 @pytest.fixture(scope="module")
 def genesisTxns():
