@@ -97,3 +97,6 @@ class Client(PlenumClient):
 
         f = getMaxFailures(len(self.nodeReg))
         return [val[1] for rid, val in results.items() if len(val[0]) > f]
+
+    def hasMadeRequest(self, reqId: int):
+        return self.storage.hasRequest(reqId)

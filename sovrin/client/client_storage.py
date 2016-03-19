@@ -22,8 +22,11 @@ class ClientStorage:
         self.ackStore = self.store.prefixed_db(b'A-')
         self.replyStore = self.store.prefixed_db(b'R-')
 
+    def getAllReqIds(self):
+        return [int(x) for x in self.reqStore.iterator(include_value=False)]
+
     def getLastReqId(self):
-        reqIds = [int(x) for x in self.reqStore.iterator(include_value=False)]
+        reqIds = self.getAllReqIds()
         return max(reqIds) if len(reqIds) > 0 else 0
 
     def addRequest(self, req):
@@ -39,3 +42,6 @@ class ClientStorage:
     @classmethod
     def getDataLocation(cls, clientName):
         return os.path.join(cls.currentPath, cls.dataLocation, clientName)
+
+    def hasRequest(self, reqId: int):
+        return reqId in self.getAllReqIds()
