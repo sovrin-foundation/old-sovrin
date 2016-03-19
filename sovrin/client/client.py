@@ -1,15 +1,21 @@
+import json
+from base64 import b64decode
 from typing import Mapping, List, Any, Dict, Union, Tuple
 
 import pickle
+
+import base58
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.request_types import OP_FIELD_NAME, Request
 from plenum.common.stacked import HA
 from plenum.common.txn import REQACK, REPLY, REQNACK
-from plenum.common.util import getlogger, getMaxFailures
+from plenum.common.util import getlogger, getMaxFailures, \
+    getSymmetricallyEncryptedVal, libnacl
 
 from sovrin.client.client_storage import ClientStorage
-
+from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
+    DISCLOSE, NONCE, ORIGIN, GET_ATTR
 
 logger = getlogger()
 
@@ -32,6 +38,8 @@ class Client(PlenumClient):
                          basedirpath)
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
+        # Attributes stored as tuple of 3 elements origin, secretKey, txnId
+        self.attributes = {}    # type: Dict[int, List[Tuple[str, str, str]]]
 
     def setupDefaultSigner(self):
         # Sovrin clients should use a wallet, which supplies the signers
@@ -41,9 +49,19 @@ class Client(PlenumClient):
         return ClientStorage(self.name)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
+        keys = []
+        for op in operations:
+            if op[TXN_TYPE] == ADD_ATTR:
+                data = op[DATA]
+                encVal, secretKey = getSymmetricallyEncryptedVal(data)
+                op[DATA] = encVal
+                keys.append(secretKey)
         requests = super().submit(*operations, identifier=identifier)
         for r in requests:
             self.storage.addRequest(r)
+            operation = r.operation
+            if operation[TXN_TYPE] == ADD_ATTR:
+                self.attributes[r.reqId] = (r.identifier, keys.pop(), None)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -57,6 +75,15 @@ class Client(PlenumClient):
             self.storage.addNack(msg, sender)
         elif msg[OP_FIELD_NAME] == REPLY:
             result = msg['result']
+            # TODO: This is just for now. As soon as the client finds out
+            # that the attribute is added it discloses it
+            reqId = msg["reqId"]
+            if reqId in self.attributes and not self.attributes[reqId][2]:
+                origin = self.attributes[reqId][0]
+                key = self.attributes[reqId][1]
+                txnId = result[TXN_ID]
+                self.attributes[reqId] = (origin, key, txnId)
+                self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
             self.storage.addReply(msg['reqId'], sender, {'result': result})
         else:
             logger.debug("Invalid op message {}".format(msg))
@@ -103,3 +130,30 @@ class Client(PlenumClient):
         r = list(replies.values())[0] if len(replies) > f else None
         e = list(errors.values())[0] if len(errors) > f else None
         return r, e
+
+    # TODO: Just for now. Remove it later
+    def doAttrDisclose(self, origin, target, txnId, key):
+        box = libnacl.public.Box(b64decode(origin), b64decode(target))
+
+        data = json.dumps({TXN_ID: txnId, SKEY: key})
+        nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
+
+        op = {
+            ORIGIN: origin,
+            TARGET_NYM: target,
+            TXN_TYPE: DISCLOSE,
+            NONCE: base58.b58encode(nonce),
+            DATA: base58.b58encode(boxedMsg)
+        }
+        self.submit(op, identifier=origin)
+
+    def doGetAttributeTxn(self, identifier, attrName):
+        op = {
+            ORIGIN: identifier,
+            TARGET_NYM: identifier,
+            TXN_TYPE: GET_ATTR,
+            # TODO: Need to encrypt get query
+            DATA: json.dumps({"name": attrName})
+        }
+        self.submit(op, identifier=identifier)
+

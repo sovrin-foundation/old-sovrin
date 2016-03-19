@@ -8,7 +8,7 @@ from plenum.server.node import Node as PlenumNode
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER
+    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE
 from sovrin.persistence.chain_store import ChainStore
 from sovrin.persistence.memory_chain_store import MemoryChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -54,6 +54,18 @@ class Node(PlenumNode):
         txnId = sha256(
             "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
         result = {"txnId": txnId}
+        if operation[TXN_TYPE] == GET_ATTR:
+            # TODO: Very inefficient, queries all transactions and looks for the
+            # DISCLOSE for the clients and returns all. We probably change the
+            # transaction schema or have some way to zero in on the DISCLOSE for
+            # the attribute that is being looked for
+            attrs = []
+            for txn in self.txnStore.getAllTxn().values():
+                if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
+                        DISCLOSE:
+                    attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
+            if attrs:
+                result["attributes"] = attrs
         # TODO: Just for the time being. Remove ASAP
         result.update(operation)
         return Reply(viewNo,
@@ -109,6 +121,9 @@ class Node(PlenumNode):
                         request.identifier,
                         request.reqId,
                         "Only user's sponsor can add attribute for that user")
+        # TODO: Just for now. Later do something meaningful here
+        elif typ in [DISCLOSE, GET_ATTR]:
+            pass
         else:
             raise UnauthorizedClientRequest(
                     request.identifier,

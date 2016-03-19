@@ -33,7 +33,7 @@ def run_node():
         # Nodes persist keys when bootstrapping to other nodes and reconnecting
         # using an ephemeral temporary directory when proving a concept is a
         # nice way to keep things clean.
-        clientName = 'Joe'
+        clientName = 'Joem'
 
         # this seed is used by the signer to deterministically generate
         # a signature verification key that is shared out of band with the
@@ -44,7 +44,7 @@ def run_node():
         assert signer.verstr == 'o7z4QmFkNB+mVkFI2BwX0H' \
                                 'dm1BGhnz8psWnKYIXWTaQ='
 
-        client_address = ('127.0.0.1', 8000)
+        client_address = ('0.0.0.0', 8000)
 
         tmpdir = os.path.join(tempfile.gettempdir(), "sovrin_clients",
                               clientName)

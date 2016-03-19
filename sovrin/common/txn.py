@@ -1,4 +1,4 @@
-
+import json
 
 TXN_TYPE = 'type'
 # TODO: Should probably be a called TARGET
@@ -11,7 +11,7 @@ NONCE = 'nonce'
 TXN_ID = 'txnId'
 SKEY = "secretKey"
 
-allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA]
+allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE]
 
 # client transaction types
 ADD_NYM = "ADD_NYM"
@@ -21,7 +21,7 @@ ASSIGN_AGENT = "ASSIGN_AGENT"
 ADD_SPONSOR = "ADD_SPONSOR"
 ADD_AGENT = "ADD_AGENT"
 DISCLOSE = "DISCLOSE"
-
+GET_ATTR = "GET_ATTR"
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {ADD_NYM: ([TARGET_NYM],        [ROLE]),
@@ -31,7 +31,9 @@ fields = {ADD_NYM: ([TARGET_NYM],        [ROLE]),
 validTxnTypes = [ADD_NYM,
                  ADD_ATTR,
                  IDPROOF,
-                 ASSIGN_AGENT]
+                 ASSIGN_AGENT,
+                 DISCLOSE,
+                 GET_ATTR]
 
 
 # def txn(txnType,
@@ -50,6 +52,17 @@ validTxnTypes = [ADD_NYM,
 
 def AddNym(target, role=None, origin=None):
     return newTxn(txnType=ADD_NYM, origin=origin, target=target, role=role)
+
+
+def AddAttr(target, attrData, role=None, origin=None):
+    return newTxn(txnType=ADD_ATTR, origin=origin, target=target, role=role,
+                  data=attrData)
+
+
+def GetAttr(target, attrName, role=None, origin=None):
+    queryData = json.dumps({"name": attrName})
+    return newTxn(txnType=GET_ATTR, origin=origin, target=target, role=role,
+                  data=queryData)
 
 
 # TODO: Change name to txn or some thing else after discussion

@@ -40,7 +40,7 @@ class ClientStorage:
 
     def addNack(self, msg: int, sender: str):
         reqId = msg[f.REQ_ID.nm]
-        reason = pickle.dumps(msg[f.REASON.nm].encode())
+        reason = pickle.dumps(msg[f.REASON.nm])
         self.nackStore.put("{}-{}".format(reqId, sender).encode(), reason)
 
     def addReply(self, reqId: int, sender: str, result: Any):
