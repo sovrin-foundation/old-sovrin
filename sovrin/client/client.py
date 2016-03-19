@@ -5,7 +5,7 @@ from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.request_types import OP_FIELD_NAME, Request
 from plenum.common.stacked import HA
-from plenum.common.txn import REQACK, REPLY
+from plenum.common.txn import REQACK, REPLY, REQNACK
 from plenum.common.util import getlogger, getMaxFailures
 
 from sovrin.client.client_storage import ClientStorage
@@ -52,18 +52,14 @@ class Client(PlenumClient):
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
         if msg[OP_FIELD_NAME] == REQACK:
-            self.storage.addAck(msg['reqId'], sender)
+            self.storage.addAck(msg, sender)
+        elif msg[OP_FIELD_NAME] == REQNACK:
+            self.storage.addNack(msg, sender)
         elif msg[OP_FIELD_NAME] == REPLY:
             result = msg['result']
             self.storage.addReply(msg['reqId'], sender, {'result': result})
         else:
             logger.debug("Invalid op message {}".format(msg))
-
-    def getRepliesFromAllNodes(self, reqId: int):
-        result = {k.split(b'-')[1].decode(): pickle.loads(v)
-                  for k, v in self.storage.replyStore.iterator(prefix=str(reqId)
-                                                               .encode())}
-        return result
 
     def getTxnsByNym(self, nym: str):
         # TODO Implement this
@@ -100,3 +96,10 @@ class Client(PlenumClient):
 
     def hasMadeRequest(self, reqId: int):
         return self.storage.hasRequest(reqId)
+
+    def replyIfConsensus(self, reqId: int):
+        f = getMaxFailures(len(self.nodeReg))
+        replies, errors = self.storage.getAllReplies(reqId)
+        r = list(replies.values())[0] if len(replies) > f else None
+        e = list(errors.values())[0] if len(errors) > f else None
+        return r, e
