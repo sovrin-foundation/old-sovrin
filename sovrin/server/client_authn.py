@@ -15,7 +15,7 @@ class TxnBasedAuthNr(NaclAuthNr):
         raise RuntimeError('Add verification keys through the ADDNYM txn')
 
     def getVerkey(self, identifier):
-        txn = self.storage.getAddTxn(identifier)
+        txn = self.storage.getAddNymTxn(identifier)
         if not txn:
             raise KeyError('unknown identifier')
         return base64_decode(identifier.encode())

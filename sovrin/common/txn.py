@@ -10,8 +10,9 @@ NONCE = 'nonce'
 
 TXN_ID = 'txnId'
 SKEY = "secretKey"
+REFERENCE = "reference"
 
-allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE]
+allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE]
 
 # client transaction types
 ADD_NYM = "ADD_NYM"
@@ -22,6 +23,7 @@ ADD_SPONSOR = "ADD_SPONSOR"
 ADD_AGENT = "ADD_AGENT"
 DISCLOSE = "DISCLOSE"
 GET_ATTR = "GET_ATTR"
+
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {ADD_NYM: ([TARGET_NYM],        [ROLE]),

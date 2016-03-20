@@ -1,21 +1,22 @@
 import json
 from base64 import b64decode
 from typing import Mapping, List, Any, Dict, Union, Tuple
-
 import pickle
 
 import base58
+import libnacl.public
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.request_types import OP_FIELD_NAME, Request
 from plenum.common.stacked import HA
 from plenum.common.txn import REQACK, REPLY, REQNACK
-from plenum.common.util import getlogger, getMaxFailures, \
-    getSymmetricallyEncryptedVal, libnacl
+from plenum.common.util import getlogger, getMaxFailures
 
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLOSE, NONCE, ORIGIN, GET_ATTR
+from sovrin.common.util import getSymmetricallyEncryptedVal, \
+    getSymmetricallyDecryptedVal
 
 logger = getlogger()
 
@@ -38,7 +39,7 @@ class Client(PlenumClient):
                          basedirpath)
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
-        # TODO: SHould i store values of attributes as non encrypted
+        # TODO: Should the store values of attributes as non encrypted
         # Dictionary of attribute requests
         # Key is request id and values are stored as tuple of 3 elements
         # origin, secretKey, attribute name, txnId
@@ -46,8 +47,8 @@ class Client(PlenumClient):
         self.autoDiscloseAttributes = False
 
     def setupDefaultSigner(self):
-        # Sovrin clients should use a wallet, which supplies the signers
-        pass
+        # TODO: Sovrin clients should use a wallet, which supplies the signers
+        super().setupDefaultSigner()
 
     def getStorage(self):
         return ClientStorage(self.name)
@@ -182,9 +183,5 @@ class Client(PlenumClient):
             if reply is None:
                 return None
             else:
-                hexData = reply["result"][DATA]
-                data = bytes(bytearray.fromhex(hexData))
-                rawKey = bytes(bytearray.fromhex(key))
-                box = libnacl.secret.SecretBox(rawKey)
-                data = box.decrypt(data).decode()
+                data = getSymmetricallyDecryptedVal(reply["result"][DATA], key)
                 return json.loads(data)

@@ -41,6 +41,7 @@ class Node(PlenumNode):
                          opVerifiers=opVerifiers,
                          storage=store)
 
+    # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
         if self.txnStore.size() == 0:
             gt = genTxns or getGenesisTxns()

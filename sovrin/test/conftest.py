@@ -1,6 +1,7 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
+
 from sovrin.common.txn import getGenesisTxns
 from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient
 
@@ -8,6 +9,7 @@ from plenum.test.conftest import getValueFromModule
 
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
     nodeReg, up, ready, keySharedNodes
+
 
 @pytest.fixture(scope="module")
 def genesisTxns():

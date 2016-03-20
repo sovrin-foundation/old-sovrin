@@ -10,7 +10,7 @@ from plenum.common.util import adict
 from plenum.test.eventually import eventually
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
-    TXN_ID, NONCE, SKEY, newTxn, AddNym
+    TXN_ID, NONCE, SKEY, REFERENCE, newTxn, AddNym
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genConnectedTestClient, \
     clientFromSigner
@@ -38,10 +38,10 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
     assert len(reqs) == nodeCount
 
 
-def submitAndCheck(looper, client, op, identifier):
+def submitAndCheck(looper, client, identifier, *op):
     txnsBefore = client.getTxnsByAttribute(TXN_TYPE)
 
-    client.submit(op, identifier=identifier)
+    client.submit(*op, identifier=identifier)
 
     txnsAfter = []
 
@@ -54,6 +54,7 @@ def submitAndCheck(looper, client, op, identifier):
     return [txn for txn in txnsAfter if txn[TXN_ID] not in txnIdsBefore]
 
 
+# TODO Ordering of parameters is bad
 def submitAndCheckNacks(looper, client, op, identifier,
                         contains='UnauthorizedClientRequest'):
     client.submit(op, identifier=identifier)
@@ -65,26 +66,32 @@ def submitAndCheckNacks(looper, client, op, identifier,
 
 def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
     nym = targetSigner.verstr
-    op = AddNym(origin=creatorSigner.verstr,
-                target=nym,
-                role=role)
-    submitAndCheck(looper, creatorClient, op, creatorSigner.identifier)
-    return targetSigner
+    op = {
+        ORIGIN: creatorSigner.verstr,
+        TARGET_NYM: nym,
+        TXN_TYPE: ADD_NYM,
+        ROLE: role
+    }
+    return submitAndCheck(looper, creatorClient, creatorSigner.identifier,
+                          op)[0]
 
 
 def addUser(looper, creatorClient, creatorSigner, name):
     usigner = SimpleSigner()
-    return createNym(looper, usigner, creatorClient, creatorSigner, USER)
+    createNym(looper, usigner, creatorClient, creatorSigner, USER)
+    return usigner
 
 
 @pytest.fixture(scope="module")
 def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    return sponsorSigner
 
 
 @pytest.fixture(scope="module")
 def anotherSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    return sponsorSigner
 
 
 @pytest.fixture(scope="module")
@@ -109,7 +116,7 @@ def attrib(userSignerA, sponsor, sponsorSigner, looper):
         DATA: data
     }
 
-    submitAndCheck(looper, sponsor, op, sponsorSigner.verstr)
+    submitAndCheck(looper, sponsor, sponsorSigner.verstr, op)
 
 
 @pytest.fixture(scope="module")
@@ -122,7 +129,7 @@ def encryptedAttrib(userSignerA, sponsor, sponsorSigner, looper, symEncData):
         DATA: symEncData.data
     }
 
-    return submitAndCheck(looper, sponsor, op, sponsorSigner.verstr)
+    return submitAndCheck(looper, sponsor, sponsorSigner.verstr, op)[0]
 
 
 @pytest.fixture(scope="module")
@@ -157,7 +164,8 @@ def testStewardCreatesASponsor(addedSponsor):
 
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
                                nodeSet, tdir, sponsorSigner):
-    return createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    return sponsorSigner
 
 
 def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
@@ -185,6 +193,25 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
 
 def testSponsorCreatesAUser(userSignerA):
     pass
+
+
+def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
+    userSigner = SimpleSigner()
+    txn = createNym(looper, userSigner, sponsor, sponsorSigner, USER)
+
+    sponsNym = sponsorSigner.verstr
+
+    op = {
+        ORIGIN: sponsNym,
+        TARGET_NYM: "jasonlaw",
+        TXN_TYPE: ADD_NYM,
+        # TODO: Should REFERENCE be symmetrically encrypted and the key
+        # should then be disclosed in another transaction
+        REFERENCE: txn[TXN_ID],
+        ROLE: USER
+    }
+
+    submitAndCheck(looper, sponsor, sponsNym, op)
 
 
 def testSponsorAddsAttributeForUser(attrib):
@@ -251,8 +278,7 @@ def testSponsorDisclosesEncryptedAttribute(encryptedAttrib, symEncData, looper,
     box = libnacl.public.Box(sponsorSigner.naclSigner.keyraw,
                              userSignerA.naclSigner.verraw)
 
-    data = json.dumps({SKEY: symEncData.secretKey, TXN_ID: encryptedAttrib[
-        0][TXN_ID]})
+    data = json.dumps({SKEY: symEncData.secretKey, TXN_ID: encryptedAttrib[TXN_ID]})
     nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
 
     op = {
@@ -262,7 +288,7 @@ def testSponsorDisclosesEncryptedAttribute(encryptedAttrib, symEncData, looper,
         NONCE: base58.b58encode(nonce),
         DATA: base58.b58encode(boxedMsg)
     }
-    submitAndCheck(looper, sponsor, op, sponsorSigner.verstr)
+    submitAndCheck(looper, sponsor, sponsorSigner.verstr, op)
 
 
 @pytest.mark.xfail()
