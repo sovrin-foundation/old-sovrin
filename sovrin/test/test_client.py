@@ -38,7 +38,7 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
     assert len(reqs) == nodeCount
 
 
-def submitAndCheck(looper, client, identifier, *op):
+def submitAndCheck(looper, client, *op, identifier):
     txnsBefore = client.getTxnsByAttribute(TXN_TYPE)
 
     client.submit(*op, identifier=identifier)
@@ -105,38 +105,41 @@ def userSignerB(genned, sponsor, sponsorSigner, looper, addedSponsor):
 
 
 @pytest.fixture(scope="module")
-def attrib(userSignerA, sponsor, sponsorSigner, looper):
+def attributeData():
+    return json.dumps({'name': 'Mario'})
 
-    data = {'name': 'Mario'}
+
+@pytest.fixture(scope="module")
+def addedAttribute(userSignerA, sponsor, sponsorSigner, attributeData, looper):
 
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: data
+        DATA: attributeData
     }
 
-    submitAndCheck(looper, sponsor, sponsorSigner.verstr, op)
+    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
 
 
 @pytest.fixture(scope="module")
-def encryptedAttrib(userSignerA, sponsor, sponsorSigner, looper, symEncData):
+def symEncData(attributeData):
+    encData, secretKey = getSymmetricallyEncryptedVal(attributeData)
+    return adict(data=attributeData, encData=encData, secretKey=secretKey)
 
+
+@pytest.fixture(scope="module")
+def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper, symEncData):
+
+    sponsorNym = sponsorSigner.verstr
     op = {
-        ORIGIN: sponsorSigner.verstr,
+        ORIGIN: sponsorNym,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: symEncData.data
+        DATA: symEncData.encData
     }
 
-    return submitAndCheck(looper, sponsor, sponsorSigner.verstr, op)[0]
-
-
-@pytest.fixture(scope="module")
-def symEncData():
-    data = json.dumps({'name': 'Mario'})
-    encVal, secretKey = getSymmetricallyEncryptedVal(data)
-    return adict(data=data, encVal=encVal, secretKey=secretKey)
+    return submitAndCheck(looper, sponsor, op, identifier=sponsorNym)[0]
 
 
 def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
@@ -188,10 +191,15 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
         ROLE: USER
     }
 
-    submitAndCheckNacks(looper, sponsor, op, sponsNym, contains="InvalidIdentifier")
+    submitAndCheckNacks(looper, sponsor, op, identifier=sponsNym,
+                        contains="InvalidIdentifier")
 
 
 def testSponsorCreatesAUser(userSignerA):
+    pass
+
+
+def testSponsorAddsAttributeForUser(addedAttribute):
     pass
 
 
@@ -211,74 +219,74 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
         ROLE: USER
     }
 
-    submitAndCheck(looper, sponsor, sponsNym, op)
+    submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
-def testSponsorAddsAttributeForUser(attrib):
-    pass
-
-
-def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir):
+def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir,
+                                            attributeData):
     seed = b'this is a not an apricot seed...'
     rand = SimpleSigner(seed=seed)
     randCli = clientFromSigner(rand, looper, nodeSet, tdir)
 
     nym = rand.verstr
 
-    data = {'name': 'Mario'}
-
     op = {
         ORIGIN: nym,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: data
+        DATA: attributeData
     }
 
-    submitAndCheckNacks(looper, randCli, op, nym, contains="InvalidIdentifier")
+    submitAndCheckNacks(looper, randCli, op, identifier=nym,
+                        contains="InvalidIdentifier")
 
 
 def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
-                                        steward, stewardSigner, genned):
+                                        steward, stewardSigner, genned,
+                                        attributeData):
     newSponsorSigner = SimpleSigner()
     newSponsor = clientFromSigner(newSponsorSigner, looper, nodeSet, tdir)
     anotherSponsor(genned, steward, stewardSigner, looper, newSponsorSigner)
-
-    data = {'name': 'Mario'}
 
     op = {
         ORIGIN: newSponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: data
+        DATA: attributeData
     }
 
-    submitAndCheckNacks(looper, newSponsor, op, newSponsorSigner.verstr)
+    submitAndCheckNacks(looper, newSponsor, op,
+                        identifier=newSponsorSigner.verstr)
 
 
 def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
-                                        steward, stewardSigner, genned):
-    data = {'name': 'Mario'}
-
+                                        steward, stewardSigner, genned,
+                                       attributeData):
     op = {
         ORIGIN: stewardSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: data
+        DATA: attributeData
     }
 
-    submitAndCheckNacks(looper, steward, op, stewardSigner.verstr)
+    submitAndCheckNacks(looper, steward, op,
+                        identifier=stewardSigner.verstr)
 
 
-def testSponsorAddedAttributeIsEncrypted(encryptedAttrib):
+@pytest.mark.xfail(reason="Attribute encryption is done in client")
+def testSponsorAddedAttributeIsEncrypted(addedEncryptedAttribute):
     pass
 
 
-def testSponsorDisclosesEncryptedAttribute(encryptedAttrib, symEncData, looper,
-                                           userSignerA, sponsorSigner, sponsor):
+@pytest.mark.xfail()
+def testSponsorDisclosesEncryptedAttribute(addedEncryptedAttribute, symEncData,
+                                           looper, userSignerA, sponsorSigner,
+                                           sponsor):
     box = libnacl.public.Box(sponsorSigner.naclSigner.keyraw,
                              userSignerA.naclSigner.verraw)
 
-    data = json.dumps({SKEY: symEncData.secretKey, TXN_ID: encryptedAttrib[TXN_ID]})
+    data = json.dumps({SKEY: symEncData.secretKey,
+                       TXN_ID: addedEncryptedAttribute[TXN_ID]})
     nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
 
     op = {
@@ -288,11 +296,12 @@ def testSponsorDisclosesEncryptedAttribute(encryptedAttrib, symEncData, looper,
         NONCE: base58.b58encode(nonce),
         DATA: base58.b58encode(boxedMsg)
     }
-    submitAndCheck(looper, sponsor, sponsorSigner.verstr, op)
+    submitAndCheck(looper, sponsor, op,
+                   identifier=sponsorSigner.verstr)
 
 
 @pytest.mark.xfail()
-def testSponsorAddedAttributeCanBeChanged(attrib):
+def testSponsorAddedAttributeCanBeChanged(addedAttribute):
     # TODO but only by user(if user has taken control of his identity) and
     # sponsor
     raise NotImplementedError
