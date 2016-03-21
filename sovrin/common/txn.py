@@ -22,6 +22,8 @@ ADD_SPONSOR = "ADD_SPONSOR"
 ADD_AGENT = "ADD_AGENT"
 DISCLOSE = "DISCLOSE"
 GET_ATTR = "GET_ATTR"
+GET_NYM = "GET_NYM"
+
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {ADD_NYM: ([TARGET_NYM],        [ROLE]),
@@ -33,7 +35,8 @@ validTxnTypes = [ADD_NYM,
                  IDPROOF,
                  ASSIGN_AGENT,
                  DISCLOSE,
-                 GET_ATTR]
+                 GET_ATTR,
+                 GET_NYM]
 
 
 # def txn(txnType,

@@ -15,7 +15,7 @@ from plenum.common.util import getlogger, getMaxFailures, \
 
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
-    DISCLOSE, NONCE, ORIGIN, GET_ATTR
+    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM
 
 logger = getlogger()
 
@@ -188,3 +188,21 @@ class Client(PlenumClient):
                 box = libnacl.secret.SecretBox(rawKey)
                 data = box.decrypt(data).decode()
                 return json.loads(data)
+
+    def doGetNym(self, identifier, nym):
+        op = {
+            ORIGIN: identifier,
+            TARGET_NYM: nym,
+            TXN_TYPE: GET_NYM,
+        }
+        self.submit(op, identifier=identifier)
+
+    def hasNym(self, nym):
+        for v in self.storage.replyStore.iterator(include_key=False):
+            v = pickle.loads(v)
+            result = v["result"]
+            if result[TXN_TYPE] == GET_NYM:
+                data = result[DATA]
+                if data[TARGET_NYM] == nym:
+                    return True
+        return False

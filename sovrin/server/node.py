@@ -3,12 +3,12 @@ from _sha256 import sha256
 
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.request_types import Reply, Request
+from plenum.common.request_types import Reply, Request, RequestAck
 from plenum.server.node import Node as PlenumNode
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE
+    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM
 from sovrin.persistence.chain_store import ChainStore
 from sovrin.persistence.memory_chain_store import MemoryChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -132,3 +132,18 @@ class Node(PlenumNode):
 
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.txnStore)
+
+    async def processRequest(self, request: Request, frm: str):
+        if request.operation[TXN_TYPE] == GET_NYM:
+            self.transmitToClient(RequestAck(request.reqId), frm)
+            nym = request.operation[TARGET_NYM]
+            txn = self.txnStore.getAddTxn(nym)
+            txnId = sha256(
+            "{}{}".format(request.identifier, request.reqId).encode()).hexdigest()
+            result = {"data": txn, "txnId": txnId}
+            result.update(request.operation)
+            self.transmitToClient(Reply(self.viewNo,
+                     request.reqId,
+                     result), frm)
+        else:
+            await super().processRequest(request, frm)
