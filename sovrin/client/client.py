@@ -203,6 +203,6 @@ class Client(PlenumClient):
             result = v["result"]
             if result[TXN_TYPE] == GET_NYM:
                 data = result[DATA]
-                if data[TARGET_NYM] == nym:
+                if data and data.get(TARGET_NYM, None) == nym:
                     return True
         return False
