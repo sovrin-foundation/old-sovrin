@@ -104,7 +104,7 @@ def getGenesisTxns():
     t = [
         {'type': 'ADD_NYM', 'origin': 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U', 'dest': 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=', 'role': 'SPONSOR', 'txnId': '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b'},
         {'type': 'ADD_NYM', 'dest': 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw=', 'txnId': '40c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', 'origin': 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ='},
-        {'type': 'ADD_NYM', 'dest': 'jasonlaw', 'txnId': '40c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', 'origin': 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='}
+        {'type': 'ADD_NYM', 'dest': 'adityastaging', 'txnId': '40c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', 'origin': 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='}
     ]
     return [storedTxn(
         ADD_NYM,
