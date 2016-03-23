@@ -1,20 +1,27 @@
 import asyncio
+import os
 from _sha256 import sha256
 
+from ledger.immutable_store.merkle import CompactMerkleTree
+
+import sovrin
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.request_types import Reply, Request, RequestAck
 from plenum.server.node import Node as PlenumNode
+from sovrin.common.has_file_storage import HasFileStorage
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM
 from sovrin.persistence.chain_store import ChainStore
+from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.persistence.memory_chain_store import MemoryChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
+from ledger.immutable_store.ledger import Ledger
 
 
-class Node(PlenumNode):
+class Node(PlenumNode, HasFileStorage):
 
     def __init__(self,
                  name,
@@ -28,7 +35,10 @@ class Node(PlenumNode):
                  opVerifiers=None,
                  storage=None):
 
-        store = storage or MemoryChainStore()
+        self.dataDir = "data/nodes"
+        if not storage:
+            HasFileStorage.__init__(self, name, dataDir=self.dataDir)
+            storage = LedgerChainStore(self.getDataLocation())
 
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -39,7 +49,7 @@ class Node(PlenumNode):
                          basedirpath=basedirpath,
                          primaryDecider=primaryDecider,
                          opVerifiers=opVerifiers,
-                         storage=store)
+                         storage=storage)
 
     def addGenesisTxns(self, genTxns=None):
         if self.txnStore.size() == 0:

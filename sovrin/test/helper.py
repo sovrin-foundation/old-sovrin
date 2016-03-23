@@ -213,6 +213,16 @@ class Organization:
                 wallet.addCompletedTxn(txn)
 
 
+class TempStorage:
+
+    def getDataLocation(self):
+        # TODO: Need some way to clear the tempdir
+        return os.path.join(tempfile.gettempdir(), self.dataDir, self.name)
+
+    def __del__(self):
+        shutil.rmtree(self.getDataLocation())
+
+
 # noinspection PyShadowingNames,PyShadowingNames
 @Spyable(methods=[Node.handleOneNodeMsg,
                   Node.processRequest,
@@ -232,7 +242,7 @@ class Organization:
                   Node.send,
                   Node.processInstanceChange,
                   Node.checkPerformance])
-class TestNode(TestNodeCore, Node):
+class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)
         TestNodeCore.__init__(self)
@@ -252,15 +262,8 @@ class TestNodeSet(PlenumTestNodeSet):
                          primaryDecider, opVerificationPluginPath, testNodeClass)
 
 
-class TestClientStorage(ClientStorage):
-
-    @classmethod
-    def getDataLocation(cls, clientName):
-        # TODO: Need some way to clear the tempdir
-        return os.path.join(tempfile.gettempdir(), cls.dataLocation, clientName)
-
-    def __del__(self):
-        shutil.rmtree(self.__class__.getDataLocation(self.clientName))
+class TestClientStorage(TempStorage, ClientStorage):
+    pass
 
 
 @Spyable(methods=[Client.handleOneNodeMsg])
