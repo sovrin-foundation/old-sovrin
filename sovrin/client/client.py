@@ -2,8 +2,6 @@ import json
 from base64 import b64decode
 from typing import Mapping, List, Any, Dict, Union, Tuple
 
-import pickle
-
 import base58
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
@@ -69,6 +67,8 @@ class Client(PlenumClient):
         for r in requests:
             self.storage.addRequest(r)
             operation = r.operation
+            # If add attribute transaction then store encyption key and
+            # attribute name with the request id for the attribute
             if operation[TXN_TYPE] == ADD_ATTR:
                 self.attributeReqs[r.reqId] = (r.identifier, keys.pop(0),
                                                attributeNames.pop(0), None)
@@ -100,6 +100,12 @@ class Client(PlenumClient):
         else:
             logger.debug("Invalid op message {}".format(msg))
 
+    def getTxnsById(self, txnId: str):
+        for v in self.storage.replyStore.iterator(include_key=False):
+            result = self.storage.serializer.deserialize(v)['result']
+            if result[TARGET_NYM] == txnId:
+                return result
+
     def getTxnsByNym(self, nym: str):
         # TODO Implement this
         pass
@@ -116,17 +122,17 @@ class Client(PlenumClient):
         # keyspace partition for storing a map of cryptonyms(or txn types or
         # which attribute of interest) to reqIds
 
-        results = {}        # tpye: Dict[int, Tuple[Set[str], Any])
+        results = {}        # type: Dict[int, Tuple[Set[str], Any])
         for k, v in self.storage.replyStore.iterator():
-            result = pickle.loads(v)['result']
+            result = self.storage.serializer.deserialize(v)['result']
             if condition(result):
-                reqId, sender = k.split(b'-')
+                reqId, sender = k.split('-')
                 reqId = int(reqId)
-                sender = sender.decode()
+                sender = sender
                 if reqId not in results:
                     results[reqId] = (set(), result)
                 results[reqId][0].add(sender)
-                # TODO: What about different nodes sending differnet replies?
+                # TODO: What about different nodes sending different replies?
                 #  Need to pick reply which is given by f+1 nodes. Having
                 # hashes to check for equality might be efficient
 
@@ -169,6 +175,14 @@ class Client(PlenumClient):
         }
         self.submit(op, identifier=identifier)
 
+    @staticmethod
+    def _getDecryptedData(encData, key):
+        data = bytes(bytearray.fromhex(encData))
+        rawKey = bytes(bytearray.fromhex(key))
+        box = libnacl.secret.SecretBox(rawKey)
+        decData = box.decrypt(data).decode()
+        return json.loads(decData)
+
     def getAttributeForIdentifier(self, identifier, attrName):
         reqId = None
         for rid, (idf, key, anm, tid) in self.attributeReqs.items():
@@ -182,12 +196,18 @@ class Client(PlenumClient):
             if reply is None:
                 return None
             else:
-                hexData = reply["result"][DATA]
-                data = bytes(bytearray.fromhex(hexData))
-                rawKey = bytes(bytearray.fromhex(key))
-                box = libnacl.secret.SecretBox(rawKey)
-                data = box.decrypt(data).decode()
-                return json.loads(data)
+                return self._getDecryptedData(reply["result"][DATA], key)
+
+    def getAllAttributesForIdentifier(self, identifier):
+        requests = [(rid, key) for rid, (idf, key, anm, tid) in
+                    self.attributeReqs.items() if idf == identifier]
+
+        attributes = []
+        for (rid, key) in requests:
+            reply, error = self.replyIfConsensus(rid)
+            if reply is not None:
+                attributes.append(self._getDecryptedData(reply["result"][DATA], key))
+        return attributes
 
     def doGetNym(self, identifier, nym):
         op = {
@@ -199,10 +219,22 @@ class Client(PlenumClient):
 
     def hasNym(self, nym):
         for v in self.storage.replyStore.iterator(include_key=False):
-            v = pickle.loads(v)
+            v = self.storage.serializer.deserialize(v)
             result = v["result"]
             if result[TXN_TYPE] == GET_NYM:
                 data = result[DATA]
                 if data and data.get(TARGET_NYM, None) == nym:
                     return True
         return False
+
+    def isRequestSuccessful(self, reqId):
+        acks = self.storage.getAcks(reqId)
+        nacks = self.storage.getNacks(reqId)
+        f = getMaxFailures(len(self.nodeReg))
+        if len(acks) > f:
+            return True, "Done"
+        elif len(nacks) > f:
+            # TODO: What if the the nacks were different from each node?
+            return False, list(nacks.values())[0]
+        else:
+            return None

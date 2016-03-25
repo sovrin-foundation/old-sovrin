@@ -1,10 +1,6 @@
 import asyncio
-import os
 from _sha256 import sha256
 
-from ledger.immutable_store.merkle import CompactMerkleTree
-
-import sovrin
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.request_types import Reply, Request, RequestAck
@@ -16,9 +12,7 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM
 from sovrin.persistence.chain_store import ChainStore
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
-from sovrin.persistence.memory_chain_store import MemoryChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
-from ledger.immutable_store.ledger import Ledger
 
 
 class Node(PlenumNode, HasFileStorage):
@@ -86,8 +80,7 @@ class Node(PlenumNode, HasFileStorage):
         self.checkValidSovrinOperation(identifier, reqId, msg)
         super().checkValidOperation(identifier, reqId, msg)
 
-    @staticmethod
-    def checkValidSovrinOperation(identifier, reqId, msg):
+    def checkValidSovrinOperation(self, identifier, reqId, msg):
         for k in msg.keys():
             if k not in allOpKeys:
                 raise InvalidClientRequest(identifier, reqId,
@@ -102,6 +95,17 @@ class Node(PlenumNode, HasFileStorage):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} operation requires {} attribute'.
                                            format(ADD_ATTR, TARGET_NYM))
+            if not self.txnStore.hasNym(msg[TARGET_NYM]):
+                raise InvalidClientRequest(identifier, reqId,
+                                           '{} should be added before adding '
+                                           'attribute for it'.
+                                           format(ADD_ATTR, TARGET_NYM))
+
+        if msg[TXN_TYPE] == ADD_NYM:
+            if self.txnStore.hasNym(msg[TARGET_NYM]):
+                raise InvalidClientRequest(identifier, reqId,
+                                           "{} is already present".
+                                           format(msg[TARGET_NYM]))
 
     authorizedAdders = {
         USER: (STEWARD, SPONSOR),

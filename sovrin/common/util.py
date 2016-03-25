@@ -25,3 +25,16 @@ def getSymmetricallyEncryptedVal(val, secretKey: Union[str, bytes]=None) -> Tupl
         box = libnacl.secret.SecretBox()
 
     return box.encrypt(val).hex(), box.sk.hex()
+
+
+def getSymmetricallyDecryptedVal(val, secretKey: Union[str, bytes]) -> str:
+    if isHex(val):
+        val = bytes(bytearray.fromhex(val))
+    elif isinstance(val, str):
+        val = val.encode("utf-8")
+    if isHex(secretKey):
+        secretKey = bytes(bytearray.fromhex(secretKey))
+    elif isinstance(secretKey, str):
+        secretKey = secretKey.encode()
+    box = libnacl.secret.SecretBox(secretKey)
+    return box.decrypt(val).decode()
