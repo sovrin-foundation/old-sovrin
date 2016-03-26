@@ -3,18 +3,19 @@ from _sha256 import sha256
 
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.request_types import Reply, Request
+from plenum.common.request_types import Reply, Request, RequestAck
 from plenum.server.node import Node as PlenumNode
+from sovrin.common.has_file_storage import HasFileStorage
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE
+    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM
 from sovrin.persistence.chain_store import ChainStore
-from sovrin.persistence.memory_chain_store import MemoryChainStore
+from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
 
 
-class Node(PlenumNode):
+class Node(PlenumNode, HasFileStorage):
 
     def __init__(self,
                  name,
@@ -28,7 +29,10 @@ class Node(PlenumNode):
                  opVerifiers=None,
                  storage=None):
 
-        store = storage or MemoryChainStore()
+        self.dataDir = "data/nodes"
+        if not storage:
+            HasFileStorage.__init__(self, name, dataDir=self.dataDir)
+            storage = LedgerChainStore(self.getDataLocation())
 
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -39,7 +43,7 @@ class Node(PlenumNode):
                          basedirpath=basedirpath,
                          primaryDecider=primaryDecider,
                          opVerifiers=opVerifiers,
-                         storage=store)
+                         storage=storage)
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
@@ -77,8 +81,7 @@ class Node(PlenumNode):
         self.checkValidSovrinOperation(identifier, reqId, msg)
         super().checkValidOperation(identifier, reqId, msg)
 
-    @staticmethod
-    def checkValidSovrinOperation(identifier, reqId, msg):
+    def checkValidSovrinOperation(self, identifier, reqId, msg):
         for k in msg.keys():
             if k not in allOpKeys:
                 raise InvalidClientRequest(identifier, reqId,
@@ -93,6 +96,17 @@ class Node(PlenumNode):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} operation requires {} attribute'.
                                            format(ADD_ATTR, TARGET_NYM))
+            if not self.txnStore.hasNym(msg[TARGET_NYM]):
+                raise InvalidClientRequest(identifier, reqId,
+                                           '{} should be added before adding '
+                                           'attribute for it'.
+                                           format(TARGET_NYM))
+
+        if msg[TXN_TYPE] == ADD_NYM:
+            if self.txnStore.hasNym(msg[TARGET_NYM]):
+                raise InvalidClientRequest(identifier, reqId,
+                                           "{} is already present".
+                                           format(msg[TARGET_NYM]))
 
     authorizedAdders = {
         USER: (STEWARD, SPONSOR),
@@ -133,3 +147,18 @@ class Node(PlenumNode):
 
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.txnStore)
+
+    async def processRequest(self, request: Request, frm: str):
+        if request.operation[TXN_TYPE] == GET_NYM:
+            self.transmitToClient(RequestAck(request.reqId), frm)
+            nym = request.operation[TARGET_NYM]
+            txn = self.txnStore.getAddTxn(nym)
+            txnId = sha256(
+            "{}{}".format(request.identifier, request.reqId).encode()).hexdigest()
+            result = {"data": txn, "txnId": txnId}
+            result.update(request.operation)
+            self.transmitToClient(Reply(self.viewNo,
+                     request.reqId,
+                     result), frm)
+        else:
+            await super().processRequest(request, frm)

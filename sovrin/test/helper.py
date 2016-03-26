@@ -7,7 +7,7 @@ from typing import Iterable
 import shutil
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
-from plenum.common.util import getMaxFailures, runall, randomString
+from plenum.common.util import getMaxFailures, runall, randomString, getlogger
 from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkNodesConnected, \
@@ -23,6 +23,9 @@ from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR
 from sovrin.server.node import Node
+
+
+logger = getlogger()
 
 
 class Scenario(ExitStack):
@@ -213,6 +216,20 @@ class Organization:
                 wallet.addCompletedTxn(txn)
 
 
+class TempStorage:
+
+    def getDataLocation(self):
+        # TODO: Need some way to clear the tempdir
+        return os.path.join(tempfile.gettempdir(), self.dataDir, self.name)
+
+    def cleanupDataLocation(self):
+        loc = self.getDataLocation()
+        try:
+            shutil.rmtree(loc)
+        except Exception as ex:
+            logger.debug("Error while removing temporary directory {}".format(ex))
+
+
 # noinspection PyShadowingNames,PyShadowingNames
 @Spyable(methods=[Node.handleOneNodeMsg,
                   Node.processRequest,
@@ -232,10 +249,14 @@ class Organization:
                   Node.send,
                   Node.processInstanceChange,
                   Node.checkPerformance])
-class TestNode(TestNodeCore, Node):
+class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)
         TestNodeCore.__init__(self)
+
+    def onStopping(self, *args, **kwargs):
+        self.cleanupDataLocation()
+        super().onStopping(*args, **kwargs)
 
 
 class TestNodeSet(PlenumTestNodeSet):
@@ -252,15 +273,8 @@ class TestNodeSet(PlenumTestNodeSet):
                          primaryDecider, opVerificationPluginPath, testNodeClass)
 
 
-class TestClientStorage(ClientStorage):
-
-    @classmethod
-    def getDataLocation(cls, clientName):
-        # TODO: Need some way to clear the tempdir
-        return os.path.join(tempfile.gettempdir(), cls.dataLocation, clientName)
-
-    def __del__(self):
-        shutil.rmtree(self.__class__.getDataLocation(self.clientName))
+class TestClientStorage(TempStorage, ClientStorage):
+    pass
 
 
 @Spyable(methods=[Client.handleOneNodeMsg])
@@ -269,8 +283,12 @@ class TestClient(Client, StackedTester):
     def stackType():
         return TestStack
 
-    def getStorage(self):
-        return TestClientStorage(self.name)
+    def getStorage(self, basedirpath=None):
+        return TestClientStorage(self.name, basedirpath)
+
+    def onStopping(self, *args, **kwargs):
+        self.storage.cleanupDataLocation()
+        super().onStopping(*args, **kwargs)
 
 
 def genTestClient(nodes: TestNodeSet = None,

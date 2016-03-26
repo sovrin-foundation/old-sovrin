@@ -48,7 +48,7 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
-    install_requires=['base58', 'plyvel'],
+    install_requires=['base58'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest']
 )

@@ -3,7 +3,21 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from pygments.token import Token
 
 from sovrin.client.client import Client
+from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE
 from sovrin.server.node import Node
+
+
+"""
+Objective
+The plenum cli bootstraps client keys by just adding them to the nodes.
+Sovrin needs the client nyms to be added as transactions first.
+I'm thinking maybe the cli needs to support something like this:
+new node all
+<each node reports genesis transactions>
+new client steward with identifier <nym> (nym matches the genesis transactions)
+client steward add bob (cli creates a signer and an ADDNYM for that signer's cryptonym, and then an alias for bobto that cryptonym.)
+new client bob (cli uses the signer previously stored for this client)
+"""
 
 
 class SovrinCli(PlenumCli):
@@ -23,7 +37,8 @@ class SovrinCli(PlenumCli):
         # # `grams` take precedence over the base class' grammar rules
         # self.grams = grams + self.grams
         self.clientGrams = [
-            "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?)   \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) \s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9]+) \s* |".format(self.relist(self.cliCmds)),
+            "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?)  \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) \s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9]+) \s* |".format(self.relist(self.cliCmds)),
+
             "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>send) \s+ (?P<msg>\{\s*.*\})  \s*)  |",
             "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>show) \s+ (?P<req_id>[0-9]+)  \s*)  |",
             "(\s* (?P<add_key>add\s+key) \s+ (?P<verkey>[a-fA-F0-9]+) \s+ (?P<for_client>for\s+client) \s+ (?P<identifier>[a-zA-Z0-9]+) \s*)",
@@ -58,3 +73,14 @@ class SovrinCli(PlenumCli):
             self.printTokens(tokens=tokens, end='\n')
             node.addGenesisTxns(genTxns)
         return nodesAdded
+
+    def newClient(self, clientName, seed=None, identifier=None):
+        if clientName == "steward":
+            for txn in self._genesisTransactions:
+                if txn[TARGET_NYM] == identifier and txn[ROLE] == STEWARD:
+                    super().newClient(clientName, identifier)
+                    # Only one steward is supported for now
+                    break
+        else:
+            pass
+

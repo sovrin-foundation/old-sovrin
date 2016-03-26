@@ -34,7 +34,7 @@ class Client(PlenumClient):
                          signer,
                          signers,
                          basedirpath)
-        self.storage = self.getStorage()
+        self.storage = self.getStorage(basedirpath)
         self.lastReqId = self.storage.getLastReqId()
         # TODO: SHould i store values of attributes as non encrypted
         # Dictionary of attribute requests
@@ -47,8 +47,8 @@ class Client(PlenumClient):
         # Sovrin clients should use a wallet, which supplies the signers
         pass
 
-    def getStorage(self):
-        return ClientStorage(self.name)
+    def getStorage(self, basedirpath=None):
+        return ClientStorage(self.name, basedirpath)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
         keys = []
