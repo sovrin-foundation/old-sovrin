@@ -57,5 +57,4 @@ class SovrinCli(PlenumCli):
                        format(node.name, t)) for t in genTxns]
             self.printTokens(tokens=tokens, end='\n')
             node.addGenesisTxns(genTxns)
-
-
+        return nodesAdded

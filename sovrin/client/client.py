@@ -1,22 +1,19 @@
 import json
 from base64 import b64decode
 from typing import Mapping, List, Any, Dict, Union, Tuple
-import pickle
 
 import base58
-import libnacl.public
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.request_types import OP_FIELD_NAME, Request
 from plenum.common.stacked import HA
 from plenum.common.txn import REQACK, REPLY, REQNACK
-from plenum.common.util import getlogger, getMaxFailures
+from plenum.common.util import getlogger, getMaxFailures, \
+    getSymmetricallyEncryptedVal, libnacl
 
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
-    DISCLOSE, NONCE, ORIGIN, GET_ATTR
-from sovrin.common.util import getSymmetricallyEncryptedVal, \
-    getSymmetricallyDecryptedVal
+    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM
 
 logger = getlogger()
 
@@ -39,16 +36,16 @@ class Client(PlenumClient):
                          basedirpath)
         self.storage = self.getStorage()
         self.lastReqId = self.storage.getLastReqId()
-        # TODO: Should the store values of attributes as non encrypted
+        # TODO: SHould i store values of attributes as non encrypted
         # Dictionary of attribute requests
-        # Key is request id and values are stored as tuple of 3 elements
-        # origin, secretKey, attribute name, txnId
-        self.attributeReqs = {}    # type: Dict[int, List[Tuple[str, str, str, str]]]
+        # Key is request id and values are stored as tuple of 5 elements
+        # identifier, toNym, secretKey, attribute name, txnId
+        self.attributeReqs = {}    # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
 
     def setupDefaultSigner(self):
-        # TODO: Sovrin clients should use a wallet, which supplies the signers
-        super().setupDefaultSigner()
+        # Sovrin clients should use a wallet, which supplies the signers
+        pass
 
     def getStorage(self):
         return ClientStorage(self.name)
@@ -70,9 +67,14 @@ class Client(PlenumClient):
         for r in requests:
             self.storage.addRequest(r)
             operation = r.operation
+            # If add attribute transaction then store encyption key and
+            # attribute name with the request id for the attribute
             if operation[TXN_TYPE] == ADD_ATTR:
-                self.attributeReqs[r.reqId] = (r.identifier, keys.pop(0),
-                                               attributeNames.pop(0), None)
+                self.attributeReqs[r.reqId] = (r.identifier,
+                                               operation[TARGET_NYM],
+                                               keys.pop(0),
+                                               attributeNames.pop(0),
+                                               None)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -91,15 +93,21 @@ class Client(PlenumClient):
                 # that the attribute is added it discloses it
                 reqId = msg["reqId"]
                 if reqId in self.attributeReqs and not self.attributeReqs[
-                    reqId][3]:
+                    reqId][-1]:
                     origin = self.attributeReqs[reqId][0]
-                    key = self.attributeReqs[reqId][1]
+                    key = self.attributeReqs[reqId][2]
                     txnId = result[TXN_ID]
                     self.attributeReqs[reqId] = (origin, key, txnId)
                     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
             self.storage.addReply(msg['reqId'], sender, {'result': result})
         else:
             logger.debug("Invalid op message {}".format(msg))
+
+    def getTxnsById(self, txnId: str):
+        for v in self.storage.replyStore.iterator(include_key=False):
+            result = self.storage.serializer.deserialize(v)['result']
+            if result[TARGET_NYM] == txnId:
+                return result
 
     def getTxnsByNym(self, nym: str):
         # TODO Implement this
@@ -117,17 +125,17 @@ class Client(PlenumClient):
         # keyspace partition for storing a map of cryptonyms(or txn types or
         # which attribute of interest) to reqIds
 
-        results = {}        # tpye: Dict[int, Tuple[Set[str], Any])
+        results = {}        # type: Dict[int, Tuple[Set[str], Any])
         for k, v in self.storage.replyStore.iterator():
-            result = pickle.loads(v)['result']
+            result = self.storage.serializer.deserialize(v)['result']
             if condition(result):
-                reqId, sender = k.split(b'-')
+                reqId, sender = k.split('-')
                 reqId = int(reqId)
-                sender = sender.decode()
+                sender = sender
                 if reqId not in results:
                     results[reqId] = (set(), result)
                 results[reqId][0].add(sender)
-                # TODO: What about different nodes sending differnet replies?
+                # TODO: What about different nodes sending different replies?
                 #  Need to pick reply which is given by f+1 nodes. Having
                 # hashes to check for equality might be efficient
 
@@ -170,10 +178,19 @@ class Client(PlenumClient):
         }
         self.submit(op, identifier=identifier)
 
-    def getAttributeForIdentifier(self, identifier, attrName):
+    @staticmethod
+    def _getDecryptedData(encData, key):
+        data = bytes(bytearray.fromhex(encData))
+        rawKey = bytes(bytearray.fromhex(key))
+        box = libnacl.secret.SecretBox(rawKey)
+        decData = box.decrypt(data).decode()
+        return json.loads(decData)
+
+    def getAttributeForNym(self, nym, attrName, identifier=None):
         reqId = None
-        for rid, (idf, key, anm, tid) in self.attributeReqs.items():
-            if idf == identifier and anm == attrName:
+        for rid, (idf, toNym, key, anm, tid) in self.attributeReqs.items():
+            if nym == toNym and anm == attrName and \
+                    (not identifier or idf == identifier):
                 reqId = rid
                 break
         if reqId is None:
@@ -183,5 +200,46 @@ class Client(PlenumClient):
             if reply is None:
                 return None
             else:
-                data = getSymmetricallyDecryptedVal(reply["result"][DATA], key)
-                return json.loads(data)
+                return self._getDecryptedData(reply["result"][DATA], key)
+
+    def getAllAttributesForNym(self, nym, identifier=None):
+        requests = [(rid, key) for rid, (idf, toNym, key, anm, tid) in
+                    self.attributeReqs.items()
+                    if nym == toNym and (not identifier or idf == identifier)]
+
+        attributes = []
+        for (rid, key) in requests:
+            reply, error = self.replyIfConsensus(rid)
+            if reply is not None:
+                attributes.append(self._getDecryptedData(reply["result"][DATA], key))
+        return attributes
+
+    def doGetNym(self, identifier, nym):
+        op = {
+            ORIGIN: identifier,
+            TARGET_NYM: nym,
+            TXN_TYPE: GET_NYM,
+        }
+        self.submit(op, identifier=identifier)
+
+    def hasNym(self, nym):
+        for v in self.storage.replyStore.iterator(include_key=False):
+            v = self.storage.serializer.deserialize(v)
+            result = v["result"]
+            if result[TXN_TYPE] == GET_NYM:
+                data = result[DATA]
+                if data and data.get(TARGET_NYM, None) == nym:
+                    return True
+        return False
+
+    def isRequestSuccessful(self, reqId):
+        acks = self.storage.getAcks(reqId)
+        nacks = self.storage.getNacks(reqId)
+        f = getMaxFailures(len(self.nodeReg))
+        if len(acks) > f:
+            return True, "Done"
+        elif len(nacks) > f:
+            # TODO: What if the the nacks were different from each node?
+            return False, list(nacks.values())[0]
+        else:
+            return None
