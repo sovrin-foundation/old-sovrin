@@ -99,7 +99,7 @@ class Node(PlenumNode, HasFileStorage):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} should be added before adding '
                                            'attribute for it'.
-                                           format(ADD_ATTR, TARGET_NYM))
+                                           format(TARGET_NYM))
 
         if msg[TXN_TYPE] == ADD_NYM:
             if self.txnStore.hasNym(msg[TARGET_NYM]):

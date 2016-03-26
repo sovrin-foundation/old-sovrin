@@ -34,21 +34,21 @@ class Client(PlenumClient):
                          signer,
                          signers,
                          basedirpath)
-        self.storage = self.getStorage()
+        self.storage = self.getStorage(basedirpath)
         self.lastReqId = self.storage.getLastReqId()
         # TODO: SHould i store values of attributes as non encrypted
         # Dictionary of attribute requests
-        # Key is request id and values are stored as tuple of 3 elements
-        # origin, secretKey, attribute name, txnId
-        self.attributeReqs = {}    # type: Dict[int, List[Tuple[str, str, str, str]]]
+        # Key is request id and values are stored as tuple of 5 elements
+        # identifier, toNym, secretKey, attribute name, txnId
+        self.attributeReqs = {}    # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
 
     def setupDefaultSigner(self):
         # Sovrin clients should use a wallet, which supplies the signers
         pass
 
-    def getStorage(self):
-        return ClientStorage(self.name)
+    def getStorage(self, basedirpath=None):
+        return ClientStorage(self.name, basedirpath)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
         keys = []
@@ -70,8 +70,11 @@ class Client(PlenumClient):
             # If add attribute transaction then store encyption key and
             # attribute name with the request id for the attribute
             if operation[TXN_TYPE] == ADD_ATTR:
-                self.attributeReqs[r.reqId] = (r.identifier, keys.pop(0),
-                                               attributeNames.pop(0), None)
+                self.attributeReqs[r.reqId] = (r.identifier,
+                                               operation[TARGET_NYM],
+                                               keys.pop(0),
+                                               attributeNames.pop(0),
+                                               None)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -90,9 +93,9 @@ class Client(PlenumClient):
                 # that the attribute is added it discloses it
                 reqId = msg["reqId"]
                 if reqId in self.attributeReqs and not self.attributeReqs[
-                    reqId][3]:
+                    reqId][-1]:
                     origin = self.attributeReqs[reqId][0]
-                    key = self.attributeReqs[reqId][1]
+                    key = self.attributeReqs[reqId][2]
                     txnId = result[TXN_ID]
                     self.attributeReqs[reqId] = (origin, key, txnId)
                     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
@@ -183,10 +186,11 @@ class Client(PlenumClient):
         decData = box.decrypt(data).decode()
         return json.loads(decData)
 
-    def getAttributeForIdentifier(self, identifier, attrName):
+    def getAttributeForNym(self, nym, attrName, identifier=None):
         reqId = None
-        for rid, (idf, key, anm, tid) in self.attributeReqs.items():
-            if idf == identifier and anm == attrName:
+        for rid, (idf, toNym, key, anm, tid) in self.attributeReqs.items():
+            if nym == toNym and anm == attrName and \
+                    (not identifier or idf == identifier):
                 reqId = rid
                 break
         if reqId is None:
@@ -198,9 +202,10 @@ class Client(PlenumClient):
             else:
                 return self._getDecryptedData(reply["result"][DATA], key)
 
-    def getAllAttributesForIdentifier(self, identifier):
-        requests = [(rid, key) for rid, (idf, key, anm, tid) in
-                    self.attributeReqs.items() if idf == identifier]
+    def getAllAttributesForNym(self, nym, identifier=None):
+        requests = [(rid, key) for rid, (idf, toNym, key, anm, tid) in
+                    self.attributeReqs.items()
+                    if nym == toNym and (not identifier or idf == identifier)]
 
         attributes = []
         for (rid, key) in requests:

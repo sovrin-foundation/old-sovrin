@@ -283,8 +283,8 @@ class TestClient(Client, StackedTester):
     def stackType():
         return TestStack
 
-    def getStorage(self):
-        return TestClientStorage(self.name)
+    def getStorage(self, basedirpath=None):
+        return TestClientStorage(self.name, basedirpath)
 
     def onStopping(self, *args, **kwargs):
         self.storage.cleanupDataLocation()
