@@ -48,7 +48,7 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
-    install_requires=['base58'],
+    install_requires=['base58', 'tailer', 'pygtail', 'sh'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest']
 )

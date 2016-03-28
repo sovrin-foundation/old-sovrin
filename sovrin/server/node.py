@@ -31,7 +31,8 @@ class Node(PlenumNode, HasFileStorage):
 
         self.dataDir = "data/nodes"
         if not storage:
-            HasFileStorage.__init__(self, name, dataDir=self.dataDir)
+            HasFileStorage.__init__(self, name, baseDir=basedirpath,
+                                    dataDir=self.dataDir)
             storage = LedgerChainStore(self.getDataLocation())
 
         super().__init__(name=name,

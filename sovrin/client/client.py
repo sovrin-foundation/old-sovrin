@@ -82,7 +82,7 @@ class Client(PlenumClient):
         msg, sender = wrappedMsg
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
-        if msg[OP_FIELD_NAME] == REQACK:
+        elif msg[OP_FIELD_NAME] == REQACK:
             self.storage.addAck(msg, sender)
         elif msg[OP_FIELD_NAME] == REQNACK:
             self.storage.addNack(msg, sender)
@@ -103,10 +103,10 @@ class Client(PlenumClient):
         else:
             logger.debug("Invalid op message {}".format(msg))
 
-    def getTxnsById(self, txnId: str):
+    def getTxnById(self, txnId: str):
         for v in self.storage.replyStore.iterator(include_key=False):
             result = self.storage.serializer.deserialize(v)['result']
-            if result[TARGET_NYM] == txnId:
+            if result[TXN_ID] == txnId:
                 return result
 
     def getTxnsByNym(self, nym: str):

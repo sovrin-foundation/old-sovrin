@@ -13,6 +13,7 @@ $ sovrin "new nodes all"
 
 """
 import os
+from os.path import dirname
 import sys
 from configparser import ConfigParser
 from tempfile import TemporaryDirectory
@@ -21,31 +22,41 @@ from sovrin.cli.cli import SovrinCli
 
 from plenum.common.looper import Looper
 
+import sovrin
+
+
+packagePath = sovrin.__file__
+outFilePath = os.path.join(dirname(dirname(packagePath)), "log/cli_output.log")
+logFilePath = os.path.join(dirname(dirname(packagePath)), "log/cli.log")
+
 
 def run_cli():
 
     commands = sys.argv[1:]
 
     with Looper(debug=False) as looper:
-        with TemporaryDirectory() as tmpdir:
-            cfg = ConfigParser()
-            cfg.optionxform = str
-            configFile = 'scripts/node_reg.conf'
-            if os.path.isfile(configFile):
-                cfg.read(configFile)
-            else:
-                cfg.read_string(default_config)
+        cfg = ConfigParser()
+        cfg.optionxform = str
+        configFile = 'scripts/node_reg.conf'
+        if os.path.isfile(configFile):
+            cfg.read(configFile)
+        else:
+            cfg.read_string(default_config)
 
-            nodeReg = SovrinCli.loadNodeReg(cfg)
-            cliNodeReg = SovrinCli.loadCliNodeReg(cfg)
+        nodeReg = SovrinCli.loadNodeReg(cfg)
+        cliNodeReg = SovrinCli.loadCliNodeReg(cfg)
+        basePath = cfg.get("storage_locations", "basePath")
+        baseDir = os.path.join(os.path.expanduser(basePath), ".sovrin")
+        if not os.path.exists(baseDir):
+            os.makedirs(baseDir)
+        cli = SovrinCli(looper=looper,
+                        tmpdir=baseDir,
+                        nodeReg=nodeReg,
+                        cliNodeReg=cliNodeReg,
+                        logFileName=logFilePath,
+                        outFilePath=outFilePath)
 
-            cli = SovrinCli(looper=looper,
-                            tmpdir=tmpdir,
-                            nodeReg=nodeReg,
-                            cliNodeReg=cliNodeReg,
-                            logFileName='log/cli.log')
-
-            looper.run(cli.shell(*commands))
+        looper.run(cli.shell(*commands))
 
 
 default_config = """
@@ -60,6 +71,9 @@ AlphaC = 127.0.0.1 8002
 BetaC = 127.0.0.1 8004
 GammaC = 127.0.0.1 8006
 DeltaC = 127.0.0.1 8008
+
+[storage_locations]
+basePath = ~
 """
 
 

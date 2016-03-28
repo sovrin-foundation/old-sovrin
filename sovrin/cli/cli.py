@@ -39,8 +39,12 @@ class SovrinCli(PlenumCli):
     _genesisTransactions = None
 
     def __init__(self, *args, **kwargs):
+        outFilePath = kwargs.pop("outFilePath")
+        self.outputFile = open(outFilePath, "w")
         super().__init__(*args, **kwargs)
         self.aliases = {}         # type: Dict[str, Signer]
+        self.sponsors = set()
+        self.users = set()
 
     def initializeGrammar(self):
         # self.grams = [
@@ -51,9 +55,9 @@ class SovrinCli(PlenumCli):
         # self.grams = grams + self.grams
         self.clientGrams = [
             # Regex for `new client steward with identifier <nym>`
-            "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?)  \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) \s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9=]+) \s* |".format(self.relist(self.cliCmds)),
-            # Regex for `client steward add bob`
-            "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>add) \s+ (?P<other_client_name>[a-zA-Z0-9]+)  \s*)  |",
+            "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?) \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) \s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9=]+) \s* |".format(self.relist(self.cliCmds)),
+            # Regex for `client steward add sponsor bob` or `client steward add user bob`
+            "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>add) \s+ (?P<role>sponsor|user) \s+ (?P<other_client_name>[a-zA-Z0-9]+) \s*)  |",
             # Regex for `new/status client bob`
             "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?)   \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) |".format(self.relist(self.cliCmds)),
             "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>send) \s+ (?P<msg>\{\s*.*\})  \s*)  |",
@@ -115,12 +119,18 @@ class SovrinCli(PlenumCli):
             if not r:
                 client_name = matchedVars.get('client_name')
                 if client_name not in self.clients:
-                    self.print("{} cannot add a new user: {}".
+                    self.print("{} cannot add a new user".
                                format(client_name), Token.BoldOrange)
                     return True
                 client_action = matchedVars.get('cli_action')
                 if client_action == 'add':
                     other_client_name = matchedVars.get('other_client_name')
+                    role = matchedVars.get("role")
+                    if role not in ("user", "sponsor"):
+                        self.print("Can only add a sponsor or user", Token.Error)
+                        return True
+                    else:
+                        role = USER if role == "user" else SPONSOR
                     client = self.clients[client_name]
                     origin = client.getSigner().verstr
                     signer = SimpleSigner()
@@ -129,7 +139,7 @@ class SovrinCli(PlenumCli):
                         ORIGIN: origin,
                         TARGET_NYM: nym,
                         TXN_TYPE: ADD_NYM,
-                        ROLE: USER           #TODO Role is user for now
+                        ROLE: role
                     }
                     req, = client.submit(op)
                     self.print("Adding nym {} for {}".
@@ -140,50 +150,6 @@ class SovrinCli(PlenumCli):
                                                 other_client_name,
                                                 signer)
                     return True
-                    # Letting ADD_NYM transaction go through all nodes
-                    # timeout = time.perf_counter() + 5
-                    # elapsed = 0
-                    # reply = None
-                    # while elapsed < timeout:
-                    #     reply, err = client.replyIfConsensus(req.reqId)
-                    #     self.looper.runFor(.2)
-                    #     if reply:
-                    #         break
-                    #     elapsed = time.perf_counter()
-                    # if reply is None:
-                    #     self.print("Request of ADD_NYM timed out", Token.Error)
-                    #     return True
-                    # else:
-                    #     result = reply["result"]
-                    #     txnId = result[TXN_ID]
-                    # op = {
-                    #     ORIGIN: origin,
-                    #     TARGET_NYM: other_client_name,
-                    #     TXN_TYPE: ADD_NYM,
-                    #     # TODO: Should REFERENCE be symmetrically encrypted and the key
-                    #     # should then be disclosed in another transaction
-                    #     REFERENCE: txnId,
-                    #     ROLE: USER
-                    # }
-                    # self.print("Adding alias {} for nym {}".
-                    #            format(other_client_name, nym),
-                    #            Token.BoldBlue)
-                    # self.aliases[other_client_name] = signer
-                    # req, = client.submit(op)
-                    # timeout = time.perf_counter() + 5
-                    # elapsed = 0
-                    # reply = None
-                    # while elapsed < timeout:
-                    #     reply, err = client.replyIfConsensus(req.reqId)
-                    #     self.looper.runFor(.2)
-                    #     if reply:
-                    #         break
-                    #     elapsed = time.perf_counter()
-                    # if reply is None:
-                    #     self.print("Request of ADD_NYM timed out", Token.Error)
-                    #     return True
-                    # else:
-                    #     self.aliases[client_name] = signer
 
     def getActionList(self):
         actions = super().getActionList()
@@ -215,3 +181,12 @@ class SovrinCli(PlenumCli):
         self.print("Adding alias {}".format(alias), Token.BoldBlue)
         self.aliases[alias] = signer
         client.submit(op)
+
+    def print(self, msg, token=None, newline=True):
+        super().print(msg, token=token, newline=newline)
+        if newline:
+            msg += "\n"
+        self.outputFile.write(msg)
+        self.outputFile.flush()
+        if msg == 'Goodbye.':
+            self.outputFile.truncate(0)
