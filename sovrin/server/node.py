@@ -153,12 +153,10 @@ class Node(PlenumNode, HasFileStorage):
             self.transmitToClient(RequestAck(request.reqId), frm)
             nym = request.operation[TARGET_NYM]
             txn = self.txnStore.getAddTxn(nym)
-            txnId = sha256(
-            "{}{}".format(request.identifier, request.reqId).encode()).hexdigest()
+            txnId = sha256("{}{}".format(request.identifier, request.reqId).
+                           encode()).hexdigest()
             result = {"data": txn, "txnId": txnId}
             result.update(request.operation)
-            self.transmitToClient(Reply(self.viewNo,
-                     request.reqId,
-                     result), frm)
+            self.transmitToClient(Reply(self.viewNo, request.reqId, result), frm)
         else:
             await super().processRequest(request, frm)

@@ -39,14 +39,14 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
 
 
 def submitAndCheck(looper, client, *op, identifier):
-    txnsBefore = client.getTxnsByAttribute(TXN_TYPE)
+    txnsBefore = client.findTxns(TXN_TYPE)
 
     client.submit(*op, identifier=identifier)
 
     txnsAfter = []
 
     def checkTxnCountAdvanced():
-        txnsAfter.extend(client.getTxnsByAttribute(TXN_TYPE))
+        txnsAfter.extend(client.findTxns(TXN_TYPE))
         assert len(txnsAfter) > len(txnsBefore)
 
     looper.run(eventually(checkTxnCountAdvanced, retryWait=1, timeout=15))
