@@ -217,8 +217,6 @@ class Client(PlenumClient):
                     attributes[name] = (val, reply[TXN_TIME])
                 elif reply[TXN_TIME] > attributes[name][1]:
                     attributes[name] = (val, reply[TXN_TIME])
-                # attributes.append((self._getDecryptedData(reply[DATA], key),
-                #                    reply[TXN_TIME]))
 
         attributes = [{attr: val} for attr, (val, tm) in attributes.items()]
         return attributes

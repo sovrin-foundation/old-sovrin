@@ -13,14 +13,14 @@ GENESIS_TRANSACTIONS = [
     },
     {
         TXN_TYPE: ADD_NYM,
-        ORIGIN: 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U',
+        ORIGIN: 'bx3ePPiBdRywm16OOmZdtlzF5FGmX06Fj2sAYbMdF18=',
         TARGET_NYM: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=',
         ROLE: 'SPONSOR',
         TXN_ID: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4c'
     },
     {
         TXN_TYPE: ADD_NYM,
-        ORIGIN: 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U',
+        ORIGIN: 'bx3ePPiBdRywm16OOmZdtlzF5FGmX06Fj2sAYbMdF18=',
         TARGET_NYM: 'ARyM91PzDKveCuqkV9B6TJ5f9YxI8Aw/cz5eDAduNUs=',
         ROLE: 'SPONSOR',
         TXN_ID: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4d'

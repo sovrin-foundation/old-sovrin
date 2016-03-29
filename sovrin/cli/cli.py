@@ -48,12 +48,6 @@ class SovrinCli(PlenumCli):
         self.loadGenesisTxns()
 
     def initializeGrammar(self):
-        # self.grams = [
-        #     "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?)   \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) |".format(self.relist(self.cliCmds))
-        # ]
-        # # The grammar should contain rules of `grams` first so that rules of
-        # # `grams` take precedence over the base class' grammar rules
-        # self.grams = grams + self.grams
         self.clientGrams = [
             # Regex for `new client steward with identifier <nym>`
             "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?) \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) \s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9=]+) \s* |".format(self.relist(self.cliCmds)),
@@ -70,6 +64,7 @@ class SovrinCli(PlenumCli):
     def initializeGrammarCompleter(self):
         self.nymWC = WordCompleter([])
         self.completers["nym"] = self.nymWC
+        self.completers["role"] = WordCompleter(["user", "sponsor"])
         super().initializeGrammarCompleter()
 
     def loadGenesisTxns(self):
@@ -88,12 +83,13 @@ class SovrinCli(PlenumCli):
 
     def newNode(self, nodeName: str):
         nodesAdded = super().newNode(nodeName)
-        genTxns = self.genesisTransactions
-        for node in nodesAdded:
-            tokens = [(Token.BoldBlue, "{} adding genesis transaction {}".
-                       format(node.name, t)) for t in genTxns]
-            self.printTokens(tokens=tokens, end='\n')
-            node.addGenesisTxns(genTxns)
+        if nodesAdded is not None:
+            genTxns = self.genesisTransactions
+            for node in nodesAdded:
+                tokens = [(Token.BoldBlue, "{} adding genesis transaction {}".
+                           format(node.name, t)) for t in genTxns]
+                self.printTokens(tokens=tokens, end='\n')
+                node.addGenesisTxns(genTxns)
         return nodesAdded
 
     def newClient(self, clientName, seed=None, identifier=None, signer=None):
@@ -165,7 +161,7 @@ class SovrinCli(PlenumCli):
         if reply is None:
             self.looper.loop.call_later(.2, reqId, client, clbk, *args)
         else:
-            result = reply["result"]
+            result = reply
             txnId = result[TXN_ID]
             clbk(txnId, *args)
 
