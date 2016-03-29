@@ -45,6 +45,7 @@ class SovrinCli(PlenumCli):
         self.aliases = {}         # type: Dict[str, Signer]
         self.sponsors = set()
         self.users = set()
+        self.loadGenesisTxns()
 
     def initializeGrammar(self):
         # self.grams = [

@@ -1,3 +1,6 @@
+import importlib
+import importlib.util
+import os
 from typing import Tuple, Union
 
 import libnacl.secret
@@ -38,3 +41,25 @@ def getSymmetricallyDecryptedVal(val, secretKey: Union[str, bytes]) -> str:
         secretKey = secretKey.encode()
     box = libnacl.secret.SecretBox(secretKey)
     return box.decrypt(val).decode()
+
+
+def getInstalledConfig(installDir, configFile):
+    configPath = os.path.join(installDir, configFile)
+    if os.path.exists(configPath):
+        spec = importlib.util.spec_from_file_location(configFile,
+                                                      configPath)
+        config = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config)
+        return config
+    else:
+        raise FileNotFoundError("No file found at location {}".format(configPath))
+
+
+def getConfig():
+    try:
+        homeDir = os.path.expanduser("~")
+        configDir = os.path.join(homeDir, ".sovrin")
+        config = getInstalledConfig(configDir, "sovrin_config.py")
+    except FileNotFoundError:
+        config = importlib.import_module("sovrin.config_example")
+    return config

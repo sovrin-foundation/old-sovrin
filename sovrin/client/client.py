@@ -13,7 +13,7 @@ from plenum.common.util import getlogger, getMaxFailures, \
 
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
-    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM
+    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, TXN_TIME
 
 logger = getlogger()
 
@@ -47,8 +47,8 @@ class Client(PlenumClient):
         # Sovrin clients should use a wallet, which supplies the signers
         pass
 
-    def getStorage(self, basedirpath=None):
-        return ClientStorage(self.name, basedirpath)
+    def getStorage(self, baseDirPath=None):
+        return ClientStorage(self.name, baseDirPath)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
         keys = []
@@ -99,7 +99,7 @@ class Client(PlenumClient):
                     txnId = result[TXN_ID]
                     self.attributeReqs[reqId] = (origin, key, txnId)
                     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
-            self.storage.addReply(msg['reqId'], sender, {'result': result})
+            self.storage.addReply(msg['reqId'], sender, result)
         else:
             logger.debug("Invalid op message {}".format(msg))
 
@@ -127,7 +127,7 @@ class Client(PlenumClient):
 
         results = {}        # type: Dict[int, Tuple[Set[str], Any])
         for k, v in self.storage.replyStore.iterator():
-            result = self.storage.serializer.deserialize(v)['result']
+            result = self.storage.serializer.deserialize(v)
             if condition(result):
                 reqId, sender = k.split('-')
                 reqId = int(reqId)
@@ -200,18 +200,27 @@ class Client(PlenumClient):
             if reply is None:
                 return None
             else:
-                return self._getDecryptedData(reply["result"][DATA], key)
+                return self._getDecryptedData(reply[DATA], key)
 
     def getAllAttributesForNym(self, nym, identifier=None):
         requests = [(rid, key) for rid, (idf, toNym, key, anm, tid) in
                     self.attributeReqs.items()
                     if nym == toNym and (not identifier or idf == identifier)]
 
-        attributes = []
+        attributes = {}
         for (rid, key) in requests:
             reply, error = self.replyIfConsensus(rid)
             if reply is not None:
-                attributes.append(self._getDecryptedData(reply["result"][DATA], key))
+                attr = self._getDecryptedData(reply[DATA], key)
+                name, val = list(attr.items())[0]
+                if name not in attributes:
+                    attributes[name] = (val, reply[TXN_TIME])
+                elif reply[TXN_TIME] > attributes[name][1]:
+                    attributes[name] = (val, reply[TXN_TIME])
+                # attributes.append((self._getDecryptedData(reply[DATA], key),
+                #                    reply[TXN_TIME]))
+
+        attributes = [{attr: val} for attr, (val, tm) in attributes.items()]
         return attributes
 
     def doGetNym(self, identifier, nym):
@@ -224,8 +233,7 @@ class Client(PlenumClient):
 
     def hasNym(self, nym):
         for v in self.storage.replyStore.iterator(include_key=False):
-            v = self.storage.serializer.deserialize(v)
-            result = v["result"]
+            result = self.storage.serializer.deserialize(v)
             if result[TXN_TYPE] == GET_NYM:
                 data = result[DATA]
                 if data and data.get(TARGET_NYM, None) == nym:

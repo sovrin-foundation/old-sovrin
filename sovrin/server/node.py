@@ -1,4 +1,6 @@
 import asyncio
+
+import time
 from _sha256 import sha256
 
 from plenum.common.exceptions import InvalidClientRequest, \
@@ -9,7 +11,8 @@ from sovrin.common.has_file_storage import HasFileStorage
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM
+    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM, TXN_ID, \
+    TXN_TIME, ATTRIBUTES
 from sovrin.persistence.chain_store import ChainStore
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -53,13 +56,13 @@ class Node(PlenumNode, HasFileStorage):
             for idx, txn in enumerate(gt):
                 reply = Reply(0, idx, txn)
                 asyncio.ensure_future(
-                    self.txnStore.append("", reply, txn["txnId"]))
+                    self.txnStore.append("", reply, txn[TXN_ID]))
 
     def generateReply(self, viewNo: int, req: Request):
         operation = req.operation
         txnId = sha256(
             "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
-        result = {"txnId": txnId}
+        result = {TXN_ID: txnId, TXN_TIME: time.time()}
         if operation[TXN_TYPE] == GET_ATTR:
             # TODO: Very inefficient, queries all transactions and looks for the
             # DISCLOSE for the clients and returns all. We probably change the
@@ -71,7 +74,7 @@ class Node(PlenumNode, HasFileStorage):
                         DISCLOSE:
                     attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
             if attrs:
-                result["attributes"] = attrs
+                result[ATTRIBUTES] = attrs
         # TODO: Just for the time being. Remove ASAP
         result.update(operation)
         return Reply(viewNo,
@@ -153,10 +156,10 @@ class Node(PlenumNode, HasFileStorage):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
             nym = request.operation[TARGET_NYM]
-            txn = self.txnStore.getAddTxn(nym)
+            txn = self.txnStore.getAddNymTxn(nym)
             txnId = sha256("{}{}".format(request.identifier, request.reqId).
                            encode()).hexdigest()
-            result = {"data": txn, "txnId": txnId}
+            result = {DATA: txn, TXN_ID: txnId, TXN_TIME: time.time()}
             result.update(request.operation)
             self.transmitToClient(Reply(self.viewNo, request.reqId, result), frm)
         else:

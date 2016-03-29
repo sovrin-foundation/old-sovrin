@@ -7,8 +7,11 @@ ORIGIN = 'origin'
 ROLE = 'role'
 DATA = 'data'
 NONCE = 'nonce'
+ATTRIBUTES = "attributes"
 
 TXN_ID = 'txnId'
+TXN_TIME = 'txnTime'
+
 SKEY = "secretKey"
 REFERENCE = "reference"
 
@@ -24,7 +27,6 @@ ADD_AGENT = "ADD_AGENT"
 DISCLOSE = "DISCLOSE"
 GET_ATTR = "GET_ATTR"
 GET_NYM = "GET_NYM"
-
 
 
 # TXN_TYPE -> (requireds, optionals)

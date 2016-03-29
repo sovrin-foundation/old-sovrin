@@ -23,7 +23,7 @@ from sovrin.cli.cli import SovrinCli
 from plenum.common.looper import Looper
 
 import sovrin
-
+from sovrin.common.util import getConfig
 
 packagePath = sovrin.__file__
 outFilePath = os.path.join(dirname(dirname(packagePath)), "log/cli_output.log")
@@ -35,24 +35,25 @@ def run_cli():
     commands = sys.argv[1:]
 
     with Looper(debug=False) as looper:
-        cfg = ConfigParser()
-        cfg.optionxform = str
-        configFile = 'scripts/node_reg.conf'
-        if os.path.isfile(configFile):
-            cfg.read(configFile)
-        else:
-            cfg.read_string(default_config)
-
-        nodeReg = SovrinCli.loadNodeReg(cfg)
-        cliNodeReg = SovrinCli.loadCliNodeReg(cfg)
-        basePath = cfg.get("storage_locations", "basePath")
-        baseDir = os.path.join(os.path.expanduser(basePath), ".sovrin")
+        # cfg = ConfigParser()
+        # cfg.optionxform = str
+        # configFile = 'scripts/node_reg.conf'
+        # if os.path.isfile(configFile):
+        #     cfg.read(configFile)
+        # else:
+        #     cfg.read_string(default_config)
+        #
+        # nodeReg = SovrinCli.loadNodeReg(cfg)
+        # cliNodeReg = SovrinCli.loadCliNodeReg(cfg)
+        # basePath = cfg.get("storage_locations", "basePath")
+        config = getConfig()
+        baseDir = os.path.join(os.path.expanduser(config.baseDataDir), ".sovrin")
         if not os.path.exists(baseDir):
             os.makedirs(baseDir)
         cli = SovrinCli(looper=looper,
                         tmpdir=baseDir,
-                        nodeReg=nodeReg,
-                        cliNodeReg=cliNodeReg,
+                        nodeReg=config.nodeReg,
+                        cliNodeReg=config.cliNodeReg,
                         logFileName=logFilePath,
                         outFilePath=outFilePath)
 

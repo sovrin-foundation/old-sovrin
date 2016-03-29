@@ -11,10 +11,10 @@ from sovrin.common.has_file_storage import HasFileStorage
 
 class ClientStorage(HasFileStorage):
 
-    def __init__(self, clientName, basedirpath=None):
+    def __init__(self, clientName, baseDirPath=None):
         self.dataDir = "data/clients"
         self.name = clientName
-        HasFileStorage.__init__(self, clientName, baseDir=basedirpath, dataDir=self.dataDir)
+        HasFileStorage.__init__(self, clientName, baseDir=baseDirPath, dataDir=self.dataDir)
         self.clientDataLocation = self.getDataLocation()
         if not os.path.exists(self.clientDataLocation):
             os.makedirs(self.clientDataLocation)

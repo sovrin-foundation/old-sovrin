@@ -2,6 +2,8 @@ import sys
 import os
 from setuptools import setup, find_packages, __version__
 from pip.req import parse_requirements
+from shutil import copyfile
+
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -48,7 +50,15 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
-    install_requires=['base58', 'tailer', 'pygtail', 'sh'],
+    install_requires=['base58', 'sh'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest']
 )
+
+CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "sovrin_config.py")
+
+if not os.path.exists(CONFIG_FILE):
+    if not os.path.exists(CONFIG_DIR):
+        os.makedirs(CONFIG_DIR)
+    copyfile('sovrin/config_example.py', CONFIG_FILE)
