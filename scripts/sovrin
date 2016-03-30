@@ -13,10 +13,8 @@ $ sovrin "new nodes all"
 
 """
 import os
-from os.path import dirname
+from os.path import dirname, isfile
 import sys
-from configparser import ConfigParser
-from tempfile import TemporaryDirectory
 
 from sovrin.cli.cli import SovrinCli
 
@@ -35,17 +33,6 @@ def run_cli():
     commands = sys.argv[1:]
 
     with Looper(debug=False) as looper:
-        # cfg = ConfigParser()
-        # cfg.optionxform = str
-        # configFile = 'scripts/node_reg.conf'
-        # if os.path.isfile(configFile):
-        #     cfg.read(configFile)
-        # else:
-        #     cfg.read_string(default_config)
-        #
-        # nodeReg = SovrinCli.loadNodeReg(cfg)
-        # cliNodeReg = SovrinCli.loadCliNodeReg(cfg)
-        # basePath = cfg.get("storage_locations", "basePath")
         config = getConfig()
         baseDir = os.path.join(os.path.expanduser(config.baseDataDir), ".sovrin")
         if not os.path.exists(baseDir):
