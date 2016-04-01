@@ -40,7 +40,8 @@ class Client(PlenumClient):
         # Dictionary of attribute requests
         # Key is request id and values are stored as tuple of 5 elements
         # identifier, toNym, secretKey, attribute name, txnId
-        self.attributeReqs = {}    # type: Dict[int, List[Tuple[str, str, str, str, str]]]
+        self.attributeReqs = self.storage.loadAttributes()
+        # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
 
     def setupDefaultSigner(self):
@@ -70,11 +71,13 @@ class Client(PlenumClient):
             # If add attribute transaction then store encyption key and
             # attribute name with the request id for the attribute
             if operation[TXN_TYPE] == ADD_ATTR:
-                self.attributeReqs[r.reqId] = (r.identifier,
-                                               operation[TARGET_NYM],
-                                               keys.pop(0),
-                                               attributeNames.pop(0),
-                                               None)
+                attrData = (r.identifier,
+                            operation[TARGET_NYM],
+                            keys.pop(0),
+                            attributeNames.pop(0),
+                            None)
+                self.attributeReqs[r.reqId] = attrData
+                self.storage.addAttribute(r.reqId, attrData)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -97,7 +100,7 @@ class Client(PlenumClient):
                     origin = self.attributeReqs[reqId][0]
                     key = self.attributeReqs[reqId][2]
                     txnId = result[TXN_ID]
-                    self.attributeReqs[reqId] = (origin, key, txnId)
+                    self.attributeReqs[reqId] += (txnId, )
                     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
             self.storage.addReply(msg['reqId'], sender, result)
         else:

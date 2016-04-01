@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any
 
@@ -22,6 +23,7 @@ class ClientStorage(HasFileStorage):
         self.ackStore = TextFileStore(self.clientDataLocation, "A")
         self.nackStore = TextFileStore(self.clientDataLocation, "N")
         self.replyStore = TextFileStore(self.clientDataLocation, "R")
+        self.attributeStore = TextFileStore(self.clientDataLocation, "AT")
         self.serializer = Base64Serializer()
 
     def _serializeRequest(self, req):
@@ -78,3 +80,11 @@ class ClientStorage(HasFileStorage):
         replies = self.getReplies(reqId)
         errors = self.getNacks(reqId)
         return replies, errors
+
+    def addAttribute(self, reqId, attrData):
+        self.attributeStore.put(str(reqId), self.serializer.serialize(attrData,
+                                                                      toBytes=False))
+
+    def loadAttributes(self):
+        return {int(k): self.serializer.deserialize(v)
+                  for k, v in self.attributeStore.iterator()}

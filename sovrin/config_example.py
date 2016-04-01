@@ -15,3 +15,7 @@ cliNodeReg = OrderedDict([
 ])
 
 baseDataDir = "~"
+
+
+logFilePath = "cli.log"
+outFilePath = "cli_output.log"

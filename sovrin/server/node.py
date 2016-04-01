@@ -58,11 +58,11 @@ class Node(PlenumNode, HasFileStorage):
                 asyncio.ensure_future(
                     self.txnStore.append("", reply, txn[TXN_ID]))
 
-    def generateReply(self, viewNo: int, req: Request):
+    def generateReply(self, viewNo: int, ppTime: float, req: Request):
         operation = req.operation
         txnId = sha256(
             "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
-        result = {TXN_ID: txnId, TXN_TIME: time.time()}
+        result = {TXN_ID: txnId, TXN_TIME: ppTime}
         if operation[TXN_TYPE] == GET_ATTR:
             # TODO: Very inefficient, queries all transactions and looks for the
             # DISCLOSE for the clients and returns all. We probably change the

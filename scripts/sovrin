@@ -23,10 +23,6 @@ from plenum.common.looper import Looper
 import sovrin
 from sovrin.common.util import getConfig
 
-packagePath = sovrin.__file__
-outFilePath = os.path.join(dirname(dirname(packagePath)), "log/cli_output.log")
-logFilePath = os.path.join(dirname(dirname(packagePath)), "log/cli.log")
-
 
 def run_cli():
 
@@ -37,6 +33,9 @@ def run_cli():
         baseDir = os.path.join(os.path.expanduser(config.baseDataDir), ".sovrin")
         if not os.path.exists(baseDir):
             os.makedirs(baseDir)
+        curDir = os.getcwd()
+        logFilePath = os.path.join(curDir, config.logFilePath)
+        outFilePath = os.path.join(curDir, config.outFilePath)
         cli = SovrinCli(looper=looper,
                         tmpdir=baseDir,
                         nodeReg=config.nodeReg,
