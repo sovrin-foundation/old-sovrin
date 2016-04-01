@@ -105,7 +105,7 @@ class Client(PlenumClient):
 
     def getTxnById(self, txnId: str):
         for v in self.storage.replyStore.iterator(include_key=False):
-            result = self.storage.serializer.deserialize(v)['result']
+            result = self.storage.serializer.deserialize(v)
             if result[TXN_ID] == txnId:
                 return result
 

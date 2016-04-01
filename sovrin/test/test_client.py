@@ -20,16 +20,15 @@ from sovrin.test.helper import genConnectedTestClient, \
 def genesisTxns(stewardSigner):
     nym = stewardSigner.verstr
     return [storedTxn(ADD_NYM, nym,
-                "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-                role=STEWARD),
-        ]
+                      "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+                      role=STEWARD),
+            ]
 
 
 # TODO use wallet instead of SimpleSigner in client
 
 
 def checkNacks(client, reqId, contains='', nodeCount=4):
-
     reqs = [x for x, _ in client.inBox if x[f.REQ_ID.nm] == reqId]
     for r in reqs:
         assert r[OP_FIELD_NAME] == 'REQNACK'
@@ -111,7 +110,6 @@ def attributeData():
 
 @pytest.fixture(scope="module")
 def addedAttribute(userSignerA, sponsor, sponsorSigner, attributeData, looper):
-
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
@@ -129,8 +127,8 @@ def symEncData(attributeData):
 
 
 @pytest.fixture(scope="module")
-def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper, symEncData):
-
+def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper,
+                            symEncData):
     sponsorNym = sponsorSigner.verstr
     op = {
         ORIGIN: sponsorNym,
@@ -158,7 +156,8 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
     for node in nodeSet:
         node.whitelistClient(steward.name)
     submitAndCheckNacks(looper=looper, client=steward, op=op,
-                        identifier=stewardSigner.identifier, contains="InvalidIdentifier")
+                        identifier=stewardSigner.identifier,
+                        contains="InvalidIdentifier")
 
 
 def testStewardCreatesASponsor(addedSponsor):
@@ -167,7 +166,7 @@ def testStewardCreatesASponsor(addedSponsor):
 
 @pytest.mark.xfail(reason="Cannot create another sponsor with same nym")
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
-                               nodeSet, tdir, sponsorSigner):
+                                     nodeSet, tdir, sponsorSigner):
     createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
     return sponsorSigner
 
@@ -261,7 +260,7 @@ def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
 
 
 def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
-                                        steward, stewardSigner, genned,
+                                       steward, stewardSigner, genned,
                                        attributeData):
     op = {
         ORIGIN: stewardSigner.verstr,
@@ -306,3 +305,32 @@ def testSponsorAddedAttributeCanBeChanged(addedAttribute):
     # TODO but only by user(if user has taken control of his identity) and
     # sponsor
     raise NotImplementedError
+
+
+def testForGettingAttribute(sponsor, userSignerA, addedAttribute):
+    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
+           [{'name': 'Mario'}]
+
+
+def testLatestAttrIsReceived(looper, sponsor, sponsorSigner, userSignerA):
+    attr1 = json.dumps({'name': 'Mario'})
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: attr1
+    }
+    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
+           [{'name': 'Mario'}]
+
+    attr2 = json.dumps({'name': 'Tom'})
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: ADD_ATTR,
+        DATA: attr2
+    }
+    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
+           [{'name': 'Tom'}]
