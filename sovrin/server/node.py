@@ -14,6 +14,7 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM, TXN_ID, \
     TXN_TIME, ATTRIBUTES
 from sovrin.persistence.chain_store import ChainStore
+from sovrin.persistence.graph_storage import GraphStorage
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
 
@@ -49,9 +50,12 @@ class Node(PlenumNode, HasFileStorage):
                          opVerifiers=opVerifiers,
                          storage=storage)
 
+        self.graphStorage = GraphStorage(user="root", password="password",
+                                         dbName=self.name)
+
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
-        if self.txnStore.size() == 0:
+        if self.txnStore.size == 0:
             gt = genTxns or getGenesisTxns()
             for idx, txn in enumerate(gt):
                 reply = Reply(0, idx, txn)

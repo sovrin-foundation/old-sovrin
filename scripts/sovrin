@@ -13,14 +13,12 @@ $ sovrin "new nodes all"
 
 """
 import os
-from os.path import dirname, isfile
 import sys
 
 from sovrin.cli.cli import SovrinCli
 
 from plenum.common.looper import Looper
 
-import sovrin
 from sovrin.common.util import getConfig
 
 

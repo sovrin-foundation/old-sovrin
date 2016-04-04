@@ -108,7 +108,7 @@ class Client(PlenumClient):
 
     def getTxnById(self, txnId: str):
         for v in self.storage.replyStore.iterator(include_key=False):
-            result = self.storage.serializer.deserialize(v)
+            result = self.storage.serializer.deserialize(v, orderedFields=self.storage.replyFields)
             if result[TXN_ID] == txnId:
                 return result
 
@@ -130,7 +130,8 @@ class Client(PlenumClient):
 
         results = {}        # type: Dict[int, Tuple[Set[str], Any])
         for k, v in self.storage.replyStore.iterator():
-            result = self.storage.serializer.deserialize(v)
+            result = self.storage.serializer.deserialize(
+                v, orderedFields=self.storage.replyFields)
             if condition(result):
                 reqId, sender = k.split('-')
                 reqId = int(reqId)
