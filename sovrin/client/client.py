@@ -108,7 +108,7 @@ class Client(PlenumClient):
 
     def getTxnById(self, txnId: str):
         for v in self.storage.replyStore.iterator(include_key=False):
-            result = self.storage.serializer.deserialize(v)
+            result = self.storage.serializer.deserialize(v, orderedFields=self.storage.replyFields)
             if result[TXN_ID] == txnId:
                 return result
 
@@ -130,7 +130,8 @@ class Client(PlenumClient):
 
         results = {}        # type: Dict[int, Tuple[Set[str], Any])
         for k, v in self.storage.replyStore.iterator():
-            result = self.storage.serializer.deserialize(v)
+            result = self.storage.serializer.deserialize(
+                v, orderedFields=self.storage.replyFields)
             if condition(result):
                 reqId, sender = k.split('-')
                 reqId = int(reqId)
@@ -234,11 +235,13 @@ class Client(PlenumClient):
 
     def hasNym(self, nym):
         for v in self.storage.replyStore.iterator(include_key=False):
-            result = self.storage.serializer.deserialize(v)
-            if result[TXN_TYPE] == GET_NYM:
-                data = result[DATA]
-                if data and data.get(TARGET_NYM, None) == nym:
-                    return True
+            result = self.storage.serializer.deserialize(
+                v, orderedFields=self.storage.replyFields)
+            # If transaction is of GET_NYM type and the query was for the `nym`
+            # and data was returned which here is `transaction_id`
+            if result[TXN_TYPE] == GET_NYM and result[TARGET_NYM] == nym \
+                    and result[DATA]:
+                return True
         return False
 
     def isRequestSuccessful(self, reqId):
