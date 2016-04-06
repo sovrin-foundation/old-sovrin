@@ -225,7 +225,8 @@ class Client(PlenumClient):
         attributes = [{attr: val} for attr, (val, tm) in attributes.items()]
         return attributes
 
-    def doGetNym(self, identifier, nym):
+    def doGetNym(self, nym, identifier=None):
+        identifier = identifier if identifier else self.defaultIdentifier
         op = {
             ORIGIN: identifier,
             TARGET_NYM: nym,
