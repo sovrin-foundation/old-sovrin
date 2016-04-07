@@ -1,4 +1,6 @@
 import asyncio
+import os
+import platform
 
 import time
 from _sha256 import sha256
@@ -57,10 +59,27 @@ class Node(PlenumNode, HasFileStorage):
 
     def getGraphStorage(self, name):
         config = getConfig()
+        self.ensureDBAvailable(config)
+        return self.createGraphStorage(name, config)
+
+    @staticmethod
+    def createGraphStorage(name, config):
         return GraphStorage(user=config.GraphDB["user"],
                             password=config.GraphDB["password"],
                             dbName=name,
                             storageType=pyorient.STORAGE_TYPE_PLOCAL)
+
+    @staticmethod
+    def ensureDBAvailable(config):
+        """
+        Starts the graph database if not already started.
+        """
+        if platform.system() == 'Linux':
+            if not os.system("service orientdb status"):
+                os.system("{} &".format(config.GraphDB["startScript"]))
+        elif platform.system() == 'Windows':
+            pass  # TODO when a Windows machine is available
+
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):

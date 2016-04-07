@@ -268,8 +268,8 @@ class TestNode(TempStorage, TestNodeCore, Node):
             logger.debug("Error while dropping db {}: {}".format(self.name, ex))
         super().onStopping(*args, **kwargs)
 
-    def getGraphStorage(self, name):
-        config = getConfig()
+    @staticmethod
+    def createGraphStorage(name, config):
         return GraphStorage(user=config.GraphDB["user"],
                             password=config.GraphDB["password"],
                             dbName=name,
