@@ -24,7 +24,7 @@ class ChainStore:
 
     @staticmethod
     def isAddNymTxn(result):
-        return TXN_TYPE in result and result[TXN_TYPE] == ADD_NYM
+        return result[TXN_TYPE] == ADD_NYM
 
     def hasNym(self, nym):
         for txnId, result in self.getAllTxn().items():

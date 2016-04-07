@@ -1,5 +1,7 @@
 import json
 
+NYM = "nym"
+
 TXN_TYPE = 'type'
 # TODO: Should probably be a called TARGET
 TARGET_NYM = 'dest'
@@ -106,10 +108,10 @@ def storedTxn(txnTyp, dest, txnId, role=None, data=None):
 
 def getGenesisTxns():
     t = [
-        {'type': 'ADD_NYM', 'origin': 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U', 'dest': 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=', 'role': 'SPONSOR', 'txnId': '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b'},
-        {'type': 'ADD_NYM', 'dest': 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw=', 'txnId': '50c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', 'origin': 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ='},
-        {'type': 'ADD_NYM', 'dest': 'adityastaging', 'txnId': '77c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', 'origin': 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='},
-        {'type': 'ADD_NYM', 'dest': 'iosstaging', 'txnId': '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', 'origin': 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='}
+        {TXN_TYPE: ADD_NYM, ORIGIN: 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U', TARGET_NYM: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=', ROLE: SPONSOR, TXN_ID: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b'},
+        {TXN_TYPE: ADD_NYM, TARGET_NYM: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw=', TXN_ID: '50c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ORIGIN: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ='},
+        {TXN_TYPE: ADD_NYM, TARGET_NYM: 'adityastaging', TXN_ID: '77c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ORIGIN: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='},
+        {TXN_TYPE: ADD_NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ORIGIN: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='}
     ]
     return [storedTxn(
         ADD_NYM,

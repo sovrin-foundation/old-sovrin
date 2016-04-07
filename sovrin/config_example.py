@@ -19,3 +19,9 @@ baseDataDir = "~"
 
 logFilePath = "cli.log"
 outFilePath = "cli_output.log"
+
+
+GraphDB = {
+    "user": "root",
+    "password": "password"
+}

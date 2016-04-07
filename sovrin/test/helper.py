@@ -5,6 +5,9 @@ from contextlib import ExitStack
 from typing import Iterable
 
 import shutil
+
+import pyorient
+
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, randomString, getlogger
@@ -22,6 +25,8 @@ from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR
+from sovrin.common.util import getConfig
+from sovrin.persistence.graph_storage import GraphStorage
 from sovrin.server.node import Node
 
 
@@ -256,7 +261,19 @@ class TestNode(TempStorage, TestNodeCore, Node):
 
     def onStopping(self, *args, **kwargs):
         self.cleanupDataLocation()
+        try:
+            self.graphStorage.client.db_drop(self.name)
+            logger.debug("Dropped db {}".format(self.name))
+        except Exception as ex:
+            logger.debug("Error while dropping db {}: {}".format(self.name, ex))
         super().onStopping(*args, **kwargs)
+
+    def getGraphStorage(self, name):
+        config = getConfig()
+        return GraphStorage(user=config.GraphDB["user"],
+                            password=config.GraphDB["password"],
+                            dbName=name,
+                            storageType=pyorient.STORAGE_TYPE_MEMORY)
 
 
 class TestNodeSet(PlenumTestNodeSet):

@@ -2,13 +2,14 @@ from libnacl.encode import base64_decode
 
 from plenum.server.client_authn import NaclAuthNr
 from sovrin.persistence.chain_store import ChainStore
+from sovrin.persistence.graph_storage import GraphStorage
 
 
 class TxnBasedAuthNr(NaclAuthNr):
     """
     Transaction-based client authenticator.
     """
-    def __init__(self, storage: ChainStore):
+    def __init__(self, storage: GraphStorage):
         self.storage = storage
 
     def addClient(self, identifier, verkey):

@@ -307,7 +307,7 @@ def testSponsorAddedAttributeCanBeChanged(addedAttribute):
     raise NotImplementedError
 
 
-def testForGettingAttribute(sponsor, userSignerA, addedAttribute):
+def testGetAttribute(sponsor, userSignerA, addedAttribute):
     assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
            [{'name': 'Mario'}]
 
