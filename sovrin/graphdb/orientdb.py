@@ -5,6 +5,7 @@ dbName = "test"
 user = "root"
 password = "password"
 session_id = client.connect(user, password)
+client.db_drop(dbName, pyorient.STORAGE_TYPE_MEMORY)
 client.db_create(dbName, pyorient.DB_TYPE_GRAPH, pyorient.STORAGE_TYPE_MEMORY)
 # client.db_create(dbName, pyorient.DB_TYPE_GRAPH, pyorient.STORAGE_TYPE_PLOCAL)
 client.db_exists(dbName, pyorient.STORAGE_TYPE_MEMORY)
@@ -55,6 +56,7 @@ for food in animal_foods:
 
 client.command("CREATE CLASS Car EXTENDS V")
 client.command("CREATE CLASS Owns EXTENDS E")
+client.command("CREATE CLASS Person EXTENDS V")
 
 client.command("CREATE VERTEX Person SET name = 'Luca'")
 client.command("CREATE VERTEX Person SET name = 'Luca1'")
@@ -94,7 +96,7 @@ client.command("create property cycler.out link Person")
 client.command("create property cycler.in link cycle")
 client.command("create edge cycler from ( SELECT FROM Person where name = 'Luca') TO ( SELECT FROM cycle where name='cycle1')")
 
-client.command("create edge cycler from ( SELECT FROM Person where name = 'Luca1') TO ( SELECT FROM Car where name='Ferrari Modena2')")
+# client.command("create edge cycler from ( SELECT FROM Person where name = 'Luca1') TO ( SELECT FROM Car where name='Ferrari Modena2')")
 
 client.command("select expand (in('cycler')) from cycle where name = 'cycle1'")
 client.command("select expand (in('cycler')) from cycle where name = 'cycle2'")
