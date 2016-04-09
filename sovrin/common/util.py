@@ -56,10 +56,12 @@ def getInstalledConfig(installDir, configFile):
 
 
 def getConfig():
+    refConfig = importlib.import_module("sovrin.config_example")
     try:
         homeDir = os.path.expanduser("~")
         configDir = os.path.join(homeDir, ".sovrin")
         config = getInstalledConfig(configDir, "sovrin_config.py")
+        refConfig.__dict__.update(config.__dict__)
     except FileNotFoundError:
-        config = importlib.import_module("sovrin.config_example")
-    return config
+        pass
+    return refConfig
