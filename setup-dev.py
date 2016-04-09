@@ -37,7 +37,7 @@ for url in reqs:
     os.system('pip install {}'.format(url))
 
 setup(
-    name='sovrin',
+    name='sovrin-dev',
     version=__version__,
     description='Sovrin Identity',
     long_description='Sovrin Identity',
@@ -50,7 +50,7 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
-    install_requires=['base58', 'sh', 'plenum', 'ledger'],
+    install_requires=['base58', 'sh', 'plenum-dev', 'ledger-dev'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest']
 )

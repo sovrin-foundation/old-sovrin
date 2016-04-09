@@ -6,7 +6,7 @@ from os.path import dirname
 from sh import tail
 
 import sovrin
-from sovrin_client_rest.util import getConfig
+from sovrin.common.util import getConfig
 
 curDir = os.getcwd()
 config = getConfig()
