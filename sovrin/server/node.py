@@ -29,7 +29,7 @@ async def eventually(condition, *args, timeout=5):
     start = time.perf_counter()
     elapsed = 0
     while elapsed < timeout:
-        result = condition(args)
+        result = condition(*args)
         if result:
             break
         await asyncio.sleep(.1)
@@ -79,6 +79,7 @@ class Node(PlenumNode, HasFileStorage):
     async def setup(self):
         if not self.setupComplete:
             self.graphStorage = await self.getGraphStorage(self.name)
+            self.clientAuthNr = self.defaultAuthNr()
             self.setupComplete = True
 
     async def getGraphStorage(self, name):

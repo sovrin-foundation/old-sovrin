@@ -24,5 +24,6 @@ outFilePath = "cli_output.log"
 GraphDB = {
     "user": "root",
     "password": "password",
-    "startScript": "/opt/orientdb/bin/server.sh"
+    "startScript": "/opt/orientdb/bin/server.sh",
+    "shutdownScript": "/opt/orientdb/bin/shutdown.sh"
 }

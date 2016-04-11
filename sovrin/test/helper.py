@@ -266,6 +266,8 @@ class TestNode(TempStorage, TestNodeCore, Node):
             logger.debug("Dropped db {}".format(self.name))
         except Exception as ex:
             logger.debug("Error while dropping db {}: {}".format(self.name, ex))
+        config = getConfig()
+        os.system(config.GraphDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
 
     @staticmethod
