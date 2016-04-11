@@ -24,6 +24,19 @@ from sovrin.server.client_authn import TxnBasedAuthNr
 from sovrin.common.util import getConfig
 
 
+async def eventually(condition, *args, timeout=5):
+    result = False
+    start = time.perf_counter()
+    elapsed = 0
+    while elapsed < timeout:
+        result = condition(args)
+        if result:
+            break
+        await asyncio.sleep(.1)
+        elapsed = time.perf_counter() - start
+    return result
+
+
 class Node(PlenumNode, HasFileStorage):
 
     def __init__(self,
@@ -44,7 +57,9 @@ class Node(PlenumNode, HasFileStorage):
                                     dataDir=self.dataDir)
             storage = LedgerChainStore(self.getDataLocation())
 
-        self.graphStorage = self.getGraphStorage(name)
+        self.graphStorage = None
+
+        self.setupComplete = False
 
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -57,10 +72,34 @@ class Node(PlenumNode, HasFileStorage):
                          opVerifiers=opVerifiers,
                          storage=storage)
 
-    def getGraphStorage(self, name):
+    async def prod(self, limit: int=None):
+        await self.setup()
+        return await super().prod(limit)
+
+    async def setup(self):
+        if not self.setupComplete:
+            self.graphStorage = await self.getGraphStorage(self.name)
+            self.setupComplete = True
+
+    async def getGraphStorage(self, name):
         config = getConfig()
-        self.ensureDBAvailable(config)
-        return self.createGraphStorage(name, config)
+        result = await self.ensureDBAvailable(config)
+        if result:
+            return self.createGraphStorage(name, config)
+
+    @staticmethod
+    async def ensureDBAvailable(config):
+        """
+        Starts the graph database if not already started.
+        """
+        if platform.system() == 'Linux':
+            if os.system("service orientdb status"):
+                return True
+            else:
+                os.system("{} &".format(config.GraphDB["startScript"]))
+                return await eventually(os.system, "service orientdb status")
+        elif platform.system() == 'Windows':
+            pass  # TODO when a Windows machine is available
 
     @staticmethod
     def createGraphStorage(name, config):
@@ -68,18 +107,6 @@ class Node(PlenumNode, HasFileStorage):
                             password=config.GraphDB["password"],
                             dbName=name,
                             storageType=pyorient.STORAGE_TYPE_PLOCAL)
-
-    @staticmethod
-    def ensureDBAvailable(config):
-        """
-        Starts the graph database if not already started.
-        """
-        if platform.system() == 'Linux':
-            if not os.system("service orientdb status"):
-                os.system("{} &".format(config.GraphDB["startScript"]))
-        elif platform.system() == 'Windows':
-            pass  # TODO when a Windows machine is available
-
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
