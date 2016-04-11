@@ -25,8 +25,8 @@ from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR
-# from sovrin.common.util import getConfig
-from sovrin.persistence.graph_storage import GraphStorage
+from sovrin.common.util import getConfig
+from sovrin.persistence.graph_store import GraphStore
 from sovrin.server.node import Node
 
 
@@ -233,7 +233,12 @@ class TempStorage:
             shutil.rmtree(loc)
         except Exception as ex:
             logger.debug("Error while removing temporary directory {}".format(ex))
-
+        try:
+            self.graphStorage.client.db_drop(self.name)
+            logger.debug("Dropped db {}".format(self.name))
+        except Exception as ex:
+            logger.debug(
+                "Error while dropping db {}: {}".format(self.name, ex))
 
 # noinspection PyShadowingNames,PyShadowingNames
 @Spyable(methods=[Node.handleOneNodeMsg,
@@ -272,7 +277,7 @@ class TestNode(TempStorage, TestNodeCore, Node):
 
     @staticmethod
     def createGraphStorage(name, config):
-        return GraphStorage(user=config.GraphDB["user"],
+        return GraphStore(user=config.GraphDB["user"],
                             password=config.GraphDB["password"],
                             dbName=name,
                             storageType=pyorient.STORAGE_TYPE_MEMORY)

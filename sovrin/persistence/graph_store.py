@@ -5,7 +5,8 @@ import pyorient
 
 from plenum.common.util import getlogger
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, STEWARD, \
-    ROLE, ORIGIN, REFERENCE
+    ROLE, ORIGIN, REFERENCE, TXN_TIME
+from sovrin.persistence.orientdb_store import OrientDbStore
 
 logger = getlogger()
 
@@ -27,38 +28,41 @@ class Edges:
     AliasOf = "AliasOf"
 
 
-class GraphStorage:
+class GraphStore(OrientDbStore):
     def __init__(self, user, password, dbName, host="localhost", port=2424,
                  storageType=pyorient.STORAGE_TYPE_MEMORY):
-        self.client = pyorient.OrientDB(host=host, port=port)
-        self.session_id = self.client.connect(user, password)
-        if not self.client.db_exists(dbName, storageType):
-            logger.debug("Creating GraphDB {}".format(dbName))
-            self.client.db_create(dbName, pyorient.DB_TYPE_GRAPH, storageType)
-        self.client.db_open(dbName, user, password)
-        self.bootstrap()
+        super().__init__(user, password, dbName, host=host, port=port,
+                         storageType=storageType)
 
-    def classExists(self, name: str) -> bool:
-        r = self.client.command("select from ( select expand( classes ) from "
-                                 "metadata:schema ) where name = '{}'".
-                                 format(name))
-        return bool(r)
+    def createDb(self, dbName, storageType):
+        logger.debug("Creating GraphDB {}".format(dbName))
+        self.client.db_create(dbName, pyorient.DB_TYPE_GRAPH, storageType)
 
-    def createClassProperties(self, className, properties: Dict):
-        for prpName, typ in properties.items():
-            self.client.command("create property {}.{} {}".format(className,
-                                                                  prpName, typ))
+    def classesNeeded(self):
+        return [
+            (Vertices.Nym, self.createNymClass),
+            (Vertices.Steward, self.createStewardClass),
+            (Vertices.Sponsor, self.createSponsorClass),
+            (Vertices.User, self.createUserClass),
+            (Vertices.Attribute, self.createAttributeClass),
+            (Edges.AddedNym, self.createAddedNymClass),
+            (Edges.AliasOf, self.createAliasOfClass),
+            (Edges.Sponsors, self.createSponsorsClass),
+            (Edges.AddedAttribute, self.createAddedAttributeClass),
+            (Edges.HasAttribute, self.createHasAttributeClass),
+        ]
 
-    def createIndexOnClass(self, className: str, prop, indexType=None):
-        cmd = "create index {}.{}".format(className, prop)
-        if indexType:
-            if indexType not in ("unique", ):
-                raise ValueError("Unknown index type {}".format(indexType))
-            cmd += " {}".format(indexType)
-        self.client.command(cmd)
-
-    def createUniqueIndexOnClass(self, className, uniqueProperty):
-        self.createIndexOnClass(className, uniqueProperty, "unique")
+    def bootstrap(self):
+        self.createClasses()
+        # if not self.classExists(Vertices.Steward):
+        #     self.createStewardClass()
+        #
+        # if not self.classExists(Vertices.Sponsor):
+        #     self.createSponsorClass()
+        #
+        # if not self.classExists(Vertices.User):
+        #     self.createUserClass()
+        #
 
     def createVertexClass(self, className: str, properties: Dict=None):
         self.client.command("create class {} extends V".format(className))
@@ -91,10 +95,14 @@ class GraphStorage:
     # Creates an edge class which has a property called `txnId` with a unique
     # index on it
     def createUniqueTxnIdEdgeClass(self, className, properties: Dict=None):
+        defaultProperties = {
+            TXN_ID: "string",
+            TXN_TIME: "datetime"
+        }
         if properties:
-            properties.update({TXN_ID: "string"})
+            properties.update(defaultProperties)
         else:
-            properties = {TXN_ID: "string"}
+            properties = defaultProperties
         self.createEdgeClass(className, properties=properties)
         self.createUniqueIndexOnClass(className, TXN_ID)
 
@@ -166,10 +174,10 @@ class GraphStorage:
         cmd = "create edge {} from {} to {}".format(name, frm, to)
         return self.createEntity(cmd, **kwargs)
 
-    def getByRecordIds(self, *rids):
-        ridStr = ",".join(
-            [rid if rid.startswith("#") else "#" + rid for rid in rids])
-        return self.client.command("select from [{}]".format(ridStr))
+    def getEdgeByTxnId(self, edgeClassName, txnId):
+        result = self.client.command("select from {} where {} = '{}'".
+                                     format(edgeClassName, TXN_ID, txnId))
+        return None if not result else result[0]
 
     def getAddedNymEdge(self, nym):
         nymEdge = self.client.command("select from {} where {} = '{}'".
@@ -179,41 +187,10 @@ class GraphStorage:
         else:
             return nymEdge[0]
 
-    def _classesNeeded(self):
-        return [
-            (Vertices.Nym, self.createNymClass),
-            (Vertices.Steward, self.createStewardClass),
-            (Vertices.Sponsor, self.createSponsorClass),
-            (Vertices.User, self.createUserClass),
-            (Vertices.Attribute, self.createAttributeClass),
-            (Edges.AddedNym, self.createAddedNymClass),
-            (Edges.AliasOf, self.createAliasOfClass),
-            (Edges.Sponsors, self.createSponsorsClass),
-            (Edges.AddedAttribute, self.createAddedAttributeClass),
-            (Edges.HasAttribute, self.createHasAttributeClass),
-        ]
-
-    def bootstrap(self):
-        for cls, clbk in self._classesNeeded():
-            if not self.classExists(cls):
-                logger.debug("Creating class {}".format(cls))
-                clbk()
-            else:
-                logger.debug("Class {} already exists".format(cls))
-
-        # if not self.classExists(Vertices.Steward):
-        #     self.createStewardClass()
-        #
-        # if not self.classExists(Vertices.Sponsor):
-        #     self.createSponsorClass()
-        #
-        # if not self.classExists(Vertices.User):
-        #     self.createUserClass()
-        #
-
     def addSteward(self, txnId, nym, frm=None):
         # Add the steward
         if not frm:
+            logger.debug("frm not available while adding steward")
             self.createVertex(Vertices.Steward, nym=nym, TXN_ID=txnId)
         else:
             self.createVertex(Vertices.Steward, nym=nym, frm=frm)
@@ -229,46 +206,59 @@ class GraphStorage:
             self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
                             ROLE=STEWARD, NYM=nym)
 
-    def addSponsor(self, txnId, nym, frm):
+    def addSponsor(self, txnId, nym, frm=None):
         # Add the sponsor
-        self.createVertex(Vertices.Sponsor, nym=nym, frm=frm)
+        if not frm:
+            logger.debug("frm not available while adding sponsor")
+            self.createVertex(Vertices.Sponsor, nym=nym)
+        else:
+            self.createVertex(Vertices.Sponsor, nym=nym, frm=frm)
 
-        # Now add an edge from steward to sponsor, since only
-        # a steward can create a sponsor
-        frm = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM, frm)
-        to = "(select from {} where {} = '{}')".format(Vertices.Sponsor, NYM, nym)
-        # Let there be an error in edge creation if `frm` does not exist
-        # because if system is behaving correctly then `frm` would exist
-        self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
-                        ROLE=SPONSOR, NYM=nym)
+            # Now add an edge from steward to sponsor, since only
+            # a steward can create a sponsor
+            frm = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM, frm)
+            to = "(select from {} where {} = '{}')".format(Vertices.Sponsor, NYM, nym)
+            # Let there be an error in edge creation if `frm` does not exist
+            # because if system is behaving correctly then `frm` would exist
+            self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
+                            ROLE=SPONSOR, NYM=nym)
 
     # TODO: Consider if sponsors or stewards would have aliases too
-    def addUser(self, txnId, nym, frm, reference=None):
+    def addUser(self, txnId, nym, frm=None, reference=None):
         # Add the user
-        self.createVertex(Vertices.User, nym=nym, frm=frm)
+        if not frm:
+            logger.debug("frm not available while adding user")
+            self.createVertex(Vertices.User, nym=nym)
+        else:
+            self.createVertex(Vertices.User, nym=nym, frm=frm)
 
-        # # TODO: After implementing agents, check if `frm` is agent
-        # sponsor = self.client.command("select * from {} where {} = '{}'".
-        #                               format(Vertices.Sponsor, NYM, frm))
-        # if not sponsor:
-        #     steward = self.client.command("select * from {} where {} = '{}'".
-        #                                   format(Vertices.Steward, NYM, frm))
-        #     if not steward:
-        #         raise ValueError("frm should either be a sponsor or steward")
-        #     else:
-        #         typ = Vertices.Steward
-        # else:
-        #     typ = Vertices.Sponsor
-        typ = self.getRole(frm)
-        # Now add an edge from SPONSOR to USER
-        frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
-        to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, nym)
-        # Let there be an error in edge creation if `frm` does not exist
-        # because if system is behaving correctly then `frm` would exist
-        self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
-                        ROLE=USER, NYM=nym)
-        if typ == Vertices.Sponsor:
-            self.createEdge(Edges.Sponsors, frm, to, TXN_ID=txnId)
+            # # TODO: After implementing agents, check if `frm` is agent
+            # sponsor = self.client.command("select * from {} where {} = '{}'".
+            #                               format(Vertices.Sponsor, NYM, frm))
+            # if not sponsor:
+            #     steward = self.client.command("select * from {} where {} = '{}'".
+            #                                   format(Vertices.Steward, NYM, frm))
+            #     if not steward:
+            #         raise ValueError("frm should either be a sponsor or steward")
+            #     else:
+            #         typ = Vertices.Steward
+            # else:
+            #     typ = Vertices.Sponsor
+            typ = self.getRole(frm)
+            # Now add an edge from SPONSOR to USER
+            frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
+            to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, nym)
+            # Let there be an error in edge creation if `frm` does not exist
+            # because if system is behaving correctly then `frm` would exist
+            self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
+                            ROLE=USER, NYM=nym)
+            if typ == Vertices.Sponsor:
+                self.createEdge(Edges.Sponsors, frm, to, TXN_ID=txnId)
+            if reference:
+                nymEdge = self.getEdgeByTxnId(Edges.AddedNym, txnId=reference)
+                referredNymRid = nymEdge['in'].get()
+                self.createEdge(Edges.AliasOf, referredNymRid, to, TXN_ID=txnId,
+                                REFERENCE=reference)
 
     def addAttribute(self, frm, to, data, txnId):
         attrVertex = self.createVertex(Vertices.Attribute, data=data)

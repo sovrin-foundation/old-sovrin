@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import platform
 
@@ -16,9 +17,9 @@ from sovrin.common.has_file_storage import HasFileStorage
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM, TXN_ID, \
-    TXN_TIME, ATTRIBUTES
+    TXN_TIME, ATTRIBUTES, REFERENCE
 from sovrin.persistence.chain_store import ChainStore
-from sovrin.persistence.graph_storage import GraphStorage
+from sovrin.persistence.graph_store import GraphStore
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
 from sovrin.common.util import getConfig
@@ -36,6 +37,8 @@ async def eventually(condition, *args, timeout=5):
         elapsed = time.perf_counter() - start
     return result
 
+
+# TODO Node storage should be a mixin of document storage and graph storage
 
 class Node(PlenumNode, HasFileStorage):
 
@@ -55,8 +58,9 @@ class Node(PlenumNode, HasFileStorage):
         if not storage:
             HasFileStorage.__init__(self, name, baseDir=basedirpath,
                                     dataDir=self.dataDir)
-            storage = LedgerChainStore(self.getDataLocation())
+            storage = LedgerChainStore(name, self.getDataLocation())
 
+        self.graphStorage = None
         self.graphStorage = self.createGraphStorage(self.name, getConfig())
 
         self.setupComplete = False
@@ -79,7 +83,6 @@ class Node(PlenumNode, HasFileStorage):
     async def setup(self):
         if not self.setupComplete:
             self.graphStorage = await self.getGraphStorage(self.name)
-            self.clientAuthNr = self.defaultAuthNr()
             self.setupComplete = True
 
     async def getGraphStorage(self, name):
@@ -108,7 +111,7 @@ class Node(PlenumNode, HasFileStorage):
 
     @staticmethod
     def createGraphStorage(name, config):
-        return GraphStorage(user=config.GraphDB["user"],
+        return GraphStore(user=config.GraphDB["user"],
                             password=config.GraphDB["password"],
                             dbName=name,
                             storageType=pyorient.STORAGE_TYPE_PLOCAL)
@@ -125,39 +128,10 @@ class Node(PlenumNode, HasFileStorage):
                     self.addNymToGraph(txn)
                 # Till now we just have ADD_NYM in genesis transaction.
 
-    def generateReply(self, viewNo: int, ppTime: float, req: Request):
-        operation = req.operation
-        txnId = sha256(
-            "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
-        result = {TXN_ID: txnId, TXN_TIME: ppTime}
-        # if operation[TXN_TYPE] == GET_ATTR:
-        #     # TODO: Very inefficient, queries all transactions and looks for the
-        #     # DISCLOSE for the clients and returns all. We probably change the
-        #     # transaction schema or have some way to zero in on the DISCLOSE for
-        #     # the attribute that is being looked for
-        #     attrs = []
-        #     for txn in self.txnStore.getAllTxn().values():
-        #         if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
-        #                 DISCLOSE:
-        #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
-        #     if attrs:
-        #         result[ATTRIBUTES] = attrs
-        # TODO: Just for the time being. Remove ASAP
-        result.update(operation)
-        if operation[TXN_TYPE] == ADD_NYM:
-            self.addNymToGraph(result)
-        elif operation[TXN_TYPE] == ADD_ATTR:
-            self.graphStorage.addAttribute(frm=operation[ORIGIN],
-                                           to=operation[TARGET_NYM],
-                                           data=operation[DATA],
-                                           txnId=txnId)
-        return Reply(viewNo,
-                     req.reqId,
-                     result)
-
     def addNymToGraph(self, txn):
         if ROLE not in txn or txn[ROLE] == USER:
-            self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], txn[ORIGIN])
+            self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], txn[ORIGIN],
+                                      reference=txn.get(REFERENCE))
         elif txn[ROLE] == SPONSOR:
             self.graphStorage.addSponsor(txn[TXN_ID], txn[TARGET_NYM], txn[ORIGIN])
         elif txn[ROLE] == STEWARD:
@@ -205,7 +179,7 @@ class Node(PlenumNode, HasFileStorage):
         op = request.operation
         typ = op[TXN_TYPE]
 
-        s = self.graphStorage  # type: GraphStorage
+        s = self.graphStorage  # type: GraphStore
 
         origin = request.identifier
         originRole = s.getRole(origin)
@@ -243,11 +217,77 @@ class Node(PlenumNode, HasFileStorage):
             txn = self.graphStorage.getAddNymTxn(nym)
             txnId = sha256("{}{}".format(request.identifier, request.reqId).
                            encode()).hexdigest()
-            result = {DATA: txn.get(TXN_ID) if txn else None,
+            result = {DATA: json.dumps(txn) if txn else None,
                       TXN_ID: txnId,
-                      TXN_TIME: time.time()
+                      TXN_TIME: time.time()*1000
                       }
             result.update(request.operation)
             self.transmitToClient(Reply(self.viewNo, request.reqId, result), frm)
         else:
             await super().processRequest(request, frm)
+
+    async def addToLedger(self, identifier, reply, txnId):
+        merkleInfo = await self.txnStore.append(
+            identifier=identifier, reply=reply, txnId=txnId)
+        serialNo = merkleInfo["serialNo"]
+        STH = merkleInfo["STH"]
+        auditInfo = merkleInfo["auditInfo"]
+        # TODO Do both operation in one request
+        self.txnStore.addReplyForTxn(txnId, reply, identifier, reply.reqId)
+        self.txnStore.addMerkleDataForTxn(txnId, serialNo, STH, auditInfo)
+        return merkleInfo
+
+    async def storeTxnAndSendToClient(self, identifier, reply, txnId):
+        merkleInfo = await self.addToLedger(identifier, reply, txnId)
+        reply.result.update(merkleInfo)
+        self.transmitToClient(reply, self.clientIdentifiers[identifier])
+
+    def storeProcessedRequest(self, identifier, reply, txnId):
+        asyncio.ensure_future(self.addToLedger(identifier, reply, txnId))
+
+    async def getReplyFor(self, identifier, reqId):
+        return self.txnStore.getReply(identifier, reqId)
+
+    def executeRequest(self, viewNo: int, ppTime: float, req: Request) -> None:
+        """
+        Execute the REQUEST sent to this Node
+
+        :param viewNo: the view number (See glossary)
+        :param ppTime: the time at which PRE-PREPARE was sent
+        :param req: the client REQUEST
+        """
+        reply = self.generateReply(viewNo, ppTime, req)
+        txnId = reply.result['txnId']
+        asyncio.ensure_future(self.storeTxnAndSendToClient(req.identifier,
+                                                           reply, txnId))
+
+    def generateReply(self, viewNo: int, ppTime: float, req: Request):
+        operation = req.operation
+        txnId = sha256(
+            "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
+        result = {TXN_ID: txnId, TXN_TIME: ppTime}
+        # if operation[TXN_TYPE] == GET_ATTR:
+        #     # TODO: Very inefficient, queries all transactions and looks for the
+        #     # DISCLOSE for the clients and returns all. We probably change the
+        #     # transaction schema or have some way to zero in on the DISCLOSE for
+        #     # the attribute that is being looked for
+        #     attrs = []
+        #     for txn in self.txnStore.getAllTxn().values():
+        #         if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
+        #                 DISCLOSE:
+        #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
+        #     if attrs:
+        #         result[ATTRIBUTES] = attrs
+        # TODO: Just for the time being. Remove ASAP
+        result.update(operation)
+        if operation[TXN_TYPE] == ADD_NYM:
+            self.addNymToGraph(result)
+        elif operation[TXN_TYPE] == ADD_ATTR:
+            self.graphStorage.addAttribute(frm=operation[ORIGIN],
+                                           to=operation[TARGET_NYM],
+                                           data=operation[DATA],
+                                           txnId=txnId)
+        return Reply(viewNo,
+                     req.reqId,
+                     result)
+

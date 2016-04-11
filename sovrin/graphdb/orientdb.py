@@ -103,3 +103,54 @@ client.command("select expand (in('cycler')) from cycle where name = 'cycle2'")
 
 client.command("create edge rides from ( SELECT FROM Person where name = 'Luca1') TO ( SELECT FROM cycle where name='cycle1')")
 client.command("create edge rides from ( SELECT FROM Person where name = 'Luca2') TO ( SELECT FROM bike where name='bike2')")
+
+client.command("create class profile")
+client.command("create property profile.id string")
+client.command("create index profile.id unique")
+client.command("insert into profile set name = 'Luca', age = 21, id = '1'")
+client.command("update profile set name = 'Luca1' upsert where id = '1'")
+client.command("update profile set name = 'Luca2' upsert where id = '2'")
+
+client.command("create class Version")
+client.command("create property Version.v string")
+client.command("create property Version.release string")
+client.command("create class Package")
+client.command("create property Package.versions embeddedlist Version")
+
+r = client.command('insert into Package set versions = [{"v":"1.0.1", "release":"monday"}]')
+client.command('update %s add versions = [{"v":"1.0.2", "release":"tuesday"}]' % r[0]._rid)
+
+cmd = (
+    # "begin;"
+    "create class Address;"
+    "create property Address.street String;"
+    "create property Address.city String;"
+    "create class Client;"
+    "create property Client.name String;"
+    "create property Client.phones embeddedSet String;"
+    "create property Client.addresses embeddedList Address;"
+    "insert into client set name = 'James Bond', phones = ['1234', '34567'], addresses = [{'city':'Shanghai', 'zip':'3999'}, {'city':'New York', 'street':'57th Ave'}];"
+    "update client add addresses = [{'city':'London', 'zip':'67373'}];"
+    # "commit;"
+)
+
+client.batch(cmd)
+client.command("update Client add addresses = [{'city':'Delhi', 'zip':'2'}]")
+client.command("select from Client")[0].oRecordData
+client.command("update Client add addresses = {'city':'Mumbai', 'zip':'3'}")
+client.command("select from Client")[0].oRecordData
+
+cmd = (
+    "create class report;"
+    "create property report.id integer;"
+    "create property report.marks embeddedmap string;"
+    "insert into report set id = 1, marks={'p': 100, 'm': 'A', 'c': 2.4};"
+)
+client.batch(cmd)
+
+client.command("select from report where marks[p] = 100")[0].oRecordData
+client.command("select from report where marks.p = 100")[0].oRecordData
+
+client.command("update report set marks.m = 'B' where id = 1")
+client.command("update report set marks.b = 21 where id = 1")
+client.command("update report set date = 1460128589.825324 return after $this.marks where id = 1")
