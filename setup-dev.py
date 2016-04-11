@@ -50,7 +50,7 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
-    install_requires=['base58', 'sh', 'plenum-dev', 'ledger-dev'],
+    install_requires=['base58', 'sh', 'pyorient', 'plenum-dev', 'ledger-dev'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest']
 )
