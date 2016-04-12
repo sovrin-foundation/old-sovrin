@@ -191,7 +191,11 @@ class GraphStore(OrientDbStore):
         # Add the steward
         if not frm:
             logger.debug("frm not available while adding steward")
-            self.createVertex(Vertices.Steward, nym=nym, TXN_ID=txnId)
+            kwargs = {
+                NYM: nym,
+                TXN_ID: txnId
+            }
+            self.createVertex(Vertices.Steward, **kwargs)
         else:
             self.createVertex(Vertices.Steward, nym=nym, frm=frm)
 
@@ -203,8 +207,12 @@ class GraphStore(OrientDbStore):
                                                             nym)
             # Let there be an error in edge creation if `frm` does not exist
             # because if system is behaving correctly then `frm` would exist
-            self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
-                            ROLE=STEWARD, NYM=nym)
+            kwargs = {
+                NYM: nym,
+                ROLE: STEWARD,
+                TXN_ID: txnId
+            }
+            self.createEdge(Edges.AddedNym, frm, to, **kwargs)
 
     def addSponsor(self, txnId, nym, frm=None):
         # Add the sponsor
@@ -220,8 +228,12 @@ class GraphStore(OrientDbStore):
             to = "(select from {} where {} = '{}')".format(Vertices.Sponsor, NYM, nym)
             # Let there be an error in edge creation if `frm` does not exist
             # because if system is behaving correctly then `frm` would exist
-            self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
-                            ROLE=SPONSOR, NYM=nym)
+            kwargs = {
+                NYM: nym,
+                ROLE: SPONSOR,
+                TXN_ID: txnId
+            }
+            self.createEdge(Edges.AddedNym, frm, to, **kwargs)
 
     # TODO: Consider if sponsors or stewards would have aliases too
     def addUser(self, txnId, nym, frm=None, reference=None):
@@ -250,15 +262,28 @@ class GraphStore(OrientDbStore):
             to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, nym)
             # Let there be an error in edge creation if `frm` does not exist
             # because if system is behaving correctly then `frm` would exist
-            self.createEdge(Edges.AddedNym, frm, to, TXN_ID=txnId,
-                            ROLE=USER, NYM=nym)
+            kwargs = {
+                NYM: nym,
+                ROLE: USER,
+                TXN_ID: txnId
+            }
+            self.createEdge(Edges.AddedNym, frm, to, **kwargs)
             if typ == Vertices.Sponsor:
-                self.createEdge(Edges.Sponsors, frm, to, TXN_ID=txnId)
+                kwargs = {
+                    TXN_ID: txnId
+                }
+                self.createEdge(Edges.Sponsors, frm, to, **kwargs)
             if reference:
-                nymEdge = self.getEdgeByTxnId(Edges.AddedNym, txnId=reference)
-                referredNymRid = nymEdge['in'].get()
-                self.createEdge(Edges.AliasOf, referredNymRid, to, TXN_ID=txnId,
-                                REFERENCE=reference)
+                kwargs = {
+                    TXN_ID: reference
+                }
+                nymEdge = self.getEdgeByTxnId(Edges.AddedNym, **kwargs)
+                referredNymRid = nymEdge.oRecordData['in'].get()
+                kwargs = {
+                    REFERENCE: reference,
+                    TXN_ID: txnId
+                }
+                self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
     def addAttribute(self, frm, to, data, txnId):
         attrVertex = self.createVertex(Vertices.Attribute, data=data)
@@ -270,13 +295,19 @@ class GraphStore(OrientDbStore):
 
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                         frm)
-        self.createEdge(Edges.AddedAttribute, frm, attrVertex._rid,
-                        TARGET_NYM=to, TXN_ID=txnId)
+        kwargs = {
+            TARGET_NYM: to,
+            TXN_ID: txnId
+        }
+        self.createEdge(Edges.AddedAttribute, frm, attrVertex._rid, **kwargs)
 
         # to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, to)
         to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                        to)
-        self.createEdge(Edges.HasAttribute, to, attrVertex._rid, TXN_ID=txnId)
+        kwargs = {
+            TXN_ID: txnId
+        }
+        self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
     def getNym(self, nym):
         result = self.client.command("select from {} where {} = '{}'".
@@ -366,7 +397,17 @@ class GraphStore(OrientDbStore):
             result = {
                 TXN_ID: nymEdge.oRecordData.get(TXN_ID)
             }
-            frm, to = self.getByRecordIds(nymEdge['out'].get(), nymEdge['in'].get())
+            frm, to = self.getByRecordIds(nymEdge.oRecordData['out'].get(),
+                                          nymEdge.oRecordData['in'].get())
             result[ORIGIN] = frm.oRecordData.get(NYM)
             result[TARGET_NYM] = to.oRecordData.get(NYM)
             return result
+
+    def getAddAttributeTxnIds(self, nym):
+        attrEdges = self.client.command("select {} from {} where {} = '{}'".
+                                      format(TXN_ID, Edges.AddedAttribute,
+                                             TARGET_NYM, nym))
+        if not attrEdges:
+            return []
+        else:
+            return [edge.oRecordData[TXN_ID] for edge in attrEdges]

@@ -64,6 +64,8 @@ def stewardSigner():
 @pytest.fixture(scope="module")
 def steward(looper, nodeSet, tdir, up, stewardSigner):
     s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
+    for node in nodeSet:
+        node.whitelistClient(s.name)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s

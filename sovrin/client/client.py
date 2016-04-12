@@ -9,6 +9,7 @@ from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.request_types import OP_FIELD_NAME, Request, f
 from plenum.common.stacked import HA
+from plenum.common.startable import Status
 from plenum.common.txn import REQACK, REPLY, REQNACK
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl
@@ -16,7 +17,7 @@ from plenum.common.util import getlogger, getMaxFailures, \
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, TXN_TIME, REFERENCE, USER, ROLE, \
-    SPONSOR, ADD_NYM
+    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
 from sovrin.persistence.graph_store import GraphStore
 
@@ -54,6 +55,7 @@ class Client(PlenumClient):
         # self.attributeReqs = self.storage.loadAttributes()
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
+        self.requestedPendingTxns = False
 
     def getGraphStorage(self, name):
         config = getConfig()
@@ -149,6 +151,28 @@ class Client(PlenumClient):
                         except pyorient.PyOrientCommandException as ex:
                             logger.error("An exception was raised while adding "
                                          "nym {}".format(ex))
+                elif result[TXN_TYPE] == GET_TXNS:
+                    if DATA in result and result[DATA]:
+                        data = json.loads(result[DATA])
+                        self.storage.setLastTxnForIdentifier(result[ORIGIN], data[LAST_TXN])
+                        for txn in data[TXNS]:
+                            if txn[TXN_TYPE] == ADD_NYM:
+                                try:
+                                    self.addNymToGraph(txn)
+                                except pyorient.PyOrientCommandException as ex:
+                                    logger.error(
+                                        "An exception was raised while adding "
+                                        "nym {}".format(ex))
+                            elif txn[TXN_TYPE] == ADD_ATTR:
+                                try:
+                                    self.graphStorage.addAttribute(frm=txn[ORIGIN],
+                                                               to=txn[TARGET_NYM],
+                                                               data=txn[DATA],
+                                                               txnId=txn[TXN_ID])
+                                except pyorient.PyOrientCommandException as ex:
+                                    logger.error(
+                                        "An exception was raised while adding "
+                                        "attribute {}".format(ex))
 
                 if result[TXN_TYPE] in (ADD_NYM, ADD_ATTR):
                     self.storage.addToTransactionLog(msg['reqId'], result)
@@ -299,7 +323,7 @@ class Client(PlenumClient):
         attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,
                                                                    identifier)
         attributes = []
-        for req in attributeReqs:
+        for req in attributeReqs.values():
             reply, error = self.replyIfConsensus(req[f.REQ_ID.nm])
             if reply is not None:
                 attr = self._getDecryptedData(reply[DATA],
@@ -352,3 +376,22 @@ class Client(PlenumClient):
             return False, list(nacks.values())[0]
         else:
             return None
+
+    def requestPendingTxns(self):
+        for identifier in self.signers:
+            lastTxn = self.storage.getValueForIdentifier(identifier)
+            op = {
+                ORIGIN: identifier,
+                TARGET_NYM: identifier,
+                TXN_TYPE: GET_TXNS,
+            }
+            if lastTxn:
+                op[DATA] = lastTxn
+            self.submit(op, identifier=identifier)
+
+    def _statusChanged(self, old, new):
+        super()._statusChanged(old, new)
+        if new == Status.started:
+            if not self.requestedPendingTxns:
+                self.requestPendingTxns()
+                self.requestedPendingTxns = True

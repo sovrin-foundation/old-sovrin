@@ -60,3 +60,12 @@ class NodeDocumentStore(DocumentStore):
                                      format(TXN_DATA, identifier, reqId))
         return None if not result else json.loads(result[0].oRecordData['reply'])
 
+    def getRepliesForTxnIds(self, *txnIds, serialNo=None):
+        txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
+        cmd = "select serialNo, reply from {} where {} in [{}]".\
+            format(TXN_DATA, TXN_ID, txnIds)
+        if serialNo:
+            cmd += " and serialNo > {}".format(serialNo)
+        result = self.client.command(cmd)
+        return {r.oRecordData["serialNo"]: json.loads(r.oRecordData["reply"])[2]
+                for r in result}

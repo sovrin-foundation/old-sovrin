@@ -10,15 +10,14 @@ import pyorient
 
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.request_types import Reply, Request, RequestAck
+from plenum.common.request_types import Reply, Request, RequestAck, RequestNack
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.has_file_storage import HasFileStorage
 
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM, TXN_ID, \
-    TXN_TIME, ATTRIBUTES, REFERENCE
-from sovrin.persistence.chain_store import ChainStore
+    TXN_TIME, ATTRIBUTES, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
 from sovrin.persistence.graph_store import GraphStore
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -54,14 +53,13 @@ class Node(PlenumNode, HasFileStorage):
                  opVerifiers=None,
                  storage=None):
 
+        self.graphStorage = self.getGraphStorage(name)
+
         self.dataDir = "data/nodes"
         if not storage:
             HasFileStorage.__init__(self, name, baseDir=basedirpath,
                                     dataDir=self.dataDir)
             storage = LedgerChainStore(name, self.getDataLocation())
-
-        self.graphStorage = None
-        self.graphStorage = self.createGraphStorage(self.name, getConfig())
 
         self.setupComplete = False
 
@@ -76,45 +74,52 @@ class Node(PlenumNode, HasFileStorage):
                          opVerifiers=opVerifiers,
                          storage=storage)
 
-    async def prod(self, limit: int=None):
-        await self.setup()
-        return await super().prod(limit)
+    # async def prod(self, limit: int=None):
+    #     await self.setup()
+    #     return await super().prod(limit)
+    #
+    # async def setup(self):
+    #     if not self.setupComplete:
+    #         self.graphStorage = await self.getGraphStorage(self.name)
+    #         self.setupComplete = True
+    #
+    # async def getGraphStorage(self, name):
+    #     config = getConfig()
+    #     result = await self.ensureDBAvailable(config)
+    #     if result:
+    #         return self.createGraphStorage(name, config)
+    #
+    # @staticmethod
+    # async def ensureDBAvailable(config):
+    #     """
+    #     Starts the graph database if not already started.
+    #     """
+    #     if platform.system() == 'Linux':
+    #         # TODO If exit code is 256, throw an exception and abort.
+    #         # TODO Don't use os.system at all. The return codes are unreliable.
+    #         # TODO Try connecting to the orientdb instance to check if it's up.
+    #         if os.system("service orientdb status"):
+    #             return True
+    #         else:
+    #             # TODO
+    #             os.system("{} &".format(config.GraphDB["startScript"]))
+    #             return await eventually(os.system, "service orientdb status")
+    #     elif platform.system() == 'Windows':
+    #         pass  # TODO when a Windows machine is available
 
-    async def setup(self):
-        if not self.setupComplete:
-            self.graphStorage = await self.getGraphStorage(self.name)
-            self.setupComplete = True
+    # @staticmethod
+    # def createGraphStorage(name, config):
+    #     return GraphStore(user=config.GraphDB["user"],
+    #                         password=config.GraphDB["password"],
+    #                         dbName=name,
+    #                         storageType=pyorient.STORAGE_TYPE_PLOCAL)
 
-    async def getGraphStorage(self, name):
+    def getGraphStorage(self, name):
         config = getConfig()
-        result = await self.ensureDBAvailable(config)
-        if result:
-            return self.createGraphStorage(name, config)
-
-    @staticmethod
-    async def ensureDBAvailable(config):
-        """
-        Starts the graph database if not already started.
-        """
-        if platform.system() == 'Linux':
-            # TODO If exit code is 256, throw an exception and abort.
-            # TODO Don't use os.system at all. The return codes are unreliable.
-            # TODO Try connecting to the orientdb instance to check if it's up.
-            if os.system("service orientdb status"):
-                return True
-            else:
-                # TODO
-                os.system("{} &".format(config.GraphDB["startScript"]))
-                return await eventually(os.system, "service orientdb status")
-        elif platform.system() == 'Windows':
-            pass  # TODO when a Windows machine is available
-
-    @staticmethod
-    def createGraphStorage(name, config):
         return GraphStore(user=config.GraphDB["user"],
-                            password=config.GraphDB["password"],
-                            dbName=name,
-                            storageType=pyorient.STORAGE_TYPE_PLOCAL)
+                          password=config.GraphDB["password"],
+                          dbName=name,
+                          storageType=pyorient.STORAGE_TYPE_PLOCAL)
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
@@ -144,10 +149,17 @@ class Node(PlenumNode, HasFileStorage):
         super().checkValidOperation(identifier, reqId, msg)
 
     def checkValidSovrinOperation(self, identifier, reqId, msg):
-        for k in msg.keys():
-            if k not in allOpKeys:
-                raise InvalidClientRequest(identifier, reqId,
-                                           'invalid attribute "{}"'.format(k))
+        unknownKeys = set(msg.keys()).difference(set(allOpKeys))
+        if unknownKeys:
+            raise InvalidClientRequest(identifier, reqId,
+                                       'invalid keys "{}"'.
+                                       format(",".join(unknownKeys)))
+
+        missingKeys = set(reqOpKeys).difference(set(msg.keys()))
+        if missingKeys:
+            raise InvalidClientRequest(identifier, reqId,
+                                       'missing required keys "{}"'.
+                                       format(",".join(missingKeys)))
 
         if msg[TXN_TYPE] not in validTxnTypes:
             raise InvalidClientRequest(identifier, reqId, 'invalid {}: {}'.
@@ -210,19 +222,48 @@ class Node(PlenumNode, HasFileStorage):
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStorage)
 
+    @staticmethod
+    def genTxnId(identifier, reqId):
+        return sha256("{}{}".format(identifier, reqId).
+                           encode()).hexdigest()
+
     async def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
             nym = request.operation[TARGET_NYM]
             txn = self.graphStorage.getAddNymTxn(nym)
-            txnId = sha256("{}{}".format(request.identifier, request.reqId).
-                           encode()).hexdigest()
+            txnId = self.genTxnId(request.identifier, request.reqId)
             result = {DATA: json.dumps(txn) if txn else None,
                       TXN_ID: txnId,
                       TXN_TIME: time.time()*1000
                       }
             result.update(request.operation)
             self.transmitToClient(Reply(self.viewNo, request.reqId, result), frm)
+        elif request.operation[TXN_TYPE] == GET_TXNS:
+            nym = request.operation[TARGET_NYM]
+            origin = request.operation[ORIGIN]
+            if nym != origin:
+                msg = "You can only receive transactions for yourself"
+                self.transmitToClient(RequestNack(request.reqId, msg), frm)
+            else:
+                data = request.operation.get(DATA)
+                self.transmitToClient(RequestAck(request.reqId), frm)
+                addNymTxn = self.graphStorage.getAddNymTxn(origin)
+                txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.getAddAttributeTxnIds(origin)
+                result = self.txnStore.getRepliesForTxnIds(*txnIds, serialNo=data)
+                lastTxn = max(result.keys()) if len(result) > 0 else 0
+                txns = list(result.values())
+                result = {
+                    DATA: json.dumps({
+                        LAST_TXN: lastTxn,
+                        TXNS: txns
+                    }),
+                    TXN_ID: self.genTxnId(request.identifier, request.reqId),
+                    TXN_TIME: time.time() * 1000
+                }
+                result.update(request.operation)
+                self.transmitToClient(Reply(self.viewNo, request.reqId, result),
+                                      frm)
         else:
             await super().processRequest(request, frm)
 
@@ -263,8 +304,7 @@ class Node(PlenumNode, HasFileStorage):
 
     def generateReply(self, viewNo: int, ppTime: float, req: Request):
         operation = req.operation
-        txnId = sha256(
-            "{}{}".format(req.identifier, req.reqId).encode()).hexdigest()
+        txnId = self.genTxnId(req.identifier, req.reqId)
         result = {TXN_ID: txnId, TXN_TIME: ppTime}
         # if operation[TXN_TYPE] == GET_ATTR:
         #     # TODO: Very inefficient, queries all transactions and looks for the

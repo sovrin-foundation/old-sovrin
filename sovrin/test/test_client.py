@@ -6,14 +6,17 @@ import pytest
 
 from plenum.client.signer import SimpleSigner
 from plenum.common.request_types import f, OP_FIELD_NAME
-from plenum.common.util import adict
+from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
     TXN_ID, NONCE, SKEY, REFERENCE, newTxn, AddNym
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genConnectedTestClient, \
-    clientFromSigner
+    clientFromSigner, genTestClient
+
+
+logger = getlogger()
 
 
 @pytest.fixture(scope="module")
@@ -45,12 +48,17 @@ def submitAndCheck(looper, client, op, identifier):
     txnsAfter = []
 
     def checkTxnCountAdvanced():
-        txnsAfter.extend(client.getTxnsByType(op[TXN_TYPE]))
+        nonlocal txnsAfter
+        txnsAfter = client.getTxnsByType(op[TXN_TYPE])
+        logger.debug("old and new txns {} {}".format(txnsBefore, txnsAfter))
         assert len(txnsAfter) > len(txnsBefore)
 
     looper.run(eventually(checkTxnCountAdvanced, retryWait=1, timeout=15))
+
     txnIdsBefore = [txn[TXN_ID] for txn in txnsBefore]
-    return [txn for txn in txnsAfter if txn[TXN_ID] not in txnIdsBefore]
+    txnIdsAfter = [txn[TXN_ID] for txn in txnsAfter]
+    logger.debug("old and new txnids {} {}".format(txnIdsBefore, txnIdsAfter))
+    return list(set(txnIdsAfter) - set(txnIdsBefore))
 
 
 # TODO Ordering of parameters is bad
@@ -60,7 +68,7 @@ def submitAndCheckNacks(looper, client, op, identifier,
     looper.run(eventually(checkNacks,
                           client,
                           client.lastReqId,
-                          contains))
+                          contains, retryWait=1, timeout=15))
 
 
 def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
@@ -82,13 +90,12 @@ def addUser(looper, creatorClient, creatorSigner, name):
 
 
 @pytest.fixture(scope="module")
-def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
-    return sponsorSigner
+def updatedSteward(steward):
+    steward.requestPendingTxns()
 
 
 @pytest.fixture(scope="module")
-def anotherSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
+def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
     createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
     return sponsorSigner
 
@@ -140,6 +147,31 @@ def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper,
     return submitAndCheck(looper, sponsor, op, identifier=sponsorNym)[0]
 
 
+@pytest.fixture(scope="module")
+def nonSponsor(looper, nodeSet, tdir):
+    sseed = b'this is a secret sponsor seed...'
+    sponsorSigner = SimpleSigner(seed=sseed)
+    c = genTestClient(nodeSet, tmpdir=tdir, signer=sponsorSigner)
+    for node in nodeSet:
+        node.whitelistClient(c.name)
+    looper.add(c)
+    looper.run(c.ensureConnectedToNodes())
+    return c
+
+
+@pytest.fixture(scope="module")
+def anotherSponsor(genned, steward, stewardSigner, tdir, looper, nodeSet):
+    sseed = b'this is 1 secret sponsor seed...'
+    signer = SimpleSigner(seed=sseed)
+    c = genTestClient(nodeSet, tmpdir=tdir, signer=signer)
+    for node in nodeSet:
+        node.whitelistClient(c.name)
+    looper.add(c)
+    looper.run(c.ensureConnectedToNodes())
+    createNym(looper, signer, steward, stewardSigner, SPONSOR)
+    return c
+
+
 def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
     seed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner(seed)
@@ -153,31 +185,25 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
         ROLE: SPONSOR
     }
 
-    for node in nodeSet:
-        node.whitelistClient(steward.name)
     submitAndCheckNacks(looper=looper, client=steward, op=op,
                         identifier=stewardSigner.identifier,
                         contains="InvalidIdentifier")
 
 
-def testStewardCreatesASponsor(addedSponsor):
+def testStewardCreatesASponsor(updatedSteward, addedSponsor):
     pass
 
 
-@pytest.mark.xfail(reason="Cannot create another sponsor with same nym")
+@pytest.mark.skipif(True, reason="Cannot create another sponsor with same nym")
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
                                      nodeSet, tdir, sponsorSigner):
     createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
     return sponsorSigner
 
 
-def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
-    sseed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner(seed=sseed)
-    sponsor = genConnectedTestClient(looper, nodeSet, tmpdir=tdir,
-                                     signer=sponsorSigner)
+def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir, nonSponsor):
 
-    sponsNym = sponsorSigner.verstr
+    sponsNym = nonSponsor.getSigner().verstr
 
     useed = b'this is a secret apricot seed...'
     userSigner = SimpleSigner(seed=useed)
@@ -191,7 +217,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir):
         ROLE: USER
     }
 
-    submitAndCheckNacks(looper, sponsor, op, identifier=sponsNym,
+    submitAndCheckNacks(looper, nonSponsor, op, identifier=sponsNym,
                         contains="InvalidIdentifier")
 
 
@@ -205,7 +231,7 @@ def testSponsorAddsAttributeForUser(addedAttribute):
 
 def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
     userSigner = SimpleSigner()
-    txn = createNym(looper, userSigner, sponsor, sponsorSigner, USER)
+    txnId = createNym(looper, userSigner, sponsor, sponsorSigner, USER)
 
     sponsNym = sponsorSigner.verstr
 
@@ -215,20 +241,17 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
         TXN_TYPE: ADD_NYM,
         # TODO: Should REFERENCE be symmetrically encrypted and the key
         # should then be disclosed in another transaction
-        REFERENCE: txn[TXN_ID],
+        REFERENCE: txnId,
         ROLE: USER
     }
 
     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
-def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir,
+def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper, nodeSet, tdir,
                                             attributeData):
-    seed = b'this is a not an apricot seed...'
-    rand = SimpleSigner(seed=seed)
-    randCli = clientFromSigner(rand, looper, nodeSet, tdir)
 
-    nym = rand.verstr
+    nym = nonSponsor.getSigner().verstr
 
     op = {
         ORIGIN: nym,
@@ -237,26 +260,23 @@ def testNonSponsorCannotAddAttributeForUser(userSignerA, looper, nodeSet, tdir,
         DATA: attributeData
     }
 
-    submitAndCheckNacks(looper, randCli, op, identifier=nym,
+    submitAndCheckNacks(looper, nonSponsor, op, identifier=nym,
                         contains="InvalidIdentifier")
 
 
 def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
                                         steward, stewardSigner, genned,
-                                        attributeData):
-    newSponsorSigner = SimpleSigner()
-    newSponsor = clientFromSigner(newSponsorSigner, looper, nodeSet, tdir)
-    anotherSponsor(genned, steward, stewardSigner, looper, newSponsorSigner)
-
+                                        attributeData, anotherSponsor):
     op = {
-        ORIGIN: newSponsorSigner.verstr,
+        ORIGIN: anotherSponsor.getSigner().verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
         DATA: attributeData
     }
 
-    submitAndCheckNacks(looper, newSponsor, op,
-                        identifier=newSponsorSigner.verstr)
+    submitAndCheckNacks(looper, anotherSponsor, op,
+
+                        identifier=anotherSponsor.getSigner().verstr)
 
 
 def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,

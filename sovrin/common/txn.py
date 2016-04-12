@@ -14,10 +14,14 @@ ATTRIBUTES = "attributes"
 TXN_ID = 'txnId'
 TXN_TIME = 'txnTime'
 
+LAST_TXN = "lastTxn"
+TXNS = "Txns"
+
 SKEY = "secretKey"
 REFERENCE = "reference"
 
-allOpKeys = [TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE]
+allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE)
+reqOpKeys = (TXN_TYPE, TARGET_NYM)
 
 # client transaction types
 ADD_NYM = "ADD_NYM"
@@ -29,6 +33,7 @@ ADD_AGENT = "ADD_AGENT"
 DISCLOSE = "DISCLOSE"
 GET_ATTR = "GET_ATTR"
 GET_NYM = "GET_NYM"
+GET_TXNS = "GET_TXNS"
 
 
 # TXN_TYPE -> (requireds, optionals)
@@ -42,7 +47,8 @@ validTxnTypes = [ADD_NYM,
                  ASSIGN_AGENT,
                  DISCLOSE,
                  GET_ATTR,
-                 GET_NYM]
+                 GET_NYM,
+                 GET_TXNS]
 
 
 # def txn(txnType,

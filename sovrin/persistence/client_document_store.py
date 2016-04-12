@@ -16,6 +16,7 @@ logger = getlogger()
 
 REQ_DATA = "ReqData"
 ATTR_DATA = "AttrData"
+LAST_TXN_DATA = "LastTxnData"
 
 
 class ClientDocumentStore(DocumentStore):
@@ -25,7 +26,8 @@ class ClientDocumentStore(DocumentStore):
     def classesNeeded(self):
         return [
             (ATTR_DATA, self.createAttributeClass),
-            (REQ_DATA, self.createReqDataClass)
+            (REQ_DATA, self.createReqDataClass),
+            (LAST_TXN_DATA, self.createLastTxnClass)
         ]
 
     def createClasses(self):
@@ -61,10 +63,17 @@ class ClientDocumentStore(DocumentStore):
             "attribute": "embedded {}".format(ATTR_DATA),
             "consensed": "boolean"
         })
-        self.createUniqueIndexOnClass(REQ_DATA, f.REQ_ID.nm)
         self.createUniqueIndexOnClass(REQ_DATA, TXN_ID)
         self.createUniqueIndexOnClass(REQ_DATA, "serialNo")
         self.createIndexOnClass(REQ_DATA, "consensed")
+
+    def createLastTxnClass(self):
+        self.client.command("create class {}".format(LAST_TXN_DATA))
+        self.createClassProperties(LAST_TXN_DATA, {
+            f.IDENTIFIER.nm: "string",
+            "value": "string",
+        })
+        self.createUniqueIndexOnClass(LAST_TXN_DATA, f.IDENTIFIER.nm)
 
     def getLastReqId(self):
         result = self.client.command("select max({}) as lastId from {}".
@@ -85,7 +94,8 @@ class ClientDocumentStore(DocumentStore):
     def addNack(self, msg: int, sender: str):
         reqId = msg[f.REQ_ID.nm]
         reason = msg[f.REASON.nm]
-        self.client.command('update {} set nacks.{} = "{}" where {} = {}'.
+        reason = reason.replace('"', '\\"').replace("'", "\\'")
+        self.client.command("update {} set nacks.{} = '{}' where {} = {}".
                             format(REQ_DATA, sender, reason, f.REQ_ID.nm, reqId))
 
     def addReply(self, reqId: int, sender: str, result: Any):
@@ -118,7 +128,7 @@ class ClientDocumentStore(DocumentStore):
             return {}
         else:
             return {
-                k: self.serializer.deserialize(v, orderedFields=self.replyFields)
+                k: self.serializer.deserialize(v, orderedFields=self.txnFields)
                 for k, v in result[0].oRecordData['replies'].items()
             }
 
@@ -132,7 +142,7 @@ class ClientDocumentStore(DocumentStore):
         return result
 
     def getNacks(self, reqId: int):
-        result = self.client.command("select acks from {} where {} = {}".
+        result = self.client.command("select nacks from {} where {} = {}".
                                      format(REQ_DATA, f.REQ_ID.nm, reqId))
         return {} if not result else result[0].oRecordData['nacks']
 
@@ -192,3 +202,13 @@ class ClientDocumentStore(DocumentStore):
                                      format(REQ_DATA, TXN_TYPE, txnType))
 
         return [] if not result else [r.oRecordData['replies'] for r in result]
+
+    def setLastTxnForIdentifier(self, identifier, value):
+        self.client.command("update {} set value = '{}', {} = '{}' upsert where {} = '{}'".
+                            format(LAST_TXN_DATA, value, f.IDENTIFIER.nm,
+                                   identifier, f.IDENTIFIER.nm, identifier))
+
+    def getValueForIdentifier(self, identifier):
+        result = self.client.command("select value from {} where {} = '{}'".
+                                     format(LAST_TXN_DATA, f.IDENTIFIER.nm, identifier))
+        return None if not result else result[0].oRecordData['value']

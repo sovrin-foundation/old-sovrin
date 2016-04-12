@@ -275,8 +275,8 @@ class TestNode(TempStorage, TestNodeCore, Node):
         # os.system(config.GraphDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
 
-    @staticmethod
-    def createGraphStorage(name, config):
+    def getGraphStorage(self, name):
+        config = getConfig()
         return GraphStore(user=config.GraphDB["user"],
                             password=config.GraphDB["password"],
                             dbName=name,
