@@ -25,7 +25,7 @@ from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR
-from sovrin.common.util import getConfig
+# from sovrin.common.util import getConfig
 from sovrin.persistence.graph_storage import GraphStorage
 from sovrin.server.node import Node
 
@@ -266,8 +266,8 @@ class TestNode(TempStorage, TestNodeCore, Node):
             logger.debug("Dropped db {}".format(self.name))
         except Exception as ex:
             logger.debug("Error while dropping db {}: {}".format(self.name, ex))
-        config = getConfig()
-        os.system(config.GraphDB['shutdownScript'])
+        # config = getConfig()
+        # os.system(config.GraphDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
 
     @staticmethod

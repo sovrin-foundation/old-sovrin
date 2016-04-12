@@ -57,7 +57,7 @@ class Node(PlenumNode, HasFileStorage):
                                     dataDir=self.dataDir)
             storage = LedgerChainStore(self.getDataLocation())
 
-        self.graphStorage = None
+        self.graphStorage = self.createGraphStorage(self.name, getConfig())
 
         self.setupComplete = False
 
@@ -94,9 +94,13 @@ class Node(PlenumNode, HasFileStorage):
         Starts the graph database if not already started.
         """
         if platform.system() == 'Linux':
+            # TODO If exit code is 256, throw an exception and abort.
+            # TODO Don't use os.system at all. The return codes are unreliable.
+            # TODO Try connecting to the orientdb instance to check if it's up.
             if os.system("service orientdb status"):
                 return True
             else:
+                # TODO
                 os.system("{} &".format(config.GraphDB["startScript"]))
                 return await eventually(os.system, "service orientdb status")
         elif platform.system() == 'Windows':
