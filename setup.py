@@ -63,6 +63,6 @@ if not os.path.exists(CONFIG_FILE):
         os.makedirs(CONFIG_DIR)
     with open(CONFIG_FILE, 'w') as f:
         msg = "# Here you can create config entries according to your needs.\n " \
-              "# For help, refer config_example.py in the sovrin package.\n " \
+              "# For help, refer config.py in the sovrin package.\n " \
               "# Any entry you add here would override that from config example\n"
         f.write(msg)

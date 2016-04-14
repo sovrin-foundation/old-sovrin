@@ -293,12 +293,12 @@ def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
                         identifier=stewardSigner.verstr)
 
 
-@pytest.mark.xfail(reason="Attribute encryption is done in client")
+@pytest.mark.skipif(True, reason="Attribute encryption is done in client")
 def testSponsorAddedAttributeIsEncrypted(addedEncryptedAttribute):
     pass
 
 
-@pytest.mark.xfail()
+@pytest.mark.skipif(True, reason="Attribute Disclosure is not done for now")
 def testSponsorDisclosesEncryptedAttribute(addedEncryptedAttribute, symEncData,
                                            looper, userSignerA, sponsorSigner,
                                            sponsor):
@@ -320,7 +320,7 @@ def testSponsorDisclosesEncryptedAttribute(addedEncryptedAttribute, symEncData,
                    identifier=sponsorSigner.verstr)
 
 
-@pytest.mark.xfail()
+@pytest.mark.skipif(True, reason="Pending implementation")
 def testSponsorAddedAttributeCanBeChanged(addedAttribute):
     # TODO but only by user(if user has taken control of his identity) and
     # sponsor
