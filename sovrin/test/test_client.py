@@ -332,7 +332,7 @@ def testGetAttribute(sponsor, userSignerA, addedAttribute):
            [{'name': 'Mario'}]
 
 
-def testLatestAttrIsReceived(looper, sponsor, sponsorSigner, userSignerA):
+def testLatestAttrIsReceived(looper, genned, sponsor, sponsorSigner, userSignerA):
     attr1 = json.dumps({'name': 'Mario'})
     op = {
         ORIGIN: sponsorSigner.verstr,

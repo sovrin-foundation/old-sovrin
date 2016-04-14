@@ -10,7 +10,7 @@ ROLE = 'role'
 DATA = 'data'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
-
+# TODO Some of these have been duplicated in Plenum's txn.py
 TXN_ID = 'txnId'
 TXN_TIME = 'txnTime'
 

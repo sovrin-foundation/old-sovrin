@@ -11,6 +11,7 @@ import pyorient
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, randomString, getlogger
+from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkNodesConnected, \
@@ -277,10 +278,12 @@ class TestNode(TempStorage, TestNodeCore, Node):
 
     def getGraphStorage(self, name):
         config = getConfig()
-        return GraphStore(user=config.GraphDB["user"],
-                            password=config.GraphDB["password"],
-                            dbName=name,
-                            storageType=pyorient.STORAGE_TYPE_MEMORY)
+        return GraphStore(OrientDbStore(
+            user=config.GraphDB["user"],
+            password=config.GraphDB["password"],
+            dbName=name,
+            dbType=pyorient.DB_TYPE_GRAPH,
+            storageType=pyorient.STORAGE_TYPE_MEMORY))
 
 
 class TestNodeSet(PlenumTestNodeSet):

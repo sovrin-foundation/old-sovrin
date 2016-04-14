@@ -1,12 +1,9 @@
-from collections import OrderedDict
 from typing import Dict
 
-import pyorient
-
 from plenum.common.util import getlogger
+from plenum.persistence.graph_store import GraphStore as PlenumGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, STEWARD, \
     ROLE, ORIGIN, REFERENCE, TXN_TIME
-from sovrin.persistence.orientdb_store import OrientDbStore
 
 logger = getlogger()
 
@@ -28,15 +25,7 @@ class Edges:
     AliasOf = "AliasOf"
 
 
-class GraphStore(OrientDbStore):
-    def __init__(self, user, password, dbName, host="localhost", port=2424,
-                 storageType=pyorient.STORAGE_TYPE_MEMORY):
-        super().__init__(user, password, dbName, host=host, port=port,
-                         storageType=storageType)
-
-    def createDb(self, dbName, storageType):
-        logger.debug("Creating GraphDB {}".format(dbName))
-        self.client.db_create(dbName, pyorient.DB_TYPE_GRAPH, storageType)
+class GraphStore(PlenumGraphStore):
 
     def classesNeeded(self):
         return [
@@ -51,28 +40,6 @@ class GraphStore(OrientDbStore):
             (Edges.AddedAttribute, self.createAddedAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
         ]
-
-    def bootstrap(self):
-        self.createClasses()
-        # if not self.classExists(Vertices.Steward):
-        #     self.createStewardClass()
-        #
-        # if not self.classExists(Vertices.Sponsor):
-        #     self.createSponsorClass()
-        #
-        # if not self.classExists(Vertices.User):
-        #     self.createUserClass()
-        #
-
-    def createVertexClass(self, className: str, properties: Dict=None):
-        self.client.command("create class {} extends V".format(className))
-        if properties:
-            self.createClassProperties(className, properties)
-
-    def createEdgeClass(self, className: str, properties: Dict=None):
-        self.client.command("create class {} extends E".format(className))
-        if properties:
-            self.createClassProperties(className, properties)
 
     def addEdgeConstraint(self, edgeClass, iN=None, out=None):
         if iN:
@@ -90,7 +57,7 @@ class GraphStore(OrientDbStore):
         else:
             properties = {NYM: "string"}
         self.createVertexClass(className, properties)
-        self.createUniqueIndexOnClass(className, NYM)
+        self.store.createUniqueIndexOnClass(className, NYM)
 
     # Creates an edge class which has a property called `txnId` with a unique
     # index on it
@@ -104,7 +71,7 @@ class GraphStore(OrientDbStore):
         else:
             properties = defaultProperties
         self.createEdgeClass(className, properties=properties)
-        self.createUniqueIndexOnClass(className, TXN_ID)
+        self.store.createUniqueIndexOnClass(className, TXN_ID)
 
     def createNymClass(self):
         self.createUniqueNymVertexClass(Vertices.Nym)
@@ -156,23 +123,6 @@ class GraphStore(OrientDbStore):
     def createHasAttributeClass(self):
         self.createUniqueTxnIdEdgeClass(Edges.HasAttribute)
         self.addEdgeConstraint(Edges.HasAttribute, iN=Vertices.Attribute)
-
-    def createEntity(self, createCmd, **kwargs):
-        attributes = []
-        if len(kwargs) > 0:
-            createCmd += " set "
-        for key, val in kwargs.items():
-            attributes.append("{} = '{}'".format(key, val))
-        createCmd += ", ".join(attributes)
-        return self.client.command(createCmd)[0]
-
-    def createVertex(self, name, **kwargs):
-        cmd = "create vertex {}".format(name)
-        return self.createEntity(cmd, **kwargs)
-
-    def createEdge(self, name, frm, to, **kwargs):
-        cmd = "create edge {} from {} to {}".format(name, frm, to)
-        return self.createEntity(cmd, **kwargs)
 
     def getEdgeByTxnId(self, edgeClassName, txnId):
         result = self.client.command("select from {} where {} = '{}'".
@@ -397,7 +347,7 @@ class GraphStore(OrientDbStore):
             result = {
                 TXN_ID: nymEdge.oRecordData.get(TXN_ID)
             }
-            frm, to = self.getByRecordIds(nymEdge.oRecordData['out'].get(),
+            frm, to = self.store.getByRecordIds(nymEdge.oRecordData['out'].get(),
                                           nymEdge.oRecordData['in'].get())
             result[ORIGIN] = frm.oRecordData.get(NYM)
             result[TARGET_NYM] = to.oRecordData.get(NYM)

@@ -9,6 +9,7 @@ from ledger.immutable_store.serializers.compact_serializer import \
     CompactSerializer
 from ledger.immutable_store.stores import TextFileStore
 from plenum.common.request_types import f
+from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.has_file_storage import HasFileStorage
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_document_store import ClientDocumentStore
@@ -40,10 +41,10 @@ class ClientStorage(HasFileStorage, ClientDocumentStore):
         ])
         self.transactionLog = TextFileStore(self.clientDataLocation, "transactions")
         config = getConfig()
-        ClientDocumentStore.__init__(self, user=config.GraphDB["user"],
+        ClientDocumentStore.__init__(self, OrientDbStore(user=config.GraphDB["user"],
                                      password=config.GraphDB["password"],
                                      dbName=clientName,
-                                     storageType=pyorient.STORAGE_TYPE_PLOCAL)
+                                     storageType=pyorient.STORAGE_TYPE_PLOCAL))
 
     def _serializeTxn(self, res):
         return self.serializer.serialize(res,
