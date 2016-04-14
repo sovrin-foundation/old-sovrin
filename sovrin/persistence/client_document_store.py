@@ -53,3 +53,23 @@ class ClientDocumentStore(PlenumClientDS):
         self.store.createUniqueIndexOnClass(REQ_DATA, TXN_ID)
         self.store.createUniqueIndexOnClass(REQ_DATA, "serialNo")
         self.store.createIndexOnClass(REQ_DATA, "consensed")
+
+    def getAllAttributeRequestsForNym(self, nym, identifier=None):
+        whereClause = "attribute.{} = '{}'". \
+            format(TARGET_NYM, nym)
+        if identifier:
+            whereClause += " and {} = '{}'".format(f.IDENTIFIER.nm, identifier)
+        cmd = "select from {} where {} order by {} desc". \
+            format(REQ_DATA, whereClause, TXN_TIME)
+        # TODO: May be can use a better sql query using group by attribute name
+        # and getting last attribute request of each group
+        result = self.client.command(cmd)
+        attributeReqs = {}  # Dict[str, Dict]
+        for r in result:
+            data = r.oRecordData
+            if "attribute" in data and data["attribute"]["name"] \
+                    not in attributeReqs:
+                attributeReqs[data["attribute"]["name"]] = data
+        return attributeReqs
+
+
