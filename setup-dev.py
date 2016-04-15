@@ -60,9 +60,10 @@ BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
 CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
 POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
 
+if not os.path.exists(BASE_DIR):
+    os.makedirs(BASE_DIR)
+
 if not os.path.exists(CONFIG_FILE):
-    if not os.path.exists(BASE_DIR):
-        os.makedirs(BASE_DIR)
     with open(CONFIG_FILE, 'w') as f:
         msg = "# Here you can create config entries according to your needs.\n " \
               "# For help, refer config.py in the sovrin package.\n " \
