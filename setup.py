@@ -32,11 +32,6 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
-reqs = ['git+https://github.com/jettify/aiohttp_sse.git@master#egg=aiohttp_sse', ]
-
-for url in reqs:
-    os.system('pip install {}'.format(url))
-
 setup(
     name='sovrin',
     version=__version__,
