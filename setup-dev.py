@@ -32,6 +32,13 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
+BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
+CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
+POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
+
+if not os.path.exists(BASE_DIR):
+    os.makedirs(BASE_DIR)
+
 setup(
     name='sovrin-dev',
     version=__version__,
@@ -46,17 +53,13 @@ setup(
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
+    data_files=[(
+        (BASE_DIR, ['sovrin/pool_transactions', ])
+    )],
     install_requires=['base58', 'sh', 'pyorient', 'plenum-dev', 'ledger-dev'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest']
 )
-
-BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
-CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
-POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
-
-if not os.path.exists(BASE_DIR):
-    os.makedirs(BASE_DIR)
 
 if not os.path.exists(CONFIG_FILE):
     with open(CONFIG_FILE, 'w') as f:
@@ -64,6 +67,3 @@ if not os.path.exists(CONFIG_FILE):
               "# For help, refer config.py in the sovrin package.\n " \
               "# Any entry you add here would override that from config example\n"
         f.write(msg)
-
-if not os.path.exists(POOL_TXN_FILE):
-    shutil.copyfile("sovrin/pool_transactions", POOL_TXN_FILE)
