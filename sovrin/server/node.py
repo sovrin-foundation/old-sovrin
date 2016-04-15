@@ -289,7 +289,7 @@ class Node(PlenumNode, HasFileStorage):
     async def getReplyFor(self, identifier, reqId):
         return self.txnStore.getReply(identifier, reqId)
 
-    def executeRequest(self, viewNo: int, ppTime: float, req: Request) -> None:
+    def doCustomAction(self, viewNo: int, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
 
@@ -298,7 +298,7 @@ class Node(PlenumNode, HasFileStorage):
         :param req: the client REQUEST
         """
         reply = self.generateReply(viewNo, ppTime, req)
-        txnId = reply.result['txnId']
+        txnId = reply.result[TXN_ID]
         asyncio.ensure_future(self.storeTxnAndSendToClient(req.identifier,
                                                            reply, txnId))
 

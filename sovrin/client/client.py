@@ -42,11 +42,6 @@ class Client(PlenumClient):
                          basedirpath)
         self.graphStorage = self.getGraphStorage(name)
         self.storage = self.getStorage(basedirpath)
-        # TODO: The client needs to know its role and and txn ids of signers
-        # for s in self.signers.values():
-        #     self.addNymToGraph({TXN_ID: None, TARGET_NYM: s.verstr,
-        #                         ORIGIN: None, ROLE: SPONSOR})
-
         self.lastReqId = self.storage.getLastReqId()
         # TODO: SHould i store values of attributes as non encrypted
         # Dictionary of attribute requests
@@ -93,18 +88,12 @@ class Client(PlenumClient):
             # If add attribute transaction then store encryption key and
             # attribute name with the request id for the attribute
             if operation[TXN_TYPE] == ADD_ATTR:
-                # attrData = (r.identifier,
-                #             operation[TARGET_NYM],
-                #             keys.pop(0),
-                #             attributeNames.pop(0),
-                #             None)
                 attrData = {
                     TARGET_NYM: operation[TARGET_NYM],
                     "name": attributeNames.pop(0),
                     "value": attributeVals.pop(0),
                     "skey": keys.pop(0)
                 }
-                # self.attributeReqs[r.reqId] = attrData
                 self.storage.addAttribute(r.reqId, attrData)
         return requests
 
@@ -217,36 +206,6 @@ class Client(PlenumClient):
                     v, orderedFields=self.storage.txnFields))
         return result
 
-    # def findTxns(self, keyName: str, keyValue: Any=None):
-    #     def cond(result):
-    #         return keyName in result and (keyValue is None or keyValue ==
-    #                                       result[keyName])
-    #
-    #     return self.getTxnsByCondition(condition=cond)
-    #
-    # def getTxnsByCondition(self, condition):
-    #     # TODO: This is very inefficient. For a starting point store have a
-    #     # keyspace partition for storing a map of cryptonyms(or txn types or
-    #     # which attribute of interest) to reqIds
-    #
-    #     results = {}        # type: Dict[int, Tuple[Set[str], Any])
-    #     for k, v in self.storage.replyStore.iterator():
-    #         result = self.storage.serializer.deserialize(
-    #             v, orderedFields=self.storage.replyFields)
-    #         if condition(result):
-    #             reqId, sender = k.split('-')
-    #             reqId = int(reqId)
-    #             sender = sender
-    #             if reqId not in results:
-    #                 results[reqId] = (set(), result)
-    #             results[reqId][0].add(sender)
-    #             # TODO: What about different nodes sending different replies?
-    #             #  Need to pick reply which is given by f+1 nodes. Having
-    #             # hashes to check for equality might be efficient
-    #
-    #     f = getMaxFailures(len(self.nodeReg))
-    #     return [val[1] for rid, val in results.items() if len(val[0]) > f]
-
     def hasMadeRequest(self, reqId: int):
         return self.storage.hasRequest(reqId)
 
@@ -301,25 +260,7 @@ class Client(PlenumClient):
             return self._getDecryptedData(reply[DATA],
                                           attributeReq['attribute']['skey'])
 
-        # reqId = None
-        # for rid, (idf, toNym, key, anm, tid) in self.attributeReqs.items():
-        #     if nym == toNym and anm == attrName and \
-        #             (not identifier or idf == identifier):
-        #         reqId = rid
-        #         break
-        # if reqId is None:
-        #     return None
-        # else:
-        #     reply, error = self.replyIfConsensus(reqId)
-        #     if reply is None:
-        #         return None
-        #     else:
-        #         return self._getDecryptedData(reply[DATA], key)
-
     def getAllAttributesForNym(self, nym, identifier=None):
-        # requests = [(rid, key) for rid, (idf, toNym, key, anm, tid) in
-        #             self.attributeReqs.items()
-        #             if nym == toNym and (not identifier or idf == identifier)]
         attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,
                                                                    identifier)
         attributes = []
@@ -330,18 +271,6 @@ class Client(PlenumClient):
                                               req['attribute']['skey'])
                 attributes.append(attr)
 
-        # attributes = {}
-        # for (rid, key) in requests:
-        #     reply, error = self.replyIfConsensus(rid)
-        #     if reply is not None:
-        #         attr = self._getDecryptedData(reply[DATA], key)
-        #         name, val = list(attr.items())[0]
-        #         if name not in attributes:
-        #             attributes[name] = (val, reply[TXN_TIME])
-        #         elif reply[TXN_TIME] > attributes[name][1]:
-        #             attributes[name] = (val, reply[TXN_TIME])
-        #
-        # attributes = [{attr: val} for attr, (val, tm) in attributes.items()]
         return attributes
 
     def doGetNym(self, nym, identifier=None):
@@ -354,15 +283,6 @@ class Client(PlenumClient):
         self.submit(op, identifier=identifier)
 
     def hasNym(self, nym):
-        # for v in self.storage.replyStore.iterator(include_key=False):
-        #     result = self.storage.serializer.deserialize(
-        #         v, orderedFields=self.storage.txnFields)
-        #     # If transaction is of GET_NYM type and the query was for the `nym`
-        #     # and data was returned which here is `transaction_id`
-        #     if result[TXN_TYPE] == GET_NYM and result[TARGET_NYM] == nym \
-        #             and result[DATA]:
-        #         return True
-        # return False
         return self.graphStorage.hasNym(nym)
 
     def isRequestSuccessful(self, reqId):

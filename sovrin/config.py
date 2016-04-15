@@ -14,7 +14,7 @@ cliNodeReg = OrderedDict([
     ('CUSOC', ('127.0.0.1', 8008))
 ])
 
-baseDataDir = "~"
+baseDir = "~/.sovrin"
 
 logFilePath = "cli.log"
 outFilePath = "cli_output.log"
