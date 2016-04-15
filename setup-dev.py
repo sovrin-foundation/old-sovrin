@@ -52,13 +52,15 @@ setup(
     packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']),
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
-                   '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
+                   '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL', 'sovrin']},
     data_files=[(
         (BASE_DIR, ['sovrin/pool_transactions', ])
     )],
     install_requires=['base58', 'sh', 'pyorient', 'plenum-dev', 'ledger-dev'],
     setup_requires=['pytest-runner'],
-    tests_require=['pytest']
+    tests_require=['pytest'],
+    scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
+             'scripts/start_sovrin_node']
 )
 
 if not os.path.exists(CONFIG_FILE):
