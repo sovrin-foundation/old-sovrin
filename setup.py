@@ -32,7 +32,6 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
-
 BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
 CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
 POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
@@ -50,12 +49,13 @@ setup(
     author_email='dev@evernym.us',
     license=__license__,
     keywords='Sovrin identity plenum',
-    packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']),
+    packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']) + ['data', ],
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
-                   '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL', 'sovrin']},
+                   '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
+    include_package_data=True,
     data_files=[(
-        (BASE_DIR, ['sovrin/pool_transactions', ])
+        (BASE_DIR, ['data/pool_transactions', ])
     )],
     install_requires=['base58', 'sh', 'pyorient', 'plenum', 'ledger'],
     setup_requires=['pytest-runner'],

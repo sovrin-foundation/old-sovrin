@@ -1,13 +1,10 @@
 import json
 
+from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA
+
 NYM = "nym"
 
-TXN_TYPE = 'type'
-# TODO: Should probably be a called TARGET
-TARGET_NYM = 'dest'
-ORIGIN = 'origin'
 ROLE = 'role'
-DATA = 'data'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
 

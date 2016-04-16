@@ -12,7 +12,7 @@ class TxnBasedAuthNr(NaclAuthNr):
     def __init__(self, storage: GraphStore):
         self.storage = storage
 
-    def addClient(self, identifier, verkey):
+    def addClient(self, identifier, verkey, pubkey=None, role=None):
         raise RuntimeError('Add verification keys through the ADDNYM txn')
 
     def getVerkey(self, identifier):

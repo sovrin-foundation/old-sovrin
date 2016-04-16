@@ -63,6 +63,3 @@ include/
 
 # generated doc files
 docs/source/api_docs/
-
-# Data
-data
