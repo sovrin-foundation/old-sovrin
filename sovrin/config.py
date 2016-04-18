@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from plenum.common.txn import ClientBootStrategy
+
 nodeReg = OrderedDict([
     ('Suncoast', ('127.0.0.1', 8001)),
     ('VACU', ('127.0.0.1', 8003)),
@@ -14,11 +16,15 @@ cliNodeReg = OrderedDict([
     ('CUSOC', ('127.0.0.1', 8008))
 ])
 
-baseDataDir = "~"
+baseDir = "~/.sovrin"
+
+poolTransactionsFile = "pool_transactions"
 
 logFilePath = "cli.log"
+
 outFilePath = "cli_output.log"
 
+clientBootStrategy = ClientBootStrategy.Custom
 
 GraphDB = {
     "user": "root",

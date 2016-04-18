@@ -34,8 +34,10 @@ class Node(PlenumNode, HasFileStorage):
                  basedirpath=None,
                  primaryDecider=None,
                  opVerifiers=None,
-                 storage=None):
+                 storage=None,
+                 config=None):
 
+        self.config = config or getConfig()
         self.graphStorage = self.getGraphStorage(name)
 
         self.dataDir = "data/nodes"
@@ -43,8 +45,6 @@ class Node(PlenumNode, HasFileStorage):
             HasFileStorage.__init__(self, name, baseDir=basedirpath,
                                     dataDir=self.dataDir)
             storage = LedgerChainStore(name, self.getDataLocation())
-
-        self.setupComplete = False
 
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -55,7 +55,8 @@ class Node(PlenumNode, HasFileStorage):
                          basedirpath=basedirpath,
                          primaryDecider=primaryDecider,
                          opVerifiers=opVerifiers,
-                         storage=storage)
+                         storage=storage,
+                         config=self.config)
 
     # async def prod(self, limit: int=None):
     #     await self.setup()
@@ -98,9 +99,8 @@ class Node(PlenumNode, HasFileStorage):
     #                         storageType=pyorient.STORAGE_TYPE_PLOCAL)
 
     def getGraphStorage(self, name):
-        config = getConfig()
-        return GraphStore(user=config.GraphDB["user"],
-                          password=config.GraphDB["password"],
+        return GraphStore(user=self.config.GraphDB["user"],
+                          password=self.config.GraphDB["password"],
                           dbName=name,
                           storageType=pyorient.STORAGE_TYPE_PLOCAL)
 
@@ -207,8 +207,7 @@ class Node(PlenumNode, HasFileStorage):
 
     @staticmethod
     def genTxnId(identifier, reqId):
-        return sha256("{}{}".format(identifier, reqId).
-                           encode()).hexdigest()
+        return sha256("{}{}".format(identifier, reqId).encode()).hexdigest()
 
     async def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
@@ -272,7 +271,7 @@ class Node(PlenumNode, HasFileStorage):
     async def getReplyFor(self, identifier, reqId):
         return self.txnStore.getReply(identifier, reqId)
 
-    def executeRequest(self, viewNo: int, ppTime: float, req: Request) -> None:
+    def doCustomAction(self, viewNo: int, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
 
@@ -281,7 +280,7 @@ class Node(PlenumNode, HasFileStorage):
         :param req: the client REQUEST
         """
         reply = self.generateReply(viewNo, ppTime, req)
-        txnId = reply.result['txnId']
+        txnId = reply.result[TXN_ID]
         asyncio.ensure_future(self.storeTxnAndSendToClient(req.identifier,
                                                            reply, txnId))
 

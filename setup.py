@@ -1,3 +1,4 @@
+import shutil
 import sys
 import os
 from setuptools import setup, find_packages, __version__
@@ -31,10 +32,12 @@ METADATA = os.path.join(SETUP_DIRNAME, 'sovrin', '__metadata__.py')
 # Load the metadata using exec() so we don't trigger an import of ioflo.__init__
 exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
-reqs = ['git+https://github.com/jettify/aiohttp_sse.git@master#egg=aiohttp_sse', ]
+BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
+CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
+POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
 
-for url in reqs:
-    os.system('pip install {}'.format(url))
+if not os.path.exists(BASE_DIR):
+    os.makedirs(BASE_DIR)
 
 setup(
     name='sovrin',
@@ -46,23 +49,24 @@ setup(
     author_email='dev@evernym.us',
     license=__license__,
     keywords='Sovrin identity plenum',
-    packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']),
+    packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']) + ['data', ],
     package_data={
         '':       ['*.txt',  '*.md', '*.rst', '*.json', '*.conf', '*.html',
                    '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
+    include_package_data=True,
+    data_files=[(
+        (BASE_DIR, ['data/pool_transactions', ])
+    )],
     install_requires=['base58', 'sh', 'pyorient', 'plenum', 'ledger'],
     setup_requires=['pytest-runner'],
-    tests_require=['pytest']
+    tests_require=['pytest'],
+    scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
+             'scripts/start_sovrin_node']
 )
 
-CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "sovrin_config.py")
-
 if not os.path.exists(CONFIG_FILE):
-    if not os.path.exists(CONFIG_DIR):
-        os.makedirs(CONFIG_DIR)
     with open(CONFIG_FILE, 'w') as f:
         msg = "# Here you can create config entries according to your needs.\n " \
-              "# For help, refer config_example.py in the sovrin package.\n " \
+              "# For help, refer config.py in the sovrin package.\n " \
               "# Any entry you add here would override that from config example\n"
         f.write(msg)

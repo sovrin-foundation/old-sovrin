@@ -56,7 +56,7 @@ def getInstalledConfig(installDir, configFile):
 
 
 def getConfig():
-    refConfig = importlib.import_module("sovrin.config_example")
+    refConfig = importlib.import_module("sovrin.config")
     try:
         homeDir = os.path.expanduser("~")
         configDir = os.path.join(homeDir, ".sovrin")
