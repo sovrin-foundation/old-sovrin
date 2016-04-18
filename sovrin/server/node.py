@@ -86,7 +86,7 @@ class Node(PlenumNode, HasFileStorage):
     #         else:
     #             # TODO
     #             os.system("{} &".format(config.GraphDB["startScript"]))
-    #             return await eventually(os.system, "service orientdb status")
+    #             return await untilTrue(os.system, "service orientdb status")
     #     elif platform.system() == 'Windows':
     #         pass  # TODO when a Windows machine is available
 

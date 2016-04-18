@@ -41,14 +41,6 @@ class GraphStore(PlenumGraphStore):
             (Edges.HasAttribute, self.createHasAttributeClass),
         ]
 
-    def addEdgeConstraint(self, edgeClass, iN=None, out=None):
-        if iN:
-            self.client.command("create property {}.in link {}".
-                                format(edgeClass, iN))
-        if out:
-            self.client.command("create property {}.out link {}".
-                                format(edgeClass, out))
-
     # Creates a vertex class which has a property called `nym` with a unique
     # index on it
     def createUniqueNymVertexClass(self, className, properties: Dict=None):
