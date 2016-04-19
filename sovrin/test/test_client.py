@@ -19,15 +19,6 @@ from sovrin.test.helper import genConnectedTestClient, \
 logger = getlogger()
 
 
-@pytest.fixture(scope="module")
-def genesisTxns(stewardSigner):
-    nym = stewardSigner.verstr
-    return [storedTxn(ADD_NYM, nym,
-                      "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-                      role=STEWARD),
-            ]
-
-
 # TODO use wallet instead of SimpleSigner in client
 
 
