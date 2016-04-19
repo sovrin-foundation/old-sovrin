@@ -13,6 +13,7 @@ from plenum.common.startable import Status
 from plenum.common.txn import REQACK, REPLY, REQNACK
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl
+from plenum.persistence.orientdb_store import OrientDbStore
 
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
@@ -54,10 +55,12 @@ class Client(PlenumClient):
 
     def getGraphStorage(self, name):
         config = getConfig()
-        return GraphStore(user=config.GraphDB["user"],
-                          password=config.GraphDB["password"],
-                          dbName=name,
-                          storageType=pyorient.STORAGE_TYPE_PLOCAL)
+        return GraphStore(OrientDbStore(
+            user=config.GraphDB["user"],
+            password=config.GraphDB["password"],
+            dbName=name,
+            dbType=pyorient.DB_TYPE_GRAPH,
+            storageType=pyorient.STORAGE_TYPE_PLOCAL))
 
     def setupDefaultSigner(self):
         # Sovrin clients should use a wallet, which supplies the signers

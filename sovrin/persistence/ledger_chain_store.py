@@ -8,6 +8,8 @@ from ledger.immutable_store.ledger import Ledger
 from ledger.immutable_store.merkle import CompactMerkleTree
 from ledger.immutable_store.serializers.compact_serializer import \
     CompactSerializer
+
+from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.txn import TXN_ID, TXN_TYPE, ORIGIN, TARGET_NYM, DATA, ROLE, \
     REFERENCE
 from sovrin.common.txn import TXN_TIME
@@ -43,7 +45,8 @@ class LedgerChainStore(Ledger, ChainStore, NodeDocumentStore):
 
         config = getConfig()
 
-        NodeDocumentStore.__init__(self, user=config.GraphDB["user"],
-                                     password=config.GraphDB["password"],
-                                     dbName=name,
-                                     storageType=pyorient.STORAGE_TYPE_PLOCAL)
+        NodeDocumentStore.__init__(self, OrientDbStore(
+            user=config.GraphDB["user"],
+            password=config.GraphDB["password"],
+            dbName=name,
+            storageType=pyorient.STORAGE_TYPE_PLOCAL))

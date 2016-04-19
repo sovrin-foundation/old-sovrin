@@ -1,8 +1,5 @@
 import asyncio
 import json
-import os
-import platform
-
 import time
 from _sha256 import sha256
 
@@ -13,28 +10,14 @@ from plenum.common.exceptions import InvalidClientRequest, \
 from plenum.common.request_types import Reply, Request, RequestAck, RequestNack
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.has_file_storage import HasFileStorage
-
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, NONCE, GET_NYM, TXN_ID, \
-    TXN_TIME, ATTRIBUTES, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
+    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, TXN_ID, \
+    TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
+from sovrin.common.util import getConfig
 from sovrin.persistence.graph_store import GraphStore
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
-from sovrin.common.util import getConfig
-
-
-async def eventually(condition, *args, timeout=5):
-    result = False
-    start = time.perf_counter()
-    elapsed = 0
-    while elapsed < timeout:
-        result = condition(*args)
-        if result:
-            break
-        await asyncio.sleep(.1)
-        elapsed = time.perf_counter() - start
-    return result
 
 
 # TODO Node storage should be a mixin of document storage and graph storage
@@ -104,7 +87,7 @@ class Node(PlenumNode, HasFileStorage):
     #         else:
     #             # TODO
     #             os.system("{} &".format(config.GraphDB["startScript"]))
-    #             return await eventually(os.system, "service orientdb status")
+    #             return await untilTrue(os.system, "service orientdb status")
     #     elif platform.system() == 'Windows':
     #         pass  # TODO when a Windows machine is available
 
