@@ -2,8 +2,10 @@ import pytest
 
 from plenum.client.signer import SimpleSigner
 
-from sovrin.common.txn import getGenesisTxns, storedTxn, STEWARD, ADD_NYM
-from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient
+from sovrin.common.txn import getGenesisTxns, storedTxn, STEWARD, ADD_NYM, \
+    SPONSOR
+from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient, \
+    createNym
 
 from plenum.test.conftest import getValueFromModule
 
@@ -86,3 +88,8 @@ def sponsorSigner():
 @pytest.fixture(scope="module")
 def sponsor(looper, nodeSet, tdir, up, sponsorSigner):
     return clientFromSigner(sponsorSigner, looper, nodeSet, tdir)
+
+@pytest.fixture(scope="module")
+def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
+    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    return sponsorSigner
