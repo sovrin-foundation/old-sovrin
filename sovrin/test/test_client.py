@@ -13,7 +13,7 @@ from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
     TXN_ID, NONCE, SKEY, REFERENCE, newTxn, AddNym
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genConnectedTestClient, \
-    clientFromSigner, genTestClient
+    clientFromSigner, genTestClient, createNym
 
 
 logger = getlogger()
@@ -30,28 +30,6 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
         assert contains in r[f.REASON.nm]
     assert len(reqs) == nodeCount
 
-
-def submitAndCheck(looper, client, op, identifier):
-    txnsBefore = client.getTxnsByType(op[TXN_TYPE])
-
-    client.submit(op, identifier=identifier)
-
-    txnsAfter = []
-
-    def checkTxnCountAdvanced():
-        nonlocal txnsAfter
-        txnsAfter = client.getTxnsByType(op[TXN_TYPE])
-        logger.debug("old and new txns {} {}".format(txnsBefore, txnsAfter))
-        assert len(txnsAfter) > len(txnsBefore)
-
-    looper.run(eventually(checkTxnCountAdvanced, retryWait=1, timeout=15))
-
-    txnIdsBefore = [txn[TXN_ID] for txn in txnsBefore]
-    txnIdsAfter = [txn[TXN_ID] for txn in txnsAfter]
-    logger.debug("old and new txnids {} {}".format(txnIdsBefore, txnIdsAfter))
-    return list(set(txnIdsAfter) - set(txnIdsBefore))
-
-
 # TODO Ordering of parameters is bad
 def submitAndCheckNacks(looper, client, op, identifier,
                         contains='UnauthorizedClientRequest'):
@@ -60,19 +38,6 @@ def submitAndCheckNacks(looper, client, op, identifier,
                           client,
                           client.lastReqId,
                           contains, retryWait=1, timeout=15))
-
-
-def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
-    nym = targetSigner.verstr
-    op = {
-        ORIGIN: creatorSigner.verstr,
-        TARGET_NYM: nym,
-        TXN_TYPE: ADD_NYM,
-        ROLE: role
-    }
-    return submitAndCheck(looper, creatorClient, op,
-                          identifier=creatorSigner.identifier)[0]
-
 
 def addUser(looper, creatorClient, creatorSigner, name):
     usigner = SimpleSigner()
