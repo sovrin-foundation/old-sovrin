@@ -7,9 +7,8 @@ import pyorient
 
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.request_types import Reply, Request, RequestAck, RequestNack
+from plenum.common.types import Reply, Request, RequestAck, RequestNack
 from plenum.server.node import Node as PlenumNode
-from sovrin.common.has_file_storage import HasFileStorage
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, TXN_ID, \
@@ -22,7 +21,7 @@ from sovrin.server.client_authn import TxnBasedAuthNr
 
 # TODO Node storage should be a mixin of document storage and graph storage
 
-class Node(PlenumNode, HasFileStorage):
+class Node(PlenumNode):
 
     def __init__(self,
                  name,
@@ -39,12 +38,6 @@ class Node(PlenumNode, HasFileStorage):
 
         self.config = config or getConfig()
         self.graphStorage = self.getGraphStorage(name)
-
-        self.dataDir = "data/nodes"
-        if not storage:
-            HasFileStorage.__init__(self, name, baseDir=basedirpath,
-                                    dataDir=self.dataDir)
-            storage = LedgerChainStore(name, self.getDataLocation())
 
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -97,6 +90,9 @@ class Node(PlenumNode, HasFileStorage):
     #                         password=config.GraphDB["password"],
     #                         dbName=name,
     #                         storageType=pyorient.STORAGE_TYPE_PLOCAL)
+
+    def getStorage(self):
+        return LedgerChainStore(self.name, self.getDataLocation(), self.config)
 
     def getGraphStorage(self, name):
         return GraphStore(user=self.config.GraphDB["user"],
@@ -252,26 +248,22 @@ class Node(PlenumNode, HasFileStorage):
     async def addToLedger(self, identifier, reply, txnId):
         merkleInfo = await self.txnStore.append(
             identifier=identifier, reply=reply, txnId=txnId)
-        serialNo = merkleInfo["serialNo"]
-        STH = merkleInfo["STH"]
-        auditInfo = merkleInfo["auditInfo"]
-        # TODO Do both operation in one request
-        self.txnStore.addReplyForTxn(txnId, reply, identifier, reply.reqId)
-        self.txnStore.addMerkleDataForTxn(txnId, serialNo, STH, auditInfo)
         return merkleInfo
 
     async def storeTxnAndSendToClient(self, identifier, reply, txnId):
         merkleInfo = await self.addToLedger(identifier, reply, txnId)
         reply.result.update(merkleInfo)
         self.transmitToClient(reply, self.clientIdentifiers[identifier])
-
-    def storeProcessedRequest(self, identifier, reply, txnId):
-        asyncio.ensure_future(self.addToLedger(identifier, reply, txnId))
+        serialNo = merkleInfo["serialNo"]
+        STH = merkleInfo["STH"]
+        auditInfo = merkleInfo["auditInfo"]
+        self.txnStore.addReplyForTxn(txnId, reply, identifier, reply.reqId,
+                                     serialNo, STH, auditInfo)
 
     async def getReplyFor(self, identifier, reqId):
         return self.txnStore.getReply(identifier, reqId)
 
-    def doCustomAction(self, viewNo: int, ppTime: float, req: Request) -> None:
+    async def doCustomAction(self, viewNo: int, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
 
@@ -281,8 +273,7 @@ class Node(PlenumNode, HasFileStorage):
         """
         reply = self.generateReply(viewNo, ppTime, req)
         txnId = reply.result[TXN_ID]
-        asyncio.ensure_future(self.storeTxnAndSendToClient(req.identifier,
-                                                           reply, txnId))
+        await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
 
     def generateReply(self, viewNo: int, ppTime: float, req: Request):
         operation = req.operation

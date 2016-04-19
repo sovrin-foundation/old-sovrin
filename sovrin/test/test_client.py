@@ -5,7 +5,7 @@ import libnacl.public
 import pytest
 
 from plenum.client.signer import SimpleSigner
-from plenum.common.request_types import f, OP_FIELD_NAME
+from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \

@@ -7,8 +7,7 @@ import pyorient
 
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
-from plenum.common.request_types import OP_FIELD_NAME, Request, f
-from plenum.common.stacked import HA
+from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.startable import Status
 from plenum.common.txn import REQACK, REPLY, REQNACK
 from plenum.common.util import getlogger, getMaxFailures, \

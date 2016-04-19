@@ -1,7 +1,7 @@
 import asyncio
 
 from plenum.client.signer import SimpleSigner
-from plenum.common.request_types import Reply
+from plenum.common.types import Reply
 from sovrin.common.txn import ADD_NYM, STEWARD
 from sovrin.common.txn import storedTxn
 from sovrin.persistence.memory_chain_store import MemoryChainStore

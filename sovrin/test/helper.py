@@ -333,7 +333,7 @@ def genConnectedTestClient(looper,
                            nodeReg=None,
                            tmpdir=None,
                            signer=None) -> TestClient:
-    c = genTestClient(nodes, tmpdir=tmpdir, signer=signer)
+    c = genTestClient(nodes, nodeReg=nodeReg, tmpdir=tmpdir, signer=signer)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
     return c

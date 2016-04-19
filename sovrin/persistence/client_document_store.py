@@ -2,6 +2,11 @@ import json
 from typing import Any
 
 from plenum.common.request_types import Request, f
+import pyorient
+
+from ledger.immutable_store.serializers.compact_serializer import \
+    CompactSerializer
+from plenum.common.types import Request, f
 from plenum.common.util import getlogger
 from sovrin.common.txn import TXN_ID, TXN_TIME, TARGET_NYM, TXN_TYPE
 from plenum.persistence.client_document_store \

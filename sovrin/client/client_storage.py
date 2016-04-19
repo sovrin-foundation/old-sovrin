@@ -1,18 +1,16 @@
 import os
 from collections import OrderedDict
-from typing import Any
 
 import pyorient
 
-from ledger.immutable_store.serializers import JsonSerializer
 from ledger.immutable_store.serializers.compact_serializer import \
     CompactSerializer
 from ledger.immutable_store.stores import TextFileStore
-from plenum.common.request_types import f
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.common.has_file_storage import HasFileStorage
+from plenum.common.has_file_storage import HasFileStorage
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_document_store import ClientDocumentStore
+
 
 # TODO Client storage should be a mixin of document storage and graph storage
 

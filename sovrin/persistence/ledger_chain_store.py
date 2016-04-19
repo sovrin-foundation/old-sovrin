@@ -19,7 +19,7 @@ from sovrin.persistence.node_document_store import NodeDocumentStore
 
 
 class LedgerChainStore(Ledger, ChainStore, NodeDocumentStore):
-    def __init__(self, name, dataLocation):
+    def __init__(self, name, dataLocation, config):
         # def b64e(s):
         #     return base64.b64encode(s).decode("utf-8")
         #
@@ -43,10 +43,7 @@ class LedgerChainStore(Ledger, ChainStore, NodeDocumentStore):
         Ledger.__init__(self, CompactMerkleTree(), dataDir=dataLocation,
                         serializer=CompactSerializer(orderedFields))
 
-        config = getConfig()
-
-        NodeDocumentStore.__init__(self, OrientDbStore(
-            user=config.GraphDB["user"],
-            password=config.GraphDB["password"],
-            dbName=name,
-            storageType=pyorient.STORAGE_TYPE_PLOCAL))
+        NodeDocumentStore.__init__(self, user=config.GraphDB["user"],
+                                     password=config.GraphDB["password"],
+                                     dbName=name,
+                                     storageType=pyorient.STORAGE_TYPE_PLOCAL)
