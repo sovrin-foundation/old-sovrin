@@ -35,7 +35,7 @@ def run_cli():
         logFilePath = os.path.join(curDir, config.logFilePath)
         outFilePath = os.path.join(curDir, config.outFilePath)
         cli = SovrinCli(looper=looper,
-                        tmpdir=baseDir,
+                        basedirpath=baseDir,
                         nodeReg=config.nodeReg,
                         cliNodeReg=config.cliNodeReg,
                         logFileName=logFilePath,

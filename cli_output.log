@@ -1,6 +1,0 @@
-
-Sovrin-CLI (c) 2016 Evernym, Inc.
-Node registry loaded.
-None of these are created or running yet.
-Type 'help' for more information.
-Error while running coroutine shell: ValueError('invalid literal for int() with base 10: \'1\\t{"serial_no":1,"leaf_data":{"dest":"bx3ePPiBdRywm16OOmZdtlzF5FGmX06Fj2sAYbMdF18=","type":"ADD_NYM","role":"STEWARD","txnId":"6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b","data',)

@@ -26,6 +26,10 @@ pip-log.txt
 pip-delete-this-directory.txt
 pip-selfcheck.json
 
+# CLI logs
+cli.log
+cli_output.log
+
 # testing / coverage reports
 .tox/
 .coverage
