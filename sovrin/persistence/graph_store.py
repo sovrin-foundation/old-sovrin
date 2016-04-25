@@ -1,9 +1,12 @@
+from collections import OrderedDict
 from typing import Dict
 
+import pyorient
 from plenum.common.util import getlogger
-from plenum.persistence.graph_store import GraphStore as PlenumGraphStore
+
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, STEWARD, \
     ROLE, ORIGIN, REFERENCE, TXN_TIME
+from plenum.persistence.graph_store import GraphStore as PlenumGraphStore
 
 logger = getlogger()
 
@@ -69,17 +72,14 @@ class GraphStore(PlenumGraphStore):
         self.createUniqueNymVertexClass(Vertices.Nym)
 
     def createStewardClass(self):
-        # self.createUniqueNymVertexClass(Vertices.Steward)
         self.client.command("create class {} extends {}".
                             format(Vertices.Steward, Vertices.Nym))
 
     def createSponsorClass(self):
-        # self.createUniqueNymVertexClass(Vertices.Sponsor)
         self.client.command("create class {} extends {}".
                             format(Vertices.Sponsor, Vertices.Nym))
 
     def createUserClass(self):
-        # self.createUniqueNymVertexClass(Vertices.User)
         self.client.command("create class {} extends {}".
                             format(Vertices.User, Vertices.Nym))
 
@@ -187,17 +187,6 @@ class GraphStore(PlenumGraphStore):
             self.createVertex(Vertices.User, nym=nym, frm=frm)
 
             # # TODO: After implementing agents, check if `frm` is agent
-            # sponsor = self.client.command("select * from {} where {} = '{}'".
-            #                               format(Vertices.Sponsor, NYM, frm))
-            # if not sponsor:
-            #     steward = self.client.command("select * from {} where {} = '{}'".
-            #                                   format(Vertices.Steward, NYM, frm))
-            #     if not steward:
-            #         raise ValueError("frm should either be a sponsor or steward")
-            #     else:
-            #         typ = Vertices.Steward
-            # else:
-            #     typ = Vertices.Sponsor
             typ = self.getRole(frm)
             # Now add an edge from SPONSOR to USER
             frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
@@ -229,11 +218,6 @@ class GraphStore(PlenumGraphStore):
 
     def addAttribute(self, frm, to, data, txnId):
         attrVertex = self.createVertex(Vertices.Attribute, data=data)
-
-        # if self.hasSponsor(frm):
-        #     frm = "(select from {} where {} = '{}')".format(Vertices.Sponsor, NYM, frm)
-        # elif self.hasSteward(frm):
-        #     frm = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM, frm)
 
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                         frm)
@@ -279,34 +263,9 @@ class GraphStore(PlenumGraphStore):
         return bool(self.getUser(nym))
 
     def hasNym(self, nym):
-        # return any([func(nym) for func in (
-        #     self.hasUser, self.hasSponsor, self.hasSteward)])
         return bool(self.getNym(nym))
 
     def getRole(self, nym):
-        # # Querying in the order of probability of finding the nym
-        # if self.hasUser(nym):
-        #     return USER
-        # elif self.hasSponsor(nym):
-        #     return SPONSOR
-        # elif self.hasSteward(nym):
-        #     return STEWARD
-        # else:
-        #     return None
-
-        # nymEdge = self.getAddedNymEdge(nym)
-        # if not nymEdge:
-        #     raise ValueError("Nym does not exist")
-        # nymV, = self.getByRecordIds(nymEdge['in'].get())
-        # nymCls = nymV._class
-        # if nymCls == Vertices.User:
-        #     return USER
-        # elif nymCls == Vertices.Sponsor:
-        #     return SPONSOR
-        # elif nymCls == Vertices.Steward:
-        #     return STEWARD
-        # else:
-        #     raise ValueError("Cannot determine role from {}".format(nymCls))
         nymV = self.getNym(nym)
         if not nymV:
             raise ValueError("Nym does not exist")

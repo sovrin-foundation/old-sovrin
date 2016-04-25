@@ -26,7 +26,11 @@ outFilePath = "cli_output.log"
 
 clientBootStrategy = ClientBootStrategy.Custom
 
-GraphDB = {
+primaryStorage = None
+
+secondaryStorage = None
+
+OrientDB = {
     "user": "root",
     "password": "password",
     "startScript": "/opt/orientdb/bin/server.sh",

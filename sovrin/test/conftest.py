@@ -2,7 +2,8 @@ import pytest
 
 from plenum.client.signer import SimpleSigner
 
-from sovrin.common.txn import getGenesisTxns, storedTxn, STEWARD, ADD_NYM, \
+from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
+from sovrin.common.txn import getGenesisTxns, STEWARD, ADD_NYM, \
     SPONSOR
 from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient, \
     createNym
@@ -16,11 +17,12 @@ from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
 @pytest.fixture(scope="module")
 def genesisTxns(stewardSigner):
     nym = stewardSigner.verstr
-    return [storedTxn(
-        ADD_NYM, nym,
-        "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-        role=STEWARD),
-    ]
+    return [{
+        TXN_TYPE: ADD_NYM,
+        TARGET_NYM: nym,
+        TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        ROLE: STEWARD
+    },]
 
 
 @pytest.yield_fixture(scope="module")

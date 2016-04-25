@@ -274,14 +274,14 @@ class TestNode(TempStorage, TestNodeCore, Node):
         except Exception as ex:
             logger.debug("Error while dropping db {}: {}".format(self.name, ex))
         # config = getConfig()
-        # os.system(config.GraphDB['shutdownScript'])
+        # os.system(config.OrientDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
 
     def getGraphStorage(self, name):
         config = getConfig()
         return GraphStore(OrientDbStore(
-            user=config.GraphDB["user"],
-            password=config.GraphDB["password"],
+            user=config.OrientDB["user"],
+            password=config.OrientDB["password"],
             dbName=name,
             dbType=pyorient.DB_TYPE_GRAPH,
             storageType=pyorient.STORAGE_TYPE_MEMORY))

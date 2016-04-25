@@ -1,15 +1,14 @@
 import json
+from collections import OrderedDict
 
-from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA
+from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME
+from plenum.common.types import f
 
 NYM = "nym"
 
 ROLE = 'role'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
-# TODO Some of these have been duplicated in Plenum's txn.py
-TXN_ID = 'txnId'
-TXN_TIME = 'txnTime'
 
 LAST_TXN = "lastTxn"
 TXNS = "Txns"
@@ -99,16 +98,6 @@ SPONSOR = "SPONSOR"
 USER = "USER"
 
 
-def storedTxn(txnTyp, dest, txnId, role=None, data=None):
-    return {
-        TXN_TYPE: txnTyp,
-        TARGET_NYM: dest,
-        TXN_ID: txnId,
-        ROLE: role,
-        DATA: data
-    }
-
-
 def getGenesisTxns():
     t = [
         {TXN_TYPE: ADD_NYM, ORIGIN: 'aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U=', TARGET_NYM: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=', ROLE: SPONSOR, TXN_ID: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b'},
@@ -116,9 +105,24 @@ def getGenesisTxns():
         {TXN_TYPE: ADD_NYM, TARGET_NYM: 'adityastaging', TXN_ID: '77c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ORIGIN: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ='},
         {TXN_TYPE: ADD_NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ORIGIN: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ='}
     ]
-    return [storedTxn(
-        ADD_NYM,
-        "aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U=",
-        "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-        role=STEWARD)
-    ] + t
+    return [{
+        TXN_TYPE: ADD_NYM,
+        TARGET_NYM: "aXMgYSBwaXQgYSBzZWVkLCBvciBzb21lcGluIGVsc2U=",
+        TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        ROLE: STEWARD
+    }] + t
+
+
+def getTxnOrderedFields():
+    return OrderedDict([
+        (f.IDENTIFIER.nm, (str, str)),
+        (f.REQ_ID.nm, (str, int)),
+        (TXN_ID, (str, str)),
+        (TXN_TIME, (str, float)),
+        (TXN_TYPE, (str, str)),
+        (ORIGIN, (str, str)),
+        (TARGET_NYM, (str, str)),
+        (DATA, (str, str)),
+        (ROLE, (str, str)),
+        (REFERENCE, (str, str))
+    ])

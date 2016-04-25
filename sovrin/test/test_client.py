@@ -5,15 +5,16 @@ import libnacl.public
 import pytest
 
 from plenum.client.signer import SimpleSigner
+from plenum.common.txn import REQNACK
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
-from sovrin.common.txn import ADD_ATTR, ADD_NYM, storedTxn, \
-    STEWARD, TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, IDPROOF, \
-    TXN_ID, NONCE, SKEY, REFERENCE, newTxn, AddNym
+from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
+    TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, \
+    TXN_ID, NONCE, SKEY, REFERENCE
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genConnectedTestClient, \
-    clientFromSigner, genTestClient, createNym
+    clientFromSigner, genTestClient, createNym, submitAndCheck
 
 
 logger = getlogger()
@@ -23,12 +24,13 @@ logger = getlogger()
 
 
 def checkNacks(client, reqId, contains='', nodeCount=4):
-    reqs = [x for x, _ in client.inBox if x[f.REQ_ID.nm] == reqId]
+    reqs = [x for x, _ in client.inBox if x[OP_FIELD_NAME] == REQNACK and
+            x[f.REQ_ID.nm] == reqId]
     for r in reqs:
-        assert r[OP_FIELD_NAME] == 'REQNACK'
         assert f.REASON.nm in r
         assert contains in r[f.REASON.nm]
     assert len(reqs) == nodeCount
+
 
 # TODO Ordering of parameters is bad
 def submitAndCheckNacks(looper, client, op, identifier,
@@ -38,6 +40,7 @@ def submitAndCheckNacks(looper, client, op, identifier,
                           client,
                           client.lastReqId,
                           contains, retryWait=1, timeout=15))
+
 
 def addUser(looper, creatorClient, creatorSigner, name):
     usigner = SimpleSigner()

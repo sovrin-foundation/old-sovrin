@@ -8,6 +8,7 @@ from ledger.immutable_store.serializers.compact_serializer import \
 from ledger.immutable_store.stores import TextFileStore
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.common.has_file_storage import HasFileStorage
+from sovrin.common.txn import getTxnOrderedFields
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_document_store import ClientDocumentStore
 
@@ -27,26 +28,17 @@ class ClientStorage(HasFileStorage, ClientDocumentStore):
         if not os.path.exists(self.clientDataLocation):
             os.makedirs(self.clientDataLocation)
         self.serializer = CompactSerializer()
-        self.txnFields = OrderedDict([
-            ("txnId", (str, str)),
-            ("txnTime", (str, float)),
-            ("type", (str, str)),
-            ("origin", (str, str)),
-            ("dest", (str, str)),
-            ("data", (str, str)),
-            ("role", (str, str)),
-            ("reference", (str, str)),
-        ])
+        self.txnFields = getTxnOrderedFields()
         self.transactionLog = TextFileStore(self.clientDataLocation, "transactions")
         config = getConfig()
-        ClientDocumentStore.__init__(self, OrientDbStore(user=config.GraphDB["user"],
-                                     password=config.GraphDB["password"],
+        ClientDocumentStore.__init__(self, OrientDbStore(user=config.OrientDB["user"],
+                                     password=config.OrientDB["password"],
                                      dbName=clientName,
                                      storageType=pyorient.STORAGE_TYPE_PLOCAL))
 
     def _serializeTxn(self, res):
         return self.serializer.serialize(res,
-                                         orderedFields=self.txnFields,
+                                         fields=self.txnFields,
                                          toBytes=False)
 
     def addToTransactionLog(self, reqId, txn):

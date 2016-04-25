@@ -7,7 +7,7 @@ import pyorient
 
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.types import Reply, Request, RequestAck, RequestNack
+from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
@@ -51,63 +51,27 @@ class Node(PlenumNode):
                          storage=storage,
                          config=self.config)
 
-    # async def prod(self, limit: int=None):
-    #     await self.setup()
-    #     return await super().prod(limit)
-    #
-    # async def setup(self):
-    #     if not self.setupComplete:
-    #         self.graphStorage = await self.getGraphStorage(self.name)
-    #         self.setupComplete = True
-    #
-    # async def getGraphStorage(self, name):
-    #     config = getConfig()
-    #     result = await self.ensureDBAvailable(config)
-    #     if result:
-    #         return self.createGraphStorage(name, config)
-    #
-    # @staticmethod
-    # async def ensureDBAvailable(config):
-    #     """
-    #     Starts the graph database if not already started.
-    #     """
-    #     if platform.system() == 'Linux':
-    #         # TODO If exit code is 256, throw an exception and abort.
-    #         # TODO Don't use os.system at all. The return codes are unreliable.
-    #         # TODO Try connecting to the orientdb instance to check if it's up.
-    #         if os.system("service orientdb status"):
-    #             return True
-    #         else:
-    #             # TODO
-    #             os.system("{} &".format(config.GraphDB["startScript"]))
-    #             return await untilTrue(os.system, "service orientdb status")
-    #     elif platform.system() == 'Windows':
-    #         pass  # TODO when a Windows machine is available
-
-    # @staticmethod
-    # def createGraphStorage(name, config):
-    #     return GraphStore(user=config.GraphDB["user"],
-    #                         password=config.GraphDB["password"],
-    #                         dbName=name,
-    #                         storageType=pyorient.STORAGE_TYPE_PLOCAL)
-
-    def getStorage(self):
+    def getPrimaryStorage(self):
         return LedgerChainStore(self.name, self.getDataLocation(), self.config)
 
     def getGraphStorage(self, name):
-        return GraphStore(user=self.config.GraphDB["user"],
-                          password=self.config.GraphDB["password"],
+        return GraphStore(user=self.config.OrientDB["user"],
+                          password=self.config.OrientDB["password"],
                           dbName=name,
                           storageType=pyorient.STORAGE_TYPE_PLOCAL)
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
-        if self.txnStore.size == 0:
+        if self.primaryStorage.size == 0:
             gt = genTxns or getGenesisTxns()
             for idx, txn in enumerate(gt):
-                reply = Reply(0, idx, txn)
+                txn.update({
+                    f.REQ_ID.nm: idx+1,
+                    f.IDENTIFIER.nm: txn.get(ORIGIN)
+                })
+                reply = Reply(txn)
                 asyncio.ensure_future(
-                    self.txnStore.append("", reply, txn[TXN_ID]))
+                    self.primaryStorage.append("", reply, txn[TXN_ID]))
                 if txn[TXN_TYPE] == ADD_NYM:
                     self.addNymToGraph(txn)
                 # Till now we just have ADD_NYM in genesis transaction.
@@ -211,12 +175,14 @@ class Node(PlenumNode):
             nym = request.operation[TARGET_NYM]
             txn = self.graphStorage.getAddNymTxn(nym)
             txnId = self.genTxnId(request.identifier, request.reqId)
-            result = {DATA: json.dumps(txn) if txn else None,
+            result = {f.IDENTIFIER.nm: request.identifier,
+                      f.REQ_ID.nm: request.reqId,
+                      DATA: json.dumps(txn) if txn else None,
                       TXN_ID: txnId,
                       TXN_TIME: time.time()*1000
                       }
             result.update(request.operation)
-            self.transmitToClient(Reply(self.viewNo, request.reqId, result), frm)
+            self.transmitToClient(Reply(result), frm)
         elif request.operation[TXN_TYPE] == GET_TXNS:
             nym = request.operation[TARGET_NYM]
             origin = request.operation[ORIGIN]
@@ -227,8 +193,10 @@ class Node(PlenumNode):
                 data = request.operation.get(DATA)
                 self.transmitToClient(RequestAck(request.reqId), frm)
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
-                txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.getAddAttributeTxnIds(origin)
-                result = self.txnStore.getRepliesForTxnIds(*txnIds, serialNo=data)
+                txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
+                    getAddAttributeTxnIds(origin)
+                result = self.primaryStorage.getRepliesForTxnIds(*txnIds,
+                                                                 serialNo=data)
                 lastTxn = max(result.keys()) if len(result) > 0 else 0
                 txns = list(result.values())
                 result = {
@@ -240,13 +208,16 @@ class Node(PlenumNode):
                     TXN_TIME: time.time() * 1000
                 }
                 result.update(request.operation)
-                self.transmitToClient(Reply(self.viewNo, request.reqId, result),
-                                      frm)
+                result.update({
+                    f.IDENTIFIER.nm: request.identifier,
+                    f.REQ_ID.nm: request.reqId,
+                })
+                self.transmitToClient(Reply(result), frm)
         else:
             await super().processRequest(request, frm)
 
     async def addToLedger(self, identifier, reply, txnId):
-        merkleInfo = await self.txnStore.append(
+        merkleInfo = await self.primaryStorage.append(
             identifier=identifier, reply=reply, txnId=txnId)
         return merkleInfo
 
@@ -255,27 +226,27 @@ class Node(PlenumNode):
         reply.result.update(merkleInfo)
         self.transmitToClient(reply, self.clientIdentifiers[identifier])
         serialNo = merkleInfo["serialNo"]
-        STH = merkleInfo["STH"]
-        auditInfo = merkleInfo["auditInfo"]
-        self.txnStore.addReplyForTxn(txnId, reply, identifier, reply.reqId,
-                                     serialNo, STH, auditInfo)
+        rootHash = merkleInfo["rootHash"]
+        auditPath = merkleInfo["auditPath"]
+        self.primaryStorage.addReplyForTxn(txnId, reply, identifier,
+                                           reply.result['reqId'], serialNo,
+                                           rootHash, auditPath)
 
     async def getReplyFor(self, identifier, reqId):
-        return self.txnStore.getReply(identifier, reqId)
+        return self.primaryStorage.getReply(identifier, reqId)
 
-    async def doCustomAction(self, viewNo: int, ppTime: float, req: Request) -> None:
+    async def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
 
-        :param viewNo: the view number (See glossary)
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        reply = self.generateReply(viewNo, ppTime, req)
+        reply = self.generateReply(ppTime, req)
         txnId = reply.result[TXN_ID]
         await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
 
-    def generateReply(self, viewNo: int, ppTime: float, req: Request):
+    def generateReply(self, ppTime: float, req: Request):
         operation = req.operation
         txnId = self.genTxnId(req.identifier, req.reqId)
         result = {TXN_ID: txnId, TXN_TIME: ppTime}
@@ -285,7 +256,7 @@ class Node(PlenumNode):
         #     # transaction schema or have some way to zero in on the DISCLOSE for
         #     # the attribute that is being looked for
         #     attrs = []
-        #     for txn in self.txnStore.getAllTxn().values():
+        #     for txn in self.primaryStorage.getAllTxn().values():
         #         if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
         #                 DISCLOSE:
         #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
@@ -293,6 +264,10 @@ class Node(PlenumNode):
         #         result[ATTRIBUTES] = attrs
         # TODO: Just for the time being. Remove ASAP
         result.update(operation)
+        result.update({
+            f.IDENTIFIER.nm: req.identifier,
+            f.REQ_ID.nm: req.reqId,
+        })
         if operation[TXN_TYPE] == ADD_NYM:
             self.addNymToGraph(result)
         elif operation[TXN_TYPE] == ADD_ATTR:
@@ -300,7 +275,5 @@ class Node(PlenumNode):
                                            to=operation[TARGET_NYM],
                                            data=operation[DATA],
                                            txnId=txnId)
-        return Reply(viewNo,
-                     req.reqId,
-                     result)
+        return Reply(result)
 

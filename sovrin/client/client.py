@@ -16,7 +16,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 
 from sovrin.client.client_storage import ClientStorage
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
-    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, TXN_TIME, REFERENCE, USER, ROLE, \
+    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
 from sovrin.persistence.graph_store import GraphStore
@@ -55,8 +55,8 @@ class Client(PlenumClient):
     def getGraphStorage(self, name):
         config = getConfig()
         return GraphStore(OrientDbStore(
-            user=config.GraphDB["user"],
-            password=config.GraphDB["password"],
+            user=config.OrientDB["user"],
+            password=config.OrientDB["password"],
             dbName=name,
             dbType=pyorient.DB_TYPE_GRAPH,
             storageType=pyorient.STORAGE_TYPE_PLOCAL))
@@ -109,7 +109,8 @@ class Client(PlenumClient):
         elif msg[OP_FIELD_NAME] == REQNACK:
             self.storage.addNack(msg, sender)
         elif msg[OP_FIELD_NAME] == REPLY:
-            result = msg['result']
+            result = msg[f.RESULT.nm]
+            reqId = msg[f.RESULT.nm][f.REQ_ID.nm]
             if self.autoDiscloseAttributes:
                 # TODO: This is just for now. As soon as the client finds out
                 # that the attribute is added it discloses it
@@ -122,12 +123,12 @@ class Client(PlenumClient):
                 #     self.attributeReqs[reqId] += (txnId, )
                 #     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
                 pass
-            replies = self.storage.addReply(msg['reqId'], sender, result)
+            replies = self.storage.addReply(reqId, sender, result)
             # TODO Should request be marked as consensed in the storage?
             # Might be inefficient to compute f on every reply
-            f = getMaxFailures(len(self.nodeReg))
-            if len(replies) == f + 1:
-                self.storage.requestConsensed(msg['reqId'])
+            fVal = getMaxFailures(len(self.nodeReg))
+            if len(replies) == fVal + 1:
+                self.storage.requestConsensed(reqId)
                 if result[TXN_TYPE] == ADD_NYM:
                     self.addNymToGraph(result)
                 elif result[TXN_TYPE] == ADD_ATTR:
@@ -166,7 +167,7 @@ class Client(PlenumClient):
                                         "attribute {}".format(ex))
 
                 if result[TXN_TYPE] in (ADD_NYM, ADD_ATTR):
-                    self.storage.addToTransactionLog(msg['reqId'], result)
+                    self.storage.addToTransactionLog(reqId, result)
         else:
             logger.debug("Invalid op message {}".format(msg))
 
@@ -191,7 +192,7 @@ class Client(PlenumClient):
     def getTxnById(self, txnId: str):
         for v in self.storage.getRepliesByTxnId(txnId):
             result = self.storage.serializer.deserialize(
-                v, orderedFields=self.storage.txnFields)
+                v, fields=self.storage.txnFields)
             return result
 
     def getTxnsByNym(self, nym: str):
@@ -205,7 +206,7 @@ class Client(PlenumClient):
             if len(replies) > f:
                 v = list(replies.values())[0]
                 result.append(self.storage.serializer.deserialize(
-                    v, orderedFields=self.storage.txnFields))
+                    v, fields=self.storage.txnFields))
         return result
 
     def hasMadeRequest(self, reqId: int):
