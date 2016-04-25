@@ -31,8 +31,10 @@ primaryStorage = None
 secondaryStorage = None
 
 OrientDB = {
-    "user": "root",
+    "user": "sovrin",
     "password": "password",
+    "host": "127.0.0.1",
+    "port": 2424,
     "startScript": "/opt/orientdb/bin/server.sh",
     "shutdownScript": "/opt/orientdb/bin/shutdown.sh"
 }
