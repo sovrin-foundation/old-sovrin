@@ -8,6 +8,7 @@ import pyorient
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
+from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
@@ -55,10 +56,10 @@ class Node(PlenumNode):
         return LedgerChainStore(self.name, self.getDataLocation(), self.config)
 
     def getGraphStorage(self, name):
-        return GraphStore(user=self.config.OrientDB["user"],
+        return GraphStore(OrientDbStore(user=self.config.OrientDB["user"],
                           password=self.config.OrientDB["password"],
                           dbName=name,
-                          storageType=pyorient.STORAGE_TYPE_PLOCAL)
+                          storageType=pyorient.STORAGE_TYPE_PLOCAL))
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):

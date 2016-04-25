@@ -352,6 +352,7 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
     looper.run(s.ensureConnectedToNodes())
     return s
 
+
 def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
     nym = targetSigner.verstr
     op = {
