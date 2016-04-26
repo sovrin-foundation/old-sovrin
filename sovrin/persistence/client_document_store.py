@@ -51,6 +51,18 @@ class ClientDocumentStore(PlenumClientDS):
         self.store.createUniqueIndexOnClass(REQ_DATA, "serialNo")
         self.store.createIndexOnClass(REQ_DATA, "consensed")
 
+    def getAttributeRequestForNym(self, nym, attrName, identifier=None):
+        whereClause = "attribute.{} = '{}' and attribute.name = '{}'". \
+            format(TARGET_NYM, nym, attrName)
+        if identifier:
+            whereClause += " and {} = '{}'".format(f.IDENTIFIER.nm, identifier)
+
+        cmd = "select from {} where {} order by {} desc limit 1". \
+            format(REQ_DATA, whereClause, TXN_TIME)
+
+        result = self.client.command(cmd)
+        return None if not result else result[0].oRecordData
+
     def getAllAttributeRequestsForNym(self, nym, identifier=None):
         whereClause = "attribute.{} = '{}'". \
             format(TARGET_NYM, nym)

@@ -15,6 +15,21 @@ from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
 
 
 @pytest.fixture(scope="module")
+def stewardSigner():
+    seed = b'is a pit a seed, or somepin else'
+    signer = SimpleSigner(seed=seed)
+    assert signer.verstr == 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='
+    return signer
+
+
+@pytest.fixture(scope="module")
+def sponsorSigner():
+    seed = b'sponsors are people too.........'
+    signer = SimpleSigner(seed=seed)
+    return signer
+
+
+@pytest.fixture(scope="module")
 def genesisTxns(stewardSigner):
     nym = stewardSigner.verstr
     return [{
@@ -63,14 +78,6 @@ def client1(client1Signer, looper, nodeSet, tdir, up):
 
 
 @pytest.fixture(scope="module")
-def stewardSigner():
-    seed = b'is a pit a seed, or somepin else'
-    signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='
-    return signer
-
-
-@pytest.fixture(scope="module")
 def steward(looper, nodeSet, tdir, up, stewardSigner):
     s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
     for node in nodeSet:
@@ -81,15 +88,9 @@ def steward(looper, nodeSet, tdir, up, stewardSigner):
 
 
 @pytest.fixture(scope="module")
-def sponsorSigner():
-    seed = b'sponsors are people too.........'
-    signer = SimpleSigner(seed=seed)
-    return signer
-
-
-@pytest.fixture(scope="module")
 def sponsor(looper, nodeSet, tdir, up, sponsorSigner):
     return clientFromSigner(sponsorSigner, looper, nodeSet, tdir)
+
 
 @pytest.fixture(scope="module")
 def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):

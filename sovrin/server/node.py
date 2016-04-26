@@ -8,6 +8,7 @@ import pyorient
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
+from plenum.common.util import getlogger
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
@@ -18,6 +19,9 @@ from sovrin.common.util import getConfig
 from sovrin.persistence.graph_store import GraphStore
 from sovrin.persistence.ledger_chain_store import LedgerChainStore
 from sovrin.server.client_authn import TxnBasedAuthNr
+
+
+logger = getlogger()
 
 
 # TODO Node storage should be a mixin of document storage and graph storage
@@ -65,14 +69,20 @@ class Node(PlenumNode):
     def addGenesisTxns(self, genTxns=None):
         if self.primaryStorage.size == 0:
             gt = genTxns or getGenesisTxns()
+            reqIds = {}
             for idx, txn in enumerate(gt):
+                identifier = txn.get(ORIGIN, "")
+                if identifier not in reqIds:
+                    reqIds[identifier] = 0
+                reqIds[identifier] += 1
                 txn.update({
-                    f.REQ_ID.nm: idx+1,
-                    f.IDENTIFIER.nm: txn.get(ORIGIN)
+                    f.REQ_ID.nm: reqIds[identifier],
+                    f.IDENTIFIER.nm: identifier
                 })
                 reply = Reply(txn)
                 asyncio.ensure_future(
-                    self.primaryStorage.append("", reply, txn[TXN_ID]))
+                    self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
+                                                 reply, txn[TXN_ID]))
                 if txn[TXN_TYPE] == ADD_NYM:
                     self.addNymToGraph(txn)
                 # Till now we just have ADD_NYM in genesis transaction.
@@ -225,7 +235,11 @@ class Node(PlenumNode):
     async def storeTxnAndSendToClient(self, identifier, reply, txnId):
         merkleInfo = await self.addToLedger(identifier, reply, txnId)
         reply.result.update(merkleInfo)
-        self.transmitToClient(reply, self.clientIdentifiers[identifier])
+        # TODO: In case of genesis transactions when no identifier is present
+        if identifier in self.clientIdentifiers:
+            self.transmitToClient(reply, self.clientIdentifiers[identifier])
+        else:
+            logger.debug("Adding genesis transaction")
         serialNo = merkleInfo["serialNo"]
         rootHash = merkleInfo["rootHash"]
         auditPath = merkleInfo["auditPath"]

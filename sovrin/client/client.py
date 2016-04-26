@@ -174,8 +174,7 @@ class Client(PlenumClient):
     def addNymToGraph(self, txn):
         if ROLE not in txn or txn[ROLE] == USER:
             if txn.get(ORIGIN) and not self.graphStorage.hasNym(txn.get(ORIGIN)):
-                # TODO: How to know whether ORIGIN is sponsor or steward
-                pass
+                logger.warn("While adding user, origin not found in the graph")
             self.graphStorage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
                                   txn.get(ORIGIN), reference=txn.get(REFERENCE))
         elif txn[ROLE] == SPONSOR:
@@ -190,7 +189,7 @@ class Client(PlenumClient):
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def getTxnById(self, txnId: str):
-        for v in self.storage.getRepliesByTxnId(txnId):
+        for v in self.storage.getRepliesByTxnId(txnId).values():
             result = self.storage.serializer.deserialize(
                 v, fields=self.storage.txnFields)
             return result
