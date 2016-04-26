@@ -20,6 +20,7 @@ if __name__ == "__main__":
         selfName = sys.argv[1]
         with Looper(debug=True) as looper:
             node = Node(selfName, nodeRegistry=None, basedirpath=keepDir)
+            node.addGenesisTxns()
             looper.add(node)
             looper.run()
 
