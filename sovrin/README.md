@@ -2,19 +2,19 @@ Refer https://www.digitalocean.com/community/tutorials/how-to-install-and-config
 
 ### Initializing Keep
 ```
-init_sovrin_raet_keep --name Alpha --seeds 111111111111111111111111111Alpha Alpha111111111111111111111111111 --force
+init_sovrin_raet_keep --name EvernymV1 --seeds 111111111111111111111111111Alpha Alpha111111111111111111111111111 --force
 ```
 
 ```
-init_sovrin_raet_keep --name Beta --seeds 1111111111111111111111111111Beta Beta1111111111111111111111111111 --force
+init_sovrin_raet_keep --name EvernymV2 --seeds 1111111111111111111111111111Beta Beta1111111111111111111111111111 --force
 ```
 
 ```
-init_sovrin_raet_keep --name Gamma --seeds 111111111111111111111111111Gamma Gamma111111111111111111111111111 --force
+init_sovrin_raet_keep --name WSECU --seeds 111111111111111111111111111Gamma Gamma111111111111111111111111111 --force
 ```
 
 ```
-init_sovrin_raet_keep --name Delta --seeds 111111111111111111111111111Delta Delta111111111111111111111111111 --force
+init_sovrin_raet_keep --name BIG --seeds 111111111111111111111111111Delta Delta111111111111111111111111111 --force
 ```
 
 ### Seeds used for generating clients
