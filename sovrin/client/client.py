@@ -4,7 +4,7 @@ from typing import Mapping, List, Any, Dict, Union, Tuple
 
 import base58
 import pyorient
-
+from pyorient import PyOrientCommandException, PyOrientORecordDuplicatedException
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA
@@ -140,7 +140,7 @@ class Client(PlenumClient):
                     if DATA in result and result[DATA]:
                         try:
                             self.addNymToGraph(json.loads(result[DATA]))
-                        except pyorient.PyOrientCommandException as ex:
+                        except PyOrientCommandException as ex:
                             logger.error("An exception was raised while adding "
                                          "nym {}".format(ex))
                 elif result[TXN_TYPE] == GET_TXNS:
@@ -149,18 +149,14 @@ class Client(PlenumClient):
                         self.storage.setLastTxnForIdentifier(result[ORIGIN], data[LAST_TXN])
                         for txn in data[TXNS]:
                             if txn[TXN_TYPE] == ADD_NYM:
-                                try:
-                                    self.addNymToGraph(txn)
-                                except pyorient.PyOrientCommandException as ex:
-                                    logger.error(
-                                        "An exception was raised while adding "
-                                        "nym {}".format(ex))
+                                self.addNymToGraph(txn)
                             elif txn[TXN_TYPE] == ADD_ATTR:
                                 try:
-                                    self.graphStorage.addAttribute(frm=txn[ORIGIN],
-                                                               to=txn[TARGET_NYM],
-                                                               data=txn[DATA],
-                                                               txnId=txn[TXN_ID])
+                                    self.graphStorage.addAttribute(
+                                        frm=txn[ORIGIN],
+                                        to=txn[TARGET_NYM],
+                                        data=txn[DATA],
+                                        txnId=txn[TXN_ID])
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
@@ -175,16 +171,29 @@ class Client(PlenumClient):
         if ROLE not in txn or txn[ROLE] == USER:
             if txn.get(ORIGIN) and not self.graphStorage.hasNym(txn.get(ORIGIN)):
                 logger.warn("While adding user, origin not found in the graph")
-            self.graphStorage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
+            try:
+                self.graphStorage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
                                   txn.get(ORIGIN), reference=txn.get(REFERENCE))
+            except (pyorient.PyOrientCommandException,
+                    pyorient.PyOrientORecordDuplicatedException) as ex:
+                logger.error(
+                    "An exception was raised while adding "
+                    "user {}".format(ex))
         elif txn[ROLE] == SPONSOR:
             # Since only a steward can add a sponsor, check if the steward
             # is present. If not then add the steward
             if txn.get(ORIGIN) and not self.graphStorage.hasSteward(txn.get(ORIGIN)):
                 # A better way is to oo a GET_NYM for the steward.
                 self.graphStorage.addSteward(None, txn.get(ORIGIN))
-            self.graphStorage.addSponsor(txn.get(TXN_ID), txn.get(TARGET_NYM),
-                                         txn.get(ORIGIN))
+            try:
+                self.graphStorage.addSponsor(txn.get(TXN_ID),
+                                             txn.get(TARGET_NYM),
+                                             txn.get(ORIGIN))
+            except (pyorient.PyOrientCommandException,
+                    pyorient.PyOrientORecordDuplicatedException) as ex:
+                logger.error(
+                    "An exception was raised while adding "
+                    "user {}".format(ex))
         else:
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 

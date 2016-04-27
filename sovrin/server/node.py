@@ -208,17 +208,17 @@ class Node(PlenumNode):
                     getAddAttributeTxnIds(origin)
                 result = self.primaryStorage.getRepliesForTxnIds(*txnIds,
                                                                  serialNo=data)
-                lastTxn = max(result.keys()) if len(result) > 0 else 0
+                lastTxn = str(max(result.keys())) if len(result) > 0 else data
                 txns = list(result.values())
                 result = {
-                    DATA: json.dumps({
-                        LAST_TXN: lastTxn,
-                        TXNS: txns
-                    }),
                     TXN_ID: self.genTxnId(request.identifier, request.reqId),
                     TXN_TIME: time.time() * 1000
                 }
                 result.update(request.operation)
+                result[DATA] = json.dumps({
+                    LAST_TXN: lastTxn,
+                    TXNS: txns
+                })
                 result.update({
                     f.IDENTIFIER.nm: request.identifier,
                     f.REQ_ID.nm: request.reqId,
@@ -291,4 +291,5 @@ class Node(PlenumNode):
                                            data=operation[DATA],
                                            txnId=txnId)
         return Reply(result)
+
 
