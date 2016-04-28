@@ -264,6 +264,8 @@ class Client(PlenumClient):
     def getAttributeForNym(self, nym, attrName, identifier=None):
         attributeReq = self.storage.getAttributeRequestForNym(nym, attrName,
                                                               identifier)
+        if attributeReq is None:
+            return None
         reply, error = self.replyIfConsensus(attributeReq[f.REQ_ID.nm])
         if reply is None:
             return None
