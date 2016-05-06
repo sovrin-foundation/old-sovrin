@@ -19,7 +19,7 @@ from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY
     DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
-from sovrin.persistence.graph_store import GraphStore
+from sovrin.persistence.identity_graph import IdentityGraph
 
 logger = getlogger()
 
@@ -43,7 +43,7 @@ class Client(PlenumClient):
         self.graphStorage = self.getGraphStorage(name)
         self.storage = self.getStorage(basedirpath)
         self.lastReqId = self.storage.getLastReqId()
-        # TODO: SHould i store values of attributes as non encrypted
+        # TODO: Should I store values of attributes as non encrypted
         # Dictionary of attribute requests
         # Key is request id and values are stored as tuple of 5 elements
         # identifier, toNym, secretKey, attribute name, txnId
@@ -54,7 +54,7 @@ class Client(PlenumClient):
 
     def getGraphStorage(self, name):
         config = getConfig()
-        return GraphStore(OrientDbStore(
+        return IdentityGraph(OrientDbStore(
             user=config.OrientDB["user"],
             password=config.OrientDB["password"],
             dbName=name,
@@ -124,11 +124,11 @@ class Client(PlenumClient):
                 #     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
                 pass
             replies = self.storage.addReply(reqId, sender, result)
-            # TODO Should request be marked as consensed in the storage?
+            # TODO Should request be marked as hasConsensus in the storage?
             # Might be inefficient to compute f on every reply
             fVal = getMaxFailures(len(self.nodeReg))
             if len(replies) == fVal + 1:
-                self.storage.requestConsensed(reqId)
+                self.storage.requestHasConsensus(reqId)
                 if result[TXN_TYPE] == ADD_NYM:
                     self.addNymToGraph(result)
                 elif result[TXN_TYPE] == ADD_ATTR:

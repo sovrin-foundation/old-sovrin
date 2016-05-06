@@ -1,5 +1,4 @@
 import os
-from collections import OrderedDict
 
 import pyorient
 
@@ -14,8 +13,6 @@ from sovrin.persistence.client_document_store import ClientDocumentStore
 
 
 # TODO Client storage should be a mixin of document storage and graph storage
-
-
 class ClientStorage(HasFileStorage, ClientDocumentStore):
 
     def __init__(self, clientName, baseDirPath=None):
@@ -31,10 +28,11 @@ class ClientStorage(HasFileStorage, ClientDocumentStore):
         self.txnFields = getTxnOrderedFields()
         self.transactionLog = TextFileStore(self.clientDataLocation, "transactions")
         config = getConfig()
-        ClientDocumentStore.__init__(self, OrientDbStore(user=config.OrientDB["user"],
-                                     password=config.OrientDB["password"],
-                                     dbName=clientName,
-                                     storageType=pyorient.STORAGE_TYPE_PLOCAL))
+        ClientDocumentStore.__init__(
+            self, OrientDbStore(user=config.OrientDB["user"],
+                                password=config.OrientDB["password"],
+                                dbName=clientName,
+                                storageType=pyorient.STORAGE_TYPE_PLOCAL))
 
     def _serializeTxn(self, res):
         return self.serializer.serialize(res,

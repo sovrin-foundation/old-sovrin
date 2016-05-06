@@ -13,8 +13,7 @@ from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE
 from sovrin.common.util import getSymmetricallyEncryptedVal
-from sovrin.test.helper import genConnectedTestClient, \
-    clientFromSigner, genTestClient, createNym, submitAndCheck
+from sovrin.test.helper import genTestClient, createNym, submitAndCheck
 
 
 logger = getlogger()

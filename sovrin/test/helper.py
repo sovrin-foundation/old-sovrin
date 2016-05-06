@@ -7,10 +7,12 @@ from typing import Iterable
 import shutil
 
 import pyorient
+from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, randomString, getlogger
+from plenum.persistence.orientdb_hash_store import OrientDbHashStore
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
@@ -28,7 +30,7 @@ from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID
 from sovrin.common.util import getConfig
-from sovrin.persistence.graph_store import GraphStore
+from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.server.node import Node
 
 
@@ -276,15 +278,6 @@ class TestNode(TempStorage, TestNodeCore, Node):
         # config = getConfig()
         # os.system(config.OrientDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
-
-    def getGraphStorage(self, name):
-        config = getConfig()
-        return GraphStore(OrientDbStore(
-            user=config.OrientDB["user"],
-            password=config.OrientDB["password"],
-            dbName=name,
-            dbType=pyorient.DB_TYPE_GRAPH,
-            storageType=pyorient.STORAGE_TYPE_MEMORY))
 
 
 class TestNodeSet(PlenumTestNodeSet):

@@ -45,11 +45,11 @@ class ClientDocumentStore(PlenumClientDS):
             "STH": "string",
             "auditPath": "embeddedlist string",
             "attribute": "embedded {}".format(ATTR_DATA),
-            "consensed": "boolean"
+            "hasConsensus": "boolean"
         })
         self.store.createUniqueIndexOnClass(REQ_DATA, TXN_ID)
         self.store.createUniqueIndexOnClass(REQ_DATA, "serialNo")
-        self.store.createIndexOnClass(REQ_DATA, "consensed")
+        self.store.createIndexOnClass(REQ_DATA, "hasConsensus")
 
     def getAttributeRequestForNym(self, nym, attrName, identifier=None):
         whereClause = "attribute.{} = '{}' and attribute.name = '{}'". \

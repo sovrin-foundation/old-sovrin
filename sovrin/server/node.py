@@ -5,9 +5,12 @@ from _sha256 import sha256
 
 import pyorient
 
+from plenum.persistence.orientdb_hash_store import OrientDbHashStore
+from sovrin.persistence.secondary_storage import SecondaryStorage
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
+from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
+    NODE_HASH_STORE_SUFFIX, NODE_SECONDARY_STORAGE_SUFFIX, NODE_TXN_STORE_SUFFIX
 from plenum.common.util import getlogger
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.node import Node as PlenumNode
@@ -16,15 +19,11 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, TXN_ID, \
     TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
-from sovrin.persistence.graph_store import GraphStore
-from sovrin.persistence.ledger_chain_store import LedgerChainStore
+from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.server.client_authn import TxnBasedAuthNr
-
 
 logger = getlogger()
 
-
-# TODO Node storage should be a mixin of document storage and graph storage
 
 class Node(PlenumNode):
 
@@ -40,10 +39,9 @@ class Node(PlenumNode):
                  opVerifiers=None,
                  storage=None,
                  config=None):
-
         self.config = config or getConfig()
+        self.hashStore = self.getHashStore(name)  # TODO code duplication.
         self.graphStorage = self.getGraphStorage(name)
-
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
                          clientAuthNr=clientAuthNr,
@@ -56,14 +54,11 @@ class Node(PlenumNode):
                          storage=storage,
                          config=self.config)
 
-    def getPrimaryStorage(self):
-        return LedgerChainStore(self.name, self.getDataLocation(), self.config)
+    def getSecondaryStorage(self):
+        return SecondaryStorage(self.graphStorage, self.primaryStorage)
 
     def getGraphStorage(self, name):
-        return GraphStore(OrientDbStore(user=self.config.OrientDB["user"],
-                          password=self.config.OrientDB["password"],
-                          dbName=name,
-                          storageType=pyorient.STORAGE_TYPE_PLOCAL))
+        return IdentityGraph(self.hashStore.store)
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
@@ -145,7 +140,7 @@ class Node(PlenumNode):
         op = request.operation
         typ = op[TXN_TYPE]
 
-        s = self.graphStorage  # type: GraphStore
+        s = self.graphStorage  # type: IdentityGraph
 
         origin = request.identifier
         originRole = s.getRole(origin)
@@ -206,12 +201,14 @@ class Node(PlenumNode):
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)
-                result = self.primaryStorage.getRepliesForTxnIds(*txnIds,
-                                                                 serialNo=data)
-                lastTxn = str(max(result.keys())) if len(result) > 0 else data
+                result = self.secondaryStorage.getRepliesForTxnIds(
+                    *txnIds, serialNo=data)
+                lastTxn = str(max(result.keys())) if len(result) > 0 \
+                    else data
                 txns = list(result.values())
                 result = {
-                    TXN_ID: self.genTxnId(request.identifier, request.reqId),
+                    TXN_ID: self.genTxnId(
+                        request.identifier, request.reqId),
                     TXN_TIME: time.time() * 1000
                 }
                 result.update(request.operation)
@@ -247,8 +244,9 @@ class Node(PlenumNode):
                                            reply.result['reqId'], serialNo,
                                            rootHash, auditPath)
 
-    async def getReplyFor(self, identifier, reqId):
-        return self.primaryStorage.getReply(identifier, reqId)
+    async def getReplyFor(self, request):
+        result = await self.secondaryStorage.getReply(request.identifier, request.reqId, type=request.operation[TXN_TYPE])
+        return Reply(result) if result else None
 
     async def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
