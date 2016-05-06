@@ -23,10 +23,12 @@ TxnVector = NamedTuple("TxnVector", [
     ("key", Optional[bytes])])
 
 # TODO: Think of a better name for `b58`
-# Cryptonym = NamedTuple("Cryptonym", [("b58", str), ("privateKey", Privateer), ("publicKey", Publican)])
+# Cryptonym = NamedTuple("Cryptonym", [("b58", str), ("privateKey", Privateer),
+# ("publicKey", Publican)])
 
 
-# Will need this when presenting attributes to users build from the wallet's completed transaction list
+# Will need this when presenting attributes to users build from the wallet's
+# completed transaction list
 class Attribute:
     def __init__(self, name: str, value: str, *txns: TxnVector):
         self.name = name
@@ -65,7 +67,8 @@ class Wallet:
     def __init__(self, client: Union[Client, ClientProvider]=None, rootSeed=None):
         self._rootSeed = rootSeed       # type: PrivateKey
         self.i = 0                      # type: int
-        # TODO Need to support multi value attributes, like multiple emails, phone numbers etc.
+        # TODO Need to support multi value attributes, like multiple emails,
+        # phone numbers etc.
         # TODO Probably need to know from which sponsor the attributes came from?
         self.attributeEncKeys = {}              # type: Dict[str, str]
         self.pendingTxns = deque()              # type: deque[Dict[str, Any]]
@@ -76,7 +79,8 @@ class Wallet:
             self.client.signers = self.signers
             self.client.defaultIdentifier = None
 
-        # TODO this is a bit messy; it steps on top of client's signers. Also, the default SimpleSigner doesn't need to be created.
+        # TODO this is a bit messy; it steps on top of client's signers. Also,
+            # the default SimpleSigner doesn't need to be created.
 
     @staticmethod
     def decrypt(ec: EncryptedWallet, key: bytes) -> 'Wallet':
@@ -94,7 +98,8 @@ class Wallet:
         raw = crypto_secretbox(byts, nonce, key)
         return EncryptedWallet(raw, nonce)
 
-    # TODO Should this also move to the user wallet? Or would the agent have attributes too?
+    # TODO Should this also move to the user wallet? Or would the agent have
+    # attributes too?
     # TODO Find a better way of adding an attribute and managing keys
     def addAttribute(self,
                      name: str,
@@ -115,7 +120,8 @@ class Wallet:
         if req:
             return req
 
-    # TODO Remove the limitation of sharing only those attributes that are there on the blockchain
+    # TODO Remove the limitation of sharing only those attributes that are there
+    #  on the blockchain
     def shareAttribute(self, name: str, shareWith: Cryptonym, commit: bool=False):
         # Getting the attribute only if its already on the blockcahin
         attr = self.getAttribute(name, synced=True)
@@ -152,14 +158,19 @@ class Wallet:
         return self._generateCryptonym(self.i)
 
     def _generateCryptonym(self, i) -> Cryptonym:
-        # TODO need to clear system memory of private keys, including the newly generated private key
-        # TODO Need to have a wallet locking mechanism. Can't keep the wallet unlocked for long periods of time.
-        # TODO Double locking mechanism? Like one key for general purpose, and another for accessing private keys?
-        # TODO Perhaps an encrypted wallet could show the names of attributes, and how many attributes, and if any are pending
+        # TODO need to clear system memory of private keys, including the newly
+        # generated private key
+        # TODO Need to have a wallet locking mechanism. Can't keep the wallet
+        # unlocked for long periods of time.
+        # TODO Double locking mechanism? Like one key for general purpose, and
+        # another for accessing private keys?
+        # TODO Perhaps an encrypted wallet could show the names of attributes,
+        # and how many attributes, and if any are pending
         ss = SimpleSigner(identifier=None, seed=self._getKey(i))
         nym = ss.verstr
         ss._identifier = nym
-        # TODO this is weird; do we need to store the identifier in SimpleSigner itself?
+        # TODO this is weird; do we need to store the identifier in SimpleSigner
+        #  itself?
         self.signers[nym] = ss
         return nym
 
@@ -216,11 +227,13 @@ class Wallet:
         """
         Checks if attribute is present in the wallet
         @param attrName: Name of the attribute
-        @param synced: If true then checks whether the transaction for the attribute has been written to the
-        blockchain. Looks in the `completedTxns` list and returns True if found
-        If false then checks whether the transaction for the attribute has not been written to the blockchain.
-        Looks in the `pendingTxns` list and returns True if found
-        If None then checks in both `pendingTxns` and `completedTxns` and if found in either return true
+        @param synced: If true then checks whether the transaction for the
+        attribute has been written to the blockchain. Looks in the
+        `completedTxns` list and returns True if found. If false then checks
+        whether the transaction for the attribute has not been written to the
+        blockchain. Looks in the `pendingTxns` list and returns True if found
+        If None then checks in both `pendingTxns` and `completedTxns` and if
+        found in either return true
         @return:
         """
         # txnCollection = self.completedTxns if synced else self.pendingTxns if synced is not None \
