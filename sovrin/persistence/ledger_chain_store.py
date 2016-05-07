@@ -3,10 +3,10 @@
 #
 # import pyorient
 #
-# from ledger.immutable_store.ledger import Ledger
+# from ledger.ledger import Ledger
 #
-# from ledger.immutable_store.merkle import CompactMerkleTree
-# from ledger.immutable_store.serializers.compact_serializer import \
+# from ledger.merkle import CompactMerkleTree
+# from ledger.serializers.compact_serializer import \
 #     CompactSerializer
 # from plenum.common.types import f
 #

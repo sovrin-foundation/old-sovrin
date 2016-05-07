@@ -1,7 +1,7 @@
 import json
 from typing import Dict
 
-from ledger.immutable_store.store import F
+from ledger.util import F
 from plenum.common.txn import TXN_TYPE, TXN_DATA
 from plenum.common.types import f
 from plenum.common.util import getlogger
@@ -84,7 +84,7 @@ class IdentityGraph(OrientDbGraphStore):
             TXN_TYPE: "string",
             f.REQ_ID.nm: "integer",
             f.IDENTIFIER.nm: "string",
-            F.serialNo.name: "string",
+            F.seqNo.name: "string",
         }
         properties.update(defaultProperties)
         self.createUniqueTxnIdEdgeClass(className, properties)
@@ -346,12 +346,12 @@ class IdentityGraph(OrientDbGraphStore):
         return None if not result \
             else json.loads(result[0].oRecordData['reply'])
 
-    def getRepliesForTxnIds(self, *txnIds, serialNo=None):
+    def getRepliesForTxnIds(self, *txnIds, seqNo=None):
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
         cmd = "select from {} where {} in [{}]". \
             format(TXN_DATA, TXN_ID, txnIds)
-        if serialNo:
-            cmd += " and serialNo > {}".format(serialNo)
+        if seqNo:
+            cmd += " and seqNo > {}".format(seqNo)
         result = self.client.command(cmd)
-        return {r.oRecordData["serialNo"]: json.loads(r.oRecordData)
+        return {r.oRecordData["seqNo"]: json.loads(r.oRecordData)
                 for r in result}

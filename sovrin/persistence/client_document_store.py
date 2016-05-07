@@ -41,14 +41,14 @@ class ClientDocumentStore(PlenumClientDS):
             TXN_TYPE: "string",
             TXN_ID: "string",
             TXN_TIME: "datetime",
-            "serialNo": "long",
+            "seqNo": "long",
             "STH": "string",
             "auditPath": "embeddedlist string",
             "attribute": "embedded {}".format(ATTR_DATA),
             "hasConsensus": "boolean"
         })
         self.store.createUniqueIndexOnClass(REQ_DATA, TXN_ID)
-        self.store.createUniqueIndexOnClass(REQ_DATA, "serialNo")
+        self.store.createUniqueIndexOnClass(REQ_DATA, "seqNo")
         self.store.createIndexOnClass(REQ_DATA, "hasConsensus")
 
     def getAttributeRequestForNym(self, nym, attrName, identifier=None):

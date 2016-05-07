@@ -1,4 +1,4 @@
-from ledger.immutable_store.store import F
+from ledger.util import F
 from plenum.common.txn import TXN_TYPE
 from plenum.common.types import Reply
 from plenum.persistence.secondary_storage import SecondaryStorage as PlenumSS
@@ -9,22 +9,22 @@ class SecondaryStorage(PlenumSS):
 
     async def getReply(self, identifier, reqId, **kwargs):
         txn = self._txnStore.getTxn(identifier, reqId, kwargs)
-        serial_no = txn.serialNo
+        seqNo = txn.seqNo
         tree = self._primaryStorage.tree
-        rootHash = tree.merkle_tree_hash(serial_no)
-        auditPath = tree.inclusion_proof(0, serial_no)
+        rootHash = tree.merkle_tree_hash(seqNo)
+        auditPath = tree.inclusion_proof(0, seqNo)
         result = txn.update({
             F.rootHash.name: rootHash,
             F.auditPath.name: auditPath
         })
         return Reply(result)
 
-    def getReplies(self, *txnIds, serialNo=None):
-        txnData = self._txnStore.getRepliesForTxnIds(*txnIds, serialNo)
+    def getReplies(self, *txnIds, seqNo=None):
+        txnData = self._txnStore.getRepliesForTxnIds(*txnIds, seqNo)
         tree = self._primaryStorage.tree
         for seqNo in txnData:
-            rootHash = tree.merkle_tree_hash(serialNo)
-            auditPath = tree.inclusion_proof(0, serialNo)
+            rootHash = tree.merkle_tree_hash(seqNo)
+            auditPath = tree.inclusion_proof(0, seqNo)
             merkleProof = {
                 F.rootHash.name: rootHash,
                 F.auditPath.name: auditPath

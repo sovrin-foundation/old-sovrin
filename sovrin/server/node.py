@@ -202,7 +202,7 @@ class Node(PlenumNode):
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)
                 result = self.secondaryStorage.getRepliesForTxnIds(
-                    *txnIds, serialNo=data)
+                    *txnIds, seqNo=data)
                 lastTxn = str(max(result.keys())) if len(result) > 0 \
                     else data
                 txns = list(result.values())
@@ -237,11 +237,11 @@ class Node(PlenumNode):
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
             logger.debug("Adding genesis transaction")
-        serialNo = merkleInfo["serialNo"]
+        seqNo = merkleInfo["seqNo"]
         rootHash = merkleInfo["rootHash"]
         auditPath = merkleInfo["auditPath"]
         self.primaryStorage.addReplyForTxn(txnId, reply, identifier,
-                                           reply.result['reqId'], serialNo,
+                                           reply.result['reqId'], seqNo,
                                            rootHash, auditPath)
 
     async def getReplyFor(self, request):

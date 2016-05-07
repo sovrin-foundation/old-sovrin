@@ -1,12 +1,12 @@
 import os
 
 import pyorient
-
-from ledger.immutable_store.serializers.compact_serializer import \
+from ledger.serializers.compact_serializer import \
     CompactSerializer
-from ledger.immutable_store.stores import TextFileStore
-from plenum.persistence.orientdb_store import OrientDbStore
+from ledger.stores.text_file_store import TextFileStore
 from plenum.common.has_file_storage import HasFileStorage
+from plenum.persistence.orientdb_store import OrientDbStore
+
 from sovrin.common.txn import getTxnOrderedFields
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_document_store import ClientDocumentStore
