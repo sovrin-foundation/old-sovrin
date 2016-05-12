@@ -88,7 +88,7 @@ def steward(looper, nodeSet, tdir, up, stewardSigner):
 
 
 @pytest.fixture(scope="module")
-def sponsor(looper, nodeSet, tdir, up, sponsorSigner):
+def sponsor(looper, nodeSet, tdir, up, steward, sponsorSigner):
     return clientFromSigner(sponsorSigner, looper, nodeSet, tdir)
 
 

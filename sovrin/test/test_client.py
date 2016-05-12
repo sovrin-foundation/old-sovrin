@@ -53,12 +53,6 @@ def updatedSteward(steward):
 
 
 @pytest.fixture(scope="module")
-def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
-    return sponsorSigner
-
-
-@pytest.fixture(scope="module")
 def userSignerA(genned, sponsor, sponsorSigner, looper, addedSponsor):
     return addUser(looper, sponsor, sponsorSigner, 'userA')
 

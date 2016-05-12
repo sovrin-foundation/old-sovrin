@@ -5,14 +5,10 @@ from _sha256 import sha256
 
 import pyorient
 
-from plenum.persistence.orientdb_hash_store import OrientDbHashStore
-from sovrin.persistence.secondary_storage import SecondaryStorage
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
-    NODE_HASH_STORE_SUFFIX, NODE_SECONDARY_STORAGE_SUFFIX, NODE_TXN_STORE_SUFFIX
+from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
 from plenum.common.util import getlogger
-from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
@@ -20,6 +16,7 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph
+from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
 
 logger = getlogger()
@@ -40,7 +37,7 @@ class Node(PlenumNode):
                  storage=None,
                  config=None):
         self.config = config or getConfig()
-        self.hashStore = self.getHashStore(name)  # TODO code duplication.
+        # self.hashStore = self.getHashStore(name)  # TODO delete this line.
         self.graphStorage = self.getGraphStorage(name)
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -58,7 +55,8 @@ class Node(PlenumNode):
         return SecondaryStorage(self.graphStorage, self.primaryStorage)
 
     def getGraphStorage(self, name):
-        return IdentityGraph(self.hashStore.store)
+        return IdentityGraph(self._getOrientDbStore(name,
+                                                    pyorient.DB_TYPE_GRAPH))
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
@@ -201,7 +199,7 @@ class Node(PlenumNode):
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)
-                result = self.secondaryStorage.getRepliesForTxnIds(
+                result = self.secondaryStorage.getReplies(
                     *txnIds, seqNo=data)
                 lastTxn = str(max(result.keys())) if len(result) > 0 \
                     else data
@@ -237,12 +235,12 @@ class Node(PlenumNode):
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
             logger.debug("Adding genesis transaction")
-        seqNo = merkleInfo["seqNo"]
-        rootHash = merkleInfo["rootHash"]
-        auditPath = merkleInfo["auditPath"]
-        self.primaryStorage.addReplyForTxn(txnId, reply, identifier,
-                                           reply.result['reqId'], seqNo,
-                                           rootHash, auditPath)
+        # seqNo = merkleInfo["seqNo"]
+        # rootHash = merkleInfo["rootHash"]
+        # auditPath = merkleInfo["auditPath"]
+        # self.primaryStorage.addReplyForTxn(txnId, reply, identifier,
+        #                                    reply.result['reqId'], seqNo,
+        #                                    rootHash, auditPath)
 
     async def getReplyFor(self, request):
         result = await self.secondaryStorage.getReply(request.identifier, request.reqId, type=request.operation[TXN_TYPE])

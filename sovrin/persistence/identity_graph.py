@@ -1,5 +1,5 @@
 import json
-from typing import Dict
+from typing import Dict, Sequence
 
 from ledger.util import F
 from plenum.common.txn import TXN_TYPE, TXN_DATA
@@ -242,7 +242,6 @@ class IdentityGraph(OrientDbGraphStore):
 
     def addAttribute(self, frm, to, data, txnId):
         attrVertex = self.createVertex(Vertices.Attribute, data=data)
-
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                         frm)
         kwargs = {
@@ -250,7 +249,6 @@ class IdentityGraph(OrientDbGraphStore):
             TXN_ID: txnId
         }
         self.createEdge(Edges.AddsAttribute, frm, attrVertex._rid, **kwargs)
-
         # to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, to)
         to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                        to)
@@ -349,7 +347,7 @@ class IdentityGraph(OrientDbGraphStore):
     def getRepliesForTxnIds(self, *txnIds, seqNo=None):
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
         cmd = "select from {} where {} in [{}]". \
-            format(TXN_DATA, TXN_ID, txnIds)
+            format(Edges.AddsNym, TXN_ID, txnIds)  # TODO Hardcoded
         if seqNo:
             cmd += " and seqNo > {}".format(seqNo)
         result = self.client.command(cmd)

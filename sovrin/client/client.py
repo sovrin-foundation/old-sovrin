@@ -1,25 +1,25 @@
 import json
 from base64 import b64decode
-from typing import Mapping, List, Any, Dict, Union, Tuple
+from typing import Mapping, List, Dict, Union, Tuple
 
 import base58
 import pyorient
-from pyorient import PyOrientCommandException, PyOrientORecordDuplicatedException
+from pyorient import PyOrientCommandException
+
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
-from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.startable import Status
 from plenum.common.txn import REQACK, REPLY, REQNACK
+from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
-
-from sovrin.client.client_storage import ClientStorage
+from sovrin.client.client_storage import ClientStorage, REQ_DATA
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
-from sovrin.persistence.identity_graph import IdentityGraph
+from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
 
 logger = getlogger()
 
@@ -40,7 +40,6 @@ class Client(PlenumClient):
                          signer,
                          signers,
                          basedirpath)
-        self.graphStorage = self.getGraphStorage(name)
         self.storage = self.getStorage(basedirpath)
         self.lastReqId = self.storage.getLastReqId()
         # TODO: Should I store values of attributes as non encrypted
@@ -66,9 +65,15 @@ class Client(PlenumClient):
         pass
 
     def getStorage(self, baseDirPath=None):
-        return ClientStorage(self.name, baseDirPath)
+        config = getConfig()
+        store = OrientDbStore(user=config.OrientDB["user"],
+                              password=config.OrientDB["password"],
+                              dbName=self.name,
+                              storageType=pyorient.STORAGE_TYPE_PLOCAL)
+        return ClientStorage(self.name, baseDirPath, store)
 
-    def submit(self, *operations: Mapping, identifier: str=None) -> List[Request]:
+    def submit(self, *operations: Mapping, identifier: str=None) -> \
+            List[Request]:
         keys = []
         attributeNames = []
         attributeVals = []
@@ -96,7 +101,7 @@ class Client(PlenumClient):
                     "value": attributeVals.pop(0),
                     "skey": keys.pop(0)
                 }
-                self.storage.addAttribute(r.reqId, attrData)
+                self.storage.addClientAttribute(r.reqId, attrData)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -128,11 +133,11 @@ class Client(PlenumClient):
             # Might be inefficient to compute f on every reply
             fVal = getMaxFailures(len(self.nodeReg))
             if len(replies) == fVal + 1:
-                self.storage.requestHasConsensus(reqId)
+                self.storage.setConsensus(reqId)
                 if result[TXN_TYPE] == ADD_NYM:
                     self.addNymToGraph(result)
                 elif result[TXN_TYPE] == ADD_ATTR:
-                    self.graphStorage.addAttribute(frm=result[ORIGIN],
+                    self.storage.addAttribute(frm=result[ORIGIN],
                                                    to=result[TARGET_NYM],
                                                    data=result[DATA],
                                                    txnId=result[TXN_ID])
@@ -152,7 +157,7 @@ class Client(PlenumClient):
                                 self.addNymToGraph(txn)
                             elif txn[TXN_TYPE] == ADD_ATTR:
                                 try:
-                                    self.graphStorage.addAttribute(
+                                    self.storage.addAttribute(
                                         frm=txn[ORIGIN],
                                         to=txn[TARGET_NYM],
                                         data=txn[DATA],
@@ -169,10 +174,10 @@ class Client(PlenumClient):
 
     def addNymToGraph(self, txn):
         if ROLE not in txn or txn[ROLE] == USER:
-            if txn.get(ORIGIN) and not self.graphStorage.hasNym(txn.get(ORIGIN)):
+            if txn.get(ORIGIN) and not self.storage.hasNym(txn.get(ORIGIN)):
                 logger.warn("While adding user, origin not found in the graph")
             try:
-                self.graphStorage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
+                self.storage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
                                   txn.get(ORIGIN), reference=txn.get(REFERENCE))
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
@@ -182,11 +187,11 @@ class Client(PlenumClient):
         elif txn[ROLE] == SPONSOR:
             # Since only a steward can add a sponsor, check if the steward
             # is present. If not then add the steward
-            if txn.get(ORIGIN) and not self.graphStorage.hasSteward(txn.get(ORIGIN)):
+            if txn.get(ORIGIN) and not self.storage.hasSteward(txn.get(ORIGIN)):
                 # A better way is to oo a GET_NYM for the steward.
-                self.graphStorage.addSteward(None, txn.get(ORIGIN))
+                self.storage.addSteward(None, txn.get(ORIGIN))
             try:
-                self.graphStorage.addSponsor(txn.get(TXN_ID),
+                self.storage.addSponsor(txn.get(TXN_ID),
                                              txn.get(TARGET_NYM),
                                              txn.get(ORIGIN))
             except (pyorient.PyOrientCommandException,
@@ -198,24 +203,23 @@ class Client(PlenumClient):
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def getTxnById(self, txnId: str):
-        for v in self.storage.getRepliesByTxnId(txnId).values():
-            result = self.storage.serializer.deserialize(
-                v, fields=self.storage.txnFields)
-            return result
+        serTxn = list(self.storage.getRepliesForTxnIds(txnId).
+                      values())[0]
+        return self.deserializeTxn(serTxn)
+
+    def deserializeTxn(self, serTxn):
+        self.storage.serializer.deserialize(serTxn,
+                                            fields=self.storage.txnFields)
 
     def getTxnsByNym(self, nym: str):
         # TODO Implement this
         pass
 
     def getTxnsByType(self, txnType):
-        result = []
-        f = getMaxFailures(len(self.nodeReg))
-        for replies in self.storage.getRepliesByTxnType(txnType):
-            if len(replies) > f:
-                v = list(replies.values())[0]
-                result.append(self.storage.serializer.deserialize(
-                    v, fields=self.storage.txnFields))
-        return result
+        edgeClass = getEdgeFromType(txnType)
+        cmd = "select from {}".format(edgeClass)
+        result = self.storage.client.command(cmd)
+        return result and [r.oRecordData for r in result]
 
     def hasMadeRequest(self, reqId: int):
         return self.storage.hasRequest(reqId)
@@ -274,8 +278,7 @@ class Client(PlenumClient):
                                           attributeReq['attribute']['skey'])
 
     def getAllAttributesForNym(self, nym, identifier=None):
-        attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,
-                                                                   identifier)
+        attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,identifier)
         attributes = []
         for req in attributeReqs.values():
             reply, error = self.replyIfConsensus(req[f.REQ_ID.nm])
@@ -283,7 +286,6 @@ class Client(PlenumClient):
                 attr = self._getDecryptedData(reply[DATA],
                                               req['attribute']['skey'])
                 attributes.append(attr)
-
         return attributes
 
     def doGetNym(self, nym, identifier=None):
@@ -296,7 +298,7 @@ class Client(PlenumClient):
         self.submit(op, identifier=identifier)
 
     def hasNym(self, nym):
-        return self.graphStorage.hasNym(nym)
+        return self.storage.hasNym(nym)
 
     def isRequestSuccessful(self, reqId):
         acks = self.storage.getAcks(reqId)
@@ -312,7 +314,7 @@ class Client(PlenumClient):
 
     def requestPendingTxns(self):
         for identifier in self.signers:
-            lastTxn = self.storage.getValueForIdentifier(identifier)
+            lastTxn = self.storage.getLastTxnForIdentifier(identifier)
             op = {
                 ORIGIN: identifier,
                 TARGET_NYM: identifier,

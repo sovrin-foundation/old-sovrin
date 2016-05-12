@@ -8,7 +8,10 @@ from sovrin.common.txn import ADD_NYM
 class SecondaryStorage(PlenumSS):
 
     async def getReply(self, identifier, reqId, **kwargs):
-        txn = self._txnStore.getTxn(identifier, reqId, kwargs)
+        txn = self._txnStore.getTxn(identifier, reqId, **kwargs)
+        return txn and self._addMerkleInfo(txn)
+
+    def _addMerkleInfo(self, txn):
         seqNo = txn.seqNo
         tree = self._primaryStorage.tree
         rootHash = tree.merkle_tree_hash(seqNo)

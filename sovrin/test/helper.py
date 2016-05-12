@@ -1,38 +1,31 @@
 import inspect
 import os
+import shutil
 import tempfile
 from contextlib import ExitStack
 from typing import Iterable
 
-import shutil
-
 import pyorient
-from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
-from plenum.common.util import getMaxFailures, runall, randomString, getlogger
-from plenum.persistence.orientdb_hash_store import OrientDbHashStore
+from plenum.common.util import getMaxFailures, runall, getlogger, getConfig
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkNodesConnected, \
     checkNodesAreReady, checkSufficientRepliesRecvd, checkLastClientReqForNode, \
-    buildCompletedTxnFromReply, genHa, TestStack, \
+    buildCompletedTxnFromReply, TestStack, \
     TestNodeCore, StackedTester
 from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as genPlenumTestClientProvider
 from plenum.test.testable import Spyable
-
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID
-from sovrin.common.util import getConfig
-from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.server.node import Node
-
 
 logger = getlogger()
 
@@ -268,6 +261,26 @@ class TestNode(TempStorage, TestNodeCore, Node):
         Node.__init__(self, *args, **kwargs)
         TestNodeCore.__init__(self)
 
+    # TODO This method is almost the duplicate of plenum's TestNode.
+    def _getOrientDbStore(self, name, dbType):
+        if hasattr(self, '_orientDbStore'):
+            return self._orientDbStore
+        client = pyorient.OrientDB(host="localhost", port=2424)
+        client.connect(user=self.config.OrientDB['user'],
+                       password=self.config.OrientDB['password'])
+        try:
+            if client.db_exists(name, pyorient.STORAGE_TYPE_MEMORY):
+                client.db_drop(name, type=pyorient.STORAGE_TYPE_MEMORY)
+        # This is to avoid a known bug in OrientDb.
+        except pyorient.exceptions.PyOrientDatabaseException:
+            client.db_drop(name, type=pyorient.STORAGE_TYPE_MEMORY)
+        self._orientDbStore = OrientDbStore(user=self.config.OrientDB["user"],
+                             password=self.config.OrientDB["password"],
+                             dbName=name,
+                             dbType=dbType,
+                             storageType=pyorient.STORAGE_TYPE_MEMORY)
+        return self._orientDbStore
+
     def onStopping(self, *args, **kwargs):
         self.cleanupDataLocation()
         try:
@@ -295,7 +308,14 @@ class TestNodeSet(PlenumTestNodeSet):
 
 
 class TestClientStorage(TempStorage, ClientStorage):
-    pass
+    def __init__(self, name, baseDir):
+        config = getConfig()
+        store = OrientDbStore(user=config.OrientDB["user"],
+                              password=config.OrientDB["password"],
+                              dbName=name,
+                              storageType=pyorient.STORAGE_TYPE_MEMORY)
+        ClientStorage.__init__(self, name, baseDir, store)
+        TempStorage.__init__(self)
 
 
 @Spyable(methods=[Client.handleOneNodeMsg])
@@ -360,9 +380,7 @@ def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
 
 def submitAndCheck(looper, client, op, identifier):
     txnsBefore = client.getTxnsByType(op[TXN_TYPE])
-
     client.submit(op, identifier=identifier)
-
     txnsAfter = []
 
     def checkTxnCountAdvanced():
@@ -372,7 +390,6 @@ def submitAndCheck(looper, client, op, identifier):
         assert len(txnsAfter) > len(txnsBefore)
 
     looper.run(eventually(checkTxnCountAdvanced, retryWait=1, timeout=15))
-
     txnIdsBefore = [txn[TXN_ID] for txn in txnsBefore]
     txnIdsAfter = [txn[TXN_ID] for txn in txnsAfter]
     logger.debug("old and new txnids {} {}".format(txnIdsBefore, txnIdsAfter))
