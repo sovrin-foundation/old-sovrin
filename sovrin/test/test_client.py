@@ -53,7 +53,7 @@ def updatedSteward(steward):
 
 
 @pytest.fixture(scope="module")
-def userSignerA(genned, sponsor, sponsorSigner, looper, addedSponsor):
+def userSignerA(genned, addedSponsor, sponsorSigner, looper, sponsor):
     return addUser(looper, sponsor, sponsorSigner, 'userA')
 
 
@@ -173,7 +173,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir, nonSponsor):
                         contains="InvalidIdentifier")
 
 
-def testSponsorCreatesAUser(userSignerA):
+def testSponsorCreatesAUser(updatedSteward, userSignerA):
     pass
 
 

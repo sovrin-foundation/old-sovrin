@@ -351,5 +351,5 @@ class IdentityGraph(OrientDbGraphStore):
         if seqNo:
             cmd += " and seqNo > {}".format(seqNo)
         result = self.client.command(cmd)
-        return {r.oRecordData["seqNo"]: json.loads(r.oRecordData)
+        return {r.oRecordData["seqNo"]: json.dumps(r.oRecordData)
                 for r in result}

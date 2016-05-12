@@ -89,7 +89,12 @@ def steward(looper, nodeSet, tdir, up, stewardSigner):
 
 @pytest.fixture(scope="module")
 def sponsor(looper, nodeSet, tdir, up, steward, sponsorSigner):
-    return clientFromSigner(sponsorSigner, looper, nodeSet, tdir)
+    s = genTestClient(nodeSet, signer=sponsorSigner, tmpdir=tdir)
+    for node in nodeSet:
+        node.whitelistClient(s.name)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    return s
 
 
 @pytest.fixture(scope="module")
