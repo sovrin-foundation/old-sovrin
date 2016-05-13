@@ -24,16 +24,19 @@ class SecondaryStorage(PlenumSS):
 
     def getReplies(self, *txnIds, seqNo=None):
         txnData = self._txnStore.getRepliesForTxnIds(*txnIds, seqNo)
-        tree = self._primaryStorage.tree
-        for seqNo in txnData:
-            rootHash = tree.merkle_tree_hash(seqNo)
-            auditPath = tree.inclusion_proof(0, seqNo)
-            merkleProof = {
-                F.rootHash.name: rootHash,
-                F.auditPath.name: auditPath
-            }
-            txnData[seqNo].update(merkleProof)
-        return txnData
+        if not txnData:
+            return txnData
+        else:
+            tree = self._primaryStorage.tree
+            for seqNo in txnData:
+                rootHash = tree.merkle_tree_hash(seqNo)
+                auditPath = tree.inclusion_proof(0, seqNo)
+                merkleProof = {
+                    F.rootHash.name: rootHash,
+                    F.auditPath.name: auditPath
+                }
+                txnData[seqNo].update(merkleProof)
+            return txnData
 
     def getAddNymTxn(self, nym):
         return self._txnStore.getAddNymTxn(nym)

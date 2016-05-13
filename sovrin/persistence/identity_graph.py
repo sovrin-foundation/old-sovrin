@@ -1,8 +1,9 @@
-import json
-from typing import Dict, Sequence
+from typing import Dict
+
+from functools import reduce
 
 from ledger.util import F
-from plenum.common.txn import TXN_TYPE, TXN_DATA
+from plenum.common.txn import TXN_TYPE
 from plenum.common.types import f
 from plenum.common.util import getlogger
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
@@ -28,13 +29,13 @@ class Edges:
     Sponsors = "Sponsors"
     AliasOf = "AliasOf"
 
-
-def getEdgeFromType(txnType: str):
-    edgeType = {
+txnEdges = {
         ADD_NYM: Edges.AddsNym,
         ADD_ATTR: Edges.AddsAttribute
     }
-    return edgeType[txnType]
+
+
+def getEdgeFromType(txnType: str): return txnEdges[txnType]
 
 
 class IdentityGraph(OrientDbGraphStore):
@@ -190,10 +191,13 @@ class IdentityGraph(OrientDbGraphStore):
 
             # Now add an edge from steward to sponsor, since only
             # a steward can create a sponsor
-            frm = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM, frm)
-            to = "(select from {} where {} = '{}')".format(Vertices.Sponsor, NYM, nym)
-            # Let there be an error in edge creation if `frm` does not exist
-            # because if system is behaving correctly then `frm` would exist
+            frm = "(select from {} where {} = '{}')".format(
+                Vertices.Steward, NYM, frm)
+            to = "(select from {} where {} = '{}')".format(
+                Vertices.Sponsor, NYM, nym)
+            # Let there be an error in edge creation if `frm` does not
+            # exist because if system is behaving correctly then `frm`
+            #  would exist
             kwargs = {
                 NYM: nym,
                 ROLE: SPONSOR,
@@ -210,7 +214,7 @@ class IdentityGraph(OrientDbGraphStore):
         else:
             self.createVertex(Vertices.User, nym=nym, frm=frm)
 
-            # # TODO: After implementing agents, check if `frm` is agent
+            # TODO: After implementing agents, check if `frm` is agent
             typ = self.getRole(frm)
             # Now add an edge from SPONSOR to USER
             frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
@@ -342,14 +346,20 @@ class IdentityGraph(OrientDbGraphStore):
                                      "clientId = '{}' and reqId = {}".
                                      format(edgeClass, identifier, reqId))
         return None if not result \
-            else json.loads(result[0].oRecordData['reply'])
+            else result[0].oRecordData['reply']
 
-    def getRepliesForTxnIds(self, *txnIds, seqNo=None):
+    def getRepliesForTxnIds(self, *txnIds, seqNo=None) -> dict:
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
-        cmd = "select from {} where {} in [{}]". \
-            format(Edges.AddsNym, TXN_ID, txnIds)  # TODO Hardcoded
-        if seqNo:
-            cmd += " and seqNo > {}".format(seqNo)
-        result = self.client.command(cmd)
-        return {r.oRecordData["seqNo"]: json.dumps(r.oRecordData)
-                for r in result}
+
+        def delegate(edgeClass):
+            cmd = "select from {} where {} in [{}]". \
+                format(edgeClass, TXN_ID, txnIds)
+            if seqNo:
+                cmd += " and seqNo > {}".format(seqNo)
+            result = self.client.command(cmd)
+            return {} if not result else \
+                {r.oRecordData["seqNo"]: r.oRecordData for r in result}
+
+        return reduce(lambda d1, d2: {**d1, **d2},
+                      map(delegate, list(txnEdges.values())))
+
