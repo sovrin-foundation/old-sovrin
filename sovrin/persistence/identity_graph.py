@@ -1,10 +1,9 @@
-from typing import Dict
-
 from functools import reduce
+from typing import Dict
 
 from ledger.util import F
 from plenum.common.txn import TXN_TYPE
-from plenum.common.types import f
+from plenum.common.types import f, Reply
 from plenum.common.util import getlogger
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
@@ -262,8 +261,12 @@ class IdentityGraph(OrientDbGraphStore):
         self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
     def getNym(self, nym):
-        result = self.client.command("select from {} where {} = '{}'".
-                            format(Vertices.Nym, NYM, nym))
+        cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
+        try:
+            result = self.client.command(cmd)
+        except Exception as ex:
+            print("error executing command {} {}".format(cmd, ex))
+            raise ex
         if not result:
             return None
         else:
@@ -363,3 +366,19 @@ class IdentityGraph(OrientDbGraphStore):
         return reduce(lambda d1, d2: {**d1, **d2},
                       map(delegate, list(txnEdges.values())))
 
+    def storeReply(self, reply: Reply):
+        edgeClass = getEdgeFromType(reply.result[TXN_TYPE])
+        assert reply.result[TXN_ID]
+        self.client.command(self._updateProperties(
+            reply.result, edgeClass, reply.result[TXN_ID]))
+
+    @staticmethod
+    def _updateProperties(props, edgeClass, txnId):
+        intTypes = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm]
+        updates = ', '.join(["{}='{}'".format(x, props[x])
+                             if x not in intTypes else
+                             "{}={}".format(x, props[x])
+                             for x in props if props[x]])
+        updateCmd = "update {} set {} upsert where {}='{}'". \
+            format(edgeClass, updates, TXN_ID, txnId)
+        return updateCmd

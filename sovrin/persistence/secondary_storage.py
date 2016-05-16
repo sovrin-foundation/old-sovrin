@@ -1,3 +1,5 @@
+import base64
+
 from ledger.util import F
 from plenum.common.txn import TXN_TYPE
 from plenum.common.types import Reply
@@ -6,6 +8,9 @@ from sovrin.common.txn import ADD_NYM
 
 
 class SecondaryStorage(PlenumSS):
+
+    def storeReply(self, reply: Reply):
+        return self._txnStore.storeReply(reply)
 
     async def getReply(self, identifier, reqId, **kwargs):
         txn = self._txnStore.getTxn(identifier, reqId, **kwargs)
@@ -29,11 +34,12 @@ class SecondaryStorage(PlenumSS):
         else:
             tree = self._primaryStorage.tree
             for seqNo in txnData:
-                rootHash = tree.merkle_tree_hash(seqNo)
-                auditPath = tree.inclusion_proof(0, seqNo)
+                rootHash = tree.merkle_tree_hash(0, int(seqNo))
+                auditPath = tree.inclusion_proof(0, int(seqNo))
                 merkleProof = {
-                    F.rootHash.name: rootHash,
-                    F.auditPath.name: auditPath
+                    F.rootHash.name: base64.b64encode(rootHash).decode(),
+                    F.auditPath.name: [base64.b64encode(h).decode()
+                                       for h in auditPath]
                 }
                 txnData[seqNo].update(merkleProof)
             return txnData
@@ -53,4 +59,3 @@ class SecondaryStorage(PlenumSS):
 
     def hasNym(self, nym) -> bool:
         return self._txnStore.hasNym(nym)
-

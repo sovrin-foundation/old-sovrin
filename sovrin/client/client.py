@@ -9,7 +9,7 @@ from pyorient import PyOrientCommandException
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
-from plenum.common.txn import REQACK, REPLY, REQNACK
+from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl
@@ -138,9 +138,9 @@ class Client(PlenumClient):
                     self.addNymToGraph(result)
                 elif result[TXN_TYPE] == ADD_ATTR:
                     self.storage.addAttribute(frm=result[ORIGIN],
-                                                   to=result[TARGET_NYM],
-                                                   data=result[DATA],
-                                                   txnId=result[TXN_ID])
+                                              to=result[TARGET_NYM],
+                                              data=result[DATA],
+                                              txnId=result[TXN_ID])
                 elif result[TXN_TYPE] == GET_NYM:
                     if DATA in result and result[DATA]:
                         try:
@@ -187,7 +187,8 @@ class Client(PlenumClient):
         elif txn[ROLE] == SPONSOR:
             # Since only a steward can add a sponsor, check if the steward
             # is present. If not then add the steward
-            if txn.get(ORIGIN) and not self.storage.hasSteward(txn.get(ORIGIN)):
+            if txn.get(ORIGIN) and \
+                    not self.storage.hasSteward(txn.get(ORIGIN)):
                 # A better way is to oo a GET_NYM for the steward.
                 self.storage.addSteward(None, txn.get(ORIGIN))
             try:
@@ -198,13 +199,22 @@ class Client(PlenumClient):
                     pyorient.PyOrientORecordDuplicatedException) as ex:
                 logger.error(
                     "An exception was raised while adding "
-                    "user {}".format(ex))
+                    "sponsor {}".format(ex))
+        elif txn[ROLE] == STEWARD:
+            try:
+                self.storage.addSteward(txn.get(TXN_ID), txn.get(ORIGIN))
+            except (pyorient.PyOrientCommandException,
+                    pyorient.PyOrientORecordDuplicatedException) as ex:
+                logger.error(
+                    "An exception was raised while adding "
+                    "steward {}".format(ex))
         else:
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def getTxnById(self, txnId: str):
         serTxn = list(self.storage.getRepliesForTxnIds(txnId).
                       values())[0]
+        # TODO Add merkleInfo as well
         return self.deserializeTxn(serTxn)
 
     def deserializeTxn(self, serTxn):

@@ -1,9 +1,12 @@
 import asyncio
+import base64
 import json
 import time
 from _sha256 import sha256
+from copy import deepcopy
 
 import pyorient
+from ledger.util import F
 
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
@@ -11,9 +14,9 @@ from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
 from plenum.common.util import getlogger
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
-    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, TXN_ID, \
-    TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
+    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM,\
+    ROLE, STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, \
+    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -222,25 +225,22 @@ class Node(PlenumNode):
         else:
             await super().processRequest(request, frm)
 
-    async def addToLedger(self, identifier, reply, txnId):
-        merkleInfo = await self.primaryStorage.append(
-            identifier=identifier, reply=reply, txnId=txnId)
-        return merkleInfo
-
     async def storeTxnAndSendToClient(self, identifier, reply, txnId):
         merkleInfo = await self.addToLedger(identifier, reply, txnId)
+        result = deepcopy(reply.result)
+        result[F.seqNo.name] = merkleInfo[F.seqNo.name]
         reply.result.update(merkleInfo)
         # TODO: In case of genesis transactions when no identifier is present
         if identifier in self.clientIdentifiers:
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
             logger.debug("Adding genesis transaction")
-        # seqNo = merkleInfo["seqNo"]
-        # rootHash = merkleInfo["rootHash"]
-        # auditPath = merkleInfo["auditPath"]
-        # self.primaryStorage.addReplyForTxn(txnId, reply, identifier,
-        #                                    reply.result['reqId'], seqNo,
-        #                                    rootHash, auditPath)
+        self.secondaryStorage.storeReply(Reply(result))
+
+    async def addToLedger(self, identifier, reply, txnId):
+        merkleInfo = await self.primaryStorage.append(
+            identifier=identifier, reply=reply, txnId=txnId)
+        return merkleInfo
 
     async def getReplyFor(self, request):
         result = await self.secondaryStorage.getReply(request.identifier, request.reqId, type=request.operation[TXN_TYPE])
@@ -253,9 +253,13 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        reply = self.generateReply(ppTime, req)
+        reply = self.generateReply(self._toEpochTime(ppTime), req)
         txnId = reply.result[TXN_ID]
         await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
+
+    @staticmethod
+    def _toEpochTime(timeInSeconds: float):
+        return int(timeInSeconds * 1000)
 
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation
