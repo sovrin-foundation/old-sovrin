@@ -176,6 +176,15 @@ class Node(PlenumNode):
     def genTxnId(identifier, reqId):
         return sha256("{}{}".format(identifier, reqId).encode()).hexdigest()
 
+    # TODO: Fix this method name and position ASAP
+    def defaultJSONencoding(self, obj):
+        """Default JSON serializer."""
+        import datetime
+
+        if isinstance(obj, datetime.datetime):
+            return int(obj.strftime('%s'))
+        raise TypeError('Not sure how to serialize %s' % (obj,))
+
     async def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
@@ -216,7 +225,7 @@ class Node(PlenumNode):
                 result[DATA] = json.dumps({
                     LAST_TXN: lastTxn,
                     TXNS: txns
-                })
+                }, default=self.defaultJSONencoding)
                 result.update({
                     f.IDENTIFIER.nm: request.identifier,
                     f.REQ_ID.nm: request.reqId,
@@ -259,7 +268,7 @@ class Node(PlenumNode):
 
     @staticmethod
     def _toEpochTime(timeInSeconds: float):
-        return int(timeInSeconds * 1000)
+        return int(timeInSeconds)
 
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation

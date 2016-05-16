@@ -355,7 +355,7 @@ class IdentityGraph(OrientDbGraphStore):
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
 
         def delegate(edgeClass):
-            cmd = "select from {} where {} in [{}]". \
+            cmd = "select EXPAND(@this.exclude('in', 'out')) from {} where {} in [{}]". \
                 format(edgeClass, TXN_ID, txnIds)
             if seqNo:
                 cmd += " and seqNo > {}".format(seqNo)
