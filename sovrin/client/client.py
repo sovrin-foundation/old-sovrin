@@ -9,12 +9,12 @@ from pyorient import PyOrientCommandException
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
-from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD
+from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.client.client_storage import ClientStorage, REQ_DATA
+from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
@@ -140,7 +140,8 @@ class Client(PlenumClient):
                     self.storage.addAttribute(frm=result[ORIGIN],
                                               to=result[TARGET_NYM],
                                               data=result[DATA],
-                                              txnId=result[TXN_ID])
+                                              txnId=result[TXN_ID],
+                                              txnTime=result[TXN_TIME])
                 elif result[TXN_TYPE] == GET_NYM:
                     if DATA in result and result[DATA]:
                         try:
@@ -161,7 +162,8 @@ class Client(PlenumClient):
                                         frm=txn[ORIGIN],
                                         to=txn[TARGET_NYM],
                                         data=txn[DATA],
-                                        txnId=txn[TXN_ID])
+                                        txnId=txn[TXN_ID],
+                                        txnTime=txn[TXN_TIME])
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
@@ -215,11 +217,7 @@ class Client(PlenumClient):
         serTxn = list(self.storage.getRepliesForTxnIds(txnId).
                       values())[0]
         # TODO Add merkleInfo as well
-        return self.deserializeTxn(serTxn)
-
-    def deserializeTxn(self, serTxn):
-        self.storage.serializer.deserialize(serTxn,
-                                            fields=self.storage.txnFields)
+        return deserializeTxn(serTxn)
 
     def getTxnsByNym(self, nym: str):
         # TODO Implement this

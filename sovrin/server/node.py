@@ -1,13 +1,12 @@
 import asyncio
-import base64
 import json
 import time
 from _sha256 import sha256
 from copy import deepcopy
 
 import pyorient
-from ledger.util import F
 
+from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
@@ -17,7 +16,7 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
-from sovrin.common.util import getConfig
+from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -40,7 +39,6 @@ class Node(PlenumNode):
                  storage=None,
                  config=None):
         self.config = config or getConfig()
-        # self.hashStore = self.getHashStore(name)  # TODO delete this line.
         self.graphStorage = self.getGraphStorage(name)
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
@@ -176,15 +174,6 @@ class Node(PlenumNode):
     def genTxnId(identifier, reqId):
         return sha256("{}{}".format(identifier, reqId).encode()).hexdigest()
 
-    # TODO: Fix this method name and position ASAP
-    def defaultJSONencoding(self, obj):
-        """Default JSON serializer."""
-        import datetime
-
-        if isinstance(obj, datetime.datetime):
-            return int(obj.strftime('%s'))
-        raise TypeError('Not sure how to serialize %s' % (obj,))
-
     async def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
@@ -225,7 +214,7 @@ class Node(PlenumNode):
                 result[DATA] = json.dumps({
                     LAST_TXN: lastTxn,
                     TXNS: txns
-                }, default=self.defaultJSONencoding)
+                }, default=dateTimeEncoding)
                 result.update({
                     f.IDENTIFIER.nm: request.identifier,
                     f.REQ_ID.nm: request.reqId,
@@ -262,13 +251,9 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        reply = self.generateReply(self._toEpochTime(ppTime), req)
+        reply = self.generateReply(int(ppTime), req)
         txnId = reply.result[TXN_ID]
         await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
-
-    @staticmethod
-    def _toEpochTime(timeInSeconds: float):
-        return int(timeInSeconds)
 
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation
@@ -298,7 +283,8 @@ class Node(PlenumNode):
             self.graphStorage.addAttribute(frm=operation[ORIGIN],
                                            to=operation[TARGET_NYM],
                                            data=operation[DATA],
-                                           txnId=txnId)
+                                           txnId=txnId,
+                                           txnTime=None)
         return Reply(result)
 
 

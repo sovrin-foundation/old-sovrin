@@ -284,25 +284,22 @@ def testGetAttribute(sponsor, userSignerA, addedAttribute):
            [{'name': 'Mario'}]
 
 
-def testLatestAttrIsReceived(looper, genned, sponsor, sponsorSigner, userSignerA):
-    attr1 = json.dumps({'name': 'Mario'})
-    op = {
-        ORIGIN: sponsorSigner.verstr,
-        TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: attr1
-    }
-    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
-    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
-           [{'name': 'Mario'}]
+def testLatestAttrIsReceived(genned, addedSponsor, sponsorSigner, looper,
+                             sponsor, userSignerA):
 
-    attr2 = json.dumps({'name': 'Tom'})
+    attr1 = {'name': 'Mario'}
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: attr2
+        DATA: json.dumps(attr1)
     }
     submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
-    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
-           [{'name': 'Tom'}]
+    assert sponsor.getAllAttributesForNym(userSignerA.verstr)[0] == attr1
+
+    attr2 = {'name': 'Luigi'}
+    op[DATA] = json.dumps(attr2)
+
+    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+    allAttributesForNym = sponsor.getAllAttributesForNym(userSignerA.verstr)
+    assert allAttributesForNym[0] == attr2

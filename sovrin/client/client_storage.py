@@ -2,17 +2,16 @@ import json
 import os
 from typing import Any, Sequence
 
-from ledger.serializers.compact_serializer import \
-    CompactSerializer
+from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.stores.text_file_store import TextFileStore
-from sovrin.persistence.identity_graph import IdentityGraph, Edges, Vertices
 from plenum.common.has_file_storage import HasFileStorage
-from plenum.common.txn import TXN_TYPE, TARGET_NYM, TXN_TIME
+from plenum.common.txn import TXN_TYPE, TARGET_NYM, TXN_TIME, TXN_ID
 from plenum.common.types import Request, f
 from sovrin.common.txn import getTxnOrderedFields
+from sovrin.persistence.identity_graph import IdentityGraph, Edges, Vertices
 
 REQ_DATA = "ReqData"
-CLIENT_ATTR_DATA = "CliAttrData"
+ATTR_DATA = "AttrData"
 """
 The attribute data stored by the client differs from that of the node in
 that the client stored the attribute key and value in a non-encrypted form
@@ -25,12 +24,18 @@ compactSerializer = CompactSerializer()
 txnOrderedFields = getTxnOrderedFields()
 
 
-def serializeTxn(res,
+def serializeTxn(data,
                  serializer=compactSerializer,
                  txnFields=txnOrderedFields):
-    return serializer.serialize(res,
+    return serializer.serialize(data,
                                 fields=txnFields,
                                 toBytes=False)
+
+
+def deserializeTxn(data,
+                   serializer=compactSerializer,
+                   fields=txnOrderedFields):
+    return serializer.deserialize(data, fields)
 
 
 class PrimaryStorage(HasFileStorage):
@@ -71,8 +76,8 @@ class SecondaryStorage(IdentityGraph):
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
             (LAST_TXN_DATA, self.createLastTxnClass),
+            (ATTR_DATA, self.createClientAttributeClass()),
             (REQ_DATA, self.createReqDataClass()),
-            (CLIENT_ATTR_DATA, self.createClientAttributeClass()),
         ]
 
     def createLastTxnClass(self):
@@ -89,9 +94,10 @@ class SecondaryStorage(IdentityGraph):
         return 0 if not result else result[0].oRecordData['lastId']
 
     def addRequest(self, req: Request):
-        self.client.command("insert into {} set {} = {}, "
+        self.client.command("insert into {} set {} = {}, {} = '{}',"
                             "{} = '{}', nacks = {{}}, replies = {{}}".
                             format(REQ_DATA, f.REQ_ID.nm, req.reqId,
+                                   f.IDENTIFIER.nm, req.identifier,
                                    TXN_TYPE, req.operation[TXN_TYPE]))
 
     def addAck(self, msg: Any, sender: str):
@@ -109,6 +115,8 @@ class SecondaryStorage(IdentityGraph):
 
     def addReply(self, reqId: int, sender: str, result: Any) -> \
             Sequence[str]:
+        txnId = result[TXN_ID]
+        txnTime = result[TXN_TIME]
         serializedTxn = serializeTxn(result)
         res = self.client.command("update {} set replies.{} = '{}' return "
                                   "after @this.replies where {} = {}".
@@ -116,6 +124,12 @@ class SecondaryStorage(IdentityGraph):
                                          f.REQ_ID.nm, reqId))
         replies = res[0].oRecordData['value']
         # TODO: Handle malicious nodes sending incorrect response
+        if len(replies) == 1:
+            self.client.command("update {} set {} = '{}', {} = {}, {} = '{}' "
+                                "where {} = {}".
+                                format(REQ_DATA, TXN_ID, txnId, TXN_TIME,
+                                       txnTime, TXN_TYPE, result[TXN_TYPE],
+                                       f.REQ_ID.nm, reqId))
         return replies
 
     def hasRequest(self, reqId: int):
@@ -130,7 +144,7 @@ class SecondaryStorage(IdentityGraph):
             return {}
         else:
             return {
-                k: self.serializer.deserialize(v, fields=self.txnFields)
+                k: deserializeTxn(v)
                 for k, v in result[0].oRecordData['replies'].items()
                 }
 
@@ -169,35 +183,37 @@ class SecondaryStorage(IdentityGraph):
                                             identifier))
         return None if not result else result[0].oRecordData['value']
 
-    # def createAttributeClass(self):
-    #     pass
-
     def createReqDataClass(self):
         self.client.command("create class {}".format(REQ_DATA))
         self.store.createClassProperties(REQ_DATA, {
             f.REQ_ID.nm: "long",
+            f.IDENTIFIER.nm: "string",
+            TXN_TYPE: "string",
+            TXN_ID: "string",
+            TXN_TIME: "datetime",
             "acks": "embeddedset string",
             "nacks": "embeddedmap string",
             "replies": "embeddedmap string",
-            "hasConsensus": "boolean"
+            "hasConsensus": "boolean",
+            "attribute": "embedded {}".format(ATTR_DATA),
         })
         self.store.createIndexOnClass(REQ_DATA, "hasConsensus")
 
     # TODO Remove this class once wallet is implemented
     def createClientAttributeClass(self):
-        self.client.command("create class {}".format(CLIENT_ATTR_DATA))
-        self.store.createClassProperties(CLIENT_ATTR_DATA, {
+        self.client.command("create class {}".format(ATTR_DATA))
+        self.store.createClassProperties(ATTR_DATA, {
             TARGET_NYM: "string",
             "name": "string",
             "value": "string",
             "skey": "string"
         })
-        self.store.createIndexOnClass(CLIENT_ATTR_DATA, TARGET_NYM)
+        self.store.createIndexOnClass(ATTR_DATA, TARGET_NYM)
 
     def addClientAttribute(self, reqId, attrData):
         data = json.dumps(attrData)
         result = self.client.command("insert into {} content {}".
-                                     format(CLIENT_ATTR_DATA, data))
+                                     format(ATTR_DATA, data))
         self.client.command("update {} set attribute = {} where {} = {}".
                             format(REQ_DATA, result[0].oRecordData,
                                    f.REQ_ID.nm, reqId))
@@ -220,8 +236,8 @@ class SecondaryStorage(IdentityGraph):
             whereClause += " and {} = '{}'".format(f.IDENTIFIER.nm, identifier)
         cmd = "select from {} where {} order by {} desc". \
             format(REQ_DATA, whereClause, TXN_TIME)
-        # TODO: May be can use a better sql query using group by
-        # attribute name and getting last attribute request of each group
+        # TODO: May be can use a better sql query using group by attribute name
+        # and getting last attribute request of each group
         result = self.client.command(cmd)
         attributeReqs = {}  # Dict[str, Dict]
         for r in result:
@@ -232,7 +248,6 @@ class SecondaryStorage(IdentityGraph):
         return attributeReqs
 
 
-# TODO How about composition instead of inheritance?
 class ClientStorage(PrimaryStorage, SecondaryStorage):
 
     def __init__(self, name, baseDir, store):

@@ -5,8 +5,8 @@ from plenum.client.signer import SimpleSigner
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
 from sovrin.common.txn import getGenesisTxns, STEWARD, ADD_NYM, \
     SPONSOR
-from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient, \
-    createNym
+from sovrin.test.helper import clientFromSigner, TestNodeSet,\
+    genTestClient, createNym
 
 from plenum.test.conftest import getValueFromModule
 

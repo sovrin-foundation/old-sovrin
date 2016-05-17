@@ -6,7 +6,9 @@ from contextlib import ExitStack
 from typing import Iterable
 
 import pyorient
+from plenum.persistence import orientdb_store
 
+from plenum.common import util
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, getlogger, getConfig
@@ -18,7 +20,8 @@ from plenum.test.helper import checkNodesConnected, \
     buildCompletedTxnFromReply, TestStack, \
     TestNodeCore, StackedTester
 from plenum.test.helper import genTestClient as genPlenumTestClient
-from plenum.test.helper import genTestClientProvider as genPlenumTestClientProvider
+from plenum.test.helper import genTestClientProvider as \
+    genPlenumTestClientProvider
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
@@ -261,24 +264,10 @@ class TestNode(TempStorage, TestNodeCore, Node):
         Node.__init__(self, *args, **kwargs)
         TestNodeCore.__init__(self)
 
-    # TODO This method is almost the duplicate of plenum's TestNode.
     def _getOrientDbStore(self, name, dbType):
-        if hasattr(self, '_orientDbStore'):
-            return self._orientDbStore
-        client = pyorient.OrientDB(host="localhost", port=2424)
-        client.connect(user=self.config.OrientDB['user'],
-                       password=self.config.OrientDB['password'])
-        try:
-            if client.db_exists(name, pyorient.STORAGE_TYPE_MEMORY):
-                client.db_drop(name, type=pyorient.STORAGE_TYPE_MEMORY)
-        # This is to avoid a known bug in OrientDb.
-        except pyorient.exceptions.PyOrientDatabaseException:
-            client.db_drop(name, type=pyorient.STORAGE_TYPE_MEMORY)
-        self._orientDbStore = OrientDbStore(user=self.config.OrientDB["user"],
-                             password=self.config.OrientDB["password"],
-                             dbName=name,
-                             dbType=dbType,
-                             storageType=pyorient.STORAGE_TYPE_MEMORY)
+        if not hasattr(self, '_orientDbStore'):
+            self._orientDbStore = orientdb_store.createOrientDbInMemStore(
+                self.config, name, dbType)
         return self._orientDbStore
 
     def onStopping(self, *args, **kwargs):

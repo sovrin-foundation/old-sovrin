@@ -218,8 +218,9 @@ class IdentityGraph(OrientDbGraphStore):
             # Now add an edge from SPONSOR to USER
             frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
             to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, nym)
-            # Let there be an error in edge creation if `frm` does not exist
-            # because if system is behaving correctly then `frm` would exist
+            # Let there be an error in edge creation if `frm` does not
+            #  exist because if system is behaving correctly then `frm`
+            #  would exist
             kwargs = {
                 NYM: nym,
                 ROLE: USER,
@@ -243,14 +244,15 @@ class IdentityGraph(OrientDbGraphStore):
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
-    def addAttribute(self, frm, to, data, txnId):
+    def addAttribute(self, frm, to, data, txnId, txnTime):
         attrVertex = self.createVertex(Vertices.Attribute, data=data)
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                         frm)
         kwargs = {
             TARGET_NYM: to,
-            TXN_ID: txnId
+            TXN_ID: txnId,
         }
+        if txnTime: kwargs[TXN_TIME] = int(txnTime)
         self.createEdge(Edges.AddsAttribute, frm, attrVertex._rid, **kwargs)
         # to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, to)
         to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
@@ -267,10 +269,7 @@ class IdentityGraph(OrientDbGraphStore):
         except Exception as ex:
             print("error executing command {} {}".format(cmd, ex))
             raise ex
-        if not result:
-            return None
-        else:
-            return result[0]
+        return result and result[0]
 
     def getUser(self, nym):
         result = self.client.command("select from {} where {} = '{}'".
