@@ -5,8 +5,8 @@ from plenum.client.signer import SimpleSigner
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
 from sovrin.common.txn import getGenesisTxns, STEWARD, ADD_NYM, \
     SPONSOR
-from sovrin.test.helper import clientFromSigner, TestNodeSet, genTestClient, \
-    createNym
+from sovrin.test.helper import clientFromSigner, TestNodeSet,\
+    genTestClient, createNym
 
 from plenum.test.conftest import getValueFromModule
 
@@ -88,8 +88,13 @@ def steward(looper, nodeSet, tdir, up, stewardSigner):
 
 
 @pytest.fixture(scope="module")
-def sponsor(looper, nodeSet, tdir, up, sponsorSigner):
-    return clientFromSigner(sponsorSigner, looper, nodeSet, tdir)
+def sponsor(looper, nodeSet, tdir, up, steward, sponsorSigner):
+    s = genTestClient(nodeSet, signer=sponsorSigner, tmpdir=tdir)
+    for node in nodeSet:
+        node.whitelistClient(s.name)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    return s
 
 
 @pytest.fixture(scope="module")

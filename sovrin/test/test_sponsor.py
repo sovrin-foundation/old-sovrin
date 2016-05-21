@@ -2,9 +2,9 @@ from typing import Tuple
 
 import libnacl.secret
 import pytest
-from plenum.common.util import randomString
 
-from sovrin.common.txn import ASSIGN_AGENT, ADD_NYM, IDPROOF, txn, newTxn
+from plenum.common.util import randomString
+from sovrin.common.txn import ADD_NYM, IDPROOF, newTxn
 from sovrin.test.helper import Scenario
 
 
@@ -46,47 +46,47 @@ def agentScenario(keySharedNodes, looper, tdir):
     return s
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testSponsorRegistersUser(sponsorWithAgentScenario):
     s = sponsorWithAgentScenario
     s.run(registersUser)
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testSponsorAddsUserEmail(sponsorWithAgentScenario):
     sponsorWithAgentScenario.run(
             addsUserEmail)
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testSponsorWithoutAgentRegistersUser(sponsorWithoutAgentScenario):
     s = sponsorWithoutAgentScenario
     s.run(registersUser)
 
 
-@pytest.mark.skipif(True, "Not sure about the add agent transaction")
-def testSponsorWithoutAgentAssignsAgent(sponsorWithoutAgentScenario):
-    s = sponsorWithoutAgentScenario
-    s.ensureRun(registersUser)
-    s.run(assignAgent)
+# @pytest.mark.skipif(True, reason="Not sure about the add agent transaction")
+# def testSponsorWithoutAgentAssignsAgent(sponsorWithoutAgentScenario):
+#     s = sponsorWithoutAgentScenario
+#     s.ensureRun(registersUser)
+#     s.run(assignAgent)
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testSponsorWithoutAgentAddsUserEmail(sponsorWithoutAgentScenario):
     sponsorWithoutAgentScenario.run(addsUserEmail)
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testAgentRegistersUser(agentScenario):
     agentScenario.run(registersUser)
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testAgentAddsUserEmail(agentScenario):
     agentScenario.run(addsUserEmail)
 
 
-@pytest.mark.skipif(True, "Need to decide exact schema")
+@pytest.mark.skipif(True, reason="Need to decide exact schema")
 def testSponsorRegistersUserUsingAgentApi(nodeSet, looper, tdir):
     # Sponsor not on the blockchain, but is using an Agent's API
     with Scenario(nodeSet=nodeSet,

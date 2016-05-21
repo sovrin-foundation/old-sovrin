@@ -1,9 +1,11 @@
+import datetime
 import importlib
 import importlib.util
 import os
 from typing import Tuple, Union
 
 import libnacl.secret
+
 from plenum.common.util import isHex, error
 
 
@@ -65,3 +67,9 @@ def getConfig():
     except FileNotFoundError:
         pass
     return refConfig
+
+
+def dateTimeEncoding(obj):
+    if isinstance(obj, datetime.datetime):
+        return int(obj.strftime('%s'))
+    raise TypeError('Not sure how to serialize %s' % (obj,))

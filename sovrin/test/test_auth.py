@@ -1,13 +1,3 @@
-import asyncio
-
-from plenum.client.signer import SimpleSigner
-from plenum.common.types import Reply
-from sovrin.common.txn import ADD_NYM, STEWARD
-from sovrin.common.txn import storedTxn
-from sovrin.persistence.memory_chain_store import MemoryChainStore
-from sovrin.server.client_authn import TxnBasedAuthNr
-
-
 def testAuth():
     pass
     #

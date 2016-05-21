@@ -2,29 +2,27 @@ import asyncio
 import json
 import time
 from _sha256 import sha256
+from copy import deepcopy
 
 import pyorient
 
+from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
 from plenum.common.util import getlogger
-from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
-    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM, ROLE, \
-    STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, TXN_ID, \
-    TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
-from sovrin.common.util import getConfig
-from sovrin.persistence.graph_store import GraphStore
-from sovrin.persistence.ledger_chain_store import LedgerChainStore
+    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM,\
+    ROLE, STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, \
+    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
+from sovrin.common.util import getConfig, dateTimeEncoding
+from sovrin.persistence.identity_graph import IdentityGraph
+from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
-
 
 logger = getlogger()
 
-
-# TODO Node storage should be a mixin of document storage and graph storage
 
 class Node(PlenumNode):
 
@@ -40,10 +38,8 @@ class Node(PlenumNode):
                  opVerifiers=None,
                  storage=None,
                  config=None):
-
         self.config = config or getConfig()
         self.graphStorage = self.getGraphStorage(name)
-
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
                          clientAuthNr=clientAuthNr,
@@ -56,14 +52,12 @@ class Node(PlenumNode):
                          storage=storage,
                          config=self.config)
 
-    def getPrimaryStorage(self):
-        return LedgerChainStore(self.name, self.getDataLocation(), self.config)
+    def getSecondaryStorage(self):
+        return SecondaryStorage(self.graphStorage, self.primaryStorage)
 
     def getGraphStorage(self, name):
-        return GraphStore(OrientDbStore(user=self.config.OrientDB["user"],
-                          password=self.config.OrientDB["password"],
-                          dbName=name,
-                          storageType=pyorient.STORAGE_TYPE_PLOCAL))
+        return IdentityGraph(self._getOrientDbStore(name,
+                                                    pyorient.DB_TYPE_GRAPH))
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
@@ -145,7 +139,7 @@ class Node(PlenumNode):
         op = request.operation
         typ = op[TXN_TYPE]
 
-        s = self.graphStorage  # type: GraphStore
+        s = self.graphStorage  # type: IdentityGraph
 
         origin = request.identifier
         originRole = s.getRole(origin)
@@ -206,19 +200,21 @@ class Node(PlenumNode):
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)
-                result = self.primaryStorage.getRepliesForTxnIds(*txnIds,
-                                                                 serialNo=data)
-                lastTxn = str(max(result.keys())) if len(result) > 0 else data
+                result = self.secondaryStorage.getReplies(
+                    *txnIds, seqNo=data)
+                lastTxn = str(max(result.keys())) if len(result) > 0 \
+                    else data
                 txns = list(result.values())
                 result = {
-                    TXN_ID: self.genTxnId(request.identifier, request.reqId),
+                    TXN_ID: self.genTxnId(
+                        request.identifier, request.reqId),
                     TXN_TIME: time.time() * 1000
                 }
                 result.update(request.operation)
                 result[DATA] = json.dumps({
                     LAST_TXN: lastTxn,
                     TXNS: txns
-                })
+                }, default=dateTimeEncoding)
                 result.update({
                     f.IDENTIFIER.nm: request.identifier,
                     f.REQ_ID.nm: request.reqId,
@@ -227,28 +223,26 @@ class Node(PlenumNode):
         else:
             await super().processRequest(request, frm)
 
-    async def addToLedger(self, identifier, reply, txnId):
-        merkleInfo = await self.primaryStorage.append(
-            identifier=identifier, reply=reply, txnId=txnId)
-        return merkleInfo
-
     async def storeTxnAndSendToClient(self, identifier, reply, txnId):
         merkleInfo = await self.addToLedger(identifier, reply, txnId)
+        result = deepcopy(reply.result)
+        result[F.seqNo.name] = merkleInfo[F.seqNo.name]
         reply.result.update(merkleInfo)
         # TODO: In case of genesis transactions when no identifier is present
         if identifier in self.clientIdentifiers:
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
             logger.debug("Adding genesis transaction")
-        serialNo = merkleInfo["serialNo"]
-        rootHash = merkleInfo["rootHash"]
-        auditPath = merkleInfo["auditPath"]
-        self.primaryStorage.addReplyForTxn(txnId, reply, identifier,
-                                           reply.result['reqId'], serialNo,
-                                           rootHash, auditPath)
+        self.secondaryStorage.storeReply(Reply(result))
 
-    async def getReplyFor(self, identifier, reqId):
-        return self.primaryStorage.getReply(identifier, reqId)
+    async def addToLedger(self, identifier, reply, txnId):
+        merkleInfo = await self.primaryStorage.append(
+            identifier=identifier, reply=reply, txnId=txnId)
+        return merkleInfo
+
+    async def getReplyFor(self, request):
+        result = await self.secondaryStorage.getReply(request.identifier, request.reqId, type=request.operation[TXN_TYPE])
+        return Reply(result) if result else None
 
     async def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
@@ -257,7 +251,7 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        reply = self.generateReply(ppTime, req)
+        reply = self.generateReply(int(ppTime), req)
         txnId = reply.result[TXN_ID]
         await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
 
@@ -289,7 +283,8 @@ class Node(PlenumNode):
             self.graphStorage.addAttribute(frm=operation[ORIGIN],
                                            to=operation[TARGET_NYM],
                                            data=operation[DATA],
-                                           txnId=txnId)
+                                           txnId=txnId,
+                                           txnTime=None)
         return Reply(result)
 
 

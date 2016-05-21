@@ -1,12 +1,13 @@
-from collections import OrderedDict
+from functools import reduce
 from typing import Dict
 
-import pyorient
+from ledger.util import F
+from plenum.common.txn import TXN_TYPE
+from plenum.common.types import f, Reply
 from plenum.common.util import getlogger
-
-from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, STEWARD, \
-    ROLE, ORIGIN, REFERENCE, TXN_TIME
-from plenum.persistence.graph_store import GraphStore as PlenumGraphStore
+from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
+from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
+    STEWARD, ROLE, ORIGIN, REFERENCE, TXN_TIME, ADD_NYM, ADD_ATTR
 
 logger = getlogger()
 
@@ -20,15 +21,23 @@ class Vertices:
 
 
 class Edges:
-    AddedNym = "AddedNym"
-    AddedAttribute = "AddedAttribute"
+    AddsNym = "AddsNym"
+    AddsAttribute = "AddsAttribute"
     HasAttribute = "HasAttribute"
     # TODO Later have OwnsAttribute in case user takes control of his identity
     Sponsors = "Sponsors"
     AliasOf = "AliasOf"
 
+txnEdges = {
+        ADD_NYM: Edges.AddsNym,
+        ADD_ATTR: Edges.AddsAttribute
+    }
 
-class GraphStore(PlenumGraphStore):
+
+def getEdgeFromType(txnType: str): return txnEdges[txnType]
+
+
+class IdentityGraph(OrientDbGraphStore):
 
     def classesNeeded(self):
         return [
@@ -37,10 +46,10 @@ class GraphStore(PlenumGraphStore):
             (Vertices.Sponsor, self.createSponsorClass),
             (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
-            (Edges.AddedNym, self.createAddedNymClass),
+            (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
             (Edges.Sponsors, self.createSponsorsClass),
-            (Edges.AddedAttribute, self.createAddedAttributeClass),
+            (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
         ]
 
@@ -68,6 +77,21 @@ class GraphStore(PlenumGraphStore):
         self.createEdgeClass(className, properties=properties)
         self.store.createUniqueIndexOnClass(className, TXN_ID)
 
+    def createEdgeClassWithTxnData(self, className, properties: Dict = None):
+        defaultProperties = {
+            TXN_ID: "string",
+            TXN_TIME: "datetime",
+            TXN_TYPE: "string",
+            f.REQ_ID.nm: "integer",
+            f.IDENTIFIER.nm: "string",
+            F.seqNo.name: "string",
+        }
+        properties.update(defaultProperties)
+        self.createUniqueTxnIdEdgeClass(className, properties)
+        # self.client.command("create index CliIdReq on {} ({}, {})"
+        #                     " unique".
+        #                     format(className, f.REQ_ID.nm, f.IDENTIFIER.nm))
+
     def createNymClass(self):
         self.createUniqueNymVertexClass(Vertices.Nym)
 
@@ -87,11 +111,11 @@ class GraphStore(PlenumGraphStore):
         self.createVertexClass(Vertices.Attribute,
                                properties={"data": "string"})
 
-    def createAddedNymClass(self):
+    def createAddsNymClass(self):
         # TODO: Confirm that property ROLE is not needed
-        self.createUniqueTxnIdEdgeClass(Edges.AddedNym,
+        self.createEdgeClassWithTxnData(Edges.AddsNym,
                                         properties={ROLE: "string"})
-        self.addEdgeConstraint(Edges.AddedNym, iN=Vertices.Nym, out=Vertices.Nym)
+        self.addEdgeConstraint(Edges.AddsNym, iN=Vertices.Nym, out=Vertices.Nym)
 
     def createAliasOfClass(self):
         self.createUniqueTxnIdEdgeClass(Edges.AliasOf,
@@ -106,11 +130,11 @@ class GraphStore(PlenumGraphStore):
         self.addEdgeConstraint(Edges.Sponsors, iN=Vertices.User,
                                out=Vertices.Sponsor)
 
-    def createAddedAttributeClass(self):
-        self.createUniqueTxnIdEdgeClass(Edges.AddedAttribute,
+    def createAddsAttributeClass(self):
+        self.createEdgeClassWithTxnData(Edges.AddsAttribute,
                                         properties={TARGET_NYM: "string"})
         # Not specifying `out` here as both Sponsor and Agent can add attributes
-        self.addEdgeConstraint(Edges.AddedAttribute, iN=Vertices.Attribute)
+        self.addEdgeConstraint(Edges.AddsAttribute, iN=Vertices.Attribute)
 
     def createHasAttributeClass(self):
         self.createUniqueTxnIdEdgeClass(Edges.HasAttribute)
@@ -121,9 +145,9 @@ class GraphStore(PlenumGraphStore):
                                      format(edgeClassName, TXN_ID, txnId))
         return None if not result else result[0]
 
-    def getAddedNymEdge(self, nym):
+    def getAddsNymEdge(self, nym):
         nymEdge = self.client.command("select from {} where {} = '{}'".
-                                      format(Edges.AddedNym, NYM, nym))
+                                      format(Edges.AddsNym, NYM, nym))
         if not nymEdge:
             return None
         else:
@@ -154,7 +178,7 @@ class GraphStore(PlenumGraphStore):
                 ROLE: STEWARD,
                 TXN_ID: txnId
             }
-            self.createEdge(Edges.AddedNym, frm, to, **kwargs)
+            self.createEdge(Edges.AddsNym, frm, to, **kwargs)
 
     def addSponsor(self, txnId, nym, frm=None):
         # Add the sponsor
@@ -166,16 +190,19 @@ class GraphStore(PlenumGraphStore):
 
             # Now add an edge from steward to sponsor, since only
             # a steward can create a sponsor
-            frm = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM, frm)
-            to = "(select from {} where {} = '{}')".format(Vertices.Sponsor, NYM, nym)
-            # Let there be an error in edge creation if `frm` does not exist
-            # because if system is behaving correctly then `frm` would exist
+            frm = "(select from {} where {} = '{}')".format(
+                Vertices.Steward, NYM, frm)
+            to = "(select from {} where {} = '{}')".format(
+                Vertices.Sponsor, NYM, nym)
+            # Let there be an error in edge creation if `frm` does not
+            # exist because if system is behaving correctly then `frm`
+            #  would exist
             kwargs = {
                 NYM: nym,
                 ROLE: SPONSOR,
                 TXN_ID: txnId
             }
-            self.createEdge(Edges.AddedNym, frm, to, **kwargs)
+            self.createEdge(Edges.AddsNym, frm, to, **kwargs)
 
     # TODO: Consider if sponsors or stewards would have aliases too
     def addUser(self, txnId, nym, frm=None, reference=None):
@@ -186,19 +213,20 @@ class GraphStore(PlenumGraphStore):
         else:
             self.createVertex(Vertices.User, nym=nym, frm=frm)
 
-            # # TODO: After implementing agents, check if `frm` is agent
+            # TODO: After implementing agents, check if `frm` is agent
             typ = self.getRole(frm)
             # Now add an edge from SPONSOR to USER
             frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
             to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, nym)
-            # Let there be an error in edge creation if `frm` does not exist
-            # because if system is behaving correctly then `frm` would exist
+            # Let there be an error in edge creation if `frm` does not
+            #  exist because if system is behaving correctly then `frm`
+            #  would exist
             kwargs = {
                 NYM: nym,
                 ROLE: USER,
                 TXN_ID: txnId
             }
-            self.createEdge(Edges.AddedNym, frm, to, **kwargs)
+            self.createEdge(Edges.AddsNym, frm, to, **kwargs)
             if typ == Vertices.Sponsor:
                 kwargs = {
                     TXN_ID: txnId
@@ -208,7 +236,7 @@ class GraphStore(PlenumGraphStore):
                 kwargs = {
                     TXN_ID: reference
                 }
-                nymEdge = self.getEdgeByTxnId(Edges.AddedNym, **kwargs)
+                nymEdge = self.getEdgeByTxnId(Edges.AddsNym, **kwargs)
                 referredNymRid = nymEdge.oRecordData['in'].get()
                 kwargs = {
                     REFERENCE: reference,
@@ -216,17 +244,16 @@ class GraphStore(PlenumGraphStore):
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
-    def addAttribute(self, frm, to, data, txnId):
+    def addAttribute(self, frm, to, data, txnId, txnTime):
         attrVertex = self.createVertex(Vertices.Attribute, data=data)
-
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                         frm)
         kwargs = {
             TARGET_NYM: to,
-            TXN_ID: txnId
+            TXN_ID: txnId,
         }
-        self.createEdge(Edges.AddedAttribute, frm, attrVertex._rid, **kwargs)
-
+        if txnTime: kwargs[TXN_TIME] = int(txnTime)
+        self.createEdge(Edges.AddsAttribute, frm, attrVertex._rid, **kwargs)
         # to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, to)
         to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                        to)
@@ -236,12 +263,13 @@ class GraphStore(PlenumGraphStore):
         self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
     def getNym(self, nym):
-        result = self.client.command("select from {} where {} = '{}'".
-                            format(Vertices.Nym, NYM, nym))
-        if not result:
-            return None
-        else:
-            return result[0]
+        cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
+        try:
+            result = self.client.command(cmd)
+        except Exception as ex:
+            print("error executing command {} {}".format(cmd, ex))
+            raise ex
+        return result and result[0]
 
     def getUser(self, nym):
         result = self.client.command("select from {} where {} = '{}'".
@@ -282,7 +310,7 @@ class GraphStore(PlenumGraphStore):
             return sponsor[0].oRecordData.get(NYM)
 
     def getAddNymTxn(self, nym):
-        nymEdge = self.getAddedNymEdge(nym)
+        nymEdge = self.getAddsNymEdge(nym)
         if not nymEdge:
             # For the special case where steward(s) are added through genesis
             # transactions so they wont have an edge
@@ -306,9 +334,50 @@ class GraphStore(PlenumGraphStore):
 
     def getAddAttributeTxnIds(self, nym):
         attrEdges = self.client.command("select {} from {} where {} = '{}'".
-                                      format(TXN_ID, Edges.AddedAttribute,
+                                      format(TXN_ID, Edges.AddsAttribute,
                                              TARGET_NYM, nym))
         if not attrEdges:
             return []
         else:
             return [edge.oRecordData[TXN_ID] for edge in attrEdges]
+
+    def getTxn(self, identifier, reqId, **kwargs):
+        type = kwargs[TXN_TYPE]
+        edgeClass = getEdgeFromType(type)
+        result = self.client.command("select from {} where "
+                                     "clientId = '{}' and reqId = {}".
+                                     format(edgeClass, identifier, reqId))
+        return None if not result \
+            else result[0].oRecordData['reply']
+
+    def getRepliesForTxnIds(self, *txnIds, seqNo=None) -> dict:
+        txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
+
+        def delegate(edgeClass):
+            cmd = "select EXPAND(@this.exclude('in', 'out')) from {} where {} in [{}]". \
+                format(edgeClass, TXN_ID, txnIds)
+            if seqNo:
+                cmd += " and seqNo > {}".format(seqNo)
+            result = self.client.command(cmd)
+            return {} if not result else \
+                {r.oRecordData["seqNo"]: r.oRecordData for r in result}
+
+        return reduce(lambda d1, d2: {**d1, **d2},
+                      map(delegate, list(txnEdges.values())))
+
+    def storeReply(self, reply: Reply):
+        edgeClass = getEdgeFromType(reply.result[TXN_TYPE])
+        assert reply.result[TXN_ID]
+        self.client.command(self._updateProperties(
+            reply.result, edgeClass, reply.result[TXN_ID]))
+
+    @staticmethod
+    def _updateProperties(props, edgeClass, txnId):
+        intTypes = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm]
+        updates = ', '.join(["{}='{}'".format(x, props[x])
+                             if x not in intTypes else
+                             "{}={}".format(x, props[x])
+                             for x in props if props[x]])
+        updateCmd = "update {} set {} upsert where {}='{}'". \
+            format(edgeClass, updates, TXN_ID, txnId)
+        return updateCmd

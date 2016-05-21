@@ -26,6 +26,10 @@ outFilePath = "cli_output.log"
 
 clientBootStrategy = ClientBootStrategy.Custom
 
+hashStore = {
+    "type": "orientdb"
+}
+
 primaryStorage = None
 
 secondaryStorage = None

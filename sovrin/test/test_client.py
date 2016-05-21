@@ -13,8 +13,7 @@ from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE
 from sovrin.common.util import getSymmetricallyEncryptedVal
-from sovrin.test.helper import genConnectedTestClient, \
-    clientFromSigner, genTestClient, createNym, submitAndCheck
+from sovrin.test.helper import genTestClient, createNym, submitAndCheck
 
 
 logger = getlogger()
@@ -54,13 +53,7 @@ def updatedSteward(steward):
 
 
 @pytest.fixture(scope="module")
-def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
-    return sponsorSigner
-
-
-@pytest.fixture(scope="module")
-def userSignerA(genned, sponsor, sponsorSigner, looper, addedSponsor):
+def userSignerA(genned, addedSponsor, sponsorSigner, looper, sponsor):
     return addUser(looper, sponsor, sponsorSigner, 'userA')
 
 
@@ -180,7 +173,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir, nonSponsor):
                         contains="InvalidIdentifier")
 
 
-def testSponsorCreatesAUser(userSignerA):
+def testSponsorCreatesAUser(updatedSteward, userSignerA):
     pass
 
 
@@ -291,25 +284,22 @@ def testGetAttribute(sponsor, userSignerA, addedAttribute):
            [{'name': 'Mario'}]
 
 
-def testLatestAttrIsReceived(looper, genned, sponsor, sponsorSigner, userSignerA):
-    attr1 = json.dumps({'name': 'Mario'})
-    op = {
-        ORIGIN: sponsorSigner.verstr,
-        TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: attr1
-    }
-    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
-    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
-           [{'name': 'Mario'}]
+def testLatestAttrIsReceived(genned, addedSponsor, sponsorSigner, looper,
+                             sponsor, userSignerA):
 
-    attr2 = json.dumps({'name': 'Tom'})
+    attr1 = {'name': 'Mario'}
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ADD_ATTR,
-        DATA: attr2
+        DATA: json.dumps(attr1)
     }
     submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
-    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
-           [{'name': 'Tom'}]
+    assert sponsor.getAllAttributesForNym(userSignerA.verstr)[0] == attr1
+
+    attr2 = {'name': 'Luigi'}
+    op[DATA] = json.dumps(attr2)
+
+    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+    allAttributesForNym = sponsor.getAllAttributesForNym(userSignerA.verstr)
+    assert allAttributesForNym[0] == attr2
