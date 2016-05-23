@@ -1,5 +1,5 @@
 """
-plenum package metadata
+Sovrin package metadata
 """
 __version_info__ = (0, 1, 29)
 __version__ = '{}.{}.{}'.format(*__version_info__)
