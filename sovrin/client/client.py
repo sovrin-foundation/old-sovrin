@@ -17,7 +17,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
-    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN
+    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
 
@@ -29,16 +29,11 @@ class Client(PlenumClient):
                  name: str,
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int = 0,
+                 lastReqId: int=0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None):
-        super().__init__(name,
-                         nodeReg,
-                         ha,
-                         lastReqId,
-                         signer,
-                         signers,
+        super().__init__(name, nodeReg, ha, lastReqId, signer, signers,
                          basedirpath)
         self.storage = self.getStorage(basedirpath)
         self.lastReqId = self.storage.getLastReqId()
@@ -50,6 +45,33 @@ class Client(PlenumClient):
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
+        self._issuer = None  # type AnonCredsRole
+        self._prover = None  # type AnonCredsRole
+        self._verifier = None  # type AnonCredsRole
+
+    @property
+    def issuer(self):
+        return self._issuer
+
+    @issuer.setter
+    def issuer(self, value):
+        self._issuer = value
+
+    @property
+    def prover(self):
+        return self._prover
+
+    @prover.setter
+    def prover(self, value):
+        self._prover = value
+
+    @property
+    def verifier(self):
+        return self._verifier
+
+    @verifier.setter
+    def verifier(self, value):
+        self._verifier = value
 
     def getGraphStorage(self, name):
         config = getConfig()
@@ -73,7 +95,7 @@ class Client(PlenumClient):
         return ClientStorage(self.name, baseDirPath, store)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> \
-            List[Request]:
+        List[Request]:
         keys = []
         attributeNames = []
         attributeVals = []
@@ -147,8 +169,9 @@ class Client(PlenumClient):
                         try:
                             self.addNymToGraph(json.loads(result[DATA]))
                         except PyOrientCommandException as ex:
-                            logger.error("An exception was raised while adding "
-                                         "nym {}".format(ex))
+                            logger.error(
+                                "An exception was raised while adding "
+                                "nym {}".format(ex))
                 elif result[TXN_TYPE] == GET_TXNS:
                     if DATA in result and result[DATA]:
                         data = json.loads(result[DATA])
@@ -180,13 +203,15 @@ class Client(PlenumClient):
             if txn.get(ORIGIN) and not self.storage.hasNym(txn.get(ORIGIN)):
                 logger.warn("While adding user, origin not found in the graph")
             try:
-                self.storage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
-                                  txn.get(ORIGIN), reference=txn.get(REFERENCE))
+                self.storage.addUser(
+                    txn.get(TXN_ID),
+                    txn.get(TARGET_NYM),
+                    txn.get(ORIGIN),
+                    reference=txn.get(REFERENCE))
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
-                logger.error(
-                    "An exception was raised while adding "
-                    "user {}".format(ex))
+                logger.error("An exception was raised while adding "
+                             "user {}".format(ex))
         elif txn[ROLE] == SPONSOR:
             # Since only a steward can add a sponsor, check if the steward
             # is present. If not then add the steward
@@ -195,28 +220,24 @@ class Client(PlenumClient):
                 # A better way is to oo a GET_NYM for the steward.
                 self.storage.addSteward(None, txn.get(ORIGIN))
             try:
-                self.storage.addSponsor(txn.get(TXN_ID),
-                                             txn.get(TARGET_NYM),
-                                             txn.get(ORIGIN))
+                self.storage.addSponsor(
+                    txn.get(TXN_ID), txn.get(TARGET_NYM), txn.get(ORIGIN))
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
-                logger.error(
-                    "An exception was raised while adding "
-                    "sponsor {}".format(ex))
+                logger.error("An exception was raised while adding "
+                             "sponsor {}".format(ex))
         elif txn[ROLE] == STEWARD:
             try:
                 self.storage.addSteward(txn.get(TXN_ID), txn.get(ORIGIN))
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
-                logger.error(
-                    "An exception was raised while adding "
-                    "steward {}".format(ex))
+                logger.error("An exception was raised while adding "
+                             "steward {}".format(ex))
         else:
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def getTxnById(self, txnId: str):
-        serTxn = list(self.storage.getRepliesForTxnIds(txnId).
-                      values())[0]
+        serTxn = list(self.storage.getRepliesForTxnIds(txnId).values())[0]
         # TODO Add merkleInfo as well
         return deserializeTxn(serTxn)
 
@@ -287,7 +308,8 @@ class Client(PlenumClient):
                                           attributeReq['attribute']['skey'])
 
     def getAllAttributesForNym(self, nym, identifier=None):
-        attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,identifier)
+        attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,
+                                                                   identifier)
         attributes = []
         for req in attributeReqs.values():
             reply, error = self.replyIfConsensus(req[f.REQ_ID.nm])

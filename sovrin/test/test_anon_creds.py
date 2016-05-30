@@ -9,7 +9,7 @@ from plenum.common.util import randomString, adict
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa, genTestClient, checkSufficientRepliesRecvd
 from sovrin.common.txn import USER, ADD_NYM
-from sovrin.test.helper import submitAndCheck, genConnectedTestAnoncredsClient, \
+from sovrin.test.helper import submitAndCheck, genConnectedTestAnonCredsRole, \
     createNym, TestVerifier, TestIssuer, TestProver
 
 
@@ -67,16 +67,18 @@ def encodedProverAttributes(proverAttributes):
 
 
 @pytest.fixture(scope="module")
-def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner, issuerSigner,
-             proverSigner, verifierSigner, issuerHa, verifierHa):
+def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
+             issuerSigner, proverSigner, verifierSigner, issuerHA, proverHA, verifierHA):
     """
     Added issuer, prover and verifier to sovrin
     """
     sponsNym = sponsorSigner.verstr
     iNym = issuerSigner.verstr
+    pNym = proverSigner.verstr
     vNym = verifierSigner.verstr
 
-    for nym, ha in ((iNym, issuerHa), (vNym, verifierHa)):
+    # TODO Why is prover not added here?
+    for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
         op = {
             ORIGIN: sponsNym,
             TARGET_NYM: nym,
@@ -89,39 +91,56 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner, issuerSigner,
 
 
 @pytest.fixture(scope="module")
-def issuer(addedIPV, looper, nodeSet, tdir, issuerSigner, issuerHa, issuerName):
+def issuer(addedIPV, looper, nodeSet, tdir, issuerSigner, issuerHa,
+           issuerName):
     cliNodeReg = nodeSet.nodeReg.extractCliNodeReg()
-    return genConnectedTestAnoncredsClient(typ=TestIssuer, name=issuerName,
-                                           p2pHa=issuerHa, looper=looper,
-                                           nodes=nodeSet, nodeReg=cliNodeReg,
-                                           tmpdir=tdir, signer=issuerSigner)
+    return genConnectedTestAnonCredsRole(typ=TestIssuer,
+                                           name=issuerName,
+                                           p2pHa=issuerHa,
+                                           looper=looper,
+                                           nodes=nodeSet,
+                                           nodeReg=cliNodeReg,
+                                           tmpdir=tdir,
+                                           signer=issuerSigner)
 
 
 @pytest.fixture(scope="module")
 def verifier(addedIPV, looper, nodeSet, tdir, verifierSigner, verifierHa,
              verifierName):
     cliNodeReg = nodeSet.nodeReg.extractCliNodeReg()
-    return genConnectedTestAnoncredsClient(typ=TestVerifier, name=verifierName,
-                                           p2pHa=verifierHa, looper=looper,
-                                           nodes=nodeSet, nodeReg=cliNodeReg,
-                                           tmpdir=tdir, signer=verifierSigner)
+    return genConnectedTestAnonCredsRole(typ=TestVerifier,
+                                           name=verifierName,
+                                           p2pHa=verifierHa,
+                                           looper=looper,
+                                           nodes=nodeSet,
+                                           nodeReg=cliNodeReg,
+                                           tmpdir=tdir,
+                                           signer=verifierSigner)
 
 
 @pytest.fixture(scope="module")
 def prover(addedIPV, looper, nodeSet, tdir, verifierSigner, verifierHa,
            verifierName):
     cliNodeReg = nodeSet.nodeReg.extractCliNodeReg()
-    return genConnectedTestAnoncredsClient(typ=TestProver, name=verifierName,
-                                           p2pHa=verifierHa, looper=looper,
-                                           nodes=nodeSet, nodeReg=cliNodeReg,
-                                           tmpdir=tdir, signer=verifierSigner)
+    return genConnectedTestAnonCredsRole(typ=TestProver,
+                                           name=verifierName,
+                                           p2pHa=verifierHa,
+                                           looper=looper,
+                                           nodes=nodeSet,
+                                           nodeReg=cliNodeReg,
+                                           tmpdir=tdir,
+                                           signer=verifierSigner)
 
 
 @pytest.fixture(scope="module")
 def issuerAddedPK_I(addedIPV, looper, nodeSet, issuer, proverAttributeNames):
     req, = issuer.addPkiToLedger(proverAttributeNames)
-    looper.run(eventually(checkSufficientRepliesRecvd, issuer.sovrinClient.inBox,
-                          req.reqId, nodeSet.f, retryWait=1, timeout=5))
+    looper.run(eventually(checkSufficientRepliesRecvd,
+                          issuer.sovrinClient.inBox,
+                          req.reqId,
+                          nodeSet.f,
+                          retryWait=1,
+                          timeout=5))
     reply, = issuer.sovrinClient.getReply(req.reqId)
     r = adict()
     r[TXN_ID] = reply.result[TXN_ID]
@@ -130,4 +149,3 @@ def issuerAddedPK_I(addedIPV, looper, nodeSet, issuer, proverAttributeNames):
 
 def testAnonCredFlow(issuerAddedPK_I, issuer, verifier, prover, looper):
     looper.runFor(3)
-    

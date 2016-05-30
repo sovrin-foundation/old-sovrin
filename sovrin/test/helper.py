@@ -23,7 +23,7 @@ from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
 from plenum.test.testable import Spyable
-from sovrin.client.anoncreds_client import AnoncredsClient
+from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.issuer import Issuer
@@ -325,21 +325,21 @@ class TestClient(Client, StackedTester):
         super().onStopping(*args, **kwargs)
 
 
-class TestAnoncredsClient(AnoncredsClient):
+class TestAnonCredsRole(AnonCredsRole):
     @property
     def sovrinClientClass(self):
         return TestClient
 
 
-class TestIssuer(TestAnoncredsClient, Issuer):
+class TestIssuer(TestAnonCredsRole, Issuer):
     pass
 
 
-class TestProver(TestAnoncredsClient, Prover):
+class TestProver(TestAnonCredsRole, Prover):
     pass
 
 
-class TestVerifier(TestAnoncredsClient, Verifier):
+class TestVerifier(TestAnonCredsRole, Verifier):
     pass
 
 
@@ -363,11 +363,11 @@ def genConnectedTestClient(looper,
     return c
 
 
-def genConnectedTestAnoncredsClient(typ, name, p2pHa, looper,
+def genConnectedTestAnonCredsRole(typ, name, p2pHa, looper,
                                     nodes: TestNodeSet = None,
                                     nodeReg=None,
                                     tmpdir=None,
-                                    signer=None) -> TestAnoncredsClient:
+                                    signer=None) -> TestAnonCredsRole:
     anoncredClient = typ(name,
                          nodeReg,
                          sovrinHa=genHa(),

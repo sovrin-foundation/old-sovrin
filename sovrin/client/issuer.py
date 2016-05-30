@@ -8,15 +8,15 @@ from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import ORIGIN, TARGET_NYM, TXN_TYPE, DATA
 from plenum.common.types import HA
-from anoncreds.protocol.issuer import Issuer as IssuerObj
+from anoncreds.protocol.issuer import Issuer
 
-from sovrin.client.anoncreds_client import AnoncredsClient
+from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client as SovrinClient
 from sovrin.common.txn import ADD_PKI
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
-class Issuer(AnoncredsClient):
+class IssuerRole(AnonCredsRole):
     def __init__(self,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
@@ -44,13 +44,13 @@ class Issuer(AnoncredsClient):
         self.provers = {}
         self.issuers = {}
 
-    def hasIssuerObj(self, attrNames: Tuple[str]) -> bool:
+    def hasIssuer(self, attrNames: Tuple[str]) -> bool:
         return attrNames in self.issuers
 
-    def createIssuerObj(self, attrNames: Tuple[str]):
-        self.issuers[attrNames] = IssuerObj(attrNames)
+    def createIssuer(self, attrNames: Tuple[str]):
+        self.issuers[attrNames] = Issuer(attrNames)
 
-    def persistIssuerObj(self, name: str, issuer: IssuerObj):
+    def persistIssuer(self, name: str, issuer: Issuer):
         pk = issuer.PK
         R = [v for k, v in sorted(pk['R'].items(), key=lambda x: int(x[0]))]
         issuerData = ",".join([str(n) for n in (
@@ -65,11 +65,11 @@ class Issuer(AnoncredsClient):
         )])
         self.issuerStore.add(name, issuerData)
 
-    def retrieveIssuerObj(self, name: str):
+    def retrieveIssuer(self, name: str):
         issuerData = self.issuerStore.get(name)
         p_prime, q_prime, p, q, N, S, Z, R = issuerData.split(",")
         R = {str(i+1): r for i, r, in R.split("|")}
-        issuer = IssuerObj(len(R))
+        issuer = Issuer(len(R))
         issuer.p = p
         issuer.q = q
         issuer.p_prime = p_prime
@@ -81,22 +81,22 @@ class Issuer(AnoncredsClient):
     def addProver(self, proverNym, attributes):
         self.provers[proverNym] = {
             "attributes": attributes,
-            "issuer": IssuerObj(len(attributes))
+            "issuer": Issuer(len(attributes))
         }
 
     def addPkiToLedger(self, attrNames):
         attrNames = tuple(sorted(attrNames))
-        if not self.hasIssuerObj(attrNames):
-            self.createIssuerObj(attrNames)
-        issuerObj = self.issuers[attrNames]
+        if not self.hasIssuer(attrNames):
+            self.createIssuer(attrNames)
+        issuer = self.issuers[attrNames]
 
         issuerNym = self.sovrinClient.defaultIdentifier
 
         pk = {
-            "N": int(issuerObj.PK["N"]),
-            "R": {k: int(v) for k, v in issuerObj.PK["R"].items()},
-            "S": int(issuerObj.PK["S"]),
-            "Z": int(issuerObj.PK["Z"]),
+            "N": int(issuer.PK["N"]),
+            "R": {k: int(v) for k, v in issuer.PK["R"].items()},
+            "S": int(issuer.PK["S"]),
+            "Z": int(issuer.PK["Z"]),
         }
         op = {
             ORIGIN: issuerNym,

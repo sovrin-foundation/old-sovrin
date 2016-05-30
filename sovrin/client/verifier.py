@@ -6,15 +6,15 @@ from plenum.client.signer import Signer
 from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
-from sovrin.client.anoncreds_client import AnoncredsClient
+from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client as SovrinClient
 # TODO find a better name for VerifierObj
-from anoncreds.protocol.verifier import Verifier as VerifierObj
+from anoncreds.protocol.verifier import Verifier
 
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
-class Verifier(AnoncredsClient):
+class VerifierRole(AnonCredsRole):
     def __init__(self,
                  name: str,
                  nodeReg: Dict[str, HA]=None,

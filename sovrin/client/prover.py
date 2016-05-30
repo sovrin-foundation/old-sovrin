@@ -6,13 +6,13 @@ from plenum.client.signer import Signer
 from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import KITStack
 from plenum.common.types import HA
-from anoncreds.protocol.prover import Prover as ProverObj
+from anoncreds.protocol.prover import Prover
 
-from sovrin.client.anoncreds_client import AnoncredsClient
+from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
-class Prover(AnoncredsClient):
+class ProverRole(AnonCredsRole):
     def __init__(self,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
@@ -43,7 +43,7 @@ class Prover(AnoncredsClient):
         self.verifiers = {}
         self.requests = []
 
-    def addProver(self, name: str, prover: ProverObj):
+    def addProver(self, name: str, prover: Prover):
         pass
 
     def getProver(self, name: str):
