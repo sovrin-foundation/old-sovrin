@@ -3,12 +3,15 @@ from typing import Dict, Union, Tuple
 from raet.raeting import AutoMode
 
 from plenum.client.signer import Signer
+from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
 from sovrin.client.anoncreds_client import AnoncredsClient
 from sovrin.client.client import Client as SovrinClient
 # TODO find a better name for VerifierObj
 from anoncreds.protocol.verifier import Verifier as VerifierObj
+
+from sovrin.persistence.entity_file_store import EntityFileStore
 
 
 class Verifier(AnoncredsClient):
@@ -31,6 +34,12 @@ class Verifier(AnoncredsClient):
                          main=True,
                          auto=AutoMode.always)
         self.peerStack = SimpleStack(stackargs, self.handlePeerMessage)
+        dataDir = "data/verifiers"
+        HasFileStorage.__init__(self, name, baseDir=basedirpath,
+                                dataDir=dataDir)
+
+        self.verifierStore = EntityFileStore(name=name,
+                                             dataDir=self.getDataLocation())
 
     def handlePeerMessage(self, msg):
         pass

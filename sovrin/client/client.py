@@ -17,7 +17,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
-    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
+    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
 
@@ -152,7 +152,8 @@ class Client(PlenumClient):
                 elif result[TXN_TYPE] == GET_TXNS:
                     if DATA in result and result[DATA]:
                         data = json.loads(result[DATA])
-                        self.storage.setLastTxnForIdentifier(result[ORIGIN], data[LAST_TXN])
+                        self.storage.setLastTxnForIdentifier(result[ORIGIN],
+                                                             data[LAST_TXN])
                         for txn in data[TXNS]:
                             if txn[TXN_TYPE] == ADD_NYM:
                                 self.addNymToGraph(txn)
@@ -302,6 +303,16 @@ class Client(PlenumClient):
             ORIGIN: identifier,
             TARGET_NYM: nym,
             TXN_TYPE: GET_NYM,
+        }
+        self.submit(op, identifier=identifier)
+
+    def doGetTxn(self, txnId, identifier=None):
+        identifier = identifier if identifier else self.defaultIdentifier
+        op = {
+            ORIGIN: identifier,
+            TARGET_NYM: identifier,
+            TXN_TYPE: GET_TXN,
+            DATA: txnId
         }
         self.submit(op, identifier=identifier)
 

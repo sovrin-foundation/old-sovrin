@@ -41,27 +41,6 @@ def submitAndCheckNacks(looper, client, op, identifier,
                           contains, retryWait=1, timeout=15))
 
 
-def addUser(looper, creatorClient, creatorSigner, name):
-    usigner = SimpleSigner()
-    createNym(looper, usigner, creatorClient, creatorSigner, USER)
-    return usigner
-
-
-@pytest.fixture(scope="module")
-def updatedSteward(steward):
-    steward.requestPendingTxns()
-
-
-@pytest.fixture(scope="module")
-def userSignerA(genned, addedSponsor, sponsorSigner, looper, sponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userA')
-
-
-@pytest.fixture(scope="module")
-def userSignerB(genned, sponsor, sponsorSigner, looper, addedSponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userB')
-
-
 @pytest.fixture(scope="module")
 def attributeData():
     return json.dumps({'name': 'Mario'})

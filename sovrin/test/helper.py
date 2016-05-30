@@ -14,7 +14,7 @@ from plenum.common.txn import REQACK
 from plenum.common.util import getMaxFailures, runall, getlogger, getConfig
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
-from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
+from plenum.test.helper import TestNodeSet as PlenumTestNodeSet, genHa
 from plenum.test.helper import checkNodesConnected, \
     checkNodesAreReady, checkSufficientRepliesRecvd, checkLastClientReqForNode, \
     buildCompletedTxnFromReply, TestStack, \
@@ -23,8 +23,12 @@ from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
 from plenum.test.testable import Spyable
+from sovrin.client.anoncreds_client import AnoncredsClient
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
+from sovrin.client.issuer import Issuer
+from sovrin.client.prover import Prover
+from sovrin.client.verifier import Verifier
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID
@@ -321,6 +325,24 @@ class TestClient(Client, StackedTester):
         super().onStopping(*args, **kwargs)
 
 
+class TestAnoncredsClient(AnoncredsClient):
+    @property
+    def sovrinClientClass(self):
+        return TestClient
+
+
+class TestIssuer(TestAnoncredsClient, Issuer):
+    pass
+
+
+class TestProver(TestAnoncredsClient, Prover):
+    pass
+
+
+class TestVerifier(TestAnoncredsClient, Verifier):
+    pass
+
+
 def genTestClient(nodes: TestNodeSet = None,
                   nodeReg=None,
                   tmpdir=None,
@@ -339,6 +361,25 @@ def genConnectedTestClient(looper,
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
     return c
+
+
+def genConnectedTestAnoncredsClient(typ, name, p2pHa, looper,
+                                    nodes: TestNodeSet = None,
+                                    nodeReg=None,
+                                    tmpdir=None,
+                                    signer=None) -> TestAnoncredsClient:
+    anoncredClient = typ(name,
+                         nodeReg,
+                         sovrinHa=genHa(),
+                         p2pHa=p2pHa,
+                         signer=signer,
+                         basedirpath=tmpdir)
+    client = genTestClient(nodes=nodes, nodeReg=nodeReg, tmpdir=tmpdir,
+                           signer=signer)
+    anoncredClient.sovrinClient = client
+    looper.add(anoncredClient)
+    looper.run(anoncredClient.sovrinClient.ensureConnectedToNodes())
+    return anoncredClient
 
 
 def genTestClientProvider(nodes: TestNodeSet = None,

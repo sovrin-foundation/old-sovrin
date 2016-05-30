@@ -334,8 +334,8 @@ class IdentityGraph(OrientDbGraphStore):
 
     def getAddAttributeTxnIds(self, nym):
         attrEdges = self.client.command("select {} from {} where {} = '{}'".
-                                      format(TXN_ID, Edges.AddsAttribute,
-                                             TARGET_NYM, nym))
+                                        format(TXN_ID, Edges.AddsAttribute,
+                                               TARGET_NYM, nym))
         if not attrEdges:
             return []
         else:

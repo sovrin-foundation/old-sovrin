@@ -15,7 +15,7 @@ from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, \
-    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
+    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, GET_TXN
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -220,6 +220,10 @@ class Node(PlenumNode):
                     f.REQ_ID.nm: request.reqId,
                 })
                 self.transmitToClient(Reply(result), frm)
+        elif request.operation[TXN_TYPE] == GET_TXN:
+            txnId = request.operation.get(DATA)
+            self.transmitToClient(RequestAck(request.reqId), frm)
+
         else:
             await super().processRequest(request, frm)
 

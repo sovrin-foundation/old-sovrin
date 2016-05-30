@@ -2,7 +2,7 @@ import pytest
 
 from plenum.client.signer import SimpleSigner
 
-from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
+from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, USER
 from sovrin.common.txn import getGenesisTxns, STEWARD, ADD_NYM, \
     SPONSOR
 from sovrin.test.helper import clientFromSigner, TestNodeSet,\
@@ -78,6 +78,16 @@ def client1(client1Signer, looper, nodeSet, tdir, up):
 
 
 @pytest.fixture(scope="module")
+def userSignerA(genned, addedSponsor, sponsorSigner, looper, sponsor):
+    return addUser(looper, sponsor, sponsorSigner, 'userA')
+
+
+@pytest.fixture(scope="module")
+def userSignerB(genned, addedSponsor, sponsorSigner, looper, sponsor):
+    return addUser(looper, sponsor, sponsorSigner, 'userB')
+
+
+@pytest.fixture(scope="module")
 def steward(looper, nodeSet, tdir, up, stewardSigner):
     s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
     for node in nodeSet:
@@ -85,6 +95,11 @@ def steward(looper, nodeSet, tdir, up, stewardSigner):
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
+
+
+@pytest.fixture(scope="module")
+def updatedSteward(steward):
+    steward.requestPendingTxns()
 
 
 @pytest.fixture(scope="module")
@@ -101,3 +116,9 @@ def sponsor(looper, nodeSet, tdir, up, steward, sponsorSigner):
 def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
     createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
     return sponsorSigner
+
+
+def addUser(looper, creatorClient, creatorSigner, name):
+    usigner = SimpleSigner()
+    createNym(looper, usigner, creatorClient, creatorSigner, USER)
+    return usigner
