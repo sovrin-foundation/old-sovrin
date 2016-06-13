@@ -286,5 +286,3 @@ class Node(PlenumNode):
                                            txnId=txnId,
                                            txnTime=None)
         return Reply(result)
-
-
