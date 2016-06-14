@@ -76,8 +76,8 @@ class SecondaryStorage(IdentityGraph):
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
             (LAST_TXN_DATA, self.createLastTxnClass),
-            (ATTR_DATA, self.createClientAttributeClass()),
-            (REQ_DATA, self.createReqDataClass()),
+            (ATTR_DATA, self.createClientAttributeClass),
+            (REQ_DATA, self.createReqDataClass),
         ]
 
     def createLastTxnClass(self):
