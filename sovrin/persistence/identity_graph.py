@@ -354,7 +354,8 @@ class IdentityGraph(OrientDbGraphStore):
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
 
         def delegate(edgeClass):
-            cmd = "select EXPAND(@this.exclude('in', 'out')) from {} where {} in [{}]". \
+            cmd = "select EXPAND(@this.exclude('in', 'out')) from {} where {}" \
+                  " in [{}]". \
                 format(edgeClass, TXN_ID, txnIds)
             if seqNo:
                 cmd += " and seqNo > {}".format(seqNo)
@@ -374,6 +375,9 @@ class IdentityGraph(OrientDbGraphStore):
     @staticmethod
     def _updateProperties(props, edgeClass, txnId):
         intTypes = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm]
+        auditPath = props.get(F.auditPath.name)
+        if auditPath:
+            props[F.auditPath.name] = ",".join(auditPath)
         updates = ', '.join(["{}='{}'".format(x, props[x])
                              if x not in intTypes else
                              "{}={}".format(x, props[x])

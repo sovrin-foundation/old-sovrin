@@ -23,5 +23,3 @@ if __name__ == "__main__":
             node.addGenesisTxns()
             looper.add(node)
             looper.run()
-
-
