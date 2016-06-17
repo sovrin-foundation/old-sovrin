@@ -11,13 +11,14 @@ from plenum.common.types import HA
 from anoncreds.protocol.issuer import Issuer
 
 from sovrin.client.anoncreds_role import AnonCredsRole
-from sovrin.client.client import Client as SovrinClient
+from sovrin.client.client import Client
 from sovrin.common.txn import ADD_PKI
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
 class IssuerRole(AnonCredsRole):
     def __init__(self,
+                 client: Client,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
                  sovrinHa: Union[HA, Tuple[str, int]]=None,

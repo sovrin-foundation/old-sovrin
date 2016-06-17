@@ -18,6 +18,7 @@ cliNodeReg = OrderedDict([
 
 baseDir = "~/.sovrin"
 
+domainTransactionsFile = "transactions"
 poolTransactionsFile = "pool_transactions"
 
 logFilePath = "cli.log"

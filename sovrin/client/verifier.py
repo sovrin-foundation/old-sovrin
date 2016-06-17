@@ -7,8 +7,7 @@ from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
 from sovrin.client.anoncreds_role import AnonCredsRole
-from sovrin.client.client import Client as SovrinClient
-# TODO find a better name for VerifierObj
+from sovrin.client.client import Client
 from anoncreds.protocol.verifier import Verifier
 
 from sovrin.persistence.entity_file_store import EntityFileStore
@@ -16,6 +15,7 @@ from sovrin.persistence.entity_file_store import EntityFileStore
 
 class VerifierRole(AnonCredsRole):
     def __init__(self,
+                 client: Client,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
                  sovrinHa: Union[HA, Tuple[str, int]]=None,

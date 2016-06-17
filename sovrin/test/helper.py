@@ -363,23 +363,18 @@ def genConnectedTestClient(looper,
     return c
 
 
-def genConnectedTestAnonCredsRole(typ, name, p2pHa, looper,
-                                    nodes: TestNodeSet = None,
+def genAnonCredsRole(typ, client, name, p2pHa,
                                     nodeReg=None,
                                     tmpdir=None,
                                     signer=None) -> TestAnonCredsRole:
-    anoncredClient = typ(name,
+    anoncredRole = typ(client,
+                         name,
                          nodeReg,
                          sovrinHa=genHa(),
                          p2pHa=p2pHa,
                          signer=signer,
                          basedirpath=tmpdir)
-    client = genTestClient(nodes=nodes, nodeReg=nodeReg, tmpdir=tmpdir,
-                           signer=signer)
-    anoncredClient.sovrinClient = client
-    looper.add(anoncredClient)
-    looper.run(anoncredClient.sovrinClient.ensureConnectedToNodes())
-    return anoncredClient
+    return anoncredRole
 
 
 def genTestClientProvider(nodes: TestNodeSet = None,

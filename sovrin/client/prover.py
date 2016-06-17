@@ -8,12 +8,14 @@ from plenum.common.stacked import KITStack
 from plenum.common.types import HA
 from anoncreds.protocol.prover import Prover
 
+from sovrin.client.client import Client
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
 class ProverRole(AnonCredsRole):
     def __init__(self,
+                 client: Client,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
                  sovrinHa: Union[HA, Tuple[str, int]]=None,
