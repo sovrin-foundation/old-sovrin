@@ -4,7 +4,7 @@ from raet.raeting import AutoMode
 
 from plenum.client.signer import Signer
 from plenum.common.has_file_storage import HasFileStorage
-from plenum.common.stacked import KITStack
+from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
 from anoncreds.protocol.prover import Prover
 
@@ -20,54 +20,41 @@ class ProverRole(AnonCredsRole):
                  nodeReg: Dict[str, HA]=None,
                  sovrinHa: Union[HA, Tuple[str, int]]=None,
                  p2pHa: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int = 0,
+                 lastReqId: int=0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None):
-        super().__init__(name, nodeReg, sovrinHa=sovrinHa,
+        super().__init__(name,
+                         nodeReg,
+                         sovrinHa=sovrinHa,
                          p2pHa=p2pHa,
-                         lastReqId=lastReqId, signer=signer,
+                         lastReqId=lastReqId,
+                         signer=signer,
                          signers=signers,
                          basedirpath=basedirpath)
-        stackargs = dict(name=name,
-                         ha=p2pHa,
-                         main=False,
-                         auto=AutoMode.always)
-        self.peerStack = KITStack(stackargs, self.handlePeerMessage, {})
-        dataDir = "data/provers"
-        HasFileStorage.__init__(self, name, baseDir=basedirpath,
-                                dataDir=dataDir)
+        stackargs = dict(name=name, ha=p2pHa, main=True, auto=AutoMode.always)
+        self.peerStack = SimpleStack(stackargs, self.handlePeerMessage)
+        # dataDir = "data/provers"
+        # HasFileStorage.__init__(self, name, baseDir=basedirpath,
+        #                         dataDir=dataDir)
 
-        self.proverStore = EntityFileStore(name=name,
-                                           dataDir=self.getDataLocation())
+        # self.proverStore = EntityFileStore(name=name,
+        #                                    dataDir=self.getDataLocation())
 
-        self.issuers = {}
+        self.provers = {}  # Map[ProverNym, Prover]
+        self.issuers = {}  # Map[ProverNym, IssuerNym]
         self.verifiers = {}
         self.requests = []
 
-    def addProver(self, name: str, prover: Prover):
-        pass
-
-    def getProver(self, name: str):
-        pass
-
     def start(self, loop):
         super().start(loop)
-        self.peerStack.maintainConnections()
-
-    async def prod(self, limit) -> int:
-        super().prod(limit)
-        await self.peerStack.serviceLifecycle()
 
     def handlePeerMessage(self, msg):
         pass
 
     def addIssuer(self, issuerName: str, issuerHa: HA):
         if issuerName not in self.issuers:
-            self.issuers[issuerName] = {
-                'ha': issuerHa,
-                'credential': None
-            }
+            self.issuers[issuerName] = {'ha': issuerHa, 'credential': None}
             self.peerStack.registry[issuerName] = issuerHa
             self.peerStack.maintainConnections()
 

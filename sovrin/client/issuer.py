@@ -23,27 +23,30 @@ class IssuerRole(AnonCredsRole):
                  nodeReg: Dict[str, HA]=None,
                  sovrinHa: Union[HA, Tuple[str, int]]=None,
                  p2pHa: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int = 0,
+                 lastReqId: int=0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None):
-        super().__init__(name, nodeReg, sovrinHa=sovrinHa,
+        super().__init__(name,
+                         nodeReg,
+                         sovrinHa=sovrinHa,
                          p2pHa=p2pHa,
-                         lastReqId=lastReqId, signer=signer,
+                         lastReqId=lastReqId,
+                         signer=signer,
                          signers=signers,
                          basedirpath=basedirpath)
-        stackargs = dict(name=name,
-                         ha=p2pHa,
-                         main=True,
-                         auto=AutoMode.always)
+        stackargs = dict(name=name, ha=p2pHa, main=True, auto=AutoMode.always)
         self.peerStack = SimpleStack(stackargs, self.handlePeerMessage)
         dataDir = "data/issuers"
-        HasFileStorage.__init__(self, name, baseDir=basedirpath,
-                                dataDir=dataDir)
-        self.issuerStore = EntityFileStore(name=name,
-                                           dataDir=self.getDataLocation())
-        self.provers = {}
-        self.issuers = {}
+        # HasFileStorage.__init__(self,
+        #                         name,
+        #                         baseDir=basedirpath,
+        #                         dataDir=dataDir)
+        # self.issuerStore = EntityFileStore(name=name,
+        #                                    dataDir=self.getDataLocation())
+        self.issuers = dict()  # Map[attrNames, Issuer]
+        self.provers = dict()  # Map[ProverNym, ProverHA]
+        self.credentials = dict()  # Map[ProverNym, {credential: <A, e, vprimeprime>, attributesData: <the plain text attribute data>}]
 
     def hasIssuer(self, attrNames: Tuple[str]) -> bool:
         return attrNames in self.issuers
@@ -51,39 +54,35 @@ class IssuerRole(AnonCredsRole):
     def createIssuer(self, attrNames: Tuple[str]):
         self.issuers[attrNames] = Issuer(attrNames)
 
-    def persistIssuer(self, name: str, issuer: Issuer):
-        pk = issuer.PK
-        R = [v for k, v in sorted(pk['R'].items(), key=lambda x: int(x[0]))]
-        issuerData = ",".join([str(n) for n in (
-            issuer.p_prime,
-            issuer.q_prime,
-            issuer.p,
-            issuer.q,
-            pk['N'],
-            pk['S'],
-            pk['Z'],
-            '|'.join(R),
-        )])
-        self.issuerStore.add(name, issuerData)
+    # def persistIssuer(self, name: str, issuer: Issuer):
+    #     pk = issuer.PK
+    #     R = [v for k, v in sorted(pk['R'].items(), key=lambda x: int(x[0]))]
+    #     issuerData = ",".join([str(n)
+    #                            for n in (issuer.p_prime,
+    #                                      issuer.q_prime,
+    #                                      issuer.p,
+    #                                      issuer.q,
+    #                                      pk['N'],
+    #                                      pk['S'],
+    #                                      pk['Z'],
+    #                                      '|'.join(R), )])
+    #     self.issuerStore.add(name, issuerData)
 
-    def retrieveIssuer(self, name: str):
-        issuerData = self.issuerStore.get(name)
-        p_prime, q_prime, p, q, N, S, Z, R = issuerData.split(",")
-        R = {str(i+1): r for i, r, in R.split("|")}
-        issuer = Issuer(len(R))
-        issuer.p = p
-        issuer.q = q
-        issuer.p_prime = p_prime
-        issuer.q_prime = q_prime
-        issuer._pk = {'N': N, 'S': S, 'Z': Z, 'R': R}
-        issuer.sk = {'p': p, 'q': q}
-        return issuer
+    # def retrieveIssuer(self, name: str):
+    #     issuerData = self.issuerStore.get(name)
+    #     p_prime, q_prime, p, q, N, S, Z, R = issuerData.split(",")
+    #     R = {str(i + 1): r for i, r, in R.split("|")}
+    #     issuer = Issuer(len(R))
+    #     issuer.p = p
+    #     issuer.q = q
+    #     issuer.p_prime = p_prime
+    #     issuer.q_prime = q_prime
+    #     issuer._pk = {'N': N, 'S': S, 'Z': Z, 'R': R}
+    #     issuer.sk = {'p': p, 'q': q}
+    #     return issuer
 
-    def addProver(self, proverNym, attributes):
-        self.provers[proverNym] = {
-            "attributes": attributes,
-            "issuer": Issuer(len(attributes))
-        }
+    def addProver(self, proverNym, ha):
+        self.provers[proverNym] = ha
 
     def addPkiToLedger(self, attrNames):
         attrNames = tuple(sorted(attrNames))
@@ -95,7 +94,8 @@ class IssuerRole(AnonCredsRole):
 
         pk = {
             "N": int(issuer.PK["N"]),
-            "R": {k: int(v) for k, v in issuer.PK["R"].items()},
+            "R": {k: int(v)
+                  for k, v in issuer.PK["R"].items()},
             "S": int(issuer.PK["S"]),
             "Z": int(issuer.PK["Z"]),
         }
@@ -105,7 +105,6 @@ class IssuerRole(AnonCredsRole):
             TXN_TYPE: ADD_PKI,
             DATA: json.dumps({
                 "public_key": pk,
-                "atrribute_names": attrNames
             })
         }
         return self.sovrinClient.submit(op)

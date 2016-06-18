@@ -20,27 +20,28 @@ class VerifierRole(AnonCredsRole):
                  nodeReg: Dict[str, HA]=None,
                  sovrinHa: Union[HA, Tuple[str, int]]=None,
                  p2pHa: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int = 0,
+                 lastReqId: int=0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None):
-        super().__init__(name, nodeReg, sovrinHa=sovrinHa,
+        super().__init__(name,
+                         nodeReg,
+                         sovrinHa=sovrinHa,
                          p2pHa=p2pHa,
-                         lastReqId=lastReqId, signer=signer,
+                         lastReqId=lastReqId,
+                         signer=signer,
                          signers=signers,
                          basedirpath=basedirpath)
-        stackargs = dict(name=name,
-                         ha=p2pHa,
-                         main=True,
-                         auto=AutoMode.always)
+        stackargs = dict(name=name, ha=p2pHa, main=True, auto=AutoMode.always)
         self.peerStack = SimpleStack(stackargs, self.handlePeerMessage)
-        dataDir = "data/verifiers"
-        HasFileStorage.__init__(self, name, baseDir=basedirpath,
-                                dataDir=dataDir)
+        # dataDir = "data/verifiers"
+        # HasFileStorage.__init__(self,
+        #                         name,
+        #                         baseDir=basedirpath,
+        #                         dataDir=dataDir)
 
         self.verifierStore = EntityFileStore(name=name,
                                              dataDir=self.getDataLocation())
 
     def handlePeerMessage(self, msg):
         pass
-
