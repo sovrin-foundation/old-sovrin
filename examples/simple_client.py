@@ -16,7 +16,7 @@ from sovrin.client.client import Client
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 
-from sovrin.common.txn import TXN_TYPE, ADD_NYM
+from sovrin.common.txn import TXN_TYPE, NYM
 
 
 def run_node():
@@ -59,7 +59,7 @@ def run_node():
         looper.runFor(3)
 
         # a simple message
-        msg = {TXN_TYPE: ADD_NYM}
+        msg = {TXN_TYPE: NYM}
 
         # submit the request to the pool
         request, = client.submit(msg)

@@ -4,6 +4,7 @@ import os
 from setuptools import setup, find_packages, __version__
 from pip.req import parse_requirements
 from shutil import copyfile
+import data
 
 
 v = sys.version_info
@@ -70,3 +71,6 @@ if not os.path.exists(CONFIG_FILE):
               "# For help, refer config.py in the sovrin package.\n " \
               "# Any entry you add here would override that from config example\n"
         f.write(msg)
+
+DATA_DIR = os.path.dirname(data.__file__)
+copyfile(os.path.join(DATA_DIR, "pool_transactions"), POOL_TXN_FILE)

@@ -6,6 +6,8 @@ from contextlib import ExitStack
 from typing import Iterable
 
 import pyorient
+
+from plenum.client.signer import SimpleSigner
 from plenum.persistence import orientdb_store
 
 from plenum.common import util
@@ -26,8 +28,8 @@ from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet, UserWallet
-from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
-    TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID
+from sovrin.common.txn import ATTRIB, NYM, \
+    TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID, USER
 from sovrin.server.node import Node
 
 logger = getlogger()
@@ -213,7 +215,7 @@ class Organization:
                 # TODO     implementation
                 txn = buildCompletedTxnFromReply(req, reply)
                 # TODO Move this logic in wallet
-                if txn['txnType'] == ADD_ATTR and txn['data'] is not None:
+                if txn['txnType'] == ATTRIB and txn['data'] is not None:
                     attr = list(txn['data'].keys())[0]
                     if attr in wallet.attributeEncKeys:
                         key = wallet.attributeEncKeys.pop(attr)
@@ -360,11 +362,17 @@ def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
     op = {
         ORIGIN: creatorSigner.verstr,
         TARGET_NYM: nym,
-        TXN_TYPE: ADD_NYM,
+        TXN_TYPE: NYM,
         ROLE: role
     }
     return submitAndCheck(looper, creatorClient, op,
                           identifier=creatorSigner.identifier)[0]
+
+
+def addUser(looper, creatorClient, creatorSigner, name):
+    usigner = SimpleSigner()
+    createNym(looper, usigner, creatorClient, creatorSigner, USER)
+    return usigner
 
 
 def submitAndCheck(looper, client, op, identifier):
@@ -383,3 +391,4 @@ def submitAndCheck(looper, client, op, identifier):
     txnIdsAfter = [txn[TXN_ID] for txn in txnsAfter]
     logger.debug("old and new txnids {} {}".format(txnIdsBefore, txnIdsAfter))
     return list(set(txnIdsAfter) - set(txnIdsBefore))
+

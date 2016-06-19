@@ -1,5 +1,8 @@
 import json
+import os
+from _sha256 import sha256
 from base64 import b64decode
+from copy import deepcopy
 from typing import Mapping, List, Dict, Union, Tuple
 
 import base58
@@ -9,17 +12,20 @@ from pyorient import PyOrientCommandException
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
-from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME
+from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME, ENC, \
+    HASH, RAW, NAME
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.util import getlogger, getMaxFailures, \
-    getSymmetricallyEncryptedVal, libnacl
+    getSymmetricallyEncryptedVal, libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
-from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
-    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
-    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
+from sovrin.client.wallet import Wallet
+from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY, \
+    DISCLO, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
+from sovrin.persistence.wallet_storage_file import WalletStorageFile
 
 logger = getlogger()
 
@@ -32,14 +38,18 @@ class Client(PlenumClient):
                  lastReqId: int = 0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
-                 basedirpath: str=None):
+                 basedirpath: str=None,
+                 wallet: Wallet = None):
+        clientDataDir = os.path.join(basedirpath, "data", "clients", name)
+        wallet = wallet or Wallet(WalletStorageFile(clientDataDir)) # type: Wallet
         super().__init__(name,
                          nodeReg,
                          ha,
                          lastReqId,
                          signer,
                          signers,
-                         basedirpath)
+                         basedirpath,
+                         wallet)
         self.storage = self.getStorage(basedirpath)
         self.lastReqId = self.storage.getLastReqId()
         # TODO: Should I store values of attributes as non encrypted
@@ -51,6 +61,22 @@ class Client(PlenumClient):
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
 
+    def setupDefaultSigner(self):
+        # Sovrin clients should use a wallet, which supplies the signers
+        pass
+
+    def sign(self, msg: Dict, signer: Signer) -> Dict:
+        if msg["operation"].get(TXN_TYPE) == ATTRIB:
+            msgCopy = deepcopy(msg)
+            keyName = {RAW, ENC, HASH}.intersection(
+                set(msgCopy["operation"].keys())).pop()
+            msgCopy["operation"][keyName] = sha256(msgCopy["operation"][keyName]
+                                                   .encode()).hexdigest()
+            msg[f.SIG.nm] = signer.sign(msgCopy)
+            return msg
+        else:
+            return super().sign(msg, signer)
+
     def getGraphStorage(self, name):
         config = getConfig()
         return IdentityGraph(OrientDbStore(
@@ -59,10 +85,6 @@ class Client(PlenumClient):
             dbName=name,
             dbType=pyorient.DB_TYPE_GRAPH,
             storageType=pyorient.STORAGE_TYPE_PLOCAL))
-
-    def setupDefaultSigner(self):
-        # Sovrin clients should use a wallet, which supplies the signers
-        pass
 
     def getStorage(self, baseDirPath=None):
         config = getConfig()
@@ -74,34 +96,68 @@ class Client(PlenumClient):
 
     def submit(self, *operations: Mapping, identifier: str=None) -> \
             List[Request]:
-        keys = []
-        attributeNames = []
-        attributeVals = []
+        # keys = []
+        # attributeNames = []
+        # attributeVals = []
         for op in operations:
-            if op[TXN_TYPE] == ADD_ATTR:
-                # Data is a json object with key as attribute name and value
-                # as attribute value
-                data = op[DATA]
-                encVal, secretKey = getSymmetricallyEncryptedVal(data)
-                op[DATA] = encVal
-                keys.append(secretKey)
-                anm = list(json.loads(data).keys())[0]
-                attributeNames.append(anm)
-                attributeVals.append(data)
+            if op[TXN_TYPE] == ATTRIB:
+                if not (RAW in op or ENC in op or HASH in op):
+                    error("An operation must have one of these keys: {} or {} {}"
+                          .format(RAW, ENC, HASH))
+
+                # TODO: Consider encryption type too.
+                if ENC in op:
+                    anm = list(json.loads(op[ENC]).keys())[0]
+                    encVal, secretKey = getSymmetricallyEncryptedVal(op[ENC])
+                    # attributeNames.append(anm)
+                    # keys.append(secretKey)
+                    # attributeVals.append(op[ENC])
+                    op[ENC] = encVal
+                    self.wallet.addAttribute(name=anm, val=encVal,
+                                             origin=op[ORIGIN],
+                                             dest=op.get(TARGET_NYM),
+                                             encKey=secretKey)
+                # TODO: Consider hash type too.
+                elif HASH in op:
+                    data = json.loads(op[HASH])
+                    anm = list(data.keys())[0]
+                    aval = list(data.values())[0]
+                    hashed = sha256(aval.encode()).hexdigest()
+                    op[HASH] = {anm: hashed}
+                    # attributeVals.append(op[HASH])
+                    self.wallet.addAttribute(name=anm, val=aval,
+                                             origin=op[ORIGIN],
+                                             dest=op.get(TARGET_NYM),
+                                             hashed=True)
+                else:
+                    data = json.loads(op[RAW])
+                    anm = list(data.keys())[0]
+                    aval = list(data.values())[0]
+                    self.wallet.addAttribute(name=anm, val=aval,
+                                             origin=op[ORIGIN],
+                                             dest=op.get(TARGET_NYM))
+                    # attributeNames.append(anm)
+                    # attributeVals.append(op[RAW])
+                # data = op[DATA]
+                # encVal, secretKey = getSymmetricallyEncryptedVal(data)
+                # op[DATA] = encVal
         requests = super().submit(*operations, identifier=identifier)
         for r in requests:
             self.storage.addRequest(r)
-            operation = r.operation
-            # If add attribute transaction then store encryption key and
-            # attribute name with the request id for the attribute
-            if operation[TXN_TYPE] == ADD_ATTR:
-                attrData = {
-                    TARGET_NYM: operation[TARGET_NYM],
-                    "name": attributeNames.pop(0),
-                    "value": attributeVals.pop(0),
-                    "skey": keys.pop(0)
-                }
-                self.storage.addClientAttribute(r.reqId, attrData)
+        #     operation = r.operation
+        #     # If add attribute transaction then store encryption key and
+        #     # attribute name with the request id for the attribute
+        #     if operation[TXN_TYPE] == ATTRIB:
+        #         attrData = {}
+        #         if operation.get(TARGET_NYM):
+        #             attrData[TARGET_NYM] = operation.get(TARGET_NYM)
+        #         attrData = {
+        #             TARGET_NYM: operation[TARGET_NYM],
+        #             NAME: attributeNames.pop(0),
+        #             "value": attributeVals.pop(0),
+        #             SKEY: keys.pop(0)
+        #         }
+        #         self.storage.addClientAttribute(r.reqId, attrData)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -134,14 +190,17 @@ class Client(PlenumClient):
             fVal = getMaxFailures(len(self.nodeReg))
             if len(replies) == fVal + 1:
                 self.storage.setConsensus(reqId)
-                if result[TXN_TYPE] == ADD_NYM:
+                if result[TXN_TYPE] == NYM:
                     self.addNymToGraph(result)
-                elif result[TXN_TYPE] == ADD_ATTR:
+                elif result[TXN_TYPE] == ATTRIB:
                     self.storage.addAttribute(frm=result[ORIGIN],
-                                              to=result[TARGET_NYM],
-                                              data=result[DATA],
                                               txnId=result[TXN_ID],
-                                              txnTime=result[TXN_TIME])
+                                              txnTime=result[TXN_TIME],
+                                              raw=result.get(RAW),
+                                              enc=result.get(ENC),
+                                              hash=result.get(HASH),
+                                              to=result.get(TARGET_NYM)
+                                              )
                 elif result[TXN_TYPE] == GET_NYM:
                     if DATA in result and result[DATA]:
                         try:
@@ -154,22 +213,24 @@ class Client(PlenumClient):
                         data = json.loads(result[DATA])
                         self.storage.setLastTxnForIdentifier(result[ORIGIN], data[LAST_TXN])
                         for txn in data[TXNS]:
-                            if txn[TXN_TYPE] == ADD_NYM:
+                            if txn[TXN_TYPE] == NYM:
                                 self.addNymToGraph(txn)
-                            elif txn[TXN_TYPE] == ADD_ATTR:
+                            elif txn[TXN_TYPE] == ATTRIB:
                                 try:
-                                    self.storage.addAttribute(
-                                        frm=txn[ORIGIN],
-                                        to=txn[TARGET_NYM],
-                                        data=txn[DATA],
-                                        txnId=txn[TXN_ID],
-                                        txnTime=txn[TXN_TIME])
+                                    self.storage.addAttribute(frm=txn[ORIGIN],
+                                              txnId=txn[TXN_ID],
+                                              txnTime=txn[TXN_TIME],
+                                              raw=txn.get(RAW),
+                                              enc=txn.get(ENC),
+                                              hash=txn.get(HASH),
+                                              to=txn.get(TARGET_NYM)
+                                              )
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
 
-                if result[TXN_TYPE] in (ADD_NYM, ADD_ATTR):
+                if result[TXN_TYPE] in (NYM, ATTRIB):
                     self.storage.addToTransactionLog(reqId, result)
         else:
             logger.debug("Invalid op message {}".format(msg))
@@ -192,7 +253,7 @@ class Client(PlenumClient):
             if txn.get(ORIGIN) and \
                     not self.storage.hasSteward(txn.get(ORIGIN)):
                 # A better way is to oo a GET_NYM for the steward.
-                self.storage.addSteward(None, txn.get(ORIGIN))
+                self.storage.addSteward(None, nym=txn.get(ORIGIN))
             try:
                 self.storage.addSponsor(txn.get(TXN_ID),
                                              txn.get(TARGET_NYM),
@@ -249,7 +310,7 @@ class Client(PlenumClient):
         op = {
             ORIGIN: origin,
             TARGET_NYM: target,
-            TXN_TYPE: DISCLOSE,
+            TXN_TYPE: DISCLO,
             NONCE: base58.b58encode(nonce),
             DATA: base58.b58encode(boxedMsg)
         }
@@ -274,26 +335,53 @@ class Client(PlenumClient):
         return json.loads(decData)
 
     def getAttributeForNym(self, nym, attrName, identifier=None):
-        attributeReq = self.storage.getAttributeRequestForNym(nym, attrName,
-                                                              identifier)
-        if attributeReq is None:
-            return None
-        reply, error = self.replyIfConsensus(attributeReq[f.REQ_ID.nm])
-        if reply is None:
-            return None
-        else:
-            return self._getDecryptedData(reply[DATA],
-                                          attributeReq['attribute']['skey'])
+        walletAttribute = self.wallet.getAttribute(attrName, nym)
+        if walletAttribute:
+            if TARGET_NYM in walletAttribute and \
+                            walletAttribute[TARGET_NYM] == nym:
+                if RAW in walletAttribute:
+                    if walletAttribute[NAME] == attrName:
+                        return {walletAttribute[NAME]: walletAttribute[RAW]}
+                elif ENC in walletAttribute:
+                    attr = self._getDecryptedData(walletAttribute[ENC],
+                                           walletAttribute[SKEY])
+                    if attrName in attr:
+                        return attr
+                elif HASH in walletAttribute:
+                    if walletAttribute[NAME] == attrName:
+                        return {walletAttribute[NAME]: walletAttribute[HASH]}
+
+        # attributeReq = self.storage.getAttributeRequestForNym(nym, attrName,
+        #                                                       identifier)
+        # if attributeReq is None:
+        #     return None
+        # reply, error = self.replyIfConsensus(attributeReq[f.REQ_ID.nm])
+        # if reply is None:
+        #     return None
+        # else:
+        #     return self._getDecryptedData(reply[DATA],
+        #                                   attributeReq['attribute']['skey'])
 
     def getAllAttributesForNym(self, nym, identifier=None):
-        attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,identifier)
+        walletAttributes = self.wallet.attributes
         attributes = []
-        for req in attributeReqs.values():
-            reply, error = self.replyIfConsensus(req[f.REQ_ID.nm])
-            if reply is not None:
-                attr = self._getDecryptedData(reply[DATA],
-                                              req['attribute']['skey'])
-                attributes.append(attr)
+        for attr in walletAttributes:
+            if TARGET_NYM in attr and attr[TARGET_NYM] == nym:
+                if RAW in attr:
+                    attributes.append({attr[NAME]: attr[RAW]})
+                elif ENC in attr:
+                    attributes.append(self._getDecryptedData(attr[ENC], attr[SKEY]))
+                elif HASH in attr:
+                    attributes.append({attr[NAME]: attr[HASH]})
+        # attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,
+        #                                                            identifier)
+        # attributes = []
+        # for req in attributeReqs.values():
+        #     reply, error = self.replyIfConsensus(req[f.REQ_ID.nm])
+        #     if reply is not None:
+        #         attr = self._getDecryptedData(reply[DATA],
+        #                                       req['attribute']['skey'])
+        #         attributes.append(attr)
         return attributes
 
     def doGetNym(self, nym, identifier=None):

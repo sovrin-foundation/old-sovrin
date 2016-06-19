@@ -4,7 +4,7 @@ import libnacl.secret
 import pytest
 
 from plenum.common.util import randomString
-from sovrin.common.txn import ADD_NYM, IDPROOF, newTxn
+from sovrin.common.txn import NYM, IDPROOF, newTxn
 from sovrin.test.helper import Scenario
 
 
@@ -113,16 +113,16 @@ async def registersUser(s: Scenario):
 
     # await setupAndStart(s)
 
-    # TODO Find out what attribute is added to the member wallet for the ADD_NYM transaction.
+    # TODO Find out what attribute is added to the member wallet for the NYM transaction.
     # How does the correlation between userNym and sponsorNym happen for the member. Same for sponsor
 
-    # createNymSMsg = self.getSignedReq(ADD_NYM, userNym, s.sponsor, agent=s.agent)
+    # createNymSMsg = self.getSignedReq(NYM, userNym, s.sponsor, agent=s.agent)
     # idProofSMsg = self.getSignedReq(IDPROOF, userNym, s.sponsor, agent=s.agent, data={'data': 42})
 
     origin = s.agentNym if s.agent else s.sponsorNym
-    createNymReq = newTxn(txnType=ADD_NYM,
-                       target=s.userNym,
-                       origin=origin)
+    createNymReq = newTxn(txnType=NYM,
+                          target=s.userNym,
+                          origin=origin)
 
     idProofReq = newTxn(txnType=IDPROOF,
                         origin=origin,

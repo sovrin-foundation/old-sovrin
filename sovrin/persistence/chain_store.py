@@ -1,4 +1,4 @@
-# from sovrin.common.txn import TARGET_NYM, TXN_TYPE, ADD_NYM, ROLE, ORIGIN, USER
+# from sovrin.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, ORIGIN, USER
 #
 #
 # class ChainStore:
@@ -22,7 +22,7 @@
 #
 #     @staticmethod
 #     def isAddNymTxn(result):
-#         return result[TXN_TYPE] == ADD_NYM
+#         return result[TXN_TYPE] == NYM
 #
 #     def hasNym(self, nym):
 #         for txnId, result in self.getAllTxn().items():
