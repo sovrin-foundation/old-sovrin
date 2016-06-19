@@ -6,35 +6,14 @@ from plenum.client.signer import Signer
 from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
-from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.prover import Prover as ACProver
 
-from sovrin.client.client import Client
-from sovrin.client.anoncreds_role import AnonCredsRole
+from sovrin.client import PROVER
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
-class ProverRole(AnonCredsRole):
-    def __init__(self,
-                 client: Client,
-                 name: str,
-                 nodeReg: Dict[str, HA]=None,
-                 sovrinHa: Union[HA, Tuple[str, int]]=None,
-                 p2pHa: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int=0,
-                 signer: Signer=None,
-                 signers: Dict[str, Signer]=None,
-                 basedirpath: str=None):
-        super().__init__(name,
-                         nodeReg,
-                         sovrinHa=sovrinHa,
-                         p2pHa=p2pHa,
-                         lastReqId=lastReqId,
-                         signer=signer,
-                         signers=signers,
-                         basedirpath=basedirpath)
-        stackargs = dict(name=name, ha=p2pHa, main=True, auto=AutoMode.always)
-        self.peerStack = SimpleStack(stackargs, self.handlePeerMessage)
-        # dataDir = "data/provers"
+class Prover():
+    def __init__(self):
         # HasFileStorage.__init__(self, name, baseDir=basedirpath,
         #                         dataDir=dataDir)
 
@@ -45,12 +24,6 @@ class ProverRole(AnonCredsRole):
         self.issuers = {}  # Map[ProverNym, IssuerNym]
         self.verifiers = {}
         self.requests = []
-
-    def start(self, loop):
-        super().start(loop)
-
-    def handlePeerMessage(self, msg):
-        pass
 
     def addIssuer(self, issuerName: str, issuerHa: HA):
         if issuerName not in self.issuers:

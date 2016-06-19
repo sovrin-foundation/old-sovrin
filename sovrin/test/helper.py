@@ -54,16 +54,14 @@ class Scenario(ExitStack):
         self.actor = None  # type: Organization
 
         if nodeSet is None:
-            self.nodes = self.enter_context(
-                    TestNodeSet(count=nodeCount,
-                                nodeReg=nodeRegistry,
-                                tmpdir=tmpdir))
+            self.nodes = self.enter_context(TestNodeSet(count=nodeCount,
+                                                        nodeReg=nodeRegistry,
+                                                        tmpdir=tmpdir))
         else:
             self.nodes = nodeSet
         self.nodeReg = self.nodes.nodeReg
         if looper is None:
-            self.looper = self.enter_context(
-                    Looper(self.nodes))
+            self.looper = self.enter_context(Looper(self.nodes))
         else:
             self.looper = looper
         self.tmpdir = tmpdir
@@ -99,8 +97,11 @@ class Scenario(ExitStack):
 
     async def start(self):
         await checkNodesConnected(self.nodes)
-        await eventually(checkNodesAreReady, self.nodes,
-                         retryWait=.25, timeout=20, ratchetSteps=10)
+        await eventually(checkNodesAreReady,
+                         self.nodes,
+                         retryWait=.25,
+                         timeout=20,
+                         ratchetSteps=10)
 
     async def startClient(self, org=None):
         org = org if org else self.actor
@@ -119,19 +120,30 @@ class Scenario(ExitStack):
                 ib.remove(x)
 
         for node in self.nodes:
-            await eventually(self.checkInboxForReAck, org.client.name, ib, REQACK, node,
+            await eventually(self.checkInboxForReAck,
+                             org.client.name,
+                             ib,
+                             REQACK,
+                             node,
                              count,
-                             retryWait=.1, timeout=10, ratchetSteps=10)
+                             retryWait=.1,
+                             timeout=10,
+                             ratchetSteps=10)
 
     @staticmethod
-    def checkInboxForReAck(clientName, clientInBox, op, fromNode, expectedCount: int):
+    def checkInboxForReAck(clientName, clientInBox, op, fromNode,
+                           expectedCount: int):
         msg = 'Got your request client ' + clientName
-        actualCount = sum(1 for x in clientInBox
-                          if x[0]['op'] == op and
-                          x[1] == fromNode.clientstack.name)
+        actualCount = sum(
+            1 for x in clientInBox
+            if x[0]['op'] == op and x[1] == fromNode.clientstack.name)
         assert actualCount == expectedCount
 
-    async def checkReplies(self, reqs, org=None, retryWait=.25, timeout=None,
+    async def checkReplies(self,
+                           reqs,
+                           org=None,
+                           retryWait=.25,
+                           timeout=None,
                            ratchetSteps=10):
         org = org if org else self.actor
         if not isinstance(reqs, Iterable):
@@ -142,11 +154,13 @@ class Scenario(ExitStack):
 
         nodeCount = sum(1 for _ in self.nodes)
         f = getMaxFailures(nodeCount)
-        corogen = (eventually(
-                checkSufficientRepliesRecvd,
-                org.client.inBox, r.reqId, f,
-                retryWait=retryWait, timeout=timeout, ratchetSteps=ratchetSteps)
-                   for r in reqs)
+        corogen = (eventually(checkSufficientRepliesRecvd,
+                              org.client.inBox,
+                              r.reqId,
+                              f,
+                              retryWait=retryWait,
+                              timeout=timeout,
+                              ratchetSteps=ratchetSteps) for r in reqs)
 
         return await runall(corogen)
 
@@ -154,11 +168,14 @@ class Scenario(ExitStack):
         org = org if org else self.actor
         req = org.client.submit(op)[0]
         for node in self.nodes:
-            await eventually(checkLastClientReqForNode, node, req,
-                             retryWait=1, timeout=10)
+            await eventually(checkLastClientReqForNode,
+                             node,
+                             req,
+                             retryWait=1,
+                             timeout=10)
         return req
 
-    async def sendAndCheckAcks(self, op, count: int = 1, org=None):
+    async def sendAndCheckAcks(self, op, count: int=1, org=None):
         baseline = self.copyOfInBox()  # baseline of client inBox so we can net it out
         req = await self.send(op, org)
         await self.checkAcks(count=count, minusInBox=baseline)
@@ -207,8 +224,8 @@ class Organization:
         else:
             raise ValueError("No wallet exists for this user id")
 
-    def addTxnsForCompletedRequestsInWallet(self, reqs: Iterable,
-                                            wallet: Wallet):
+    def addTxnsForCompletedRequestsInWallet(self, reqs: Iterable, wallet:
+                                            Wallet):
         for req in reqs:
             reply, status = self.client.getReply(req.reqId)
             if status == "CONFIRMED":
@@ -226,7 +243,6 @@ class Organization:
 
 
 class TempStorage:
-
     def getDataLocation(self):
         # TODO: Need some way to clear the tempdir
         return os.path.join(tempfile.gettempdir(), self.dataDir, self.name)
@@ -236,33 +252,25 @@ class TempStorage:
         try:
             shutil.rmtree(loc)
         except Exception as ex:
-            logger.debug("Error while removing temporary directory {}".format(ex))
+            logger.debug("Error while removing temporary directory {}".format(
+                ex))
         try:
             self.graphStorage.client.db_drop(self.name)
             logger.debug("Dropped db {}".format(self.name))
         except Exception as ex:
-            logger.debug(
-                "Error while dropping db {}: {}".format(self.name, ex))
+            logger.debug("Error while dropping db {}: {}".format(self.name,
+                                                                 ex))
+
 
 # noinspection PyShadowingNames,PyShadowingNames
-@Spyable(methods=[Node.handleOneNodeMsg,
-                  Node.processRequest,
-                  Node.processOrdered,
-                  Node.postToClientInBox,
-                  Node.postToNodeInBox,
-                  "eatTestMsg",
-                  Node.decidePrimaries,
-                  Node.startViewChange,
-                  Node.discard,
-                  Node.reportSuspiciousNode,
-                  Node.reportSuspiciousClient,
-                  Node.processRequest,
-                  Node.processPropagate,
-                  Node.propagate,
-                  Node.forward,
-                  Node.send,
-                  Node.processInstanceChange,
-                  Node.checkPerformance])
+@Spyable(
+    methods=[Node.handleOneNodeMsg, Node.processRequest, Node.processOrdered,
+             Node.postToClientInBox, Node.postToNodeInBox, "eatTestMsg",
+             Node.decidePrimaries, Node.startViewChange, Node.discard,
+             Node.reportSuspiciousNode, Node.reportSuspiciousClient,
+             Node.processRequest, Node.processPropagate, Node.propagate,
+             Node.forward, Node.send, Node.processInstanceChange,
+             Node.checkPerformance])
 class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)
@@ -280,7 +288,8 @@ class TestNode(TempStorage, TestNodeCore, Node):
             self.graphStorage.client.db_drop(self.name)
             logger.debug("Dropped db {}".format(self.name))
         except Exception as ex:
-            logger.debug("Error while dropping db {}: {}".format(self.name, ex))
+            logger.debug("Error while dropping db {}: {}".format(self.name,
+                                                                 ex))
         # config = getConfig()
         # os.system(config.OrientDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
@@ -288,8 +297,8 @@ class TestNode(TempStorage, TestNodeCore, Node):
 
 class TestNodeSet(PlenumTestNodeSet):
     def __init__(self,
-                 names: Iterable[str] = None,
-                 count: int = None,
+                 names: Iterable[str]=None,
+                 count: int=None,
                  nodeReg=None,
                  tmpdir=None,
                  keyshare=True,
@@ -297,7 +306,8 @@ class TestNodeSet(PlenumTestNodeSet):
                  opVerificationPluginPath=None,
                  testNodeClass=TestNode):
         super().__init__(names, count, nodeReg, tmpdir, keyshare,
-                         primaryDecider, opVerificationPluginPath, testNodeClass)
+                         primaryDecider, opVerificationPluginPath,
+                         testNodeClass)
 
 
 class TestClientStorage(TempStorage, ClientStorage):
@@ -343,17 +353,21 @@ class TestVerifier(TestAnonCredsRole, Verifier):
     pass
 
 
-def genTestClient(nodes: TestNodeSet = None,
+def genTestClient(nodes: TestNodeSet=None,
                   nodeReg=None,
                   tmpdir=None,
                   signer=None,
                   testClientClass=TestClient) -> TestClient:
-    return genPlenumTestClient(nodes, nodeReg, tmpdir, signer, testClientClass,
+    return genPlenumTestClient(nodes,
+                               nodeReg,
+                               tmpdir,
+                               signer,
+                               testClientClass,
                                bootstrapKeys=False)
 
 
 def genConnectedTestClient(looper,
-                           nodes: TestNodeSet = None,
+                           nodes: TestNodeSet=None,
                            nodeReg=None,
                            tmpdir=None,
                            signer=None) -> TestClient:
@@ -363,21 +377,7 @@ def genConnectedTestClient(looper,
     return c
 
 
-def genAnonCredsRole(typ, client, name, p2pHa,
-                                    nodeReg=None,
-                                    tmpdir=None,
-                                    signer=None) -> TestAnonCredsRole:
-    anoncredRole = typ(client,
-                         name,
-                         nodeReg,
-                         sovrinHa=genHa(),
-                         p2pHa=p2pHa,
-                         signer=signer,
-                         basedirpath=tmpdir)
-    return anoncredRole
-
-
-def genTestClientProvider(nodes: TestNodeSet = None,
+def genTestClientProvider(nodes: TestNodeSet=None,
                           nodeReg=None,
                           tmpdir=None,
                           clientGnr=genTestClient):
@@ -399,7 +399,9 @@ def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
         TXN_TYPE: ADD_NYM,
         ROLE: role
     }
-    return submitAndCheck(looper, creatorClient, op,
+    return submitAndCheck(looper,
+                          creatorClient,
+                          op,
                           identifier=creatorSigner.identifier)[0]
 
 

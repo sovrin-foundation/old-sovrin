@@ -6,6 +6,7 @@ import base58
 import pyorient
 from pyorient import PyOrientCommandException
 
+from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
@@ -15,16 +16,19 @@ from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
-from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, SKEY, \
-    DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
-    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS
+from sovrin.common.txn import TXN_TYPE, ADD_ATTR, DATA, TXN_ID, TARGET_NYM, \
+    SKEY, DISCLOSE, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
+    SPONSOR, ADD_NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
+from sovrin.client.issuer import Issuer
+from sovrin.client.prover import Prover
+from sovrin.client.verifier import Verifier
 
 logger = getlogger()
 
 
-class Client(PlenumClient):
+class Client(PlenumClient, Issuer, Prover, Verifier):
     def __init__(self,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
@@ -32,6 +36,9 @@ class Client(PlenumClient):
                  lastReqId: int=0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
+                 issuerHA: Union[HA, Tuple[str, int]]=None,
+                 proverHA: Union[HA, Tuple[str, int]]=None,
+                 verifierHA: Union[HA, Tuple[str, int]]=None,
                  basedirpath: str=None):
         super().__init__(name, nodeReg, ha, lastReqId, signer, signers,
                          basedirpath)
@@ -45,33 +52,19 @@ class Client(PlenumClient):
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
-        self._issuer = None  # type AnonCredsRole
-        self._prover = None  # type AnonCredsRole
-        self._verifier = None  # type AnonCredsRole
+        Issuer.__init__(self)
+        Prover.__init__(self)
+        Verifier.__init__(self)
+        dataDirs = ["data/{}s".format(r) for r in roles]
 
-    @property
-    def issuer(self):
-        return self._issuer
+    def handleIssuerMessage(self):
+        pass
 
-    @issuer.setter
-    def issuer(self, value):
-        self._issuer = value
+    def handleProverMessage(self):
+        pass
 
-    @property
-    def prover(self):
-        return self._prover
-
-    @prover.setter
-    def prover(self, value):
-        self._prover = value
-
-    @property
-    def verifier(self):
-        return self._verifier
-
-    @verifier.setter
-    def verifier(self, value):
-        self._verifier = value
+    def handleVerifierMessage(self):
+        pass
 
     def getGraphStorage(self, name):
         config = getConfig()

@@ -8,36 +8,15 @@ from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import ORIGIN, TARGET_NYM, TXN_TYPE, DATA
 from plenum.common.types import HA
-from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.issuer import Issuer as CredDef
 
-from sovrin.client.anoncreds_role import AnonCredsRole
-from sovrin.client.client import Client
+from sovrin.client import ISSUER
 from sovrin.common.txn import ADD_PKI
 from sovrin.persistence.entity_file_store import EntityFileStore
 
 
-class IssuerRole(AnonCredsRole):
-    def __init__(self,
-                 client: Client,
-                 name: str,
-                 nodeReg: Dict[str, HA]=None,
-                 sovrinHa: Union[HA, Tuple[str, int]]=None,
-                 p2pHa: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int=0,
-                 signer: Signer=None,
-                 signers: Dict[str, Signer]=None,
-                 basedirpath: str=None):
-        super().__init__(name,
-                         nodeReg,
-                         sovrinHa=sovrinHa,
-                         p2pHa=p2pHa,
-                         lastReqId=lastReqId,
-                         signer=signer,
-                         signers=signers,
-                         basedirpath=basedirpath)
-        stackargs = dict(name=name, ha=p2pHa, main=True, auto=AutoMode.always)
-        self.peerStack = SimpleStack(stackargs, self.handlePeerMessage)
-        dataDir = "data/issuers"
+class Issuer():
+    def __init__(self):
         # HasFileStorage.__init__(self,
         #                         name,
         #                         baseDir=basedirpath,
@@ -48,11 +27,11 @@ class IssuerRole(AnonCredsRole):
         self.provers = dict()  # Map[ProverNym, ProverHA]
         self.credentials = dict()  # Map[ProverNym, {credential: <A, e, vprimeprime>, attributesData: <the plain text attribute data>}]
 
-    def hasIssuer(self, attrNames: Tuple[str]) -> bool:
+    def hasCredDef(self, attrNames: Tuple[str]) -> bool:
         return attrNames in self.issuers
 
-    def createIssuer(self, attrNames: Tuple[str]):
-        self.issuers[attrNames] = Issuer(attrNames)
+    def createCredDef(self, attrNames: Tuple[str]):
+        self.issuers[attrNames] = CredDef(attrNames)
 
     # def persistIssuer(self, name: str, issuer: Issuer):
     #     pk = issuer.PK
