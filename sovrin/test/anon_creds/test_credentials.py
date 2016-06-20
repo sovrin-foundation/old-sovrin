@@ -3,6 +3,9 @@ import json
 import pytest
 from charm.core.math.integer import integer
 
+from plenum.test.eventually import eventually
+from plenum.test.helper import checkSufficientRepliesRecvd
+
 from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, TYPE, IP, PORT, \
     KEYS, DATA, TARGET_NYM
 from anoncreds.protocol.issuer import Issuer
@@ -56,12 +59,17 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
 
 
 def testIssuerWritesCredDef(credentialDefinitionAdded):
+    """
+    A credential definition is added
+    """
     pass
 
 
 def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir, nodeSet,
                           looper, sponsorSigner, credDef):
-    txnIds = credentialDefinitionAdded
+    """
+    A credential definition is received
+    """
     user = genTestClient(nodeSet, signer=userSignerA, tmpdir=tdir)
     looper.add(user)
     looper.run(user.ensureConnectedToNodes())
@@ -74,4 +82,13 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir, nodeSet,
             VERSION: credDef[VERSION]
         }
     }
-    return submitAndCheck(looper, user, op, identifier=userSignerA.verstr)
+    req, = user.submit(op, identifier=userSignerA.verstr)
+    looper.run(eventually(checkSufficientRepliesRecvd, user.inBox, req.reqId, nodeSet.f,
+               retryWait=1, timeout=5))
+    reply, status = user.getReply(req.reqId)
+    assert status == "CONFIRMED"
+    recvdCredDef = json.loads(reply[DATA])
+    assert recvdCredDef[NAME] == credDef[NAME]
+    assert recvdCredDef[VERSION] == credDef[VERSION]
+    # TODO: Need to check equality of keys too
+

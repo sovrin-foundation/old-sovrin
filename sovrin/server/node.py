@@ -3,6 +3,7 @@ import json
 import time
 from _sha256 import sha256
 from copy import deepcopy
+from operator import itemgetter
 
 import pyorient
 
@@ -116,10 +117,6 @@ class Node(PlenumNode):
                                        format(TXN_TYPE, msg[TXN_TYPE]))
 
         if msg[TXN_TYPE] == ATTRIB:
-            # if TARGET_NYM not in msg:
-            #     raise InvalidClientRequest(identifier, reqId,
-            #                                '{} operation requires {} attribute'.
-            #                                format(ATTRIB, TARGET_NYM))
             dataKeys = {RAW, ENC, HASH}.intersection(set(msg.keys()))
             if len(dataKeys) != 1:
                 raise InvalidClientRequest(identifier, reqId,
@@ -195,14 +192,13 @@ class Node(PlenumNode):
             result = {f.IDENTIFIER.nm: request.identifier,
                       f.REQ_ID.nm: request.reqId,
                       DATA: json.dumps(txn) if txn else None,
-                      TXN_ID: txnId,
-                      TXN_TIME: time.time()*1000
+                      TXN_ID: txnId
                       }
             result.update(request.operation)
             self.transmitToClient(Reply(result), frm)
         elif request.operation[TXN_TYPE] == GET_TXNS:
             nym = request.operation[TARGET_NYM]
-            origin = request.operation[ORIGIN]
+            origin = request.identifier
             if nym != origin:
                 msg = "You can only receive transactions for yourself"
                 self.transmitToClient(RequestNack(request.reqId, msg), frm)
@@ -212,15 +208,19 @@ class Node(PlenumNode):
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)
+                # If sending transactions to a user then should send sponsor
+                # creation transaction also
+                if addNymTxn.get(ROLE) == USER:
+                    sponsorNymTxn = self.graphStorage.getAddNymTxn(
+                        addNymTxn.get(ORIGIN))
+                    txnIds = [sponsorNymTxn[TXN_ID], ] + txnIds
                 result = self.secondaryStorage.getReplies(
                     *txnIds, seqNo=data)
-                lastTxn = str(max(result.keys())) if len(result) > 0 \
-                    else data
-                txns = list(result.values())
+                txns = sorted(list(result.values()), key=itemgetter(F.seqNo.name))
+                lastTxn = str(txns[-1][F.seqNo.name]) if len(txns) > 0 else data
                 result = {
                     TXN_ID: self.genTxnId(
-                        request.identifier, request.reqId),
-                    TXN_TIME: time.time() * 1000
+                        request.identifier, request.reqId)
                 }
                 result.update(request.operation)
                 result[DATA] = json.dumps({
@@ -237,7 +237,17 @@ class Node(PlenumNode):
             name = request.operation[DATA][NAME]
             version = request.operation[DATA][VERSION]
             credDef = self.graphStorage.getCredDef(issuerNym, name, version)
-            self.transmitToClient(Reply(credDef), frm)
+            result = {
+                TXN_ID: self.genTxnId(
+                    request.identifier, request.reqId)
+            }
+            result.update(request.operation)
+            result[DATA] = json.dumps(credDef)
+            result.update({
+                f.IDENTIFIER.nm: request.identifier,
+                f.REQ_ID.nm: request.reqId,
+            })
+            self.transmitToClient(Reply(result), frm)
         else:
             await super().processRequest(request, frm)
 

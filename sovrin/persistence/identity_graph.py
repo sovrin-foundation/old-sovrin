@@ -325,11 +325,18 @@ class IdentityGraph(OrientDbGraphStore):
                                        "{} where {}='{}'"
                                        .format(Edges.AddsCredDef, Vertices.Nym,
                                                NYM, frm))
-        if not credDefs:
+        if credDefs:
             for cd in credDefs:
                 record = cd.oRecordData
                 if record.get(NAME) == name and record.get(VERSION) == version:
-                    return record
+                    return {
+                        NAME: name,
+                        VERSION: version,
+                        IP: record.get(IP),
+                        PORT: record.get(PORT),
+                        TYPE: record.get(TYPE),
+                        KEYS: record.get(KEYS)
+                    }
 
     def getNym(self, nym):
         cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
@@ -393,7 +400,8 @@ class IdentityGraph(OrientDbGraphStore):
                 }
         else:
             result = {
-                TXN_ID: nymEdge.oRecordData.get(TXN_ID)
+                TXN_ID: nymEdge.oRecordData.get(TXN_ID),
+                ROLE: nymEdge.oRecordData.get(ROLE, USER)
             }
             frm, to = self.store.getByRecordIds(nymEdge.oRecordData['out'].get(),
                                           nymEdge.oRecordData['in'].get())

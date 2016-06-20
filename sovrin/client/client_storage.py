@@ -119,7 +119,7 @@ class SecondaryStorage(IdentityGraph):
     def addReply(self, reqId: int, sender: str, result: Any) -> \
             Sequence[str]:
         txnId = result[TXN_ID]
-        txnTime = result[TXN_TIME]
+        txnTime = result.get(TXN_TIME)
         serializedTxn = serializeTxn(result)
         serializedTxn = serializedTxn.replace('"', '\\"').replace("'", "\\'")
         res = self.client.command("update {} set replies.{} = '{}' return "
