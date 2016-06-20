@@ -9,13 +9,14 @@ import pyorient
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
+from plenum.common.txn import RAW, ENC, HASH
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
-from plenum.common.util import getlogger
+from plenum.common.util import getlogger, error
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
-    TARGET_NYM, allOpKeys, validTxnTypes, ADD_ATTR, SPONSOR, ADD_NYM,\
-    ROLE, STEWARD, USER, GET_ATTR, DISCLOSE, ORIGIN, DATA, GET_NYM, \
-    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, GET_TXN
+    TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
+    ROLE, STEWARD, USER, GET_ATTR, DISCLO, ORIGIN, DATA, GET_NYM, \
+    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -25,7 +26,6 @@ logger = getlogger()
 
 
 class Node(PlenumNode):
-
     def __init__(self,
                  name,
                  nodeRegistry,
@@ -77,9 +77,9 @@ class Node(PlenumNode):
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
-                if txn[TXN_TYPE] == ADD_NYM:
+                if txn[TXN_TYPE] == NYM:
                     self.addNymToGraph(txn)
-                # Till now we just have ADD_NYM in genesis transaction.
+                # Till now we just have NYM in genesis transaction.
 
     def addNymToGraph(self, txn):
         if ROLE not in txn or txn[ROLE] == USER:
@@ -113,18 +113,26 @@ class Node(PlenumNode):
             raise InvalidClientRequest(identifier, reqId, 'invalid {}: {}'.
                                        format(TXN_TYPE, msg[TXN_TYPE]))
 
-        if msg[TXN_TYPE] == ADD_ATTR:
-            if TARGET_NYM not in msg:
+        if msg[TXN_TYPE] == ATTRIB:
+            # if TARGET_NYM not in msg:
+            #     raise InvalidClientRequest(identifier, reqId,
+            #                                '{} operation requires {} attribute'.
+            #                                format(ATTRIB, TARGET_NYM))
+            dataKeys = {RAW, ENC, HASH}.intersection(set(msg.keys()))
+            if len(dataKeys) != 1:
                 raise InvalidClientRequest(identifier, reqId,
-                                           '{} operation requires {} attribute'.
-                                           format(ADD_ATTR, TARGET_NYM))
-            if not self.graphStorage.hasNym(msg[TARGET_NYM]):
+                                           '{} should have one and only one of '
+                                           '{}, {}, {}'
+                                           .format(ATTRIB, RAW, ENC, HASH))
+
+            if not (not msg.get(TARGET_NYM) or
+                        self.graphStorage.hasNym(msg[TARGET_NYM])):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} should be added before adding '
                                            'attribute for it'.
                                            format(TARGET_NYM))
 
-        if msg[TXN_TYPE] == ADD_NYM:
+        if msg[TXN_TYPE] == NYM:
             if self.graphStorage.hasNym(msg[TARGET_NYM]):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} is already present".
@@ -144,7 +152,7 @@ class Node(PlenumNode):
         origin = request.identifier
         originRole = s.getRole(origin)
 
-        if typ == ADD_NYM:
+        if typ == NYM:
             role = op.get(ROLE, USER)
             authorizedAdder = self.authorizedAdders[role]
             if originRole not in authorizedAdder:
@@ -152,14 +160,15 @@ class Node(PlenumNode):
                     request.identifier,
                     request.reqId,
                     "{} cannot add {}".format(originRole, role))
-        elif typ == ADD_ATTR:
-            if not s.getSponsorFor(op[TARGET_NYM]) == origin:
+        elif typ == ATTRIB:
+            if op.get(TARGET_NYM) and not \
+                            s.getSponsorFor(op[TARGET_NYM]) == origin:
                 raise UnauthorizedClientRequest(
                         request.identifier,
                         request.reqId,
                         "Only user's sponsor can add attribute for that user")
         # TODO: Just for now. Later do something meaningful here
-        elif typ in [DISCLOSE, GET_ATTR]:
+        elif typ in [DISCLO, GET_ATTR]:
             pass
         else:
             raise UnauthorizedClientRequest(
@@ -220,15 +229,24 @@ class Node(PlenumNode):
                     f.REQ_ID.nm: request.reqId,
                 })
                 self.transmitToClient(Reply(result), frm)
-        elif request.operation[TXN_TYPE] == GET_TXN:
-            txnId = request.operation.get(DATA)
-            self.transmitToClient(RequestAck(request.reqId), frm)
-
         else:
             await super().processRequest(request, frm)
 
     async def storeTxnAndSendToClient(self, identifier, reply, txnId):
-        merkleInfo = await self.addToLedger(identifier, reply, txnId)
+        if reply.result[TXN_TYPE] == ATTRIB:
+            result = deepcopy(reply.result)
+            if RAW in result:
+                result[RAW] = sha256(result[RAW].encode()).hexdigest()
+            elif ENC in result:
+                result[ENC] = sha256(result[ENC].encode()).hexdigest()
+            elif HASH in result:
+                result[HASH] = result[HASH]
+            else:
+                error("Transaction missing required field")
+            reply = Reply(result)
+            merkleInfo = await self.addToLedger(identifier, reply, txnId)
+        else:
+            merkleInfo = await self.addToLedger(identifier, reply, txnId)
         result = deepcopy(reply.result)
         result[F.seqNo.name] = merkleInfo[F.seqNo.name]
         reply.result.update(merkleInfo)
@@ -245,7 +263,9 @@ class Node(PlenumNode):
         return merkleInfo
 
     async def getReplyFor(self, request):
-        result = await self.secondaryStorage.getReply(request.identifier, request.reqId, type=request.operation[TXN_TYPE])
+        result = await self.secondaryStorage.getReply(request.identifier,
+                                                      request.reqId,
+                                                      type=request.operation[TXN_TYPE])
         return Reply(result) if result else None
 
     async def doCustomAction(self, ppTime: float, req: Request) -> None:
@@ -281,12 +301,15 @@ class Node(PlenumNode):
             f.IDENTIFIER.nm: req.identifier,
             f.REQ_ID.nm: req.reqId,
         })
-        if operation[TXN_TYPE] == ADD_NYM:
+        if operation[TXN_TYPE] == NYM:
             self.addNymToGraph(result)
-        elif operation[TXN_TYPE] == ADD_ATTR:
+        elif operation[TXN_TYPE] == ATTRIB:
             self.graphStorage.addAttribute(frm=operation[ORIGIN],
-                                           to=operation[TARGET_NYM],
-                                           data=operation[DATA],
                                            txnId=txnId,
-                                           txnTime=None)
+                                           txnTime=ppTime,
+                                           raw=operation.get(RAW),
+                                           enc=operation.get(ENC),
+                                           hash=operation.get(HASH),
+                                           to=operation.get(TARGET_NYM)
+                                           )
         return Reply(result)

@@ -4,7 +4,7 @@ from ledger.util import F
 from plenum.common.txn import TXN_TYPE
 from plenum.common.types import Reply
 from plenum.persistence.secondary_storage import SecondaryStorage as PlenumSS
-from sovrin.common.txn import ADD_NYM
+from sovrin.common.txn import NYM
 
 
 class SecondaryStorage(PlenumSS):
@@ -55,7 +55,7 @@ class SecondaryStorage(PlenumSS):
 
     @staticmethod
     def isAddNymTxn(result):
-        return result[TXN_TYPE] == ADD_NYM
+        return result[TXN_TYPE] == NYM
 
     def hasNym(self, nym) -> bool:
         return self._txnStore.hasNym(nym)

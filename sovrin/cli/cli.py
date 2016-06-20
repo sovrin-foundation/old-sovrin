@@ -12,7 +12,7 @@ from plenum.client.signer import Signer, SimpleSigner
 from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
-    ADD_NYM, SPONSOR, TXN_ID, REFERENCE, USER
+    NYM, SPONSOR, TXN_ID, REFERENCE, USER
 from sovrin.server.node import Node
 
 
@@ -135,7 +135,7 @@ class SovrinCli(PlenumCli):
                     op = {
                         ORIGIN: origin,
                         TARGET_NYM: nym,
-                        TXN_TYPE: ADD_NYM,
+                        TXN_TYPE: NYM,
                         ROLE: role
                     }
                     req, = client.submit(op)
@@ -169,7 +169,7 @@ class SovrinCli(PlenumCli):
         op = {
             ORIGIN: origin,
             TARGET_NYM: alias,
-            TXN_TYPE: ADD_NYM,
+            TXN_TYPE: NYM,
             # TODO: Should REFERENCE be symmetrically encrypted and the key
             # should then be disclosed in another transaction
             REFERENCE: txnId,

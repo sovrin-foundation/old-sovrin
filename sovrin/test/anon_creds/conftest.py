@@ -8,7 +8,7 @@ from plenum.common.txn import ORIGIN, TARGET_NYM, ROLE, TXN_TYPE, DATA, TXN_ID
 from plenum.common.util import randomString, adict
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa, checkSufficientRepliesRecvd
-from sovrin.common.txn import USER, ADD_NYM
+from sovrin.common.txn import USER, NYM
 from sovrin.test.helper import submitAndCheck
 
 
@@ -76,7 +76,7 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
         op = {
             ORIGIN: sponsNym,
             TARGET_NYM: nym,
-            TXN_TYPE: ADD_NYM,
+            TXN_TYPE: NYM,
             ROLE: USER,
             DATA: json.dumps({'ha': ha})
         }

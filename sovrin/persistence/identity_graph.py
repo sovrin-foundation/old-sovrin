@@ -4,10 +4,10 @@ from typing import Dict
 from ledger.util import F
 from plenum.common.txn import TXN_TYPE
 from plenum.common.types import f, Reply
-from plenum.common.util import getlogger
+from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
-    STEWARD, ROLE, ORIGIN, REFERENCE, TXN_TIME, ADD_NYM, ADD_ATTR
+    STEWARD, ROLE, ORIGIN, REFERENCE, TXN_TIME, ATTRIB
 
 logger = getlogger()
 
@@ -29,8 +29,8 @@ class Edges:
     AliasOf = "AliasOf"
 
 txnEdges = {
-        ADD_NYM: Edges.AddsNym,
-        ADD_ATTR: Edges.AddsAttribute
+        NYM: Edges.AddsNym,
+        ATTRIB: Edges.AddsAttribute
     }
 
 
@@ -217,7 +217,8 @@ class IdentityGraph(OrientDbGraphStore):
             typ = self.getRole(frm)
             # Now add an edge from SPONSOR to USER
             frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
-            to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, nym)
+            to = "(select from {} where {} = '{}')".format(Vertices.User, NYM,
+                                                           nym)
             # Let there be an error in edge creation if `frm` does not
             #  exist because if system is behaving correctly then `frm`
             #  would exist
@@ -244,15 +245,25 @@ class IdentityGraph(OrientDbGraphStore):
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
-    def addAttribute(self, frm, to, data, txnId, txnTime):
-        attrVertex = self.createVertex(Vertices.Attribute, data=data)
+    def addAttribute(self, frm, txnId, txnTime, raw=None, enc=None, hash=None,
+                     to=None):
+        if raw:
+            attrVertex = self.createVertex(Vertices.Attribute, raw=raw)
+        elif enc:
+            attrVertex = self.createVertex(Vertices.Attribute, enc=enc)
+        elif hash:
+            attrVertex = self.createVertex(Vertices.Attribute, hash=hash)
+        else:
+            error("Only one of raw, enc and hash should be provided")
+
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                         frm)
         kwargs = {
             TARGET_NYM: to,
             TXN_ID: txnId,
         }
-        if txnTime: kwargs[TXN_TIME] = int(txnTime)
+        if txnTime is not None:
+            kwargs[TXN_TIME] = int(txnTime)
         self.createEdge(Edges.AddsAttribute, frm, attrVertex._rid, **kwargs)
         # to = "(select from {} where {} = '{}')".format(Vertices.User, NYM, to)
         to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,

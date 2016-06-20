@@ -21,6 +21,8 @@ baseDir = "~/.sovrin"
 domainTransactionsFile = "transactions"
 poolTransactionsFile = "pool_transactions"
 
+domainTransactionsFile = "transactions"
+
 logFilePath = "cli.log"
 
 outFilePath = "cli_output.log"

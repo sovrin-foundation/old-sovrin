@@ -5,11 +5,11 @@ import libnacl.public
 import pytest
 
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import REQNACK
+from plenum.common.txn import REQNACK, ENC, RAW
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
-from sovrin.common.txn import ADD_ATTR, ADD_NYM, \
+from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE
 from sovrin.common.util import getSymmetricallyEncryptedVal
@@ -47,12 +47,13 @@ def attributeData():
 
 
 @pytest.fixture(scope="module")
-def addedAttribute(userSignerA, sponsor, sponsorSigner, attributeData, looper):
+def addedRawAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
+                      looper):
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: attributeData
+        TXN_TYPE: ATTRIB,
+        RAW: attributeData
     }
 
     submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
@@ -71,8 +72,8 @@ def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper,
     op = {
         ORIGIN: sponsorNym,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: symEncData.encData
+        TXN_TYPE: ATTRIB,
+        ENC: symEncData.encData
     }
 
     return submitAndCheck(looper, sponsor, op, identifier=sponsorNym)[0]
@@ -112,7 +113,7 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
     op = {
         ORIGIN: stewardSigner.verstr,
         TARGET_NYM: sponsorNym,
-        TXN_TYPE: ADD_NYM,
+        TXN_TYPE: NYM,
         ROLE: SPONSOR
     }
 
@@ -144,7 +145,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir, nonSponsor):
     op = {
         ORIGIN: sponsNym,
         TARGET_NYM: userNym,
-        TXN_TYPE: ADD_NYM,
+        TXN_TYPE: NYM,
         ROLE: USER
     }
 
@@ -156,7 +157,7 @@ def testSponsorCreatesAUser(updatedSteward, userSignerA):
     pass
 
 
-def testSponsorAddsAttributeForUser(addedAttribute):
+def testSponsorAddsAttributeForUser(addedRawAttribute):
     pass
 
 
@@ -169,7 +170,7 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
     op = {
         ORIGIN: sponsNym,
         TARGET_NYM: "jasonlaw",
-        TXN_TYPE: ADD_NYM,
+        TXN_TYPE: NYM,
         # TODO: Should REFERENCE be symmetrically encrypted and the key
         # should then be disclosed in another transaction
         REFERENCE: txnId,
@@ -179,16 +180,16 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
-def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper, nodeSet, tdir,
-                                            attributeData):
+def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper,
+                                            nodeSet, tdir, attributeData):
 
     nym = nonSponsor.getSigner().verstr
 
     op = {
         ORIGIN: nym,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: attributeData
+        TXN_TYPE: ATTRIB,
+        RAW: attributeData
     }
 
     submitAndCheckNacks(looper, nonSponsor, op, identifier=nym,
@@ -201,12 +202,11 @@ def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
     op = {
         ORIGIN: anotherSponsor.getSigner().verstr,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: attributeData
+        TXN_TYPE: ATTRIB,
+        RAW: attributeData
     }
 
     submitAndCheckNacks(looper, anotherSponsor, op,
-
                         identifier=anotherSponsor.getSigner().verstr)
 
 
@@ -216,8 +216,8 @@ def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
     op = {
         ORIGIN: stewardSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: attributeData
+        TXN_TYPE: ATTRIB,
+        RAW: attributeData
     }
 
     submitAndCheckNacks(looper, steward, op,
@@ -243,22 +243,23 @@ def testSponsorDisclosesEncryptedAttribute(addedEncryptedAttribute, symEncData,
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
+        TXN_TYPE: ATTRIB,
         NONCE: base58.b58encode(nonce),
-        DATA: base58.b58encode(boxedMsg)
+        ENC: base58.b58encode(boxedMsg)
     }
     submitAndCheck(looper, sponsor, op,
                    identifier=sponsorSigner.verstr)
 
 
 @pytest.mark.skipif(True, reason="Pending implementation")
-def testSponsorAddedAttributeCanBeChanged(addedAttribute):
+def testSponsorAddedAttributeCanBeChanged(addedRawAttribute):
     # TODO but only by user(if user has taken control of his identity) and
     # sponsor
     raise NotImplementedError
 
 
-def testGetAttribute(sponsor, userSignerA, addedAttribute):
+def testGetAttribute(genned, addedSponsor, sponsorSigner,
+                     sponsor, userSignerA, addedRawAttribute):
     assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
            [{'name': 'Mario'}]
 
@@ -270,14 +271,14 @@ def testLatestAttrIsReceived(genned, addedSponsor, sponsorSigner, looper,
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
-        TXN_TYPE: ADD_ATTR,
-        DATA: json.dumps(attr1)
+        TXN_TYPE: ATTRIB,
+        RAW: json.dumps(attr1)
     }
     submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
     assert sponsor.getAllAttributesForNym(userSignerA.verstr)[0] == attr1
 
     attr2 = {'name': 'Luigi'}
-    op[DATA] = json.dumps(attr2)
+    op[RAW] = json.dumps(attr2)
 
     submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
     allAttributesForNym = sponsor.getAllAttributesForNym(userSignerA.verstr)

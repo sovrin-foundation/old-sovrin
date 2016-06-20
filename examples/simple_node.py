@@ -27,7 +27,7 @@ def run_node():
 
     genesisTxns = [{'txnId': '6b86b273ff34fce19d6b804eff5a3f57'
                              '47ada4eaa22f1d49c01e52ddb7875b4b',
-                    'type': 'ADD_NYM',
+                    'type': 'NYM',
                     'dest': 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=',
                     'role': 'SPONSOR'}]
 
