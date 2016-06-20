@@ -11,7 +11,7 @@ from sovrin.client.client import Client
 logger = getlogger()
 
 
-class AnonCredsRole(HasFileStorage):
+class AnonCredsRole:#(HasFileStorage):
     def __init__(self,
                  client: Client,
                  name: str,

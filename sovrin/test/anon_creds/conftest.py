@@ -7,10 +7,13 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.txn import ORIGIN, TARGET_NYM, ROLE, TXN_TYPE, DATA, TXN_ID
 from plenum.common.util import randomString, adict
 from plenum.test.eventually import eventually
-from plenum.test.helper import genHa, checkSufficientRepliesRecvd
+from plenum.test.helper import genHa, checkSufficientRepliesRecvd, genTestClient
 from sovrin.common.txn import USER, NYM
 from sovrin.test.helper import submitAndCheck
 
+
+# TODO Make a fixture for creating a client with a anon-creds features
+#  enabled.
 
 @pytest.fixture(scope="module")
 def issuerSigner():

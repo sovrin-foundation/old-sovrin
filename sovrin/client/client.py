@@ -2,6 +2,7 @@ import json
 import os
 from _sha256 import sha256
 from base64 import b64decode
+from collections import deque
 from copy import deepcopy
 from typing import Mapping, List, Dict, Union, Tuple
 
@@ -9,10 +10,13 @@ import base58
 import pyorient
 from pyorient import PyOrientCommandException
 
+from raet.raeting import AutoMode
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
+from plenum.server.router import Router
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
+from plenum.common.stacked import SimpleStack
 from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME, ENC, \
     HASH, RAW, NAME
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA
@@ -39,13 +43,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                  name: str,
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
+                 peerHA: Union[HA, Tuple[str, int]]=None,
                  lastReqId: int=0,
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None,
                  wallet: Wallet = None):
         clientDataDir = os.path.join(basedirpath, "data", "clients", name)
-        wallet = wallet or Wallet(WalletStorageFile(clientDataDir)) # type: Wallet
+        wallet = wallet or \
+                 Wallet(WalletStorageFile(clientDataDir))  # type: Wallet
         super().__init__(name,
                          nodeReg,
                          ha,
@@ -69,14 +75,30 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         Verifier.__init__(self)
         dataDirs = ["data/{}s".format(r) for r in roles]
 
-    def handleIssuerMessage(self):
-        pass
+        # We may have a subclass of Sovrin Client instead that mixes in
+        #  the Anon Cred behaviors.
+        self.hasAnonCreds = bool(peerHA)
+        if self.hasAnonCreds:
+            self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)
+            stackargs = dict(name=name,
+                             ha=peerHA,
+                             main=True,
+                             auto=AutoMode.always)
+            self.peerMsgRoutes = []
+            self.peerMsgRouter = Router(*self.peerMsgRoutes)
+            self.peerStack = SimpleStack(stackargs,
+                                         msgHandler=self.handlePeerMessage)
+            self.peerStack.sign = self.sign
+            self.peerInbox = deque()
 
-    def handleProverMessage(self):
-        pass
+    def handlePeerMessage(self, msg):
+        """
+        Use the peerMsgRouter to pass the messages to the correct
+         function that handles them
 
-    def handleVerifierMessage(self):
-        pass
+        :param msg: the P2P client message.
+        """
+        return self.peerMsgRouter.handle(msg)
 
     def setupDefaultSigner(self):
         # Sovrin clients should use a wallet, which supplies the signers
@@ -456,3 +478,19 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             if not self.requestedPendingTxns:
                 self.requestPendingTxns()
                 self.requestedPendingTxns = True
+
+    def start(self, loop):
+        super().start(loop)
+        if self.hasAnonCreds and \
+                        self.status is not Status.going():
+            self.peerStack.start()
+
+    async def prod(self, limit) -> int:
+        s = await self.nodestack.service(limit)
+        if self.isGoing():
+            await self.nodestack.serviceLifecycle()
+        self.nodestack.flushOutBoxes()
+        if self.hasAnonCreds:
+            return s + await self.peerStack.service(limit)
+        else:
+            return s
