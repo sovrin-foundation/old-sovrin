@@ -63,6 +63,7 @@ class SecondaryStorage(IdentityGraph):
     Using Orientdb graph storage to store client requests and transactions.
     """
 
+    # TODO: Why it is here too?
     def classesNeeded(self):
         return [
             (Vertices.Nym, self.createNymClass),
@@ -70,6 +71,7 @@ class SecondaryStorage(IdentityGraph):
             (Vertices.Sponsor, self.createSponsorClass),
             (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
+            (Vertices.CredDef, self.createCredDefClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
             (Edges.Sponsors, self.createSponsorsClass),
@@ -78,6 +80,7 @@ class SecondaryStorage(IdentityGraph):
             (LAST_TXN_DATA, self.createLastTxnClass),
             (ATTR_DATA, self.createClientAttributeClass),
             (REQ_DATA, self.createReqDataClass),
+            (Edges.AddsCredDef, self.createAddsCredDefClass)
         ]
 
     def createLastTxnClass(self):
@@ -118,6 +121,7 @@ class SecondaryStorage(IdentityGraph):
         txnId = result[TXN_ID]
         txnTime = result[TXN_TIME]
         serializedTxn = serializeTxn(result)
+        serializedTxn = serializedTxn.replace('"', '\\"').replace("'", "\\'")
         res = self.client.command("update {} set replies.{} = '{}' return "
                                   "after @this.replies where {} = {}".
                                   format(REQ_DATA, sender, serializedTxn,

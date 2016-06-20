@@ -9,14 +9,16 @@ import pyorient
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.txn import RAW, ENC, HASH
+from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, KEYS, TYPE, IP, \
+    PORT
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
 from plenum.common.util import getlogger, error
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, ORIGIN, DATA, GET_NYM, \
-    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS
+    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, \
+    GET_CRED_DEF
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -168,8 +170,9 @@ class Node(PlenumNode):
                         request.reqId,
                         "Only user's sponsor can add attribute for that user")
         # TODO: Just for now. Later do something meaningful here
-        elif typ in [DISCLO, GET_ATTR]:
+        elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF]:
             pass
+
         else:
             raise UnauthorizedClientRequest(
                     request.identifier,
@@ -229,6 +232,12 @@ class Node(PlenumNode):
                     f.REQ_ID.nm: request.reqId,
                 })
                 self.transmitToClient(Reply(result), frm)
+        elif request.operation[TXN_TYPE] == GET_CRED_DEF:
+            issuerNym = request.operation[TARGET_NYM]
+            name = request.operation[DATA][NAME]
+            version = request.operation[DATA][VERSION]
+            credDef = self.graphStorage.getCredDef(issuerNym, name, version)
+            self.transmitToClient(Reply(credDef), frm)
         else:
             await super().processRequest(request, frm)
 
@@ -312,4 +321,15 @@ class Node(PlenumNode):
                                            hash=operation.get(HASH),
                                            to=operation.get(TARGET_NYM)
                                            )
+        elif operation[TXN_TYPE] == CRED_DEF:
+            data = operation.get(DATA)
+            self.graphStorage.addCredDef(frm=operation[ORIGIN],
+                                           txnId=txnId,
+                                           txnTime=ppTime,
+                                            name=data.get(NAME),
+                                         version=data.get(VERSION),
+                                         keys=data.get(KEYS),
+                                         typ=data.get(TYPE),
+                                         ip=data.get(IP),
+                                         port=data.get(PORT))
         return Reply(result)

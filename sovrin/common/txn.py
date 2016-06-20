@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME, \
-    RAW, ENC, HASH
+    RAW, ENC, HASH, NAME, VERSION, TYPE, KEYS, IP, PORT
 from plenum.common.types import f
 
 ROLE = 'role'
@@ -30,8 +30,9 @@ DISCLO = "DISCLO"
 GET_ATTR = "GET_ATTR"
 GET_NYM = "GET_NYM"
 GET_TXNS = "GET_TXNS"
-CRED_DEF = "CRED_DEF"
 GET_TXN = "GET_TXN"
+CRED_DEF = "CRED_DEF"
+GET_CRED_DEF = "GET_CRED_DEF"
 ADD_PKI = "ADD_PKI"
 REQ_CRED = "REQ_CRED"
 GET_NONCE = "GET_NONCE"
@@ -39,8 +40,10 @@ VER_PRF = "VER_PRF"
 
 
 # TXN_TYPE -> (requireds, optionals)
-fields = {NYM: ([TARGET_NYM],        [ROLE]),
-          ATTRIB: ([], [RAW, ENC, HASH])
+fields = {NYM: ([TARGET_NYM], [ROLE]),
+          ATTRIB: ([], [RAW, ENC, HASH]),
+          CRED_DEF: ([NAME, VERSION, TYPE, KEYS], [IP, PORT]),
+          GET_CRED_DEF: ([], [])
           }
 
 validTxnTypes = [NYM,
@@ -51,7 +54,8 @@ validTxnTypes = [NYM,
                  GET_ATTR,
                  GET_NYM,
                  GET_TXNS,
-                 CRED_DEF]
+                 CRED_DEF,
+                 GET_CRED_DEF]
 
 
 # def txn(txnType,

@@ -1,13 +1,15 @@
+import json
 from functools import reduce
-from typing import Dict
+from typing import Dict, Optional
 
 from ledger.util import F
-from plenum.common.txn import TXN_TYPE
+from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
+    DATA
 from plenum.common.types import f, Reply
 from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
-    STEWARD, ROLE, ORIGIN, REFERENCE, TXN_TIME, ATTRIB
+    STEWARD, ROLE, ORIGIN, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF
 
 logger = getlogger()
 
@@ -18,6 +20,7 @@ class Vertices:
     Sponsor = SPONSOR
     User = USER
     Attribute = "Attribute"
+    CredDef = "CredDef"
 
 
 class Edges:
@@ -27,14 +30,16 @@ class Edges:
     # TODO Later have OwnsAttribute in case user takes control of his identity
     Sponsors = "Sponsors"
     AliasOf = "AliasOf"
+    AddsCredDef = "AddsCredDef"
 
 txnEdges = {
         NYM: Edges.AddsNym,
-        ATTRIB: Edges.AddsAttribute
+        ATTRIB: Edges.AddsAttribute,
+        CRED_DEF: Edges.AddsCredDef
     }
 
 
-def getEdgeFromType(txnType: str): return txnEdges[txnType]
+def getEdgeFromType(txnType: str): return txnEdges.get(txnType)
 
 
 class IdentityGraph(OrientDbGraphStore):
@@ -46,11 +51,13 @@ class IdentityGraph(OrientDbGraphStore):
             (Vertices.Sponsor, self.createSponsorClass),
             (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
+            (Vertices.CredDef, self.createCredDefClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
             (Edges.Sponsors, self.createSponsorsClass),
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
+            (Edges.AddsCredDef, self.createAddsCredDefClass)
         ]
 
     # Creates a vertex class which has a property called `nym` with a unique
@@ -111,6 +118,14 @@ class IdentityGraph(OrientDbGraphStore):
         self.createVertexClass(Vertices.Attribute,
                                properties={"data": "string"})
 
+    def createCredDefClass(self):
+        self.createVertexClass(Vertices.CredDef, properties={
+            TYPE: "string",
+            IP: "string",
+            PORT: "integer",
+            KEYS: "string"      # JSON
+        })
+
     def createAddsNymClass(self):
         # TODO: Confirm that property ROLE is not needed
         self.createEdgeClassWithTxnData(Edges.AddsNym,
@@ -139,6 +154,14 @@ class IdentityGraph(OrientDbGraphStore):
     def createHasAttributeClass(self):
         self.createUniqueTxnIdEdgeClass(Edges.HasAttribute)
         self.addEdgeConstraint(Edges.HasAttribute, iN=Vertices.Attribute)
+
+    def createAddsCredDefClass(self):
+        # TODO: Add compound index on the name and version
+        self.createUniqueTxnIdEdgeClass(Edges.AddsCredDef, properties={
+            NAME: "string",
+            VERSION: "string"
+        })
+        self.addEdgeConstraint(Edges.AddsCredDef, iN=Vertices.CredDef)
 
     def getEdgeByTxnId(self, edgeClassName, txnId):
         result = self.client.command("select from {} where {} = '{}'".
@@ -273,6 +296,41 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
+    def addCredDef(self, frm, txnId, txnTime, name, version, keys: Dict,
+                   typ: Optional[str]=None, ip: Optional[str]=None,
+                   port: Optional[int]=None):
+        kwargs = {
+            TYPE: typ,
+            IP: ip,
+            PORT: port,
+            KEYS: json.dumps(keys),
+            # TODO: Remove these 2 attributes since they are there in edge
+            NAME: name,
+            VERSION: version
+        }
+        vertex = self.createVertex(Vertices.CredDef, **kwargs)
+        frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
+                                                        frm)
+        kwargs = {
+            TXN_ID: txnId,
+            NAME: name,
+            VERSION: version
+        }
+        if txnTime is not None:
+            kwargs[TXN_TIME] = int(txnTime)
+        self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
+
+    def getCredDef(self, frm, name, version):
+        credDefs = self.client.command("select expand(out('{}')) from "
+                                       "{} where {}='{}'"
+                                       .format(Edges.AddsCredDef, Vertices.Nym,
+                                               NYM, frm))
+        if not credDefs:
+            for cd in credDefs:
+                record = cd.oRecordData
+                if record.get(NAME) == name and record.get(VERSION) == version:
+                    return record
+
     def getNym(self, nym):
         cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
         try:
@@ -378,10 +436,12 @@ class IdentityGraph(OrientDbGraphStore):
                       map(delegate, list(txnEdges.values())))
 
     def storeReply(self, reply: Reply):
+        # TODO: This stores all data in the edge, fix it ASAP.
         edgeClass = getEdgeFromType(reply.result[TXN_TYPE])
         assert reply.result[TXN_ID]
-        self.client.command(self._updateProperties(
-            reply.result, edgeClass, reply.result[TXN_ID]))
+        updateCmd = self._updateProperties(reply.result, edgeClass,
+                                           reply.result[TXN_ID])
+        self.client.command(updateCmd)
 
     @staticmethod
     def _updateProperties(props, edgeClass, txnId):
@@ -389,6 +449,10 @@ class IdentityGraph(OrientDbGraphStore):
         auditPath = props.get(F.auditPath.name)
         if auditPath:
             props[F.auditPath.name] = ",".join(auditPath)
+
+        # TODO: Temporary fix, fix it ASAP.
+        if DATA in props and not isinstance(props[DATA], str):
+            props[DATA] = json.dumps(props[DATA])
         updates = ', '.join(["{}='{}'".format(x, props[x])
                              if x not in intTypes else
                              "{}={}".format(x, props[x])

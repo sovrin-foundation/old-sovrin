@@ -18,7 +18,7 @@ from plenum.client.signer import Signer
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME, ENC, \
-    HASH, RAW, NAME
+    HASH, RAW, NAME, VERSION, KEYS, TYPE, IP, PORT
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl, error
@@ -27,7 +27,7 @@ from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY, \
     DISCLO, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
 from sovrin.client.issuer import Issuer
@@ -116,6 +116,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         else:
             return super().sign(msg, signer)
 
+    # TODO: Why is it here if not used?
     def getGraphStorage(self, name):
         config = getConfig()
         return IdentityGraph(OrientDbStore(
@@ -271,7 +272,19 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
 
-                if result[TXN_TYPE] in (NYM, ATTRIB):
+                elif result[TXN_TYPE] == CRED_DEF:
+                    data = result.get(DATA)
+                    self.storage.addCredDef(frm=result[ORIGIN],
+                                            txnId=result[TXN_ID],
+                                            txnTime=result[TXN_TIME],
+                                            name=data.get(NAME),
+                                            version=data.get(VERSION),
+                                            keys=json.loads(data.get(KEYS)),   # TODO: Figure out a way to avoid this.
+                                            typ=data.get(TYPE),
+                                            ip=data.get(IP),
+                                            port=data.get(PORT))
+
+                if result[TXN_TYPE] in (NYM, ATTRIB, CRED_DEF):
                     self.storage.addToTransactionLog(reqId, result)
         else:
             logger.debug("Invalid op message {}".format(msg))
@@ -308,7 +321,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     "sponsor {}".format(ex))
         elif txn[ROLE] == STEWARD:
             try:
-                self.storage.addSteward(txn.get(TXN_ID), txn.get(ORIGIN))
+                self.storage.addSteward(txn.get(TXN_ID), nym=txn.get(TARGET_NYM),
+                                        frm=txn.get(ORIGIN))
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
                 logger.error(
@@ -328,9 +342,11 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
 
     def getTxnsByType(self, txnType):
         edgeClass = getEdgeFromType(txnType)
-        cmd = "select from {}".format(edgeClass)
-        result = self.storage.client.command(cmd)
-        return result and [r.oRecordData for r in result]
+        if edgeClass:
+            cmd = "select from {}".format(edgeClass)
+            result = self.storage.client.command(cmd)
+            return result and [r.oRecordData for r in result]
+        return []
 
     def hasMadeRequest(self, reqId: int):
         return self.storage.hasRequest(reqId)

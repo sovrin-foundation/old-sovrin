@@ -414,6 +414,8 @@ def addUser(looper, creatorClient, creatorSigner, name):
 
 
 def submitAndCheck(looper, client, op, identifier):
+    # TODO: This assumes every transaction will have an edge in graph, why?
+    # Fix this
     txnsBefore = client.getTxnsByType(op[TXN_TYPE])
     client.submit(op, identifier=identifier)
     txnsAfter = []
