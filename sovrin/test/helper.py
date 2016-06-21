@@ -1,18 +1,20 @@
 import inspect
+import json
 import os
 import shutil
 import tempfile
 from contextlib import ExitStack
-from typing import Iterable
+from typing import Iterable, Union, Tuple
 
 import pyorient
+from plenum.common.types import HA
 
 from plenum.client.signer import SimpleSigner
 from plenum.persistence import orientdb_store
 
 from plenum.common import util
 from plenum.common.looper import Looper
-from plenum.common.txn import REQACK
+from plenum.common.txn import REQACK, DATA
 from plenum.common.util import getMaxFailures, runall, getlogger, getConfig
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
@@ -28,9 +30,9 @@ from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
-from sovrin.client.issuer import Issuer
-from sovrin.client.prover import Prover
-from sovrin.client.verifier import Verifier
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID, USER
@@ -359,13 +361,16 @@ def genTestClient(nodes: TestNodeSet=None,
                   nodeReg=None,
                   tmpdir=None,
                   signer=None,
+                  peerHA: Union[HA, Tuple[str, int]]=None,
                   testClientClass=TestClient) -> TestClient:
-    return genPlenumTestClient(nodes,
+    testClient = genPlenumTestClient(nodes,
                                nodeReg,
                                tmpdir,
                                signer,
                                testClientClass,
                                bootstrapKeys=False)
+    testClient.peerHA = peerHA
+    return testClient
 
 
 def genConnectedTestClient(looper,
@@ -432,3 +437,13 @@ def submitAndCheck(looper, client, op, identifier):
     logger.debug("old and new txnids {} {}".format(txnIdsBefore, txnIdsAfter))
     return list(set(txnIdsAfter) - set(txnIdsBefore))
 
+
+def addNym(ha, looper, nym, sponsNym, sponsor):
+    op = {
+        ORIGIN: sponsNym,
+        TARGET_NYM: nym,
+        TXN_TYPE: NYM,
+        ROLE: USER,
+        DATA: json.dumps({'ha': ha})
+    }
+    submitAndCheck(looper, sponsor, op, identifier=sponsNym)

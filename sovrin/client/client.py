@@ -30,9 +30,9 @@ from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY, 
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
-from sovrin.client.issuer import Issuer
-from sovrin.client.prover import Prover
-from sovrin.client.verifier import Verifier
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 
 logger = getlogger()
@@ -70,13 +70,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
+        # TODO Refactor init params after integration
         Issuer.__init__(self)
         Prover.__init__(self)
         Verifier.__init__(self)
         dataDirs = ["data/{}s".format(r) for r in roles]
 
-        # We may have a subclass of Sovrin Client instead that mixes in
-        #  the Anon Cred behaviors.
+        # To make anonymous credentials optional, we may have a subclass
+        #  of Sovrin Client instead that mixes in Issuer, Prover and
+        #  Verifier.
         self.hasAnonCreds = bool(peerHA)
         if self.hasAnonCreds:
             self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)

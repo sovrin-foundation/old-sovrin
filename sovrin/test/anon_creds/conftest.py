@@ -1,20 +1,28 @@
 import json
 
 import pytest
+from charm.core.math.integer import integer
+
 from anoncreds.protocol.utils import encodeAttrs
 
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import ORIGIN, TARGET_NYM, ROLE, TXN_TYPE, DATA, TXN_ID
+
 from plenum.common.util import randomString, adict
 from plenum.test.eventually import eventually
-from plenum.test.helper import genHa, checkSufficientRepliesRecvd, genTestClient
-from sovrin.common.txn import USER, NYM
-from sovrin.test.helper import submitAndCheck
+from plenum.test.helper import genHa, checkSufficientRepliesRecvd
+from sovrin.common.txn import USER, NYM, CRED_DEF
+from sovrin.test.helper import submitAndCheck, addNym
+from charm.core.math.integer import integer
 
+from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, TYPE, IP,\
+    PORT, KEYS, DATA
+from anoncreds.protocol.issuer import Issuer
+
+from sovrin.common.txn import CRED_DEF, GET_CRED_DEF
+from sovrin.test.helper import addUser, submitAndCheck, genTestClient
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
-
 @pytest.fixture(scope="module")
 def issuerSigner():
     signer = SimpleSigner()
@@ -76,14 +84,8 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
     vNym = verifierSigner.verstr
 
     for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
-        op = {
-            ORIGIN: sponsNym,
-            TARGET_NYM: nym,
-            TXN_TYPE: NYM,
-            ROLE: USER,
-            DATA: json.dumps({'ha': ha})
-        }
-        submitAndCheck(looper, sponsor, op, identifier=sponsNym)
+        addNym(ha, looper, nym, sponsNym, sponsor)
+
 
 # @pytest.fixture(scope="module")
 # def issuerAddedPK_I(addedIPV, looper, nodeSet, issuerAdded,
@@ -99,3 +101,47 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
 #     r = adict()
 #     r[TXN_ID] = reply.result[TXN_ID]
 #     return r
+
+
+@pytest.fixture(scope="module")
+def attrNames():
+    return "first_name", "last_name", "birth_date", "expire_date", \
+           "undergrad", "postgrad"
+
+
+@pytest.fixture(scope="module")
+def issuer(attrNames):
+    p_prime = integer(156991571687241757560913999612105108587468535208804851513244305347791502397013251234580937586571597031916037838033046034770771173926507265437617855415940646572556208146631362944594503201021036235697827847650635607984173023170017730379016569941848350333948723947742719519249330208387815146482288223677189982933)
+    q_prime = integer(168694778973832439908851228779255302004773421133839849056373974229420312328526255272439631222790798583346447915579287992909455456865305700322580981926848432022408208416487374085454534271452543138205715733881167962673142093415926617886691354844318260877624181326227800612850621357390310851043996607517675746483)
+    return Issuer(attrNames, True, p_prime, q_prime)
+
+
+@pytest.fixture(scope="module")
+def credDef(issuer):
+    pk = issuer.PK
+    return {
+        NAME: "Qualifications",
+        VERSION: "1.0",
+        TYPE: "CL",
+        IP: "127.0.0.1",
+        PORT: 7897,
+        KEYS: json.dumps({
+            "master_secret_rand": int(pk.R.pop("0")),
+            "N": int(pk.N),
+            "S": int(pk.S),
+            "Z": int(pk.Z),
+            "attributes": {k: int(v) for k, v in pk.R.items()}
+        })
+    }
+
+
+@pytest.fixture(scope="module")
+def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
+                            sponsorSigner, looper, tdir, nodeSet, credDef):
+    op = {
+        ORIGIN: sponsorSigner.verstr,
+        TXN_TYPE: CRED_DEF,
+        DATA: credDef
+    }
+
+    return submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
