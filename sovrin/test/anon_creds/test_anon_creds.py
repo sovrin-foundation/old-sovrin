@@ -8,6 +8,7 @@ from plenum.common.txn import TXN_TYPE
 from plenum.common.util import getlogger
 from plenum.test.helper import genHa
 from sovrin.common.txn import CRED_DEF
+from sovrin.test.anon_creds.helper import getCredDefTxnData
 from sovrin.test.helper import genTestClient, submitAndCheck
 
 logger = getlogger()
@@ -44,7 +45,7 @@ attributes = {
     "postgrad": "False"
 }
 
-attrNames = list(attributes.keys())
+attrNames = tuple(attributes.keys())
 
 
 def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
@@ -56,10 +57,16 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     # TODO Add sleep() or read_input() to stop and highlight specific things.
 
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
-    issuer = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa)
-    prover = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa)
-    verifier = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa)
+    issuer = genTestClient(nodeSet, tmpdir=tdir, signer=issuerSigner,
+                           peerHA=genHa())
+    prover = genTestClient(nodeSet, tmpdir=tdir, signer=proverSigner,
+                           peerHA=genHa())
+    verifier = genTestClient(nodeSet, tmpdir=tdir, signer=verifierSigner,
+                             peerHA=genHa())
 
+    looper.add(issuer)
+    looper.add(prover)
+    looper.add(verifier)
     # Adding signers
     issuer.signers[issuerSigner.identifier] = issuerSigner
     logger.info("Key pair for Issuer created \n"
@@ -80,18 +87,22 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     issuer.attrRepo = attrRepo
     name1 = "Qualifications"
     version1 = "1.0"
+    ip = issuer.peerHA[0]
+    port = issuer.peerHA[1]
     issuerId = 'issuer1'
     proverId = 'prover1'
     verifierId = 'verifier1'
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
-    issuer.credentialDefinitions = {(name1, version1): credDef}
+    credDef = issuer.newCredDef(attrNames, name1, version1, ip=ip, port=port)
+    # issuer.credentialDefinitions = {(name1, version1): credDef}
     logger.info("Issuer: Creating version {} of credential definition"
                 " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef)  # Pretty-printing the big object.
-    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA: credDef}
+    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA:
+        getCredDefTxnData(credDef)}
     logger.info("Issuer: Writing credential definition to "
                 "Sovrin Ledger...")
     submitAndCheck(looper, issuer, op, identifier=issuerSigner.identifier)

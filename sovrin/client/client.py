@@ -70,10 +70,10 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
-        # TODO Refactor init params after integration
-        Issuer.__init__(self)
-        Prover.__init__(self)
-        Verifier.__init__(self)
+        Issuer.__init__(self, self.defaultIdentifier)
+        # TODO nym should be not used as id of Prover and Verifier
+        Prover.__init__(self, self.defaultIdentifier)
+        Verifier.__init__(self, self.defaultIdentifier)
         dataDirs = ["data/{}s".format(r) for r in roles]
 
         # To make anonymous credentials optional, we may have a subclass
