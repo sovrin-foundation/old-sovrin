@@ -71,9 +71,9 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
         # TODO Refactor init params after integration
-        Issuer.__init__(self)
-        Prover.__init__(self)
-        Verifier.__init__(self)
+        # Issuer.__init__(self)
+        # Prover.__init__(self)
+        # Verifier.__init__(self)
         dataDirs = ["data/{}s".format(r) for r in roles]
 
         # To make anonymous credentials optional, we may have a subclass

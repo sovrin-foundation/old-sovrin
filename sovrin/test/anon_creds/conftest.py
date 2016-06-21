@@ -7,7 +7,6 @@ from anoncreds.protocol.utils import encodeAttrs
 
 from plenum.client.signer import SimpleSigner
 
-from plenum.common.util import randomString, adict
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa, checkSufficientRepliesRecvd
 from sovrin.common.txn import USER, NYM, CRED_DEF
@@ -20,6 +19,7 @@ from anoncreds.protocol.issuer import Issuer
 
 from sovrin.common.txn import CRED_DEF, GET_CRED_DEF
 from sovrin.test.helper import addUser, submitAndCheck, genTestClient
+
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
@@ -144,4 +144,5 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
         DATA: credDef
     }
 
-    return submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+    return submitAndCheck(looper, sponsor, op,
+                          identifier=sponsorSigner.verstr)
