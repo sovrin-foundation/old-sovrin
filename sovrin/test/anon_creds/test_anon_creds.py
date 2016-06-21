@@ -56,9 +56,9 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     # TODO Add sleep() or read_input() to stop and highlight specific things.
 
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
-    issuer = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa)
-    prover = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa)
-    verifier = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa)
+    issuer = genTestClient(nodeSet, tmpdir=tdir, signer=issuerSigner, peerHA=genHa())
+    prover = genTestClient(nodeSet, tmpdir=tdir, signer=proverSigner, peerHA=genHa())
+    verifier = genTestClient(nodeSet, tmpdir=tdir, signer=verifierSigner, peerHA=genHa())
 
     # Adding signers
     issuer.signers[issuerSigner.identifier] = issuerSigner
