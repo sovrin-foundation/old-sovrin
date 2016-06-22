@@ -5,7 +5,7 @@ from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
 from ioflo.aid.consoling import Console
 
 logging.root.handlers = []
-setupLogging(DISPLAY_LOG_LEVEL,
+setupLogging(5,
              Console.Wordage.mute)
 logger = getlogger("test_anon_creds")
 

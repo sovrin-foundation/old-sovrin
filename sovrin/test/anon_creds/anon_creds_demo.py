@@ -60,14 +60,20 @@ for node in nodes:
 
 looper.run(checkNodesConnected(nodes))
 ensureElectionsDone(looper=looper, nodes=nodes, retryWait=1, timeout=30)
+
 steward = genTestClient(nodes, signer=stewardSigner, tmpdir=tdir())
-sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir())
-whitelistClient(nodes, steward.name, sponsor.name)
+whitelistClient(nodes, steward.name)
 looper.add(steward)
-looper.add(sponsor)
 looper.run(steward.ensureConnectedToNodes())
-looper.run(sponsor.ensureConnectedToNodes())
+steward.requestPendingTxns()
+
 createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+
+sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir())
+whitelistClient(nodes, sponsor.name)
+looper.add(sponsor)
+looper.run(sponsor.ensureConnectedToNodes())
+
 
 sponsNym = sponsorSigner.verstr
 iNym = issuerSigner.verstr
@@ -147,7 +153,6 @@ def runAnonCredFlow():
                 "{}".format(proverSigner.verstr))
 
     encodedAttributes = {issuerId: encodeAttrs(attributes)}
-    revealedAttrs = ["undergrad"]
     pk = {
         issuerId: prover.getPkFromCredDef(credDef)
     }
