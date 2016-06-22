@@ -61,6 +61,9 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     looper.add(issuer)
     looper.add(prover)
     looper.add(verifier)
+    looper.run(issuer.ensureConnectedToNodes(),
+               prover.ensureConnectedToNodes(),
+               verifier.ensureConnectedToNodes())
     # Adding signers
     issuer.signers[issuerSigner.identifier] = issuerSigner
     logger.info("Key pair for Issuer created \n"

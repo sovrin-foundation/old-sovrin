@@ -16,7 +16,7 @@ from sovrin.test.helper import genTestClient, submitAndCheck, createNym,\
     addNym, TestNodeSet
 from random import randint
 
-from test.conftest import genesisTxns
+from sovrin.test.conftest import genesisTxns
 
 logger = getlogger()
 
