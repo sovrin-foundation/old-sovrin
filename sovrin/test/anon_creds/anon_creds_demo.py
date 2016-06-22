@@ -1,5 +1,8 @@
-import os
 import pprint
+import tempfile
+
+from anoncreds.protocol.attribute_repo import AttributeRepo
+from anoncreds.protocol.proof import Proof
 
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.client.signer import SimpleSigner
@@ -12,10 +15,8 @@ from plenum.test.helper import genHa, ensureElectionsDone, \
 from sovrin.common.txn import CRED_DEF, SPONSOR
 from sovrin.test.helper import genTestClient, submitAndCheck, createNym,\
     addNym, TestNodeSet
-from random import randint
-
 from sovrin.test.conftest import genesisTxns
-from test.anon_creds.helper import getCredDefTxnData
+from sovrin.test.anon_creds.helper import getCredDefTxnData
 
 logger = getlogger()
 
@@ -32,10 +33,8 @@ attributes = {
 attrNames = tuple(attributes.keys())
 
 
-# TODO This isn't Windows compatible
 def tdir():
-    return os.path.join("/tmp",
-                        str(randint(1000, 2000)))
+    return tempfile.TemporaryDirectory().name
 
 
 stewardSigner = SimpleSigner()
@@ -66,9 +65,9 @@ sponsNym = sponsorSigner.verstr
 iNym = issuerSigner.verstr
 pNym = proverSigner.verstr
 vNym = verifierSigner.verstr
-issuerHA = genHa
-proverHA = genHa
-verifierHA = genHa
+issuerHA = genHa()
+proverHA = genHa()
+verifierHA = genHa()
 
 for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
     addNym(ha, looper, nym, sponsNym, sponsor)
@@ -105,15 +104,16 @@ def runAnonCredFlow():
         verifierSigner.verstr))
 
     # Issuer's attribute repository
-    attrRepo = {proverSigner.identifier: attributes}
-    issuer.attrRepo = attrRepo
+    attrRepo = AttributeRepo()
+    attrRepo.attributes = {proverSigner.identifier: attributes}
+    issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
     version1 = "1.0"
     ip = issuer.peerHA[0]
     port = issuer.peerHA[1]
-    issuerId = 'issuer1'
-    proverId = 'prover1'
-    verifierId = 'verifier1'
+    issuerId = issuerSigner.identifier
+    proverId = proverSigner.identifier
+    verifierId = verifierSigner.identifier
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
@@ -137,14 +137,21 @@ def runAnonCredFlow():
     input()
     logger.info("Issuer: Creating credential for "
                 "{}".format(proverSigner.verstr))
-    cred = issuer.createCredential(proverId, name1, version1)
+
+    encodedAttributes = {issuerId: encodeAttrs(attributes)}
+    revealedAttrs = ["undergrad"]
+    pk = {
+        issuerId: prover.getPkFromCredDef(credDef)
+    }
+    proof = Proof(pk)
+    proofId = proof.id
+    prover.proofs[proofId] = proof
+    cred = issuer.createCredential(proverId, name1, version1, proof.U[issuerId])
     input()
     logger.info("Prover: Received credential from "
                 "{}".format(issuerSigner.verstr))
 
     # Prover intends to prove certain attributes to a Verifier
-    proofId = 'proof1'
-
     # Verifier issues a nonce
     input()
     logger.info("Prover: Requesting Nonce from verifier…")
@@ -157,16 +164,21 @@ def runAnonCredFlow():
     logger.info("Prover: Nonce received")
     prover.proofs[proofId]['nonce'] = nonce
 
+    presentationToken = {
+        issuerId: (
+            cred[0], cred[1],
+            proof.vprime[issuerId] + cred[2])
+    }
     # Prover discovers Issuer's credential definition
     prover.credentialDefinitions = {(issuerId, attrNames): credDef}
     revealedAttrs = ["undergrad"]
     input()
     logger.info("Prover: Preparing proof for attributes: "
                 "{}".format(revealedAttrs))
-    input()
+    proof.setParams(encodedAttributes, presentationToken,
+                    revealedAttrs, nonce)
+    prf = proof.prepare_proof()
     logger.info("Prover: Proof prepared.")
-    proof = prover.prepare_proof(cred, encodeAttrs(attrNames),
-                                 revealedAttrs, nonce)
     logger.info("Prover: Proof submitted")
     input()
     logger.info("Verifier: Proof received.")
@@ -179,12 +191,12 @@ def runAnonCredFlow():
     verifier.credentialDefinitions = {
         (issuerId, name1, version1): credDef
     }
-
     # Verifier verifies proof
-    input()
     logger.info("Verifier: Verifying proof...")
-    verified = verifier.verify_proof(proof, nonce,
-                                     attrNames, revealedAttrs)
+    verified = verifier.verify_proof(pk, prf, nonce,
+                                     encodedAttributes,
+                                     revealedAttrs)
+    input()
     logger.info("Verifier: Proof verified.")
     assert verified
     input()

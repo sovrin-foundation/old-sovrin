@@ -2,7 +2,6 @@ import pprint
 
 from anoncreds.protocol.attribute_repo import AttributeRepo
 from anoncreds.protocol.proof import Proof
-from charm.core.math.integer import randomPrime
 
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.common.txn import DATA, ORIGIN
