@@ -1,5 +1,9 @@
 import pprint
 
+from anoncreds.protocol.attribute_repo import AttributeRepo
+from anoncreds.protocol.proof import Proof
+from charm.core.math.integer import randomPrime
+
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.common.txn import DATA, ORIGIN
 from plenum.common.txn import TXN_TYPE
@@ -56,15 +60,16 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
                     verifierSigner.verstr))
 
     # Issuer's attribute repository
-    attrRepo = {proverSigner.identifier: attributes}
-    issuer.attrRepo = attrRepo
+    attrRepo = AttributeRepo()
+    attrRepo.attributes = {proverSigner.identifier: attributes}
+    issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
     version1 = "1.0"
     ip = issuer.peerHA[0]
     port = issuer.peerHA[1]
-    issuerId = 'issuer1'
-    proverId = 'prover1'
-    verifierId = 'verifier1'
+    issuerId = issuerSigner.identifier
+    proverId = proverSigner.identifier
+    verifierId = verifierSigner.identifier
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
@@ -85,13 +90,20 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     # Issuer issues a credential for prover
     logger.info("Issuer: Creating credential for "
                 "{}".format(proverSigner.verstr))
-    cred = issuer.createCredential(proverId, name1, version1)
+
+    encodedAttributes = {issuerId: encodeAttrs(attributes)}
+    revealedAttrs = ["undergrad"]
+    pk = {
+        issuerId: prover.getPkFromCredDef(credDef)
+    }
+    proof = Proof(pk)
+    proofId = proof.id
+    prover.proofs[proofId] = proof
+    cred = issuer.createCredential(proverId, name1, version1, proof.U[issuerId])
     logger.info("Prover: Received credential from "
                 "{}".format(issuerSigner.verstr))
 
     # Prover intends to prove certain attributes to a Verifier
-    proofId = 'proof1'
-
     # Verifier issues a nonce
     logger.info("Prover: Requesting Nonce from verifier…")
     logger.info("Verifier: Nonce received from prover"
@@ -99,31 +111,33 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     nonce = verifier.generateNonce(interactionId)
     logger.info("Verifier: Nonce sent.")
     logger.info("Prover: Nonce received")
-    prover.proofs[proofId]['nonce'] = nonce
 
+    presentationToken = {
+        issuerId: (
+            cred[0], cred[1],
+            proof.vprime[issuerId] + cred[2])
+    }
     # Prover discovers Issuer's credential definition
-    prover.credentialDefinitions = {(issuerId, attrNames): credDef}
-    revealedAttrs = ["undergrad"]
     logger.info("Prover: Preparing proof for attributes: "
                 "{}".format(revealedAttrs))
+    proof.setParams(encodedAttributes, presentationToken,
+                    revealedAttrs, nonce)
+    prf = proof.prepare_proof()
     logger.info("Prover: Proof prepared.")
-    proof = prover.prepare_proof(cred, encodeAttrs(attrNames),
-                                 revealedAttrs, nonce)
     logger.info("Prover: Proof submitted")
     logger.info("Verifier: Proof received.")
     logger.info("Verifier: Looking up Credential Definition"
                 " on Sovrin Ledger...")
-    prover.proofs[proofId] = proof
 
     # Verifier fetches the credential definition from ledger
     verifier.credentialDefinitions = {
         (issuerId, name1, version1): credDef
     }
-
+    verified = verifier.verify_proof(pk, prf, nonce,
+                                     encodedAttributes,
+                                     revealedAttrs)
     # Verifier verifies proof
     logger.info("Verifier: Verifying proof...")
-    verified = verifier.verify_proof(proof, nonce,
-                                     attrNames, revealedAttrs)
     logger.info("Verifier: Proof verified.")
     assert verified
     logger.info("Prover: Proof accepted.")
