@@ -12,9 +12,10 @@ from plenum.common.txn import TXN_TYPE
 from plenum.common.util import getlogger
 from plenum.test.helper import genHa, ensureElectionsDone, \
     checkNodesConnected, genNodeReg
-from sovrin.common.txn import CRED_DEF, SPONSOR
+
 from sovrin.test.helper import genTestClient, submitAndCheck, createNym,\
     addNym, TestNodeSet
+from sovrin.common.txn import CRED_DEF, SPONSOR
 from sovrin.test.conftest import genesisTxns
 from sovrin.test.anon_creds.helper import getCredDefTxnData
 
@@ -44,17 +45,24 @@ proverSigner = SimpleSigner()
 verifierSigner = SimpleSigner()
 nodes = TestNodeSet(nodeReg=genNodeReg(count=4), tmpdir=tdir(),
                      primaryDecider=None)
-steward = genTestClient(nodes, signer=stewardSigner, tmpdir=tdir())
-sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir())
+
+
+def whitelistClient(nodes, *clientNames):
+    for node in nodes:
+        for nm in clientNames:
+            node.whitelistClient(nm)
+
 looper = Looper(nodes, autoStart=True)
 for node in nodes:
     node.startKeySharing()
     node.start(looper)
     node.addGenesisTxns(genesisTxns(stewardSigner))
-    node.whitelistClient(steward.name)
-    node.whitelistClient(sponsor.name)
+
 looper.run(checkNodesConnected(nodes))
 ensureElectionsDone(looper=looper, nodes=nodes, retryWait=1, timeout=30)
+steward = genTestClient(nodes, signer=stewardSigner, tmpdir=tdir())
+sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir())
+whitelistClient(nodes, steward.name, sponsor.name)
 looper.add(steward)
 looper.add(sponsor)
 looper.run(steward.ensureConnectedToNodes())
