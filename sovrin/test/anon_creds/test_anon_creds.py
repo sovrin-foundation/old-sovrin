@@ -1,18 +1,25 @@
+import logging
 import pprint
+# The following setup of logging needs to happen before everything else
+from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
+from ioflo.aid.consoling import Console
+
+logging.root.handlers = []
+setupLogging(DISPLAY_LOG_LEVEL,
+             Console.Wordage.mute)
+logger = getlogger("test_anon_creds")
 
 from anoncreds.protocol.attribute_repo import AttributeRepo
 from anoncreds.protocol.proof import Proof
+from charm.core.math.integer import randomPrime
 
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.common.txn import DATA, ORIGIN
 from plenum.common.txn import TXN_TYPE
-from plenum.common.util import getlogger
 from plenum.test.helper import genHa
 from sovrin.common.txn import CRED_DEF
 from sovrin.test.anon_creds.helper import getCredDefTxnData
 from sovrin.test.helper import genTestClient, submitAndCheck
-
-logger = getlogger()
 
 
 attributes = {
@@ -45,15 +52,15 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
                verifier.ensureConnectedToNodes())
     # Adding signers
     issuer.signers[issuerSigner.identifier] = issuerSigner
-    logger.info("Key pair for Issuer created \n"
+    logger.display("Key pair for Issuer created \n"
                 "Public key is {} \n"
                 "Private key is stored on disk\n".format(issuerSigner.verstr))
     prover.signers[proverSigner.identifier] = proverSigner
-    logger.info("Key pair for Prover created \n"
+    logger.display("Key pair for Prover created \n"
                 "Public key is {} \n"
                 "Private key is stored on disk\n".format(proverSigner.verstr))
     verifier.signers[verifierSigner.identifier] = verifierSigner
-    logger.info("Key pair for Verifier created \n"
+    logger.display("Key pair for Verifier created \n"
                 "Public key is {} \n"
                 "Private key is stored on disk\n".format(
                     verifierSigner.verstr))
@@ -74,20 +81,20 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     # Issuer publishes credential definition to Sovrin ledger
     credDef = issuer.newCredDef(attrNames, name1, version1, ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
-    logger.info("Issuer: Creating version {} of credential definition"
+    logger.display("Issuer: Creating version {} of credential definition"
                 " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef)  # Pretty-printing the big object.
     op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA:
         getCredDefTxnData(credDef)}
-    logger.info("Issuer: Writing credential definition to "
+    logger.display("Issuer: Writing credential definition to "
                 "Sovrin Ledger...")
     submitAndCheck(looper, issuer, op, identifier=issuerSigner.identifier)
 
     # Prover requests Issuer for credential (out of band)
-    logger.info("Prover: Requested credential from Issuer")
+    logger.display("Prover: Requested credential from Issuer")
     # Issuer issues a credential for prover
-    logger.info("Issuer: Creating credential for "
+    logger.display("Issuer: Creating credential for "
                 "{}".format(proverSigner.verstr))
 
     encodedAttributes = {issuerId: encodeAttrs(attributes)}
@@ -99,17 +106,17 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     proofId = proof.id
     prover.proofs[proofId] = proof
     cred = issuer.createCredential(proverId, name1, version1, proof.U[issuerId])
-    logger.info("Prover: Received credential from "
+    logger.display("Prover: Received credential from "
                 "{}".format(issuerSigner.verstr))
 
     # Prover intends to prove certain attributes to a Verifier
     # Verifier issues a nonce
-    logger.info("Prover: Requesting Nonce from verifier…")
-    logger.info("Verifier: Nonce received from prover"
+    logger.display("Prover: Requesting Nonce from verifier…")
+    logger.display("Verifier: Nonce received from prover"
                 " {}".format(proverId))
     nonce = verifier.generateNonce(interactionId)
-    logger.info("Verifier: Nonce sent.")
-    logger.info("Prover: Nonce received")
+    logger.display("Verifier: Nonce sent.")
+    logger.display("Prover: Nonce received")
 
     presentationToken = {
         issuerId: (
@@ -117,15 +124,15 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
             proof.vprime[issuerId] + cred[2])
     }
     # Prover discovers Issuer's credential definition
-    logger.info("Prover: Preparing proof for attributes: "
+    logger.display("Prover: Preparing proof for attributes: "
                 "{}".format(revealedAttrs))
     proof.setParams(encodedAttributes, presentationToken,
                     revealedAttrs, nonce)
     prf = proof.prepare_proof()
-    logger.info("Prover: Proof prepared.")
-    logger.info("Prover: Proof submitted")
-    logger.info("Verifier: Proof received.")
-    logger.info("Verifier: Looking up Credential Definition"
+    logger.display("Prover: Proof prepared.")
+    logger.display("Prover: Proof submitted")
+    logger.display("Verifier: Proof received.")
+    logger.display("Verifier: Looking up Credential Definition"
                 " on Sovrin Ledger...")
 
     # Verifier fetches the credential definition from ledger
@@ -136,7 +143,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
                                      encodedAttributes,
                                      revealedAttrs)
     # Verifier verifies proof
-    logger.info("Verifier: Verifying proof...")
-    logger.info("Verifier: Proof verified.")
+    logger.display("Verifier: Verifying proof...")
+    logger.display("Verifier: Proof verified.")
     assert verified
-    logger.info("Prover: Proof accepted.")
+    logger.display("Prover: Proof accepted.")
