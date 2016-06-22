@@ -84,7 +84,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     logger.display("Issuer: Creating version {} of credential definition"
                 " for {}".format(version1, name1))
     print("Credential definition: ")
-    pprint.pprint(credDef)  # Pretty-printing the big object.
+    pprint.pprint(credDef.get())  # Pretty-printing the big object.
     op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA:
         getCredDefTxnData(credDef)}
     logger.display("Issuer: Writing credential definition to "
