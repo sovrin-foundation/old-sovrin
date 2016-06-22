@@ -1,7 +1,5 @@
 import pprint
 
-from charm.core.math.integer import randomPrime
-
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.common.txn import DATA, ORIGIN
 from plenum.common.txn import TXN_TYPE
@@ -13,28 +11,6 @@ from sovrin.test.helper import genTestClient, submitAndCheck
 
 logger = getlogger()
 
-
-def cryptoNumber(bitLength: int=100):
-    return randomPrime(bitLength)
-
-
-credDef = dict(type="JC1",
-               ha={'ip': "10.10.10.10",
-                   'port': 7897},
-               keys={
-                   "master_secret": cryptoNumber(),
-                   "n": cryptoNumber(),
-                   "S": cryptoNumber(),
-                   "Z": cryptoNumber(),
-                   "attributes": {
-                       "first_name": cryptoNumber(),
-                       "last_name": cryptoNumber(),
-                       "birth_date": cryptoNumber(),
-                       "expire_date": cryptoNumber(),
-                       "undergrad": cryptoNumber(),
-                       "postgrad": cryptoNumber(),
-                   }
-               })
 
 attributes = {
     "first_name": "John",

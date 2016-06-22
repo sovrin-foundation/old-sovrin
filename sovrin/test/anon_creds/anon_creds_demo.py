@@ -1,8 +1,6 @@
 import os
 import pprint
 
-from charm.core.math.integer import randomPrime
-
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
@@ -17,31 +15,10 @@ from sovrin.test.helper import genTestClient, submitAndCheck, createNym,\
 from random import randint
 
 from sovrin.test.conftest import genesisTxns
+from test.anon_creds.helper import getCredDefTxnData
 
 logger = getlogger()
 
-
-def cryptoNumber(bitLength: int = 100):
-    return randomPrime(bitLength)
-
-
-credDef = dict(type="JC1",
-               ha={'ip': "10.10.10.10",
-                   'port': 7897},
-               keys={
-                   "master_secret": cryptoNumber(),
-                   "n": cryptoNumber(),
-                   "S": cryptoNumber(),
-                   "Z": cryptoNumber(),
-                   "attributes": {
-                       "first_name": cryptoNumber(),
-                       "last_name": cryptoNumber(),
-                       "birth_date": cryptoNumber(),
-                       "expire_date": cryptoNumber(),
-                       "undergrad": cryptoNumber(),
-                       "postgrad": cryptoNumber(),
-                   }
-               })
 
 attributes = {
     "first_name": "John",
@@ -52,7 +29,7 @@ attributes = {
     "postgrad": "False"
 }
 
-attrNames = list(attributes.keys())
+attrNames = tuple(attributes.keys())
 
 
 # TODO This isn't Windows compatible
@@ -103,6 +80,12 @@ def runAnonCredFlow():
     prover = genTestClient(nodes, tmpdir=tdir(), peerHA=genHa())
     verifier = genTestClient(nodes, tmpdir=tdir(), peerHA=genHa())
 
+    looper.add(issuer)
+    looper.add(prover)
+    looper.add(verifier)
+    looper.run(issuer.ensureConnectedToNodes(),
+               prover.ensureConnectedToNodes(),
+               verifier.ensureConnectedToNodes())
     # Adding signers
     issuer.signers[issuerSigner.identifier] = issuerSigner
     input()
@@ -126,21 +109,25 @@ def runAnonCredFlow():
     issuer.attrRepo = attrRepo
     name1 = "Qualifications"
     version1 = "1.0"
+    ip = issuer.peerHA[0]
+    port = issuer.peerHA[1]
     issuerId = 'issuer1'
     proverId = 'prover1'
     verifierId = 'verifier1'
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
-    issuer.credentialDefinitions = {(name1, version1): credDef}
+    credDef = issuer.newCredDef(attrNames, name1, version1, ip=ip, port=port)
+    # issuer.credentialDefinitions = {(name1, version1): credDef}
     input()
     logger.info("Issuer: Creating version {} of credential definition"
                 " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef)  # Pretty-printing the big object.
-    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA: credDef}
-    input()
-    logger.info("Issuer: Writing credential definition to " "Sovrin Ledger...")
+    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA:
+        getCredDefTxnData(credDef)}
+    logger.info("Issuer: Writing credential definition to "
+                "Sovrin Ledger...")
     submitAndCheck(looper, issuer, op, identifier=issuerSigner.identifier)
 
     # Prover requests Issuer for credential (out of band)
@@ -161,8 +148,8 @@ def runAnonCredFlow():
     # Verifier issues a nonce
     input()
     logger.info("Prover: Requesting Nonce from verifier…")
-    input()
-    logger.info("Verifier: Nonce received from prover" " {}".format(proverId))
+    logger.info("Verifier: Nonce received from prover"
+                " {}".format(proverId))
     nonce = verifier.generateNonce(interactionId)
     input()
     logger.info("Verifier: Nonce sent.")
@@ -178,9 +165,8 @@ def runAnonCredFlow():
                 "{}".format(revealedAttrs))
     input()
     logger.info("Prover: Proof prepared.")
-    proof = prover.prepare_proof(cred, encodeAttrs(attrNames), revealedAttrs,
-                                 nonce)
-    input()
+    proof = prover.prepare_proof(cred, encodeAttrs(attrNames),
+                                 revealedAttrs, nonce)
     logger.info("Prover: Proof submitted")
     input()
     logger.info("Verifier: Proof received.")
@@ -190,13 +176,15 @@ def runAnonCredFlow():
     prover.proofs[proofId] = proof
 
     # Verifier fetches the credential definition from ledger
-    verifier.credentialDefinitions = {(issuerId, name1, version1): credDef}
+    verifier.credentialDefinitions = {
+        (issuerId, name1, version1): credDef
+    }
 
     # Verifier verifies proof
     input()
     logger.info("Verifier: Verifying proof...")
-    verified = verifier.verify_proof(proof, nonce, attrNames, revealedAttrs)
-    input()
+    verified = verifier.verify_proof(proof, nonce,
+                                     attrNames, revealedAttrs)
     logger.info("Verifier: Proof verified.")
     assert verified
     input()
