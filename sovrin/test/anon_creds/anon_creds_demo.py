@@ -1,4 +1,5 @@
 import pprint
+import shutil
 import tempfile
 
 from anoncreds.protocol.attribute_repo import AttributeRepo
@@ -33,17 +34,16 @@ attributes = {
 
 attrNames = tuple(attributes.keys())
 
-
-def tdir():
-    return tempfile.TemporaryDirectory().name
-
+# TODO This hack makes the script incompatible with Windows.
+shutil.rmtree('/tmp/data')
+tdir = tempfile.TemporaryDirectory().name
 
 stewardSigner = SimpleSigner()
 sponsorSigner = SimpleSigner()
 issuerSigner = SimpleSigner()
 proverSigner = SimpleSigner()
 verifierSigner = SimpleSigner()
-nodes = TestNodeSet(nodeReg=genNodeReg(count=4), tmpdir=tdir(),
+nodes = TestNodeSet(nodeReg=genNodeReg(count=4), tmpdir=tdir,
                      primaryDecider=None)
 
 
@@ -61,7 +61,7 @@ for node in nodes:
 looper.run(checkNodesConnected(nodes))
 ensureElectionsDone(looper=looper, nodes=nodes, retryWait=1, timeout=30)
 
-steward = genTestClient(nodes, signer=stewardSigner, tmpdir=tdir())
+steward = genTestClient(nodes, signer=stewardSigner, tmpdir=tdir)
 whitelistClient(nodes, steward.name)
 looper.add(steward)
 looper.run(steward.ensureConnectedToNodes())
@@ -69,7 +69,7 @@ steward.requestPendingTxns()
 
 createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
 
-sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir())
+sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir)
 whitelistClient(nodes, sponsor.name)
 looper.add(sponsor)
 looper.run(sponsor.ensureConnectedToNodes())
@@ -89,9 +89,9 @@ for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
 
 def runAnonCredFlow():
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
-    issuer = genTestClient(nodes, tmpdir=tdir(), peerHA=genHa())
-    prover = genTestClient(nodes, tmpdir=tdir(), peerHA=genHa())
-    verifier = genTestClient(nodes, tmpdir=tdir(), peerHA=genHa())
+    issuer = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
+    prover = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
+    verifier = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
 
     looper.add(issuer)
     looper.add(prover)
