@@ -1,3 +1,4 @@
+import os
 import pprint
 import shutil
 import tempfile
@@ -34,8 +35,8 @@ attributes = {
 
 attrNames = tuple(attributes.keys())
 
-# TODO This hack makes the script incompatible with Windows.
-shutil.rmtree('/tmp/data')
+if os.path.exists('/tmp/data'):
+    shutil.rmtree('/tmp/data')
 tdir = tempfile.TemporaryDirectory().name
 
 stewardSigner = SimpleSigner()
