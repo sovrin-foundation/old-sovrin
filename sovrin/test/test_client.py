@@ -70,7 +70,6 @@ def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper,
                             symEncData):
     sponsorNym = sponsorSigner.verstr
     op = {
-        ORIGIN: sponsorNym,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         ENC: symEncData.encData
@@ -111,7 +110,6 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
     sponsorNym = sponsorSigner.verstr
 
     op = {
-        ORIGIN: stewardSigner.verstr,
         TARGET_NYM: sponsorNym,
         TXN_TYPE: NYM,
         ROLE: SPONSOR
@@ -143,7 +141,6 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir, nonSponsor):
     userNym = userSigner.verstr
 
     op = {
-        ORIGIN: sponsNym,
         TARGET_NYM: userNym,
         TXN_TYPE: NYM,
         ROLE: USER
@@ -168,7 +165,6 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
     sponsNym = sponsorSigner.verstr
 
     op = {
-        ORIGIN: sponsNym,
         TARGET_NYM: "jasonlaw",
         TXN_TYPE: NYM,
         # TODO: Should REFERENCE be symmetrically encrypted and the key
@@ -186,7 +182,7 @@ def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper,
     nym = nonSponsor.getSigner().verstr
 
     op = {
-        ORIGIN: nym,
+        # ORIGIN: nym,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
@@ -200,7 +196,6 @@ def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
                                         steward, stewardSigner, genned,
                                         attributeData, anotherSponsor):
     op = {
-        ORIGIN: anotherSponsor.getSigner().verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
@@ -214,7 +209,6 @@ def testStewardCannotAddUsersAttribute(userSignerA, looper, nodeSet, tdir,
                                        steward, stewardSigner, genned,
                                        attributeData):
     op = {
-        ORIGIN: stewardSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
@@ -241,7 +235,6 @@ def testSponsorDisclosesEncryptedAttribute(addedEncryptedAttribute, symEncData,
     nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
 
     op = {
-        ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         NONCE: base58.b58encode(nonce),
@@ -269,7 +262,6 @@ def testLatestAttrIsReceived(genned, addedSponsor, sponsorSigner, looper,
 
     attr1 = {'name': 'Mario'}
     op = {
-        ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         RAW: json.dumps(attr1)

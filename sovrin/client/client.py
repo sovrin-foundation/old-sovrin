@@ -96,9 +96,7 @@ class Client(PlenumClient):
 
     def submit(self, *operations: Mapping, identifier: str=None) -> \
             List[Request]:
-        # keys = []
-        # attributeNames = []
-        # attributeVals = []
+        origin = identifier or self.defaultIdentifier
         for op in operations:
             if op[TXN_TYPE] == ATTRIB:
                 if not (RAW in op or ENC in op or HASH in op):
@@ -109,12 +107,9 @@ class Client(PlenumClient):
                 if ENC in op:
                     anm = list(json.loads(op[ENC]).keys())[0]
                     encVal, secretKey = getSymmetricallyEncryptedVal(op[ENC])
-                    # attributeNames.append(anm)
-                    # keys.append(secretKey)
-                    # attributeVals.append(op[ENC])
                     op[ENC] = encVal
                     self.wallet.addAttribute(name=anm, val=encVal,
-                                             origin=op[ORIGIN],
+                                             origin=origin,
                                              dest=op.get(TARGET_NYM),
                                              encKey=secretKey)
                 # TODO: Consider hash type too.
@@ -126,7 +121,7 @@ class Client(PlenumClient):
                     op[HASH] = {anm: hashed}
                     # attributeVals.append(op[HASH])
                     self.wallet.addAttribute(name=anm, val=aval,
-                                             origin=op[ORIGIN],
+                                             origin=origin,
                                              dest=op.get(TARGET_NYM),
                                              hashed=True)
                 else:
@@ -134,30 +129,11 @@ class Client(PlenumClient):
                     anm = list(data.keys())[0]
                     aval = list(data.values())[0]
                     self.wallet.addAttribute(name=anm, val=aval,
-                                             origin=op[ORIGIN],
+                                             origin=origin,
                                              dest=op.get(TARGET_NYM))
-                    # attributeNames.append(anm)
-                    # attributeVals.append(op[RAW])
-                # data = op[DATA]
-                # encVal, secretKey = getSymmetricallyEncryptedVal(data)
-                # op[DATA] = encVal
         requests = super().submit(*operations, identifier=identifier)
         for r in requests:
             self.storage.addRequest(r)
-        #     operation = r.operation
-        #     # If add attribute transaction then store encryption key and
-        #     # attribute name with the request id for the attribute
-        #     if operation[TXN_TYPE] == ATTRIB:
-        #         attrData = {}
-        #         if operation.get(TARGET_NYM):
-        #             attrData[TARGET_NYM] = operation.get(TARGET_NYM)
-        #         attrData = {
-        #             TARGET_NYM: operation[TARGET_NYM],
-        #             NAME: attributeNames.pop(0),
-        #             "value": attributeVals.pop(0),
-        #             SKEY: keys.pop(0)
-        #         }
-        #         self.storage.addClientAttribute(r.reqId, attrData)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg) -> None:
@@ -193,7 +169,7 @@ class Client(PlenumClient):
                 if result[TXN_TYPE] == NYM:
                     self.addNymToGraph(result)
                 elif result[TXN_TYPE] == ATTRIB:
-                    self.storage.addAttribute(frm=result[ORIGIN],
+                    self.storage.addAttribute(frm=result[f.IDENTIFIER.nm],
                                               txnId=result[TXN_ID],
                                               txnTime=result[TXN_TIME],
                                               raw=result.get(RAW),
@@ -211,13 +187,14 @@ class Client(PlenumClient):
                 elif result[TXN_TYPE] == GET_TXNS:
                     if DATA in result and result[DATA]:
                         data = json.loads(result[DATA])
-                        self.storage.setLastTxnForIdentifier(result[ORIGIN], data[LAST_TXN])
+                        self.storage.setLastTxnForIdentifier(result[f.IDENTIFIER.nm],
+                                                             data[LAST_TXN])
                         for txn in data[TXNS]:
                             if txn[TXN_TYPE] == NYM:
                                 self.addNymToGraph(txn)
                             elif txn[TXN_TYPE] == ATTRIB:
                                 try:
-                                    self.storage.addAttribute(frm=txn[ORIGIN],
+                                    self.storage.addAttribute(frm=txn[f.IDENTIFIER.nm],
                                               txnId=txn[TXN_ID],
                                               txnTime=txn[TXN_TIME],
                                               raw=txn.get(RAW),
@@ -236,12 +213,13 @@ class Client(PlenumClient):
             logger.debug("Invalid op message {}".format(msg))
 
     def addNymToGraph(self, txn):
+        origin = txn.get(f.IDENTIFIER.nm)
         if ROLE not in txn or txn[ROLE] == USER:
-            if txn.get(ORIGIN) and not self.storage.hasNym(txn.get(ORIGIN)):
+            if origin and not self.storage.hasNym(origin):
                 logger.warn("While adding user, origin not found in the graph")
             try:
                 self.storage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
-                                  txn.get(ORIGIN), reference=txn.get(REFERENCE))
+                                     origin, reference=txn.get(REFERENCE))
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
                 logger.error(
@@ -250,14 +228,12 @@ class Client(PlenumClient):
         elif txn[ROLE] == SPONSOR:
             # Since only a steward can add a sponsor, check if the steward
             # is present. If not then add the steward
-            if txn.get(ORIGIN) and \
-                    not self.storage.hasSteward(txn.get(ORIGIN)):
+            if origin and not self.storage.hasSteward(origin):
                 # A better way is to oo a GET_NYM for the steward.
-                self.storage.addSteward(None, nym=txn.get(ORIGIN))
+                self.storage.addSteward(None, nym=origin)
             try:
-                self.storage.addSponsor(txn.get(TXN_ID),
-                                             txn.get(TARGET_NYM),
-                                             txn.get(ORIGIN))
+                self.storage.addSponsor(txn.get(TXN_ID), txn.get(TARGET_NYM),
+                                        origin)
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
                 logger.error(
@@ -265,7 +241,7 @@ class Client(PlenumClient):
                     "sponsor {}".format(ex))
         elif txn[ROLE] == STEWARD:
             try:
-                self.storage.addSteward(txn.get(TXN_ID), txn.get(ORIGIN))
+                self.storage.addSteward(txn.get(TXN_ID), origin)
             except (pyorient.PyOrientCommandException,
                     pyorient.PyOrientORecordDuplicatedException) as ex:
                 logger.error(
@@ -308,7 +284,6 @@ class Client(PlenumClient):
         nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
 
         op = {
-            ORIGIN: origin,
             TARGET_NYM: target,
             TXN_TYPE: DISCLO,
             NONCE: base58.b58encode(nonce),
@@ -318,7 +293,6 @@ class Client(PlenumClient):
 
     def doGetAttributeTxn(self, identifier, attrName):
         op = {
-            ORIGIN: identifier,
             TARGET_NYM: identifier,
             TXN_TYPE: GET_ATTR,
             # TODO: Need to encrypt get query
@@ -387,7 +361,6 @@ class Client(PlenumClient):
     def doGetNym(self, nym, identifier=None):
         identifier = identifier if identifier else self.defaultIdentifier
         op = {
-            ORIGIN: identifier,
             TARGET_NYM: nym,
             TXN_TYPE: GET_NYM,
         }
@@ -412,7 +385,6 @@ class Client(PlenumClient):
         for identifier in self.signers:
             lastTxn = self.storage.getLastTxnForIdentifier(identifier)
             op = {
-                ORIGIN: identifier,
                 TARGET_NYM: identifier,
                 TXN_TYPE: GET_TXNS,
             }
