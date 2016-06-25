@@ -15,7 +15,7 @@ from plenum.common.txn import TARGET_NYM, TXN_TYPE, NEW_NODE, DATA, PUBKEY, \
     ALIAS, NODE_PORT, CLIENT_PORT, NODE_IP, TXN_ID, CLIENT_IP, NEW_STEWARD, \
     NEW_CLIENT
 from plenum.common.types import f
-from plenum.common.util import getConfig
+from sovrin.common.util import getConfig
 
 config = getConfig()
 keepDir = os.path.expanduser(config.baseDir)
