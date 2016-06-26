@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME, \
-    RAW, ENC, HASH
+    RAW, ENC, HASH, POOL_TXN_TYPES
 from plenum.common.types import f
 
 ROLE = 'role'
@@ -38,7 +38,7 @@ fields = {NYM: ([TARGET_NYM],        [ROLE]),
           ATTRIB: ([], [RAW, ENC, HASH])
           }
 
-validTxnTypes = [NYM,
+validTxnTypes = {NYM,
                  ATTRIB,
                  IDPROOF,
                  ASSIGN_AGENT,
@@ -46,7 +46,8 @@ validTxnTypes = [NYM,
                  GET_ATTR,
                  GET_NYM,
                  GET_TXNS,
-                 CRED_DEF]
+                 CRED_DEF}
+validTxnTypes.update(POOL_TXN_TYPES)
 
 
 # def txn(txnType,
