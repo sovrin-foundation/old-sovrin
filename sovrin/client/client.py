@@ -41,6 +41,7 @@ class Client(PlenumClient):
                  basedirpath: str=None,
                  wallet: Wallet = None):
         clientDataDir = os.path.join(basedirpath, "data", "clients", name)
+        clientDataDir = os.path.expanduser(clientDataDir)
         wallet = wallet or Wallet(WalletStorageFile(clientDataDir)) # type: Wallet
         super().__init__(name,
                          nodeReg,
