@@ -6,20 +6,25 @@ from copy import deepcopy
 from operator import itemgetter
 
 import pyorient
+from ledger.compact_merkle_tree import CompactMerkleTree
+from ledger.ledger import Ledger
+from ledger.serializers.compact_serializer import CompactSerializer
 
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, KEYS, TYPE, IP, \
     PORT
-from plenum.common.types import Reply, Request, RequestAck, RequestNack, f
+from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
+    NODE_PRIMARY_STORAGE_SUFFIX
 from plenum.common.util import getlogger, error
+from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, ORIGIN, DATA, GET_NYM, \
-    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, \
-    GET_CRED_DEF
+    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
+    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -62,13 +67,29 @@ class Node(PlenumNode):
         return IdentityGraph(self._getOrientDbStore(name,
                                                     pyorient.DB_TYPE_GRAPH))
 
+    def getPrimaryStorage(self):
+        """
+        This is usually an implementation of Ledger
+        """
+        if self.config.primaryStorage is None:
+            fields = getTxnOrderedFields()
+            return Ledger(CompactMerkleTree(hashStore=self.hashStore),
+                          dataDir=self.getDataLocation(),
+                          serializer=CompactSerializer(fields=fields),
+                          fileName=self.config.domainTransactionsFile)
+        else:
+            return initStorage(self.config.primaryStorage,
+                               name=self.name + NODE_PRIMARY_STORAGE_SUFFIX,
+                               dataDir=self.getDataLocation(),
+                               config=self.config)
+
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
         if self.primaryStorage.size == 0:
             gt = genTxns or getGenesisTxns()
             reqIds = {}
             for idx, txn in enumerate(gt):
-                identifier = txn.get(ORIGIN, "")
+                identifier = txn.get(f.IDENTIFIER.nm, "")
                 if identifier not in reqIds:
                     reqIds[identifier] = 0
                 reqIds[identifier] += 1
@@ -77,6 +98,7 @@ class Node(PlenumNode):
                     f.IDENTIFIER.nm: identifier
                 })
                 reply = Reply(txn)
+                # TODO Why this is called here
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
@@ -85,13 +107,14 @@ class Node(PlenumNode):
                 # Till now we just have NYM in genesis transaction.
 
     def addNymToGraph(self, txn):
+        origin = txn.get(f.IDENTIFIER.nm)
         if ROLE not in txn or txn[ROLE] == USER:
-            self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], txn[ORIGIN],
+            self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], origin,
                                       reference=txn.get(REFERENCE))
         elif txn[ROLE] == SPONSOR:
-            self.graphStorage.addSponsor(txn[TXN_ID], txn[TARGET_NYM], txn[ORIGIN])
+            self.graphStorage.addSponsor(txn[TXN_ID], txn[TARGET_NYM], origin)
         elif txn[ROLE] == STEWARD:
-            self.graphStorage.addSteward(txn[TXN_ID], txn[TARGET_NYM], txn.get(ORIGIN))
+            self.graphStorage.addSteward(txn[TXN_ID], txn[TARGET_NYM], origin)
         else:
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 
@@ -169,12 +192,8 @@ class Node(PlenumNode):
         # TODO: Just for now. Later do something meaningful here
         elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF]:
             pass
-
         else:
-            raise UnauthorizedClientRequest(
-                    request.identifier,
-                    request.reqId,
-                    "Assuming no one is authorized for txn type {}".format(typ))
+            await super().checkRequestAuthorized(request)
 
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStorage)
@@ -323,7 +342,7 @@ class Node(PlenumNode):
         if operation[TXN_TYPE] == NYM:
             self.addNymToGraph(result)
         elif operation[TXN_TYPE] == ATTRIB:
-            self.graphStorage.addAttribute(frm=operation[ORIGIN],
+            self.graphStorage.addAttribute(frm=req.identifier,
                                            txnId=txnId,
                                            txnTime=ppTime,
                                            raw=operation.get(RAW),

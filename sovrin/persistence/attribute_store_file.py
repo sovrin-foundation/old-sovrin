@@ -60,5 +60,3 @@ class AttributeStoreFile(AttributeStore):
     def attributes(self):
         return [self.constructAttrData(val, *self.attrKeyParts(key))
                 for key, val in self.store.iterator()]
-
-

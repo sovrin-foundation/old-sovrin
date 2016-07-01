@@ -63,7 +63,7 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
-             'scripts/start_sovrin_node']
+             'scripts/start_sovrin_node', 'scripts/generate_sovrin_pool_transactions']
 )
 
 if not os.path.exists(CONFIG_FILE):

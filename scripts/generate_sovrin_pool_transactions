@@ -1,0 +1,14 @@
+#! /usr/bin/env python3
+
+import os
+from plenum.common.test_network_setup import TestNetworkSetup
+from sovrin.common.util import getConfig
+
+config = getConfig()
+keepDir = os.path.expanduser(config.baseDir)
+portsStart = 9700
+
+
+if __name__ == "__main__":
+    TestNetworkSetup.bootstrapTestNodes(portsStart, keepDir,
+                                        config.poolTransactionsFile)

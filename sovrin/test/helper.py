@@ -401,7 +401,7 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
 def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
     nym = targetSigner.verstr
     op = {
-        ORIGIN: creatorSigner.verstr,
+        # ORIGIN: creatorSigner.verstr,
         TARGET_NYM: nym,
         TXN_TYPE: NYM,
         ROLE: role
