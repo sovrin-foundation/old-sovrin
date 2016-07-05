@@ -100,8 +100,8 @@ class Node(PlenumNode):
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
-                if txn[TXN_TYPE] == NYM:
-                    self.addNymToGraph(txn)
+                # if txn[TXN_TYPE] == NYM:
+                #     self.addNymToGraph(txn)
                 # Till now we just have NYM in genesis transaction.
 
     def addNymToGraph(self, txn):
@@ -220,7 +220,6 @@ class Node(PlenumNode):
             self.transmitToClient(Reply(result), frm)
         elif request.operation[TXN_TYPE] == GET_TXNS:
             nym = request.operation[TARGET_NYM]
-            # origin = request.operation[ORIGIN]
             origin = request.identifier
             if nym != origin:
                 msg = "You can only receive transactions for yourself"
@@ -277,6 +276,17 @@ class Node(PlenumNode):
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
             logger.debug("Adding genesis transaction")
+        if result[TXN_TYPE] == NYM:
+            self.addNymToGraph(result)
+        elif result[TXN_TYPE] == ATTRIB:
+            self.graphStorage.addAttribute(frm=identifier,
+                                           txnId=txnId,
+                                           txnTime=None,
+                                           raw=result.get(RAW),
+                                           enc=result.get(ENC),
+                                           hash=result.get(HASH),
+                                           to=result.get(TARGET_NYM)
+                                           )
         self.secondaryStorage.storeReply(Reply(result))
 
     async def addToLedger(self, identifier, reply, txnId):
@@ -323,15 +333,15 @@ class Node(PlenumNode):
             f.IDENTIFIER.nm: req.identifier,
             f.REQ_ID.nm: req.reqId,
         })
-        if operation[TXN_TYPE] == NYM:
-            self.addNymToGraph(result)
-        elif operation[TXN_TYPE] == ATTRIB:
-            self.graphStorage.addAttribute(frm=req.identifier,
-                                           txnId=txnId,
-                                           txnTime=ppTime,
-                                           raw=operation.get(RAW),
-                                           enc=operation.get(ENC),
-                                           hash=operation.get(HASH),
-                                           to=operation.get(TARGET_NYM)
-                                           )
+        # if operation[TXN_TYPE] == NYM:
+        #     self.addNymToGraph(result)
+        # elif operation[TXN_TYPE] == ATTRIB:
+        #     self.graphStorage.addAttribute(frm=req.identifier,
+        #                                    txnId=txnId,
+        #                                    txnTime=ppTime,
+        #                                    raw=operation.get(RAW),
+        #                                    enc=operation.get(ENC),
+        #                                    hash=operation.get(HASH),
+        #                                    to=operation.get(TARGET_NYM)
+        #                                    )
         return Reply(result)
