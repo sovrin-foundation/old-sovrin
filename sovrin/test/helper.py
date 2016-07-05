@@ -395,8 +395,7 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
     return s
 
 
-def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
-    nym = targetSigner.verstr
+def createNym(looper, nym, creatorClient, creatorSigner, role):
     op = {
         # ORIGIN: creatorSigner.verstr,
         TARGET_NYM: nym,
@@ -411,7 +410,7 @@ def createNym(looper, targetSigner, creatorClient, creatorSigner, role):
 
 def addUser(looper, creatorClient, creatorSigner, name):
     usigner = SimpleSigner()
-    createNym(looper, usigner, creatorClient, creatorSigner, USER)
+    createNym(looper, usigner.verstr, creatorClient, creatorSigner, USER)
     return usigner
 
 

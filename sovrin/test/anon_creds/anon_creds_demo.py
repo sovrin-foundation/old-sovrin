@@ -75,7 +75,7 @@ looper.add(steward)
 looper.run(steward.ensureConnectedToNodes())
 steward.requestPendingTxns()
 
-createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
 
 sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir)
 whitelistClient(nodes, sponsor.name)

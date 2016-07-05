@@ -114,5 +114,5 @@ def sponsor(looper, nodeSet, tdir, up, steward, sponsorSigner):
 
 @pytest.fixture(scope="module")
 def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
     return sponsorSigner
