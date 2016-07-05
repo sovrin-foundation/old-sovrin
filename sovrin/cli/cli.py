@@ -14,7 +14,7 @@ from plenum.client.signer import Signer, SimpleSigner
 from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
-    NYM, SPONSOR, TXN_ID, REFERENCE, USER
+    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM
 from sovrin.server.node import Node
 
 
@@ -153,6 +153,7 @@ class SovrinCli(PlenumCli):
             r = super()._clientCommand(matchedVars)
             if not r:
                 client_name = matchedVars.get('client_name')
+                client = self.clients[client_name]
                 if client_name not in self.clients:
                     self.print("{} cannot add a new user".
                                format(client_name), Token.BoldOrange)
@@ -166,7 +167,7 @@ class SovrinCli(PlenumCli):
                         return True
                     else:
                         role = USER if role == "user" else SPONSOR
-                    client = self.clients[client_name]
+
                     origin = client.getSigner().verstr
                     signer = SimpleSigner()
                     nym = signer.verstr
@@ -189,7 +190,7 @@ class SovrinCli(PlenumCli):
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
             destId = matchedVars.get('dest_id')
-            # TODO:LH Add code to send dest
+            self._clientCommand(matchedVars)
             print("dest id is {}".format(destId))
             return True
 
