@@ -159,7 +159,7 @@ class SovrinCli(PlenumCli):
                                format(client_name), Token.BoldOrange)
                     return True
                 client_action = matchedVars.get('cli_action')
-                if client_action == 'add':
+                if client_action == 'add' or matchedVars.get('send_nym') == 'send NYM' :
                     other_client_name = matchedVars.get('other_client_name')
                     role = matchedVars.get("role")
                     if role not in ("user", "sponsor"):
