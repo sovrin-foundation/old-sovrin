@@ -5,6 +5,10 @@ from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
 from ioflo.aid.consoling import Console
 
+from anoncreds.protocol.types import AttribsDef, AttribType
+from anoncreds.protocol.verifier import verify_proof
+from anoncreds.temp_primes import P_PRIME, Q_PRIME
+
 
 def out(record, extra_cli_value=None):
     """
@@ -16,19 +20,16 @@ def out(record, extra_cli_value=None):
     """
     logger.display(record.msg)
 
+
 logging.root.addHandler(DemoHandler(out))
 logging.root.handlers = []
 setupLogging(DISPLAY_LOG_LEVEL,
              Console.Wordage.mute)
 logger = getlogger("test_anon_creds")
 
-
-
 from anoncreds.protocol.attribute_repo import AttributeRepo
 from anoncreds.protocol.proof import Proof
-from charm.core.math.integer import randomPrime
 
-from anoncreds.protocol.utils import encodeAttrs
 from plenum.common.txn import DATA, ORIGIN
 from plenum.common.txn import TXN_TYPE
 from plenum.test.helper import genHa
@@ -36,15 +37,23 @@ from sovrin.common.txn import CRED_DEF
 from sovrin.test.anon_creds.helper import getCredDefTxnData
 from sovrin.test.helper import genTestClient, submitAndCheck
 
+BYU = AttribsDef('BYU',
+                 [AttribType("first_name", encode=True),
+                  AttribType("last_name", encode=True),
+                  AttribType("birth_date", encode=True),
+                  AttribType("expire_date", encode=True),
+                  AttribType("undergrad", encode=True),
+                  AttribType("postgrad", encode=True)]
+                 )
 
-attributes = {
-    "first_name": "John",
-    "last_name": "Doe",
-    "birth_date": "1970-01-01",
-    "expire_date": "2300-01-01",
-    "undergrad": "True",
-    "postgrad": "False"
-}
+attributes = BYU.attribs(
+    first_name="John",
+    last_name="Doe",
+    birth_date="1970-01-01",
+    expire_date="2300-01-01",
+    undergrad="True",
+    postgrad="False"
+)
 
 attrNames = tuple(attributes.keys())
 
@@ -68,51 +77,56 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     # Adding signers
     issuer.signers[issuerSigner.identifier] = issuerSigner
     logger.display("Key pair for Issuer created \n"
-                "Public key is {} \n"
-                "Private key is stored on disk\n".format(issuerSigner.verstr))
+                   "Public key is {} \n"
+                   "Private key is stored on disk\n".format(
+        issuerSigner.verstr))
     prover.signers[proverSigner.identifier] = proverSigner
     logger.display("Key pair for Prover created \n"
-                "Public key is {} \n"
-                "Private key is stored on disk\n".format(proverSigner.verstr))
+                   "Public key is {} \n"
+                   "Private key is stored on disk\n".format(
+        proverSigner.verstr))
     verifier.signers[verifierSigner.identifier] = verifierSigner
     logger.display("Key pair for Verifier created \n"
-                "Public key is {} \n"
-                "Private key is stored on disk\n".format(
-                    verifierSigner.verstr))
+                   "Public key is {} \n"
+                   "Private key is stored on disk\n".format(
+        verifierSigner.verstr))
 
+    # TODO BYU.name is used here instead of issuerSigner.identifier due to
+    #  tight coupling in Attribs.encoded()
+    issuerId = BYU.name
+    proverId = proverSigner.identifier
     # Issuer's attribute repository
     attrRepo = AttributeRepo()
-    attrRepo.attributes = {proverSigner.identifier: attributes}
+    attrRepo.attributes = {proverId: attributes}
     issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
     version1 = "1.0"
     ip = issuer.peerHA[0]
     port = issuer.peerHA[1]
-    issuerId = issuerSigner.identifier
-    proverId = proverSigner.identifier
-    verifierId = verifierSigner.identifier
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
-    credDef = issuer.newCredDef(attrNames, name1, version1, ip=ip, port=port)
+    credDef = issuer.newCredDef(attrNames, name1, version1,
+                                p_prime=P_PRIME, q_prime=Q_PRIME,
+                                ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
     logger.display("Issuer: Creating version {} of credential definition"
-                " for {}".format(version1, name1))
+                   " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
-    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA:
-        getCredDefTxnData(credDef)}
+    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF,
+          DATA: getCredDefTxnData(credDef)}
     logger.display("Issuer: Writing credential definition to "
-                "Sovrin Ledger...")
+                   "Sovrin Ledger...")
     submitAndCheck(looper, issuer, op, identifier=issuerSigner.identifier)
 
     # Prover requests Issuer for credential (out of band)
     logger.display("Prover: Requested credential from Issuer")
     # Issuer issues a credential for prover
     logger.display("Issuer: Creating credential for "
-                "{}".format(proverSigner.verstr))
+                   "{}".format(proverSigner.verstr))
 
-    encodedAttributes = {issuerId: encodeAttrs(attributes)}
+    encodedAttributes = attributes.encoded()
     revealedAttrs = ["undergrad"]
     pk = {
         issuerId: prover.getPkFromCredDef(credDef)
@@ -120,15 +134,16 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     proof = Proof(pk)
     proofId = proof.id
     prover.proofs[proofId] = proof
-    cred = issuer.createCredential(proverId, name1, version1, proof.U[issuerId])
+    cred = issuer.createCredential(proverId, name1, version1,
+                                   proof.U[issuerId])
     logger.display("Prover: Received credential from "
-                "{}".format(issuerSigner.verstr))
+                   "{}".format(issuerSigner.verstr))
 
     # Prover intends to prove certain attributes to a Verifier
     # Verifier issues a nonce
     logger.display("Prover: Requesting Nonce from verifier…")
     logger.display("Verifier: Nonce received from prover"
-                " {}".format(proverId))
+                   " {}".format(proverId))
     nonce = verifier.generateNonce(interactionId)
     logger.display("Verifier: Nonce sent.")
     logger.display("Prover: Nonce received")
@@ -140,23 +155,26 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     }
     # Prover discovers Issuer's credential definition
     logger.display("Prover: Preparing proof for attributes: "
-                "{}".format(revealedAttrs))
+                   "{}".format(revealedAttrs))
     proof.setParams(encodedAttributes, presentationToken,
                     revealedAttrs, nonce)
-    prf = proof.prepare_proof()
+    prf = proof.prepareProof(credential=presentationToken,
+                             attrs=attributes.encoded(),
+                             revealedAttrs=revealedAttrs,
+                             nonce=nonce)
     logger.display("Prover: Proof prepared.")
     logger.display("Prover: Proof submitted")
     logger.display("Verifier: Proof received.")
     logger.display("Verifier: Looking up Credential Definition"
-                " on Sovrin Ledger...")
+                   " on Sovrin Ledger...")
 
     # Verifier fetches the credential definition from ledger
     verifier.credentialDefinitions = {
         (issuerId, name1, version1): credDef
     }
-    verified = verifier.verify_proof(pk, prf, nonce,
-                                     encodedAttributes,
-                                     revealedAttrs)
+    verified = verify_proof(pk, prf, nonce,
+                            attributes.encoded(),
+                            revealedAttrs)
     # Verifier verifies proof
     logger.display("Verifier: Verifying proof...")
     logger.display("Verifier: Proof verified.")

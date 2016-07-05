@@ -7,22 +7,22 @@ from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
-from plenum.common.types import HA
 
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
 from plenum.client.signer import SimpleSigner
-from plenum.persistence import orientdb_store
-
-from plenum.common import util
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK, DATA
+from plenum.common.types import HA
 from plenum.common.util import getMaxFailures, runall, getlogger, getConfig
+from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
-from plenum.test.helper import TestNodeSet as PlenumTestNodeSet, genHa
+from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkNodesConnected, \
-    checkNodesAreReady, checkSufficientRepliesRecvd, checkLastClientReqForNode, \
-    buildCompletedTxnFromReply, TestStack, \
-    TestNodeCore, StackedTester
+    checkNodesAreReady, checkSufficientRepliesRecvd, checkLastClientReqForNode,\
+    buildCompletedTxnFromReply, TestStack, TestNodeCore, StackedTester
 from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
@@ -30,9 +30,6 @@ from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.verifier import Verifier
 from sovrin.client.wallet import Wallet, UserWallet
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID, USER

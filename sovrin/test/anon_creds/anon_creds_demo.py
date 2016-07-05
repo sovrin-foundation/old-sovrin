@@ -214,7 +214,7 @@ def runAnonCredFlow():
     }
     # Verifier verifies proof
     logger.display("Verifier: Verifying proof...")
-    verified = verifier.verify_proof(pk, prf, nonce,
+    verified = verify_proof(pk, prf, nonce,
                                      encodedAttributes,
                                      revealedAttrs)
     input()

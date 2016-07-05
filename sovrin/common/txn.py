@@ -54,7 +54,8 @@ validTxnTypes = {NYM,
                  GET_ATTR,
                  GET_NYM,
                  GET_TXNS,
-                 CRED_DEF}
+                 CRED_DEF,
+                 GET_CRED_DEF}
 validTxnTypes.update(POOL_TXN_TYPES)
 
 

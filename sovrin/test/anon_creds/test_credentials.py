@@ -1,6 +1,7 @@
 import json
 
-from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM
+from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
+    KEYS
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
 from sovrin.common.txn import GET_CRED_DEF
@@ -14,30 +15,32 @@ def testIssuerWritesCredDef(credentialDefinitionAdded):
     pass
 
 
-def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir, nodeSet,
-                          looper, sponsorSigner, credDef):
+def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
+                          nodeSet, looper, sponsorSigner, credDef):
     """
     A credential definition is received
     """
     user = genTestClient(nodeSet, signer=userSignerA, tmpdir=tdir)
     looper.add(user)
     looper.run(user.ensureConnectedToNodes())
+    definition = credDef.get()
     op = {
         ORIGIN: userSignerA.verstr,
         TARGET_NYM: sponsorSigner.verstr,
         TXN_TYPE: GET_CRED_DEF,
         DATA: {
-            NAME: credDef[NAME],
-            VERSION: credDef[VERSION]
+            NAME: definition[NAME],
+            VERSION: definition[VERSION]
         }
     }
     req, = user.submit(op, identifier=userSignerA.verstr)
-    looper.run(eventually(checkSufficientRepliesRecvd, user.inBox, req.reqId, nodeSet.f,
-               retryWait=1, timeout=5))
+    looper.run(eventually(checkSufficientRepliesRecvd, user.inBox,
+                          req.reqId, nodeSet.f,
+                          retryWait=1, timeout=5))
     reply, status = user.getReply(req.reqId)
     assert status == "CONFIRMED"
     recvdCredDef = json.loads(reply[DATA])
-    assert recvdCredDef[NAME] == credDef[NAME]
-    assert recvdCredDef[VERSION] == credDef[VERSION]
-    # TODO: Need to check equality of keys too
+    assert recvdCredDef[NAME] == definition[NAME]
+    assert recvdCredDef[VERSION] == definition[VERSION]
+    assert json.loads(recvdCredDef[KEYS]) == definition[KEYS]
 

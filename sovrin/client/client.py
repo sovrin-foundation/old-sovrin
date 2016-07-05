@@ -25,7 +25,7 @@ from plenum.common.util import getlogger, getMaxFailures, \
 from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
-from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY, \
+from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF
 from sovrin.common.util import getConfig
@@ -117,16 +117,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             return msg
         else:
             return super().sign(msg, signer)
-
-    # TODO: Why is it here if not used?
-    def getGraphStorage(self, name):
-        config = getConfig()
-        return IdentityGraph(OrientDbStore(
-            user=config.OrientDB["user"],
-            password=config.OrientDB["password"],
-            dbName=name,
-            dbType=pyorient.DB_TYPE_GRAPH,
-            storageType=pyorient.STORAGE_TYPE_PLOCAL))
 
     def getStorage(self, baseDirPath=None):
         config = getConfig()
@@ -237,14 +227,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                 self.addNymToGraph(txn)
                             elif txn[TXN_TYPE] == ATTRIB:
                                 try:
-                                    self.storage.addAttribute(frm=txn[f.IDENTIFIER.nm],
-                                              txnId=txn[TXN_ID],
-                                              txnTime=txn[TXN_TIME],
-                                              raw=txn.get(RAW),
-                                              enc=txn.get(ENC),
-                                              hash=txn.get(HASH),
-                                              to=txn.get(TARGET_NYM)
-                                              )
+                                    self.storage.addAttribute(
+                                        frm=txn[f.IDENTIFIER.nm],
+                                        txnId=txn[TXN_ID],
+                                        txnTime=txn[TXN_TIME],
+                                        raw=txn.get(RAW),
+                                        enc=txn.get(ENC),
+                                        hash=txn.get(HASH),
+                                        to=txn.get(TARGET_NYM)
+                                    )
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
@@ -257,7 +248,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                             txnTime=result[TXN_TIME],
                                             name=data.get(NAME),
                                             version=data.get(VERSION),
-                                            keys=json.loads(data.get(KEYS)),   # TODO: Figure out a way to avoid this.
+                                            keys=data.get(KEYS),
                                             typ=data.get(TYPE),
                                             ip=data.get(IP),
                                             port=data.get(PORT))

@@ -1,7 +1,6 @@
 from typing import Dict, Union, Tuple
 
 from plenum.client.signer import Signer
-from plenum.common.has_file_storage import HasFileStorage
 from plenum.common.types import HA
 from plenum.common.util import getlogger
 
@@ -11,7 +10,8 @@ from sovrin.client.client import Client
 logger = getlogger()
 
 
-class AnonCredsRole:#(HasFileStorage):
+# TODO Rename to HasAnonCreds if appropriate.
+class AnonCredsRole:
     def __init__(self,
                  client: Client,
                  name: str,
