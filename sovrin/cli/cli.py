@@ -186,19 +186,30 @@ class SovrinCli(PlenumCli):
                                                 other_client_name,
                                                 signer)
                     return True
+                elif matchedVars.get('send_get_nym') == 'send GET_NYM':
+                    nym = matchedVars.get('dest_id')
+                    op = {
+                        TARGET_NYM: nym,
+                        TXN_TYPE: GET_NYM,
+                    }
+                    req, = client.submit(op)
+                    self.print("Getting nym {}".format(nym), Token.BoldBlue)
+                    self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                                req.reqId, client, self.addAlias,
+                                                client)
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
             destId = matchedVars.get('dest_id')
             self._clientCommand(matchedVars)
-            print("dest id is {}".format(destId))
+            self.print("dest id is {}".format(destId))
             return True
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
             destId = matchedVars.get('dest_id')
-            # TODO:LH Add code to send GET_NYM
-            print("dest id is {}".format(destId))
+            self._clientCommand(matchedVars)
+            self.print("dest id is {}".format(destId))
             return True
 
     def _sendAttribAction(self, matchedVars):
@@ -206,8 +217,8 @@ class SovrinCli(PlenumCli):
             destId = matchedVars.get('dest_id')
             raw = ast.literal_eval(matchedVars.get('raw'))
             # TODO:LH Add code to send GET_NYM
-            print("dest id is {}".format(destId))
-            print("raw message is {}".format(raw))
+            self.print("dest id is {}".format(destId))
+            self.print("raw message is {}".format(raw))
             return True
 
     def _sendCredDefAction(self, matchedVars):
@@ -219,11 +230,11 @@ class SovrinCli(PlenumCli):
             port = matchedVars.get('port')
             keys = ast.literal_eval(matchedVars.get('keys'))
             # TODO:LH Add code to send GET_NYM
-            print("passed values are {}, {}, {}, {}, {}, {}".format(name, version, type, ip, port, keys))
+            self.print("passed values are {}, {}, {}, {}, {}, {}".format(name, version, type, ip, port, keys))
             return True
 
     def _sendCredAction(self, matchedVars):
-        print(matchedVars)
+        self.print(matchedVars)
         if matchedVars.get('send_cred') == 'send to':
             dest = matchedVars.get('dest')
             credName = matchedVars.get('cred_name')
@@ -243,7 +254,7 @@ class SovrinCli(PlenumCli):
             attrName = matchedVars.get('attr_name')
             credName = matchedVars.get('cred_name')
             dest = matchedVars.get('dest')
-            print("{}, {}, {}".format(attrName, credName, dest))
+            self.print("{}, {}, {}".format(attrName, credName, dest))
             return True
 
     def getActionList(self):
