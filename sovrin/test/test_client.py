@@ -182,7 +182,6 @@ def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper,
     nym = nonSponsor.getSigner().verstr
 
     op = {
-        # ORIGIN: nym,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
