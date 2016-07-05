@@ -11,10 +11,11 @@ from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
 from plenum.client.signer import Signer, SimpleSigner
+from plenum.common.txn import DATA, RAW, ENC, HASH
 from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
-    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM
+    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB
 from sovrin.server.node import Node
 
 
@@ -159,7 +160,7 @@ class SovrinCli(PlenumCli):
                                format(client_name), Token.BoldOrange)
                     return True
                 client_action = matchedVars.get('cli_action')
-                if client_action == 'add' or matchedVars.get('send_nym') == 'send NYM' :
+                if client_action == 'add' or matchedVars.get('send_nym') == 'send NYM':
                     other_client_name = matchedVars.get('other_client_name')
                     role = matchedVars.get("role")
                     if role not in ("user", "sponsor"):
@@ -195,8 +196,32 @@ class SovrinCli(PlenumCli):
                     req, = client.submit(op)
                     self.print("Getting nym {}".format(nym), Token.BoldBlue)
                     self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                                req.reqId, client, self.addAlias,
-                                                client)
+                                                req.reqId, client)
+                elif matchedVars.get('send_attrib') == 'send ATTRIB':
+                    nym = matchedVars.get('dest_id')
+                    raw = matchedVars.get('raw')
+                    enc = matchedVars.get('enc')
+                    hsh = matchedVars.get('hash')
+                    op = {
+                        TXN_TYPE: ATTRIB,
+                        TARGET_NYM: nym
+                    }
+                    data = None
+                    if not raw:
+                        op[RAW] = raw
+                        data = raw
+                    elif not enc:
+                        op[ENC] = enc
+                        data = enc
+                    elif not hsh:
+                        op[HASH] = hsh
+                        data = hsh
+
+                    req, = client.submit(op)
+                    self.print("Adding attributes {} for {}".
+                               format(data, nym), Token.BoldBlue)
+                    self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                            req.reqId, client)
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
@@ -216,7 +241,7 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('send_attrib') == 'send ATTRIB':
             destId = matchedVars.get('dest_id')
             raw = ast.literal_eval(matchedVars.get('raw'))
-            # TODO:LH Add code to send GET_NYM
+            self._clientCommand(matchedVars)
             self.print("dest id is {}".format(destId))
             self.print("raw message is {}".format(raw))
             return True
