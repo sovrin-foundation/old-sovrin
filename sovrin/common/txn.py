@@ -64,32 +64,37 @@ validTxnTypes.update(POOL_TXN_TYPES)
 #     }
 
 
-def AddNym(target, role=None, origin=None):
-    return newTxn(txnType=NYM, origin=origin, target=target, role=role)
+def AddNym(target, role=None):
+    return newTxn(txnType=NYM, target=target, role=role)
 
 
-def AddAttr(target, attrData, role=None, origin=None):
-    return newTxn(txnType=ATTRIB, origin=origin, target=target, role=role,
-                  data=attrData)
+def AddAttr(target, attrData, role=None):
+    return newTxn(txnType=ATTRIB, target=target, role=role,
+                  enc=attrData)
 
 
-def GetAttr(target, attrName, role=None, origin=None):
+def GetAttr(target, attrName, role=None):
     queryData = json.dumps({"name": attrName})
-    return newTxn(txnType=GET_ATTR, origin=origin, target=target, role=role,
+    return newTxn(txnType=GET_ATTR, target=target, role=role,
                   data=queryData)
 
 
 # TODO: Change name to txn or some thing else after discussion
-def newTxn(txnType, origin=None, target=None, data=None, role=None):
+def newTxn(txnType, target=None, data=None, enc=None, raw=None,
+           hash=None, role=None):
     txn = {
         TXN_TYPE: txnType
     }
-    if origin:
-        txn[ORIGIN] = origin
     if target:
         txn[TARGET_NYM] = target
     if data:
         txn[DATA] = data
+    if enc:
+        txn[ENC] = enc
+    if raw:
+        txn[RAW] = raw
+    if hash:
+        txn[HASH] = hash
     if role:
         txn[ROLE] = role
     return txn
