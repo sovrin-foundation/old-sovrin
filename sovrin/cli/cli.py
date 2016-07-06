@@ -273,7 +273,7 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('send_attrib') == 'send ATTRIB':
             nym = matchedVars.get('dest_id')
             raw = ast.literal_eval(matchedVars.get('raw'))
-            enc = matchedVars.get('enc')
+            enc = ast.literal_eval(matchedVars.get('enc'))
             hsh = matchedVars.get('hash')
             self._addAttrib(nym, raw, enc, hsh)
             self.print("dest id is {}".format(nym))
