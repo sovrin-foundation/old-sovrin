@@ -160,42 +160,13 @@ class SovrinCli(PlenumCli):
                                format(client_name), Token.BoldOrange)
                     return True
                 client_action = matchedVars.get('cli_action')
-                if client_action == 'add' or matchedVars.get('send_nym') == 'send NYM':
+                if client_action == 'add':
                     other_client_name = matchedVars.get('other_client_name')
-                    role = matchedVars.get("role")
-                    if role not in ("user", "sponsor"):
-                        self.print("Can only add a sponsor or user", Token.Error)
-                        return True
-                    else:
-                        role = USER if role == "user" else SPONSOR
-
-                    origin = client.getSigner().verstr
+                    role = self._getRole(matchedVars)
                     signer = SimpleSigner()
                     nym = signer.verstr
-                    op = {
-                        TARGET_NYM: nym,
-                        TXN_TYPE: NYM,
-                        ROLE: role
-                    }
-                    req, = client.submit(op)
-                    self.print("Adding nym {} for {}".
-                               format(nym, other_client_name), Token.BoldBlue)
-                    self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                                req.reqId, client, self.addAlias,
-                                                client, origin,
-                                                other_client_name,
-                                                signer)
-                    return True
-                elif matchedVars.get('send_get_nym') == 'send GET_NYM':
-                    nym = matchedVars.get('dest_id')
-                    op = {
-                        TARGET_NYM: nym,
-                        TXN_TYPE: GET_NYM,
-                    }
-                    req, = client.submit(op)
-                    self.print("Getting nym {}".format(nym), Token.BoldBlue)
-                    self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                                req.reqId, client)
+                    return self._addNym(nym, role, other_client_name)
+
                 elif matchedVars.get('send_attrib') == 'send ATTRIB':
                     nym = matchedVars.get('dest_id')
                     raw = matchedVars.get('raw')
@@ -222,26 +193,90 @@ class SovrinCli(PlenumCli):
                     self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                             req.reqId, client)
 
+    def _getRole(self, matchedVars):
+        role = matchedVars.get("role")
+        if role not in ("user", "sponsor"):
+            self.print("Can only add a sponsor or user", Token.Error)
+            return True
+        else:
+            role = USER if role == "user" else SPONSOR
+
+        return role
+
+    def _getNym(self, nym):
+        op = {
+            TARGET_NYM: nym,
+            TXN_TYPE: GET_NYM,
+        }
+        req, = self.defaultClient.submit(op)
+        self.print("Getting nym {}".format(nym), Token.BoldBlue)
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                    req.reqId, self.defaultClient, self.getReply,
+                                    req.reqId, self.defaultClient.name)
+
+    def _addNym(self, nym, role, other_client_name=None):
+        op = {
+            TARGET_NYM: nym,
+            TXN_TYPE: NYM,
+            ROLE: role
+        }
+        req, = self.defaultClient.submit(op)
+        printStr = "Adding nym {}".format(nym)
+        if other_client_name:
+            printStr = printStr + " for " + other_client_name
+        self.print(printStr, Token.BoldBlue)
+
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                    req.reqId, self.defaultClient, self.addAlias,
+                                    self.defaultClient, other_client_name,
+                                    self.activeSigner)
+        return True
+
+    def _addAttrib(self, nym, raw, enc, hsh):
+        op = {
+            TXN_TYPE: ATTRIB,
+            TARGET_NYM: nym
+        }
+        data = None
+        if not raw:
+            op[RAW] = raw
+            data = raw
+        elif not enc:
+            op[ENC] = enc
+            data = enc
+        elif not hsh:
+            op[HASH] = hsh
+            data = hsh
+
+        req, = self.defaultClient.submit(op)
+        self.print("Adding attributes {} for {}".
+                   format(data, nym), Token.BoldBlue)
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                    req.reqId, self.defaultClient)
+
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
-            destId = matchedVars.get('dest_id')
-            self._clientCommand(matchedVars)
-            self.print("dest id is {}".format(destId))
+            nym = matchedVars.get('dest_id')
+            role = self._getRole(matchedVars)
+            self._addNym(nym, role)
+            self.print("dest id is {}".format(nym))
             return True
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
             destId = matchedVars.get('dest_id')
-            self._clientCommand(matchedVars)
+            self._getNym(destId)
             self.print("dest id is {}".format(destId))
             return True
 
     def _sendAttribAction(self, matchedVars):
         if matchedVars.get('send_attrib') == 'send ATTRIB':
-            destId = matchedVars.get('dest_id')
+            nym = matchedVars.get('dest_id')
             raw = ast.literal_eval(matchedVars.get('raw'))
-            self._clientCommand(matchedVars)
-            self.print("dest id is {}".format(destId))
+            enc = matchedVars.get('enc')
+            hsh = matchedVars.get('hash')
+            self._addAttrib(nym, raw, enc, hsh)
+            self.print("dest id is {}".format(nym))
             self.print("raw message is {}".format(raw))
             return True
 
@@ -303,9 +338,8 @@ class SovrinCli(PlenumCli):
             txnId = result[TXN_ID]
             clbk(txnId, *args)
 
-    def addAlias(self, txnId, client, origin, alias, signer):
+    def addAlias(self, txnId, client, alias, signer):
         op = {
-            ORIGIN: origin,
             TARGET_NYM: alias,
             TXN_TYPE: NYM,
             # TODO: Should REFERENCE be symmetrically encrypted and the key
