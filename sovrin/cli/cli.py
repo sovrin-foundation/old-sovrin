@@ -42,8 +42,8 @@ class SovrinCli(PlenumCli):
     _genesisTransactions = None
 
     def __init__(self, *args, **kwargs):
-        outFilePath = kwargs.pop("outFilePath")
-        self.outputFile = open(outFilePath, "w")
+        # outFilePath = kwargs.pop("outFilePath")
+        # self.outputFile = open(outFilePath, "w")
         super().__init__(*args, **kwargs)
         self.aliases = {}         # type: Dict[str, Signer]
         self.sponsors = set()
@@ -173,7 +173,6 @@ class SovrinCli(PlenumCli):
                     signer = SimpleSigner()
                     nym = signer.verstr
                     op = {
-                        ORIGIN: origin,
                         TARGET_NYM: nym,
                         TXN_TYPE: NYM,
                         ROLE: role
@@ -322,7 +321,7 @@ class SovrinCli(PlenumCli):
         super().print(msg, token=token, newline=newline)
         if newline:
             msg += "\n"
-        self.outputFile.write(msg)
-        self.outputFile.flush()
-        if msg == 'Goodbye.':
-            self.outputFile.truncate(0)
+        # self.outputFile.write(msg)
+        # self.outputFile.flush()
+        # if msg == 'Goodbye.':
+        #     self.outputFile.truncate(0)
