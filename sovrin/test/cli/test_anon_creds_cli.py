@@ -47,7 +47,7 @@ objects from one cli to another directly.
 
 
 @pytest.fixture(scope="module")
-def poolCLI():
+def poolCLI(cli):
     return cli
 
 
