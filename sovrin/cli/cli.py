@@ -5,6 +5,8 @@ import time
 
 import asyncio
 
+from anoncreds.protocol.credential_definition import CredentialDefinition
+
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
@@ -15,9 +17,9 @@ from plenum.common.txn import DATA, RAW, ENC, HASH
 from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
-    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB
+    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF
 from sovrin.server.node import Node
-
+from sovrin.test.anon_creds.helper import getCredDefTxnData
 
 """
 Objective
@@ -254,6 +256,40 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.defaultClient)
 
+    def _addCredDef(self, matchedVars):
+        credDef = self._getCredDef(matchedVars)
+        op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
+        req, = self.defaultClient.submit(op)
+        self.print("Adding cred def {}".
+                   format(credDef), Token.BoldBlue)
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                    req.reqId, self.defaultClient)
+
+    def _reqCred(self, matchedVars):
+
+        dest = matchedVars.get('dest')
+        saveas = matchedVars.get('cred_name')
+        cred_name = matchedVars.get('name')
+        cred_version = matchedVars.get('version')
+        attrs = matchedVars.get('attrs')
+
+        cred_req = {"name": cred_name, "version": cred_version, "attrs": attrs}
+
+        self.defaultClient.sendMsgToOtherClient(dest, cred_req)
+
+    def _getCredDef(self, matchedVars):
+        name = matchedVars.get('name')
+        version = matchedVars.get('version')
+        # TODO: do we need to use type anywhere?
+        # type = matchedVars.get('type')
+        ip = matchedVars.get('ip')
+        port = matchedVars.get('port')
+        keys = ast.literal_eval(matchedVars.get('keys'))
+        attributes = ast.literal_eval(keys.get('attributes'))
+
+        return CredentialDefinition(attrNames=list(attributes.keys()), name=name, version=version,
+                                       ip=ip, port=port)
+
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
             nym = matchedVars.get('dest_id')
@@ -288,7 +324,8 @@ class SovrinCli(PlenumCli):
             ip = matchedVars.get('ip')
             port = matchedVars.get('port')
             keys = ast.literal_eval(matchedVars.get('keys'))
-            # TODO:LH Add code to send GET_NYM
+
+            self._addCredDef(matchedVars)
             self.print("passed values are {}, {}, {}, {}, {}, {}".format(name, version, type, ip, port, keys))
             return True
 
