@@ -27,8 +27,7 @@ from plenum.test.helper import genHa, ensureElectionsDone, \
 from sovrin.test.helper import genTestClient, submitAndCheck, createNym, addNym, TestNodeSet
 from sovrin.common.txn import CRED_DEF, SPONSOR
 from sovrin.test.conftest import genesisTxns
-from sovrin.test.anon_creds.helper import getCredDefTxnData
-
+from sovrin.common.util import getCredDefTxnData
 
 attributes = {
     "first_name": "John",

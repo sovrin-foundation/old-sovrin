@@ -26,8 +26,8 @@ from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
     NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF
+from sovrin.common.util import getCredDefTxnData
 from sovrin.server.node import Node
-from sovrin.test.anon_creds.helper import getCredDefTxnData
 
 """
 Objective
@@ -54,10 +54,10 @@ class SovrinCli(PlenumCli):
     def __init__(self, *args, **kwargs):
         # outFilePath = kwargs.pop("outFilePath")
         # self.outputFile = open(outFilePath, "w")
-        super().__init__(*args, **kwargs)
         self.aliases = {}         # type: Dict[str, Signer]
         self.sponsors = set()
         self.users = set()
+        super().__init__(*args, **kwargs)
         self.loadGenesisTxns()
 
     def initializeGrammar(self):

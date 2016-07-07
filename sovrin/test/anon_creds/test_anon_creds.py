@@ -34,7 +34,7 @@ from plenum.common.txn import DATA, ORIGIN
 from plenum.common.txn import TXN_TYPE
 from plenum.test.helper import genHa
 from sovrin.common.txn import CRED_DEF
-from sovrin.test.anon_creds.helper import getCredDefTxnData
+from sovrin.common.util import getCredDefTxnData
 from sovrin.test.helper import genTestClient, submitAndCheck
 
 BYU = AttribsDef('BYU',
