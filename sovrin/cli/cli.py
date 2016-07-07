@@ -12,8 +12,16 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
+from plenum.cli.constants import CLIENT_GRAMS_NEW_KEYPAIR_FORMATTED_REG_EX, CLIENT_GRAMS_LIST_IDS_FORMATTED_REG_EX, \
+    CLIENT_GRAMS_BECOME_FORMATTED_REG_EX, \
+    CLIENT_GRAMS_CLIENT_COMMAND_FORMATTED_REG_EX, CLIENT_GRAMS_CLIENT_SEND_FORMATTED_REG_EX, \
+    CLIENT_GRAMS_CLIENT_SHOW_FORMATTED_REG_EX, CLIENT_GRAMS_ADD_KEY_FORMATTED_REG_EX
 from plenum.client.signer import Signer, SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH
+from sovrin.cli.constants import CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX, \
+    CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX, CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX, SEND_NYM_FORMATTED_REG_EX, \
+    GET_NYM_FORMATTED_REG_EX, ADD_ATTRIB_FORMATTED_REG_EX, SEND_CRED_DEF_FORMATTED_REG_EX, SEND_CRED_FORMATTED_REG_EX, \
+    LIST_CREDS_FORMATTED_REG_EX, SEND_PROOF_FORMATTED_REG_EX
 from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
@@ -55,29 +63,26 @@ class SovrinCli(PlenumCli):
     def initializeGrammar(self):
         self.clientGrams = [
             # Regex for `new client steward with identifier <nym>`
-            "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?) \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) \s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9=]+) \s* |".format(self.relist(self.cliCmds)),
+            CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX,
             # Regex for `client steward add sponsor bob` or `client steward add user bob`
-            "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>add) \s+ (?P<role>sponsor|user) \s+ (?P<other_client_name>[a-zA-Z0-9]+) \s*)  |",
+            CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX,
             # Regex for `new/status client bob`
-            "(\s* (?P<client_command>{}) \s+ (?P<node_or_cli>clients?)   \s+ (?P<client_name>[a-zA-Z0-9]+) \s*) |".format(self.relist(self.cliCmds)),
-            "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>send) \s+ (?P<msg>\{\s*.*\})  \s*)  |",
-            "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>show) \s+ (?P<req_id>[0-9]+)  \s*)  |",
-            "(\s* (?P<add_key>add\s+key) \s+ (?P<verkey>[a-fA-F0-9]+) \s+ (?P<for_client>for\s+client) \s+ (?P<identifier>[a-zA-Z0-9]+) \s*) |",
-            "(\s* (?P<send_nym>send\s+NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[a-fA-F0-9]+) \s*) |",
-            "(\s* (?P<send_get_nym>send\s+GET_NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[a-fA-F0-9]+) \s*) |",
-            "(\s* (?P<send_attrib>send\s+ATTRIB) \s+ dest=\s*(?P<dest_id>[a-fA-F0-9]+) \s+ raw=(?P<raw>\{\s*.*\}) \s*) |",
-            "(\s* (?P<send_cred_def>send\s+CRED_DEF) \s+ name=\"\s*(?P<name>[a-zA-Z0-9\s]+)\" \s+ version=\"(?P<version>[0-9\.]+)\" " \
-                "\s+type=(?P<type>[a-zA-Z0-9]+) \s+ ip=(?P<ip>[0-9\.]+) \s+ port=(?P<port>[0-9]+) \s+ keys=(?P<keys>\{\s*.*\}) \s*) |",
-            "(\s* (?P<send_cred>send\s+to) \s+ (?P<dest>[a-fA-F0-9]+) \s+ (?P<saveas>saveas)? \s+? (?P<cred_name>[a-zA-Z0-9\-_]+)? \s+? REQ_CRED \s+ " \
-                " name=(?P<name>[a-zA-Z0-9\-]+) \s+ version=(?P<version>[0-9\.]+) \s+ attrs=(?P<attrs>[a-zA-Z0-9,]+) \s*) |",
-            "(\s* (?P<list_cred>list\s+CRED) \s*) |",
-            "(\s* (?P<send_proof>send\s+proof) \s+ of \s+ (?P<attr_name>[a-zA-Z0-9\-_]+) \s+ from \s+ (?P<cred_name>[a-zA-Z0-9\-_]+)? \s+ to \s+ " \
-            " (?P<dest>[a-fA-F0-9]+) \s*) |",
-            # TODO:KS Change base class to allow for extension, as of now we don't have any clean API for it
-            "(\s* (?P<new_keypair>new_keypair) \s* (?P<alias>[a-zA-Z0-9]+)? \s*) |",
-            "(\s* (?P<list_ids>list) \s+ (?P<ids>ids) \s*) |",
-            "(\s* (?P<become>become) \s+ (?P<id>[a-zA-Z0-9]+) \s*) |",
-            "(\s* (?P<use_keypair>use_keypair) \s+ (?P<keypair>[a-fA-F0-9]+) \s*)"
+            CLIENT_GRAMS_CLIENT_COMMAND_FORMATTED_REG_EX,
+            CLIENT_GRAMS_CLIENT_SEND_FORMATTED_REG_EX,
+            CLIENT_GRAMS_CLIENT_SHOW_FORMATTED_REG_EX,
+            CLIENT_GRAMS_ADD_KEY_FORMATTED_REG_EX,
+            CLIENT_GRAMS_NEW_KEYPAIR_FORMATTED_REG_EX,
+            CLIENT_GRAMS_LIST_IDS_FORMATTED_REG_EX,
+            CLIENT_GRAMS_BECOME_FORMATTED_REG_EX,
+            CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX,
+
+            SEND_NYM_FORMATTED_REG_EX,
+            GET_NYM_FORMATTED_REG_EX,
+            ADD_ATTRIB_FORMATTED_REG_EX,
+            SEND_CRED_DEF_FORMATTED_REG_EX,
+            SEND_CRED_FORMATTED_REG_EX,
+            LIST_CREDS_FORMATTED_REG_EX,
+            SEND_PROOF_FORMATTED_REG_EX,
         ]
         super().initializeGrammar()
 
