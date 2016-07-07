@@ -2,15 +2,14 @@ import pytest
 
 
 @pytest.fixture("module")
-def sponsorCli():
+def stewardCli():
     pass
 
 
 @pytest.fixture("module")
-def stewardCli():
+def sponsorCli():
     pass
 
 
 def testSendNym(cli):
     pass
-
