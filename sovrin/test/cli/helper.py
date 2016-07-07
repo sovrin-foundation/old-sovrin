@@ -19,7 +19,5 @@ def newCli(nodeRegsForCLI, looper, tdir):
 
 def sendNym(cli, nym, role):
     cli.enterCmd("send NYM {}={} "
-                 "{}={} "
                  "{}={}".format(TARGET_NYM, nym,
-                                TXN_TYPE, NYM,
                                 ROLE, role))
