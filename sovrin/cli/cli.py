@@ -329,7 +329,7 @@ class SovrinCli(PlenumCli):
             ip = matchedVars.get('ip')
             port = matchedVars.get('port')
             keys = ast.literal_eval(matchedVars.get('keys'))
-            # TODO: LH Add method to add cred def
+            self._addCredDef(matchedVars)
             self.print("passed values are {}, {}, {}, {}, {}, {}".format(name, version, type, ip, port, keys))
             return True
 
