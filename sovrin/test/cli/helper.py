@@ -1,6 +1,6 @@
 from sovrin.test.helper import TestNode, TestClient
 
-from plenum.test.cli.helper import TestCliCore, newCli as newCliP
+from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI
 from plenum.test.testable import Spyable
 from sovrin.cli.cli import SovrinCli
 
@@ -11,5 +11,5 @@ class TestCli(SovrinCli, TestCliCore):
 
 
 def newCli(nodeRegsForCLI, looper, tdir):
-    return newCliP(nodeRegsForCLI, looper, tdir, cliClass=TestCli,
-                   nodeClass=TestNode, clientClass=TestClient)
+    return newPlenumCLI(nodeRegsForCLI, looper, tdir, cliClass=TestCli,
+                        nodeClass=TestNode, clientClass=TestClient)
