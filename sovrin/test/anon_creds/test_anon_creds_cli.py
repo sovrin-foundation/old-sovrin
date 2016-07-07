@@ -1,11 +1,12 @@
 import pytest
 
-from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE
+
 from plenum.test.cli.conftest import cli, nodeRegsForCLI, looper,\
     createAllNodes
 from plenum.test.cli.helper import newKeyPair
 from plenum.test.cli.helper import newCLI
-from sovrin.common.txn import SPONSOR, USER, NYM
+from sovrin.common.txn import SPONSOR, USER
+from sovrin.test.cli.helper import sendNym
 from sovrin.test.helper import createNym
 
 """
@@ -46,7 +47,7 @@ objects from one cli to another directly.
 
 
 @pytest.fixture(scope="module")
-def poolCLI(cli):
+def poolCLI():
     return cli
 
 
@@ -90,20 +91,12 @@ def tylerPubKey(tylerCLI):
     return newKeyPair(tylerCLI, alias='Tyler')   # or should it be "forBYU"?
 
 
-@pytest.fixture(scope="module")
-def stewardCreated(poolCLI, createAllNodes, stewardSigner):
-    steward = poolCLI.newClient(clientName="steward", signer=stewardSigner)
-    for node in poolCLI.nodes.values():
-        node.whitelistClient(steward.name)
-    poolCLI.looper.run(steward.ensureConnectedToNodes())
-    return steward
-
-
 def createSponsor(nym, steward, cli):
     createNym(cli.looper, nym, steward, steward.signers[steward.name],
               SPONSOR)
 
 
+# This method exists for debugging purposes.
 def createUser(nym, sponsor, cli):
     createNym(cli.looper, nym, sponsor, sponsor.signers[sponsor.name], USER)
 
@@ -111,6 +104,11 @@ def createUser(nym, sponsor, cli):
 @pytest.fixture(scope="module")
 def philCreated(philPubKey, steward, stewardCreated, poolCLI):
     createSponsor(philPubKey, steward, poolCLI)
+
+
+# TODO debugging, remove
+def testPhilCreated(philCreated):
+    pass
 
 
 @pytest.fixture(scope="module")
@@ -133,14 +131,6 @@ def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
     for node in poolCLI.nodes.values():
         for cli in [philCLI, bookStoreCLI, byuCLI, tylerCLI]:
             node.whitelistClient(cli.defaultClient.name)
-
-
-def sendNym(cli, nym, role):
-    cli.enterCmd("send NYM {}={} "
-                 "{}={} "
-                 "{}={}".format(TARGET_NYM, nym,
-                                TXN_TYPE, NYM,
-                                ROLE, role))
 
 
 def testAnonCredsCLI(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI,
