@@ -99,7 +99,7 @@ def anotherSponsor(genned, steward, stewardSigner, tdir, looper, nodeSet):
         node.whitelistClient(c.name)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    createNym(looper, signer, steward, stewardSigner, SPONSOR)
+    createNym(looper, signer.verstr, steward, stewardSigner, SPONSOR)
     return c
 
 
@@ -127,7 +127,7 @@ def testStewardCreatesASponsor(updatedSteward, addedSponsor):
 @pytest.mark.skipif(True, reason="Cannot create another sponsor with same nym")
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
                                      nodeSet, tdir, sponsorSigner):
-    createNym(looper, sponsorSigner, steward, stewardSigner, SPONSOR)
+    createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
     return sponsorSigner
 
 
@@ -160,7 +160,7 @@ def testSponsorAddsAttributeForUser(addedRawAttribute):
 
 def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
     userSigner = SimpleSigner()
-    txnId = createNym(looper, userSigner, sponsor, sponsorSigner, USER)
+    txnId = createNym(looper, userSigner.verstr, sponsor, sponsorSigner, USER)
 
     sponsNym = sponsorSigner.verstr
 
