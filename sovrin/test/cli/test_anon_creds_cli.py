@@ -143,7 +143,7 @@ def testAnonCredsCLI(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI,
 #     """
 #     Test to demonstrate anonymous credentials through Sovrin CLI.
 #     """
-#     cli.enterCmd("new_keypair")
+#     cli.enterCmd("new keypair")
 #     assert len(cli.defaultClient.signers) == 2
 #     BYUPubKeyMsg = cli.lastPrintArgs['msg']
 #     assert BYUPubKeyMsg.startswith('Public key')
@@ -160,11 +160,11 @@ def testAnonCredsCLI(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI,
 #         'attributes: {'
 #         '"first_name":R1, "last_name":R2, "birth_date":R3, "expire_date":R4, '
 #         '"undergrad":R5, "postgrad":R6}}')
-#     cli.enterCmd('new_keypair BYU')
+#     cli.enterCmd('new keypair BYU')
 #     TylerPubKeyMsg = cli.lastPrintArgs['msg']
 #     assert TylerPubKeyMsg.startswith('Public key')
 #     TylerPubKey = TylerPubKeyMsg.split(" ")[-1]
-#     cli.enterCmd('use_keypair {}'.format(BYUPubKey))
+#     cli.enterCmd('use keypair {}'.format(BYUPubKey))
 #     assert cli.activeSigner.verstr == BYUPubKey
 #     cli.enterCmd("send NYM dest={}".format(TylerPubKey))  # TODO incomplete
 #     cli.enterCmd("send GET_NYM dest={}".format(TylerPubKey))  # TODO
