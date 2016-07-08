@@ -268,7 +268,7 @@ class IdentityGraph(OrientDbGraphStore):
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
-    def addAttribute(self, frm, txnId, txnTime, raw=None, enc=None, hash=None,
+    def addAttribute(self, frm, txnId, txnTime=None, raw=None, enc=None, hash=None,
                      to=None):
         if raw:
             attrVertex = self.createVertex(Vertices.Attribute, raw=raw)
@@ -405,7 +405,7 @@ class IdentityGraph(OrientDbGraphStore):
             }
             frm, to = self.store.getByRecordIds(nymEdge.oRecordData['out'].get(),
                                           nymEdge.oRecordData['in'].get())
-            result[ORIGIN] = frm.oRecordData.get(NYM)
+            result[f.IDENTIFIER.nm] = frm.oRecordData.get(NYM)
             result[TARGET_NYM] = to.oRecordData.get(NYM)
             return result
 

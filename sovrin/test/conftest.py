@@ -11,7 +11,7 @@ from sovrin.test.helper import clientFromSigner, TestNodeSet,\
 from plenum.test.conftest import getValueFromModule
 
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
-    nodeReg, up, ready, keySharedNodes
+    nodeReg, up, ready, keySharedNodes, whitelist, logcapture
 
 
 @pytest.fixture(scope="module")

@@ -45,9 +45,9 @@ class AttributeStoreFile(AttributeStore):
             dataKeyName = RAW
         value = {dataKeyName: val, ORIGIN: origin}
         if encKey:
-            value = {SKEY: encKey}
+            value.update({SKEY: encKey})
         if encType:
-            value = {ENC_TYPE: encType}
+            value.update({ENC_TYPE: encType})
         self.store.put(key, value=json.dumps(value))
 
     def getAttribute(self, name: str, dest: Optional[str] = None):
