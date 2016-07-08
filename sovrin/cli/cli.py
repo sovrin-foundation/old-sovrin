@@ -142,7 +142,7 @@ class SovrinCli(PlenumCli):
         if clientName == "steward":
             for txn in self._genesisTransactions:
                 if txn[TARGET_NYM] == identifier and txn[ROLE] == STEWARD:
-                    self.print("Steward added", Token.BoldBlue)
+                    self.print("Steward activated", Token.BoldBlue)
                     # Only one steward is supported for now
                     if not signer:
                         signer = SimpleSigner(seed=STEWARD_SEED)
@@ -292,8 +292,8 @@ class SovrinCli(PlenumCli):
         keys = ast.literal_eval(matchedVars.get('keys'))
         attributes = ast.literal_eval(keys.get('attributes'))
 
-        return CredentialDefinition(attrNames=list(attributes.keys()), name=name, version=version,
-                                       ip=ip, port=port)
+        return CredentialDefinition(attrNames=list(attributes.keys()), name=name,
+                                    version=version, ip=ip, port=port)
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
@@ -330,18 +330,19 @@ class SovrinCli(PlenumCli):
             port = matchedVars.get('port')
             keys = ast.literal_eval(matchedVars.get('keys'))
             self._addCredDef(matchedVars)
-            self.print("passed values are {}, {}, {}, {}, {}, {}".format(name, version, type, ip, port, keys))
+            self.print("passed values are {}, {}, {}, {}, {}, {}".
+                       format(name, version, type, ip, port, keys))
             return True
 
     def _sendCredAction(self, matchedVars):
-        self.print(matchedVars)
         if matchedVars.get('send_cred') == 'send to':
             dest = matchedVars.get('dest')
             credName = matchedVars.get('cred_name')
             name = matchedVars.get('name')
             version = matchedVars.get('version')
             attrs = matchedVars.get('attrs')
-            print("passed values are {}, {}, {}, {}, {}".format(dest, credName, name, version, attrs))
+            self.print("passed values are {}, {}, {}, {}, {}".
+                  format(dest, credName, name, version, attrs))
             return True
 
     def _listCredAction(self, matchedVars):
@@ -396,7 +397,3 @@ class SovrinCli(PlenumCli):
         super().print(msg, token=token, newline=newline)
         if newline:
             msg += "\n"
-        # self.outputFile.write(msg)
-        # self.outputFile.flush()
-        # if msg == 'Goodbye.':
-        #     self.outputFile.truncate(0)

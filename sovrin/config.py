@@ -3,17 +3,17 @@ from collections import OrderedDict
 from plenum.common.txn import ClientBootStrategy
 
 nodeReg = OrderedDict([
-    ('Suncoast', ('127.0.0.1', 8001)),
-    ('VACU', ('127.0.0.1', 8003)),
-    ('WSECU', ('127.0.0.1', 8005)),
-    ('CUSO', ('127.0.0.1', 8007))
+    ('Alpha', ('127.0.0.1', 9701)),
+    ('Beta', ('127.0.0.1', 9703)),
+    ('Gamma', ('127.0.0.1', 9705)),
+    ('Delta', ('127.0.0.1', 9707))
 ])
 
 cliNodeReg = OrderedDict([
-    ('SuncoastC', ('127.0.0.1', 8002)),
-    ('VACUC', ('127.0.0.1', 8004)),
-    ('WSECUC', ('127.0.0.1', 8006)),
-    ('CUSOC', ('127.0.0.1', 8008))
+    ('AlphaC', ('127.0.0.1', 9702)),
+    ('BetaC', ('127.0.0.1', 9704)),
+    ('GammaC', ('127.0.0.1', 9706)),
+    ('DeltaC', ('127.0.0.1', 9708))
 ])
 
 baseDir = "~/.sovrin"
