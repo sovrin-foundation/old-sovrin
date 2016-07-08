@@ -2,13 +2,13 @@ import pytest
 
 import plenum
 from plenum.common.looper import Looper
-from plenum.test.cli.conftest import nodeRegsForCLI, cli, createAllNodes
+from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes
 from plenum.common.looper import Looper
 from sovrin.common.util import getConfig
 
 plenum.common.util.loggingConfigured = False
 
-from sovrin.test.cli.helper import TestCli, newCli
+from sovrin.test.cli.helper import newCLI
 
 config = getConfig()
 
@@ -19,6 +19,11 @@ from plenum.test.cli.helper import newKeyPair
 def looper():
     with Looper(debug=False) as l:
         yield l
+
+
+@pytest.fixture("module")
+def cli(nodeRegsForCLI, looper, tdir):
+    return newCLI(nodeRegsForCLI, looper, tdir)
 
 
 @pytest.fixture(scope="module")
