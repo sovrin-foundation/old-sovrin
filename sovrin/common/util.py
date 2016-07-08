@@ -5,8 +5,7 @@ import os
 from typing import Tuple, Union
 
 import libnacl.secret
-
-from plenum.common.util import isHex, error
+from plenum.common.util import isHex, error, getConfig as PlenumConfig
 
 
 def getSymmetricallyEncryptedVal(val, secretKey: Union[str, bytes]=None) -> Tuple[str, str]:
@@ -58,7 +57,10 @@ def getInstalledConfig(installDir, configFile):
 
 
 def getConfig():
-    refConfig = importlib.import_module("sovrin.config")
+    plenumConfig = PlenumConfig()
+    sovrinConfig = importlib.import_module("sovrin.config")
+    refConfig = plenumConfig
+    refConfig.__dict__.update(sovrinConfig.__dict__)
     try:
         homeDir = os.path.expanduser("~")
         configDir = os.path.join(homeDir, ".sovrin")
