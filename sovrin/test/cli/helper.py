@@ -1,19 +1,21 @@
-from sovrin.common.txn import NYM
 from sovrin.test.helper import TestNode, TestClient
 
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI
 from plenum.test.testable import Spyable
-from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE
+from plenum.common.txn import TARGET_NYM, ROLE
 from sovrin.cli.cli import SovrinCli
+from plenum.cli.cli import Cli as PlenumCLI
 
 
 @Spyable(methods=[SovrinCli.print, SovrinCli.printTokens])
-class TestCli(SovrinCli, TestCliCore):
-    pass
+class TestCLI(SovrinCli, TestCliCore):
+
+    def newClient(self, clientName, seed=None, identifier=None, signer=None):
+        return PlenumCLI.newClient(self, clientName, seed, identifier, signer)
 
 
-def newCli(nodeRegsForCLI, looper, tdir):
-    return newPlenumCLI(nodeRegsForCLI, looper, tdir, cliClass=TestCli,
+def newCLI(nodeRegsForCLI, looper, tdir):
+    return newPlenumCLI(nodeRegsForCLI, looper, tdir, cliClass=TestCLI,
                         nodeClass=TestNode, clientClass=TestClient)
 
 

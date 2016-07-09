@@ -102,8 +102,8 @@ class Node(PlenumNode):
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
-                if txn[TXN_TYPE] == NYM:
-                    self.addNymToGraph(txn)
+                # if txn[TXN_TYPE] == NYM:
+                #     self.addNymToGraph(txn)
                 # Till now we just have NYM in genesis transaction.
 
     def addNymToGraph(self, txn):
@@ -293,6 +293,28 @@ class Node(PlenumNode):
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
             logger.debug("Adding genesis transaction")
+        if result[TXN_TYPE] == NYM:
+            self.addNymToGraph(result)
+        elif result[TXN_TYPE] == ATTRIB:
+            self.graphStorage.addAttribute(frm=identifier,
+                                           txnId=txnId,
+                                           txnTime=None,
+                                           raw=result.get(RAW),
+                                           enc=result.get(ENC),
+                                           hash=result.get(HASH),
+                                           to=result.get(TARGET_NYM)
+                                           )
+        elif result[TXN_TYPE] == CRED_DEF:
+            data = result.get(DATA)
+            self.graphStorage.addCredDef(frm=identifier,
+                                         txnId=txnId,
+                                         txnTime=None,
+                                         name=data.get(NAME),
+                                         version=data.get(VERSION),
+                                         keys=data.get(KEYS),
+                                         typ=data.get(TYPE),
+                                         ip=data.get(IP),
+                                         port=data.get(PORT))
         self.secondaryStorage.storeReply(Reply(result))
 
     async def addToLedger(self, identifier, reply, txnId):
@@ -339,26 +361,5 @@ class Node(PlenumNode):
             f.IDENTIFIER.nm: req.identifier,
             f.REQ_ID.nm: req.reqId,
         })
-        if operation[TXN_TYPE] == NYM:
-            self.addNymToGraph(result)
-        elif operation[TXN_TYPE] == ATTRIB:
-            self.graphStorage.addAttribute(frm=req.identifier,
-                                           txnId=txnId,
-                                           txnTime=ppTime,
-                                           raw=operation.get(RAW),
-                                           enc=operation.get(ENC),
-                                           hash=operation.get(HASH),
-                                           to=operation.get(TARGET_NYM)
-                                           )
-        elif operation[TXN_TYPE] == CRED_DEF:
-            data = operation.get(DATA)
-            self.graphStorage.addCredDef(frm=operation[ORIGIN],
-                                           txnId=txnId,
-                                           txnTime=ppTime,
-                                            name=data.get(NAME),
-                                         version=data.get(VERSION),
-                                         keys=data.get(KEYS),
-                                         typ=data.get(TYPE),
-                                         ip=data.get(IP),
-                                         port=data.get(PORT))
+
         return Reply(result)

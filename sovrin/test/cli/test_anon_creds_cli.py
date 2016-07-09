@@ -1,10 +1,8 @@
 import pytest
 
-
-from plenum.test.cli.conftest import cli, nodeRegsForCLI, looper,\
-    createAllNodes
+from plenum.test.cli.conftest import nodeRegsForCLI, looper, createAllNodes
 from plenum.test.cli.helper import newKeyPair
-from plenum.test.cli.helper import newCLI
+from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER
 from sovrin.test.cli.helper import sendNym
 from sovrin.test.helper import createNym
@@ -47,8 +45,8 @@ objects from one cli to another directly.
 
 
 @pytest.fixture(scope="module")
-def poolCLI(cli):
-    return cli
+def poolCLI(nodeRegsForCLI, looper, tdir):
+    return newCLI(nodeRegsForCLI, looper, tdir)
 
 
 @pytest.fixture(scope="module")
@@ -58,7 +56,8 @@ def byuCLI(nodeRegsForCLI, looper, tdir):
 
 @pytest.fixture(scope="module")
 def philCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+    cli = newCLI(nodeRegsForCLI, looper, tdir)
+    return cli
 
 
 @pytest.fixture(scope="module")
@@ -92,7 +91,7 @@ def tylerPubKey(tylerCLI):
 
 
 def createSponsor(nym, steward, cli):
-    createNym(cli.looper, nym, steward, steward.signers[steward.name],
+    createNym(cli.looper, nym, steward, next(iter(steward.signers.values())),
               SPONSOR)
 
 
@@ -102,18 +101,25 @@ def createUser(nym, sponsor, cli):
 
 
 @pytest.fixture(scope="module")
-def philCreated(philPubKey, steward, stewardCreated, poolCLI):
-    createSponsor(philPubKey, steward, poolCLI)
+def philCreated(philPubKey, stewardCreated, poolCLI):
+    createSponsor(philPubKey, stewardCreated, poolCLI)
 
 
-# TODO debugging, remove
+def testSteward(steward):
+    pass
+
+
 def testPhilCreated(philCreated):
     pass
 
 
+def testReady(ready):
+    pass
+
+
 @pytest.fixture(scope="module")
-def bookStoreCreated(bookStorePubKey, steward, stewardCreated, poolCLI):
-    createSponsor(bookStorePubKey, steward, poolCLI)
+def bookStoreCreated(bookStorePubKey, stewardCreated, poolCLI):
+    createSponsor(bookStorePubKey, stewardCreated, poolCLI)
 
 
 @pytest.fixture(scope="module")

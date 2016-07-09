@@ -85,20 +85,23 @@ class SovrinCli(PlenumCli):
             LIST_CREDS_FORMATTED_REG_EX,
             GEN_CRED_FORMATTED_REG_EX,
             SEND_PROOF_FORMATTED_REG_EX,
+            ADD_GENESIS_FORMATTED_REG_EX,
         ]
         super().initializeGrammar()
 
     def initializeGrammarLexer(self):
-        sovrinLexers = {
-            'send_nym': SimpleLexer(Token.Keyword),
-            'send_get_nym': SimpleLexer(Token.Keyword),
-            'send_attrib': SimpleLexer(Token.Keyword),
-            'send_cred_def': SimpleLexer(Token.Keyword),
-            'send_cred': SimpleLexer(Token.Keyword),
-            'list_cred': SimpleLexer(Token.Keyword),
-            'send_proof': SimpleLexer(Token.Keyword),
-            'gen_cred': SimpleLexer(Token.Keyword)
-        }
+        lexerNames = [
+            'send_nym',
+            'send_get_nym',
+            'send_attrib',
+            'send_cred_def',
+            'send_cred',
+            'list_cred',
+            'send_proof',
+            'add_genesis',
+	    'gen_cred'
+        ]
+        sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
         self.lexers = {**self.lexers, **sovrinLexers}
         super().initializeGrammarLexer()
@@ -113,8 +116,11 @@ class SovrinCli(PlenumCli):
         self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
         self.completers["send_cred"] = WordCompleter(["send", "to"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
-        self.completers["send_proof"] = WordCompleter(["send", "proof"]),
-        self.completers["gen_cred"] = WordCompleter(["send", "GEN_CRED"])
+        self.completers["send_proof"] = WordCompleter(["send", "proof"])
+	self.completers["gen_cred"] = WordCompleter(["send", "GEN_CRED"])
+        self.completers["add_genesis"] = \
+            WordCompleter(["add", "genesis", "transactions"])
+
         super().initializeGrammarCompleter()
 
     def loadGenesisTxns(self):
@@ -146,7 +152,7 @@ class SovrinCli(PlenumCli):
         if clientName == "steward":
             for txn in self._genesisTransactions:
                 if txn[TARGET_NYM] == identifier and txn[ROLE] == STEWARD:
-                    self.print("Steward added", Token.BoldBlue)
+                    self.print("Steward activated", Token.BoldBlue)
                     # Only one steward is supported for now
                     if not signer:
                         signer = SimpleSigner(seed=STEWARD_SEED)
@@ -333,8 +339,8 @@ class SovrinCli(PlenumCli):
         keys = ast.literal_eval(matchedVars.get('keys'))
         attributes = ast.literal_eval(keys.get('attributes'))
 
-        return CredentialDefinition(attrNames=list(attributes.keys()), name=name, version=version,
-                                       ip=ip, port=port)
+        return CredentialDefinition(attrNames=list(attributes.keys()), name=name,
+                                    version=version, ip=ip, port=port)
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
@@ -371,7 +377,8 @@ class SovrinCli(PlenumCli):
             port = matchedVars.get('port')
             keys = ast.literal_eval(matchedVars.get('keys'))
             self._addCredDef(matchedVars)
-            self.print("passed values are {}, {}, {}, {}, {}, {}".format(name, version, type, ip, port, keys))
+            self.print("passed values are {}, {}, {}, {}, {}, {}".
+                       format(name, version, type, ip, port, keys))
             return True
 
     def _reqCredAction(self, matchedVars):
@@ -382,7 +389,8 @@ class SovrinCli(PlenumCli):
             version = matchedVars.get('version')
             attrs = matchedVars.get('attrs')
             self._reqCred(matchedVars)
-            print("passed values are {}, {}, {}, {}, {}".format(dest, credName, name, version, attrs))
+            self.print("passed values are {}, {}, {}, {}, {}".
+                  format(dest, credName, name, version, attrs))
             return True
 
     def _listCredAction(self, matchedVars):
@@ -427,14 +435,23 @@ class SovrinCli(PlenumCli):
             self._getCredDefAndExecuteCallback(issuerId, name, version,
                                                self._genCred, issuerId,
                                                self.activeSigner.identifier, proverId, u, attr, saveas)
+    
+     def _setGenesisAction(self, matchedVars):
+        if matchedVars.get('add_genesis'):
+            raise NotImplementedError
+            return True
 
     def getActionList(self):
         actions = super().getActionList()
         # Add more actions to base class for sovrin CLI
-        actions.extend([self._sendNymAction, self._sendGetNymAction,
-                        self._sendAttribAction, self._sendCredDefAction,
-                        self._reqCredAction, self._listCredAction,
-                        self._sendProofAction, self._genCredAction])
+        actions.extend([self._sendNymAction,
+                        self._sendGetNymAction,
+                        self._sendAttribAction,
+                        self._sendCredDefAction,
+                        self._sendCredAction,
+                        self._listCredAction,
+                        self._sendProofAction,
+                        self._setGenesisAction])
         return actions
 
     @staticmethod
@@ -466,7 +483,3 @@ class SovrinCli(PlenumCli):
         super().print(msg, token=token, newline=newline)
         if newline:
             msg += "\n"
-        # self.outputFile.write(msg)
-        # self.outputFile.flush()
-        # if msg == 'Goodbye.':
-        #     self.outputFile.truncate(0)

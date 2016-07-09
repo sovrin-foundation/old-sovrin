@@ -17,4 +17,4 @@ def sponsorCli():
 def testSendNym(cli: TestCli, stewardCreated, newKeyPairCreated):
     nym = newKeyPairCreated
     sendNym(cli, nym, USER)
-    assert 'Invalid command' not in cli.printeds[1]['msg']
+    assert 'Invalid command' not in cli.printed
