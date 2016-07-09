@@ -420,7 +420,8 @@ class SovrinCli(PlenumCli):
     def ensureReqCompleted(self, reqId, client, clbk, *args):
         reply, err = client.replyIfConsensus(reqId)
         if reply is None:
-            self.looper.loop.call_later(.2, reqId, client, clbk, *args)
+            self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                        reqId, client, clbk, *args)
         else:
             clbk(reply, err, *args)
 
