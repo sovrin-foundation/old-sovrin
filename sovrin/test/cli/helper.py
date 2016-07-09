@@ -9,9 +9,7 @@ from plenum.cli.cli import Cli as PlenumCLI
 
 @Spyable(methods=[SovrinCli.print, SovrinCli.printTokens])
 class TestCLI(SovrinCli, TestCliCore):
-
-    def newClient(self, clientName, seed=None, identifier=None, signer=None):
-        return PlenumCLI.newClient(self, clientName, seed, identifier, signer)
+    pass
 
 
 def newCLI(nodeRegsForCLI, looper, tdir):
