@@ -15,6 +15,7 @@ logger = getlogger("anon_creds_demo")
 
 from anoncreds.protocol.attribute_repo import AttributeRepo
 from anoncreds.protocol.proof import Proof
+from anoncreds.protocol.verifier import verify_proof
 
 from anoncreds.protocol.utils import encodeAttrs
 from plenum.client.signer import SimpleSigner
@@ -51,7 +52,7 @@ issuerSigner = SimpleSigner()
 proverSigner = SimpleSigner()
 verifierSigner = SimpleSigner()
 nodes = TestNodeSet(nodeReg=genNodeReg(count=4), tmpdir=tdir,
-                     primaryDecider=None)
+        primaryDecider=None)
 
 
 def whitelistClient(nodes, *clientNames):
