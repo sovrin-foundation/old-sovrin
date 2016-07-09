@@ -4,6 +4,7 @@ from typing import Any, Dict
 from ledger.stores.text_file_store import TextFileStore
 from plenum.persistence.wallet_storage_file import WalletStorageFile \
     as PWalletStorageFile
+
 from sovrin.persistence.attribute_store_file import AttributeStoreFile
 from sovrin.persistence.credential_def_store_file import CredDefStoreFile
 from sovrin.persistence.wallet_storage import WalletStorage
@@ -15,6 +16,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         attrsDirName = "attributes"
         credDefDirName = "credential_definitions"
         credFileName = "credentials"
+        credDefKeys = "credential_definition_keys"
         dataDir = self.getDataLocation()
         self.attrStore = AttributeStoreFile(dataDir, attrsDirName)
         # type: AttributeStoreFile
@@ -22,6 +24,8 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         # type: CredDefStoreFile
         self.credStore = TextFileStore(dataDir, credFileName,
                                        storeContentHash=False)
+        self.credDefKeyStore = TextFileStore(dataDir, credDefKeys,
+                                             storeContentHash=False)
 
     def addAttribute(self, name: str, val: Any, origin: str, dest: str = None,
                      encKey: str = None, encType: str = None,
@@ -41,10 +45,22 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         self.credDefStore.addCredDef(name, version, dest, type, ip, port, keys)
 
     def getCredDef(self, name: str, version: str, dest: str = None):
-        self.credDefStore.getCredDef(name, version)
+        return self.credDefStore.getCredDef(name, version)
 
     def addCredential(self, name: str, data: Dict):
         self.credStore.put(key=name, value=json.dumps(data))
 
     def getCredential(self, name: str):
-        self.credStore.get(name)
+        return self.credStore.get(name)
+
+    @staticmethod
+    def credDefKeyStoreKey(name, version):
+        return "{},{}".format(name, version)
+
+    def addCredDefSk(self, name: str, version: str, secretKey):
+        key = self.credDefKeyStoreKey(name, version)
+        self.credDefKeyStore.put(key=key, value=secretKey)
+
+    def getCredDefSk(self, name: str, version: str):
+        key = self.credDefKeyStoreKey(name, version)
+        return self.credDefKeyStore.get(key)

@@ -1,25 +1,21 @@
 import json
 
 import pytest
-from charm.core.math.integer import integer
 
 from anoncreds.protocol.utils import encodeAttrs
 
 from plenum.client.signer import SimpleSigner
 
-from plenum.test.eventually import eventually
-from plenum.test.helper import genHa, checkSufficientRepliesRecvd
+from plenum.test.helper import genHa
 from anoncreds.protocol.credential_definition import CredentialDefinition
 from anoncreds.temp_primes import P_PRIME, Q_PRIME
-from sovrin.common.txn import USER, NYM, CRED_DEF
+from anoncreds.test.conftest import credDef1, attrNames1, primes1
 from sovrin.test.helper import submitAndCheck, addNym
-from charm.core.math.integer import integer
 
 from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, TYPE, IP,\
     PORT, KEYS, DATA
-from anoncreds.protocol.issuer import Issuer
 
-from sovrin.common.txn import CRED_DEF, GET_CRED_DEF
+from sovrin.common.txn import CRED_DEF
 from sovrin.test.helper import addUser, submitAndCheck, genTestClient
 
 

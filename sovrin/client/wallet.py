@@ -53,19 +53,25 @@ class Wallet(PWallet):
     def attributes(self):
         return self.storage.attributes
 
+    def addCredDefSk(self, name: str, version: str, secretKey):
+        self.storage.addCredDefSk(name, version, secretKey)
 
-class UserWallet(Wallet):
-    def add(self, txnType: str, userNym: Cryptonym, sponsorNym: Cryptonym=None, agentNym: Cryptonym=None, commit: bool=False):
-        txnData = newTxn(txnType=txnType,
-                      targetNym=userNym,
-                      sponsor=sponsorNym,
-                      agent=agentNym)
-        self.addNewTxn(txnData, commit)
-        return txnData
+    def getCredDefSk(self, name: str, version: str):
+        return self.storage.getCredDefSk(name, version)
 
-    def addSponsor(self, *args, **kwargs):
-        self.add(ADD_SPONSOR, *args, **kwargs)
 
-    # User can have agent without having any sponsor
-    def addAgent(self, *args, **kwargs):
-        self.add(ADD_AGENT, *args, **kwargs)
+# class UserWallet(Wallet):
+#     def add(self, txnType: str, userNym: Cryptonym, sponsorNym: Cryptonym=None, agentNym: Cryptonym=None, commit: bool=False):
+#         txnData = newTxn(txnType=txnType,
+#                       targetNym=userNym,
+#                       sponsor=sponsorNym,
+#                       agent=agentNym)
+#         self.addNewTxn(txnData, commit)
+#         return txnData
+#
+#     def addSponsor(self, *args, **kwargs):
+#         self.add(ADD_SPONSOR, *args, **kwargs)
+#
+#     # User can have agent without having any sponsor
+#     def addAgent(self, *args, **kwargs):
+#         self.add(ADD_AGENT, *args, **kwargs)

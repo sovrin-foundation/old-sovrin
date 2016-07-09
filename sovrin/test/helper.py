@@ -30,7 +30,7 @@ from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
-from sovrin.client.wallet import Wallet, UserWallet
+from sovrin.client.wallet import Wallet#, UserWallet
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID, USER
 from sovrin.server.node import Node
@@ -210,8 +210,8 @@ class Organization:
     #         self.s.looper.addNextable(self._client)
     #     return self._client
 
-    def createUserWallet(self, userId: str):
-        self.userWallets[userId] = UserWallet(self.client)
+    # def createUserWallet(self, userId: str):
+    #     self.userWallets[userId] = UserWallet(self.client)
 
     def removeUserWallet(self, userId: str):
         if userId in self.userWallets:
@@ -219,11 +219,11 @@ class Organization:
         else:
             raise ValueError("No wallet exists for this user id")
 
-    def getUserWallet(self, userId: str) -> UserWallet:
-        if userId in self.userWallets:
-            return self.userWallets[userId]
-        else:
-            raise ValueError("No wallet exists for this user id")
+    # def getUserWallet(self, userId: str) -> UserWallet:
+    #     if userId in self.userWallets:
+    #         return self.userWallets[userId]
+    #     else:
+    #         raise ValueError("No wallet exists for this user id")
 
     def addTxnsForCompletedRequestsInWallet(self, reqs: Iterable, wallet:
                                             Wallet):
@@ -397,7 +397,6 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
 
 def createNym(looper, nym, creatorClient, creatorSigner, role):
     op = {
-        # ORIGIN: creatorSigner.verstr,
         TARGET_NYM: nym,
         TXN_TYPE: NYM,
         ROLE: role
@@ -436,7 +435,6 @@ def submitAndCheck(looper, client, op, identifier):
 
 def addNym(ha, looper, nym, sponsNym, sponsor):
     op = {
-        ORIGIN: sponsNym,
         TARGET_NYM: nym,
         TXN_TYPE: NYM,
         ROLE: USER,

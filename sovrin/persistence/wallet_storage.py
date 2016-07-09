@@ -28,6 +28,14 @@ class WalletStorage(PWalletStorage):
         pass
 
     @abstractmethod
+    def addCredDefSk(self, name: str, version: str, secretKey):
+        pass
+
+    @abstractmethod
+    def getCredDefSk(self, name: str, version: str):
+        pass
+
+    @abstractmethod
     def addCredential(self, name: str, data: Dict):
         pass
 
