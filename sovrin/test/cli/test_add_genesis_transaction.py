@@ -1,9 +1,14 @@
+from plenum.test.cli.helper import checkCmdValid
+
+
 def testAddGenesisTransactions(cli):
-    cli.parse("add genesis transactions xyz")
-    assert 'Invalid command' not in cli.printeds
-    assert "\ngenesis transactions set\n" in cli.printeds
+    checkCmdValid(cli, "add genesis transaction NYM dest=cx3ePPiBdRyab1900mZdtlzF5FGmX06Fj2sAYbMdF18= txnId=0b68b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b role=STEWARD")
+    txn = {
+        "type": "NYM",
+        "dest": "cx3ePPiBdRyab1900mZdtlzF5FGmX06Fj2sAYbMdF18=",
+        "txnId": "0b68b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        "role": "STEWARD",
+    }
+    assert txn in cli._genesisTransactions
+    assert "Genesis transaction added" in cli.lastCmdOutput
 
-
-def testSovrinStartupCreatesWalletAndKey(cli):
-    assert "\nCurrent wallet set to Default\n" in cli.printeds
-    assert "\nCurrent identifier set to" in cli.printeds

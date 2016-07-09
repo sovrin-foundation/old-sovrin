@@ -364,8 +364,16 @@ class SovrinCli(PlenumCli):
             return True
 
     def _setGenesisAction(self, matchedVars):
-        if matchedVars.get('add_genesis'):
-            raise NotImplementedError
+        if matchedVars.get('add_genesis') == "add genesis transaction":
+            mg = matchedVars.get
+            txn = {
+                TXN_TYPE: mg('type_value'),
+                TARGET_NYM: mg('dest_value'),
+                TXN_ID: mg('txnId_value'),
+                ROLE: mg('role_value'),
+            }
+            self._genesisTransactions.append(txn)
+            self.print("Genesis transaction added")
             return True
 
     def getActionList(self):

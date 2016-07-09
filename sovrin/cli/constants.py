@@ -24,7 +24,7 @@ SEND_PROOF_REG_EX = \
     " (?P<dest>[a-fA-F0-9]+) \s*)"
 
 ADD_GENESIS_REG_EX = \
-    "(\s* (?P<add_genesis>set\s+genesis\s+transactions?) \s+ (?P<txns>.*))"
+    "(\s*(?P<add_genesis>add \s+ genesis \s+ transaction?) \s+ (?P<type_value>[A-Z_]+) \s+ (?P<dest>dest=)\s*(?P<dest_value>[A-Za-z0-9+=/]+) \s+ (?P<txnId>txnId=)\s*(?P<txnId_value>[a-zA-Z0-9]+) \s+ (?P<role>role=)\s*(?P<role_value>USER|SPONSOR|STEWARD)\s*)"
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
