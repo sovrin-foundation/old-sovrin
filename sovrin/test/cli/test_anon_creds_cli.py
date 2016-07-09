@@ -45,8 +45,8 @@ objects from one cli to another directly.
 
 
 @pytest.fixture(scope="module")
-def poolCLI(cli):
-    return cli
+def poolCLI(nodeRegsForCLI, looper, tdir):
+    return newCLI(nodeRegsForCLI, looper, tdir)
 
 
 @pytest.fixture(scope="module")
@@ -105,8 +105,15 @@ def philCreated(philPubKey, stewardCreated, poolCLI):
     createSponsor(philPubKey, stewardCreated, poolCLI)
 
 
-# TODO debugging, remove
+def testSteward(steward):
+    pass
+
+
 def testPhilCreated(philCreated):
+    pass
+
+
+def testReady(ready):
     pass
 
 

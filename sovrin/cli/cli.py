@@ -21,7 +21,8 @@ from plenum.common.txn import DATA, RAW, ENC, HASH
 from sovrin.cli.constants import CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX, \
     CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX, CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX, SEND_NYM_FORMATTED_REG_EX, \
     GET_NYM_FORMATTED_REG_EX, ADD_ATTRIB_FORMATTED_REG_EX, SEND_CRED_DEF_FORMATTED_REG_EX, SEND_CRED_FORMATTED_REG_EX, \
-    LIST_CREDS_FORMATTED_REG_EX, SEND_PROOF_FORMATTED_REG_EX
+    LIST_CREDS_FORMATTED_REG_EX, SEND_PROOF_FORMATTED_REG_EX, \
+    ADD_GENESIS_FORMATTED_REG_EX
 from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
@@ -83,19 +84,22 @@ class SovrinCli(PlenumCli):
             SEND_CRED_FORMATTED_REG_EX,
             LIST_CREDS_FORMATTED_REG_EX,
             SEND_PROOF_FORMATTED_REG_EX,
+            ADD_GENESIS_FORMATTED_REG_EX,
         ]
         super().initializeGrammar()
 
     def initializeGrammarLexer(self):
-        sovrinLexers = {
-            'send_nym': SimpleLexer(Token.Keyword),
-            'send_get_nym': SimpleLexer(Token.Keyword),
-            'send_attrib': SimpleLexer(Token.Keyword),
-            'send_cred_def': SimpleLexer(Token.Keyword),
-            'send_cred': SimpleLexer(Token.Keyword),
-            'list_cred': SimpleLexer(Token.Keyword),
-            'send_proof': SimpleLexer(Token.Keyword)
-        }
+        lexerNames = [
+            'send_nym',
+            'send_get_nym',
+            'send_attrib',
+            'send_cred_def',
+            'send_cred',
+            'list_cred',
+            'send_proof',
+            'add_genesis',
+        ]
+        sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
         self.lexers = {**self.lexers, **sovrinLexers}
         super().initializeGrammarLexer()
@@ -111,6 +115,9 @@ class SovrinCli(PlenumCli):
         self.completers["send_cred"] = WordCompleter(["send", "to"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
+        self.completers["add_genesis"] = \
+            WordCompleter(["add", "genesis", "transactions"])
+
         super().initializeGrammarCompleter()
 
     def loadGenesisTxns(self):
@@ -358,13 +365,22 @@ class SovrinCli(PlenumCli):
             self.print("{}, {}, {}".format(attrName, credName, dest))
             return True
 
+    def _setGenesisAction(self, matchedVars):
+        if matchedVars.get('add_genesis'):
+            raise NotImplementedError
+            return True
+
     def getActionList(self):
         actions = super().getActionList()
         # Add more actions to base class for sovrin CLI
-        actions.extend([self._sendNymAction, self._sendGetNymAction,
-                        self._sendAttribAction, self._sendCredDefAction,
-                        self._sendCredAction, self._listCredAction,
-                        self._sendProofAction])
+        actions.extend([self._sendNymAction,
+                        self._sendGetNymAction,
+                        self._sendAttribAction,
+                        self._sendCredDefAction,
+                        self._sendCredAction,
+                        self._listCredAction,
+                        self._sendProofAction,
+                        self._setGenesisAction])
         return actions
 
     @staticmethod

@@ -21,7 +21,10 @@ SEND_CRED_REG_EX = \
 LIST_CREDS_REG_EX = "(\s* (?P<list_cred>list\s+CRED) \s*) "
 SEND_PROOF_REG_EX = \
     "(\s* (?P<send_proof>send\s+proof) \s+ of \s+ (?P<attr_name>[a-zA-Z0-9\-_]+) \s+ from \s+ (?P<cred_name>[a-zA-Z0-9\-_]+)? \s+ to \s+ " \
-    " (?P<dest>[a-fA-F0-9]+) \s*) |"
+    " (?P<dest>[a-fA-F0-9]+) \s*)"
+
+ADD_GENESIS_REG_EX = \
+    "(\s* (?P<add_genesis>set\s+genesis\s+transactions?) \s+ (?P<txns>.*))"
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -29,4 +32,5 @@ ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
 SEND_CRED_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_DEF_REG_EX)
 SEND_CRED_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
-SEND_PROOF_FORMATTED_REG_EX = SEND_PROOF_REG_EX
+SEND_PROOF_FORMATTED_REG_EX = getPipedRegEx(SEND_PROOF_REG_EX)
+ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_REG_EX)
