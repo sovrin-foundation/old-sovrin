@@ -146,8 +146,9 @@ def testAnonCredsCLI(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI,
 
 
 def testReqCred(tylerCLI, byuCLI):
-    tylerCLI.enterCmd("new keypair")
-    byuCLI.enterCmd("new keypair")
+    # TODO: following two steps are to ensure "defaultClient.defaultIdentifier" is initialized
+    tylerCLI.enterCmd("new key")
+    byuCLI.enterCmd("new key")
 
     credDefName ="Qualifications"
     credDefVersion = "1.0"
