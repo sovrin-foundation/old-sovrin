@@ -1,10 +1,6 @@
 import ast
 from typing import Dict
 
-import time
-
-import asyncio
-
 from anoncreds.protocol.credential_definition import CredentialDefinition
 
 from plenum.cli.cli import Cli as PlenumCli
@@ -12,21 +8,15 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
-from plenum.cli.constants import CLIENT_GRAMS_NEW_KEYPAIR_FORMATTED_REG_EX, CLIENT_GRAMS_LIST_IDS_FORMATTED_REG_EX, \
-    CLIENT_GRAMS_BECOME_FORMATTED_REG_EX, \
-    CLIENT_GRAMS_CLIENT_COMMAND_FORMATTED_REG_EX, CLIENT_GRAMS_CLIENT_SEND_FORMATTED_REG_EX, \
-    CLIENT_GRAMS_CLIENT_SHOW_FORMATTED_REG_EX, CLIENT_GRAMS_ADD_KEY_FORMATTED_REG_EX
+from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
-from plenum.common.txn import DATA, RAW, ENC, HASH
-from sovrin.cli.constants import CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX, \
-    CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX, CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX, SEND_NYM_FORMATTED_REG_EX, \
-    GET_NYM_FORMATTED_REG_EX, ADD_ATTRIB_FORMATTED_REG_EX, SEND_CRED_DEF_FORMATTED_REG_EX, SEND_CRED_FORMATTED_REG_EX, \
-    LIST_CREDS_FORMATTED_REG_EX, SEND_PROOF_FORMATTED_REG_EX, \
-    ADD_GENESIS_FORMATTED_REG_EX
+from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, IP, PORT, KEYS
+
 from sovrin.cli.genesisTxns import STEWARD_SEED
+from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
-from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, ORIGIN, TXN_TYPE, \
-    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF
+from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, \
+    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getCredDefTxnData
 from sovrin.server.node import Node
 
@@ -60,30 +50,7 @@ class SovrinCli(PlenumCli):
         self.loadGenesisTxns()
 
     def initializeGrammar(self):
-        self.clientGrams = [
-            # Regex for `new client steward with identifier <nym>`
-            CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX,
-            # Regex for `client steward add sponsor bob` or `client steward add user bob`
-            CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX,
-            # Regex for `new/status client bob`
-            CLIENT_GRAMS_CLIENT_COMMAND_FORMATTED_REG_EX,
-            CLIENT_GRAMS_CLIENT_SEND_FORMATTED_REG_EX,
-            CLIENT_GRAMS_CLIENT_SHOW_FORMATTED_REG_EX,
-            CLIENT_GRAMS_ADD_KEY_FORMATTED_REG_EX,
-            CLIENT_GRAMS_NEW_KEYPAIR_FORMATTED_REG_EX,
-            CLIENT_GRAMS_LIST_IDS_FORMATTED_REG_EX,
-            CLIENT_GRAMS_BECOME_FORMATTED_REG_EX,
-            CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX,
-
-            SEND_NYM_FORMATTED_REG_EX,
-            GET_NYM_FORMATTED_REG_EX,
-            ADD_ATTRIB_FORMATTED_REG_EX,
-            SEND_CRED_DEF_FORMATTED_REG_EX,
-            SEND_CRED_FORMATTED_REG_EX,
-            LIST_CREDS_FORMATTED_REG_EX,
-            SEND_PROOF_FORMATTED_REG_EX,
-            ADD_GENESIS_FORMATTED_REG_EX,
-        ]
+        self.clientGrams = getClientGrams() + getNewClientGrams()
         super().initializeGrammar()
 
     def initializeGrammarLexer(self):
@@ -96,6 +63,7 @@ class SovrinCli(PlenumCli):
             'list_cred',
             'send_proof',
             'add_genesis',
+            'gen_cred'
         ]
         sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -110,7 +78,8 @@ class SovrinCli(PlenumCli):
         self.completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
         self.completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
         self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
-        self.completers["send_cred"] = WordCompleter(["send", "to"])
+        self.completers["req_cred"] = WordCompleter(["request", "credential"])
+        self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
         self.completers["add_genesis"] = \
@@ -222,9 +191,13 @@ class SovrinCli(PlenumCli):
         }
         req, = self.defaultClient.submit(op)
         self.print("Getting nym {}".format(nym), Token.BoldBlue)
+
+        def getNymReply(reply, err):
+            print("Reply fot from nym: {}", reply)
+
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.defaultClient, self.getReply,
-                                    req.reqId, self.defaultClient.name)
+                                    req.reqId, self.defaultClient, self.getNymReply)
+
 
     def _addNym(self, nym, role, other_client_name=None):
         op = {
@@ -234,6 +207,7 @@ class SovrinCli(PlenumCli):
         }
         req, = self.defaultClient.submit(op)
         printStr = "Adding nym {}".format(nym)
+
         if other_client_name:
             printStr = printStr + " for " + other_client_name
         self.print(printStr, Token.BoldBlue)
@@ -267,7 +241,7 @@ class SovrinCli(PlenumCli):
                                     req.reqId, self.defaultClient)
 
     def _addCredDef(self, matchedVars):
-        credDef = self._getCredDef(matchedVars)
+        credDef = self._buildCredDef(matchedVars)
         op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
         req, = self.defaultClient.submit(op)
         self.print("Adding cred def {}".
@@ -275,19 +249,49 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.defaultClient)
 
+    # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
 
-        dest = matchedVars.get('dest')
-        saveas = matchedVars.get('cred_name')
+        dest = matchedVars.get('issuer_identifier')
         cred_name = matchedVars.get('name')
         cred_version = matchedVars.get('version')
-        attrs = matchedVars.get('attrs')
 
-        cred_req = {"name": cred_name, "version": cred_version, "attrs": attrs}
+        self._getCredDefAndExecuteCallback(dest, self.defaultClient.defaultIdentifier,
+                                           cred_name, cred_version,
+                                           self._sendCredReqToIssuer)
 
-        self.defaultClient.sendMsgToOtherClient(dest, cred_req)
+    def _getCredDefAndExecuteCallback(self, dest, proverId, cred_name, cred_version, clbk, *args):
+        op = {
+            TARGET_NYM: dest,
+            TXN_TYPE: GET_CRED_DEF,
+            DATA: {
+                NAME: cred_name,
+                VERSION: cred_version
+            }
+        }
+        req, = self.defaultClient.submit(op, identifier=dest)
+        self.print("Getting cred def {} version {} for {}".
+                   format(cred_name, cred_version, dest), Token.BoldBlue)
 
-    def _getCredDef(self, matchedVars):
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                    req.reqId, self.defaultClient,
+                                    clbk, dest, proverId, *args)
+
+    #  callback function which once gets reply for GET_CRED_DEF will send the proper command/msg to issuer
+    def _sendCredReqToIssuer(self, reply, err, issuerId, proverId):
+        credName = reply.result[NAME]
+        credVersion = reply.result[VERSION]
+        issuerIp = reply.result[IP]
+        issuerPort = reply.result[PORT]
+        keys = reply.result[KEYS]
+
+        credDef = CredentialDefinition(attrNames=keys, name=credName, version=credVersion, ip=issuerIp, port=issuerPort)
+        u = credDef.PK
+        self.print("Credential request is: {}", format(u))
+        # TODO: Handling sending of this command to real issuer (based on ip and port) is pending
+
+    # helper function to build CredentialDefinition function from given values
+    def _buildCredDef(self, matchedVars):
         name = matchedVars.get('name')
         version = matchedVars.get('version')
         # TODO: do we need to use type anywhere?
@@ -321,9 +325,9 @@ class SovrinCli(PlenumCli):
             raw = ast.literal_eval(matchedVars.get('raw'))
             enc = ast.literal_eval(matchedVars.get('enc'))
             hsh = matchedVars.get('hash')
-            self._addAttrib(nym, raw, enc, hsh)
             self.print("dest id is {}".format(nym))
             self.print("raw message is {}".format(raw))
+            self._addAttrib(nym, raw, enc, hsh)
             return True
 
     def _sendCredDefAction(self, matchedVars):
@@ -334,20 +338,20 @@ class SovrinCli(PlenumCli):
             ip = matchedVars.get('ip')
             port = matchedVars.get('port')
             keys = ast.literal_eval(matchedVars.get('keys'))
-            self._addCredDef(matchedVars)
             self.print("passed values are {}, {}, {}, {}, {}, {}".
                        format(name, version, type, ip, port, keys))
+            self._addCredDef(matchedVars)
             return True
 
-    def _sendCredAction(self, matchedVars):
-        if matchedVars.get('send_cred') == 'send to':
-            dest = matchedVars.get('dest')
+    def _reqCredAction(self, matchedVars):
+        if matchedVars.get('req_cred') == 'request credential':
+            dest = matchedVars.get('issuer_identifier')
             credName = matchedVars.get('cred_name')
             name = matchedVars.get('name')
             version = matchedVars.get('version')
-            attrs = matchedVars.get('attrs')
-            self.print("passed values are {}, {}, {}, {}, {}".
-                  format(dest, credName, name, version, attrs))
+            self.print("passed values are {}, {}, {}, {}".
+                  format(dest, credName, name, version))
+            self._reqCred(matchedVars)
             return True
 
     def _listCredAction(self, matchedVars):
@@ -363,18 +367,39 @@ class SovrinCli(PlenumCli):
             self.print("{}, {}, {}".format(attrName, credName, dest))
             return True
 
+    # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
+    # This is required for demo for sure, we'll see if it will be required for real execution or not
+    def _genCredAction(self, matchedVars):
+        if matchedVars.get('gen_cred') == 'generate credential':
+            issuerId = self.defaultClient.defaultIdentifier
+            name = matchedVars.get('name')
+            version = matchedVars.get('version')
+            u = matchedVars.get('u')
+            attr = matchedVars.get('attr')
+            saveas = matchedVars.get('saveas')
+
+            self._getCredDefAndExecuteCallback(issuerId, self.defaultClient.defaultIdentifier,
+                                               name, version, self._genCred, u, attr)
+
+            # This is responsible to creating/generating credential on issuer side
+
+    def _genCred(self, reply, err, issuerId, u, attr):
+        credName = reply.result[NAME]
+        credVersion = reply.result[VERSION]
+        issuerIp = reply.result[IP]
+        issuerPort = reply.result[PORT]
+        keys = reply.result[KEYS]
+
+        credDef = CredentialDefinition(attrNames=list(keys), name=credName, version=credVersion,
+                                       ip=issuerIp, port=issuerPort)
+        cred = credDef.generateCredential(u, attr)
+        self.print("Credential is {}", format(cred))
+        # TODO: For real scenario, do we need to send this credential back or it will be out of band?
+
+
     def _setGenesisAction(self, matchedVars):
-        if matchedVars.get('add_genesis') == "add genesis transaction":
-            mg = matchedVars.get
-            txn = {
-                TXN_TYPE: mg('type_value'),
-                TARGET_NYM: mg('dest_value'),
-                TXN_ID: mg('txnId_value'),
-                ROLE: mg('role_value'),
-            }
-            self._genesisTransactions.append(txn)
-            self.print("Genesis transaction added")
-            return True
+        if matchedVars.get('add_genesis'):
+            raise NotImplementedError
 
     def getActionList(self):
         actions = super().getActionList()
@@ -383,7 +408,7 @@ class SovrinCli(PlenumCli):
                         self._sendGetNymAction,
                         self._sendAttribAction,
                         self._sendCredDefAction,
-                        self._sendCredAction,
+                        self._reqCredAction,
                         self._listCredAction,
                         self._sendProofAction,
                         self._setGenesisAction])
@@ -399,11 +424,10 @@ class SovrinCli(PlenumCli):
             self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                         reqId, client, clbk, *args)
         else:
-            result = reply
-            txnId = result[TXN_ID]
-            clbk(txnId, *args)
+            clbk(reply, err, *args)
 
-    def addAlias(self, txnId, client, alias, signer):
+    def addAlias(self, reply, err, client, alias, signer):
+        txnId = reply[TXN_ID]
         op = {
             TARGET_NYM: alias,
             TXN_TYPE: NYM,

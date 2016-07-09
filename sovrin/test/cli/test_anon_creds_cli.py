@@ -145,6 +145,27 @@ def testAnonCredsCLI(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI,
     pass
 
 
+def addNewKey(clis):
+    for cli in clis:
+        cli.enterCmd("new key")
+
+def getLastCliPrintedMsg(cli):
+    return cli.printeds[0]['msg']
+
+def testReqCred(tylerCLI, byuCLI):
+    # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
+    addNewKey([tylerCLI, byuCLI])
+
+    credDefName ="Qualifications"
+    credDefVersion = "1.0"
+    issuerIdentifier = byuCLI.defaultClient.defaultIdentifier
+    tylerCLI.enterCmd("request credential {} version {} from {}".format(credDefName, credDefVersion, issuerIdentifier))
+    assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(tylerCLI)
+
+def testGenCred(byuCLI):
+    addNewKey([byuCLI])
+    assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(byuCLI)
+
 # def testAnonCredsCLI(cli):
 #     """
 #     Test to demonstrate anonymous credentials through Sovrin CLI.
