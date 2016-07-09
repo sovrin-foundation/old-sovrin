@@ -30,7 +30,7 @@ logger = getlogger("test_anon_creds")
 from anoncreds.protocol.attribute_repo import AttributeRepo
 from anoncreds.protocol.proof import Proof
 
-from plenum.common.txn import DATA, ORIGIN
+from plenum.common.txn import DATA
 from plenum.common.txn import TXN_TYPE
 from plenum.test.helper import genHa
 from sovrin.common.txn import CRED_DEF

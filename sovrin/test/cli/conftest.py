@@ -1,24 +1,31 @@
 import pytest
 
 import plenum
-from plenum.common.looper import Looper
-from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes
-from plenum.common.looper import Looper
-from sovrin.common.util import getConfig
-
 plenum.common.util.loggingConfigured = False
 
+from plenum.common.looper import Looper
+from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted
+from plenum.test.cli.conftest import nodeRegsForCLI, nodeNames
+
+
+from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI
 
 config = getConfig()
-
-from plenum.test.cli.helper import newKeyPair
 
 
 @pytest.yield_fixture(scope="module")
 def looper():
     with Looper(debug=False) as l:
         yield l
+
+
+@pytest.fixture("module")
+def nodesCli(nodeRegsForCLI, looper, tdir, nodeNames):
+    cli = newCLI(nodeRegsForCLI, looper, tdir)
+    cli.enterCmd("new node all")
+    checkAllNodesStarted(cli, *nodeNames)
+    return cli
 
 
 @pytest.fixture("module")
