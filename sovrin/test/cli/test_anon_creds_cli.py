@@ -1,7 +1,9 @@
+import os
+
 import pytest
 
 from plenum.test.cli.conftest import nodeRegsForCLI, looper, createAllNodes
-from plenum.test.cli.helper import newKeyPair
+from plenum.test.cli.helper import newKeyPair, checkCmdValid
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER
 from sovrin.test.cli.helper import sendNym
@@ -46,28 +48,27 @@ objects from one cli to another directly.
 
 @pytest.fixture(scope="module")
 def poolCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="pool")
 
 
 @pytest.fixture(scope="module")
 def byuCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="byu")
 
 
 @pytest.fixture(scope="module")
 def philCLI(nodeRegsForCLI, looper, tdir):
-    cli = newCLI(nodeRegsForCLI, looper, tdir)
-    return cli
+    return newCLI(nodeRegsForCLI, looper, os.path.join(tdir, "phil"))
 
 
 @pytest.fixture(scope="module")
 def tylerCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="tyler")
 
 
 @pytest.fixture(scope="module")
 def bookStoreCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="bookStore")
 
 
 @pytest.fixture(scope="module")
@@ -90,6 +91,11 @@ def tylerPubKey(tylerCLI):
     return newKeyPair(tylerCLI, alias='Tyler')   # or should it be "forBYU"?
 
 
+@pytest.fixture(scope="module")
+def trusteeCreated(poolCLI, philPubKey):
+    checkCmdValid(poolCLI, "add genesis transaction NYM dest={} txnId=0b68b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b role=STEWARD".format(philPubKey))
+
+
 def createSponsor(nym, steward, cli):
     createNym(cli.looper, nym, steward, next(iter(steward.signers.values())),
               SPONSOR)
@@ -100,16 +106,11 @@ def createUser(nym, sponsor, cli):
     createNym(cli.looper, nym, sponsor, sponsor.signers[sponsor.name], USER)
 
 
-@pytest.fixture(scope="module")
-def philCreated(philPubKey, stewardCreated, poolCLI):
-    createSponsor(philPubKey, stewardCreated, poolCLI)
-
-
 def testSteward(steward):
     pass
 
 
-def testPhilCreated(philCreated):
+def testPhilCreated(trusteeCreated):
     pass
 
 

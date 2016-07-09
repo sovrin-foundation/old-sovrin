@@ -1,3 +1,5 @@
+import os
+
 from sovrin.test.helper import TestNode, TestClient
 
 from plenum.test.cli.helper import TestCliCore, newCLI as newCLIP
@@ -12,8 +14,9 @@ class TestCLI(SovrinCli, TestCliCore):
     pass
 
 
-def newCLI(nodeRegsForCLI, looper, tdir):
-    return newCLIP(nodeRegsForCLI, looper, tdir, cliClass=TestCLI,
+def newCLI(nodeRegsForCLI, looper, tdir, subdirectory=None):
+    tempDir = os.path.join(tdir, subdirectory) if subdirectory else tdir
+    return newCLIP(nodeRegsForCLI, looper, tempDir, cliClass=TestCLI,
                    nodeClass=TestNode, clientClass=TestClient)
 
 
