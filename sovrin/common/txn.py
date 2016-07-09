@@ -38,6 +38,8 @@ REQ_CRED = "REQ_CRED"
 GET_NONCE = "GET_NONCE"
 VER_PRF = "VER_PRF"
 
+# Temp for demo
+GEN_CRED = "GEN_CRED"
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {NYM: ([TARGET_NYM], [ROLE]),

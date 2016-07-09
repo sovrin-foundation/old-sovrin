@@ -23,10 +23,29 @@ SEND_PROOF_REG_EX = \
     "(\s* (?P<send_proof>send\s+proof) \s+ of \s+ (?P<attr_name>[a-zA-Z0-9\-_]+) \s+ from \s+ (?P<cred_name>[a-zA-Z0-9\-_]+)? \s+ to \s+ " \
     " (?P<dest>[a-fA-F0-9]+) \s*) |"
 
+GEN_CRED_REG_EX = \
+    "(\s* (?P<gen_cred>send\s+GEN_CRED) " \
+    "\s+ issuerId=\"\s*(?P<issuer_id>[a-zA-Z0-9\s]+)\"" \
+    "\s+ proverId=\"\s*(?P<prover_id>[a-zA-Z0-9\s]+)\"" \
+    "\s+ name=\"\s*(?P<name>[a-zA-Z0-9\s]+)\" " \
+    "\s+ version=\"\s*(?P<version>[a-zA-Z0-9\s]+)\" " \
+    "\s+ u=\"\s*(?P<u>[a-zA-Z0-9\s]+)\" " \
+    "\s+ attr=\"\s*(?P<attr>[a-zA-Z0-9\s]+)\" " \
+    "\s+ saveas=\"\s*(?P<saveas>[a-zA-Z0-9\s]+)\" " \
+    ")"
+
+SAVE_CRED_REG_EX = \
+    "(\s* (?P<save_cred>save\s+CRED) " \
+    "\s+ as=\"\s*(?P<as>[a-zA-Z0-9\s]+)\"" \
+    "\s+ cred=\"\s*(?P<cred>[a-zA-Z0-9\s]+)\"" \
+    ")"
+
+
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
 ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
 SEND_CRED_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_DEF_REG_EX)
 SEND_CRED_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
+GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)
 SEND_PROOF_FORMATTED_REG_EX = SEND_PROOF_REG_EX
