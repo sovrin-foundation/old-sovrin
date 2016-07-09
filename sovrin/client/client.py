@@ -102,10 +102,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         """
         return self.peerMsgRouter.handle(msg)
 
-    def setupDefaultSigner(self):
-        # Sovrin clients should use a wallet, which supplies the signers
-        pass
-
     def sign(self, msg: Dict, signer: Signer) -> Dict:
         if msg["operation"].get(TXN_TYPE) == ATTRIB:
             msgCopy = deepcopy(msg)

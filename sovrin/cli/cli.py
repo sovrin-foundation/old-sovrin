@@ -43,8 +43,6 @@ class SovrinCli(PlenumCli):
     _genesisTransactions = None
 
     def __init__(self, *args, **kwargs):
-        # outFilePath = kwargs.pop("outFilePath")
-        # self.outputFile = open(outFilePath, "w")
         self.aliases = {}         # type: Dict[str, Signer]
         self.sponsors = set()
         self.users = set()

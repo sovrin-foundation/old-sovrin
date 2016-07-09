@@ -1,6 +1,6 @@
 from sovrin.test.helper import TestNode, TestClient
 
-from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI
+from plenum.test.cli.helper import TestCliCore, newCLI as newCLIP
 from plenum.test.testable import Spyable
 from plenum.common.txn import TARGET_NYM, ROLE
 from sovrin.cli.cli import SovrinCli
@@ -15,8 +15,8 @@ class TestCLI(SovrinCli, TestCliCore):
 
 
 def newCLI(nodeRegsForCLI, looper, tdir):
-    return newPlenumCLI(nodeRegsForCLI, looper, tdir, cliClass=TestCLI,
-                        nodeClass=TestNode, clientClass=TestClient)
+    return newCLIP(nodeRegsForCLI, looper, tdir, cliClass=TestCLI,
+                   nodeClass=TestNode, clientClass=TestClient)
 
 
 def sendNym(cli, nym, role):
