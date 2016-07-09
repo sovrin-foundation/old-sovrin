@@ -37,7 +37,7 @@ ADD_GENESIS_REG_EX = \
 
 GEN_CRED_REG_EX = \
     "(\s* (?P<gen_cred>generate\s+credential) " \
-    "\s+ (?P<cred_req>[a-zA-Z0-9\s]+) " \
+    "\s+ (?P<gen_cred>[a-zA-Z0-9\s]+) " \
     ")"
 
 SAVE_CRED_REG_EX = \

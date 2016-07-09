@@ -79,9 +79,9 @@ class SovrinCli(PlenumCli):
         self.completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
         self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
         self.completers["req_cred"] = WordCompleter(["request", "credential"])
+        self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
-        self.completers["gen_cred"] = WordCompleter(["send", "GEN_CRED"])
         self.completers["add_genesis"] = \
             WordCompleter(["add", "genesis", "transactions"])
 
@@ -367,8 +367,23 @@ class SovrinCli(PlenumCli):
             self.print("{}, {}, {}".format(attrName, credName, dest))
             return True
 
-    # This is responsible to creating/generating credential on issuer side
-    def _genCred(self, reply, err, issuerId, proverId, u, attr):
+    # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
+    # This is required for demo for sure, we'll see if it will be required for real execution or not
+    def _genCredAction(self, matchedVars):
+        if matchedVars.get('gen_cred') == 'generate credential':
+            issuerId = self.defaultClient.defaultIdentifier
+            name = matchedVars.get('name')
+            version = matchedVars.get('version')
+            u = matchedVars.get('u')
+            attr = matchedVars.get('attr')
+            saveas = matchedVars.get('saveas')
+
+            self._getCredDefAndExecuteCallback(issuerId, self.defaultClient.defaultIdentifier,
+                                               name, version, self._genCred, u, attr)
+
+            # This is responsible to creating/generating credential on issuer side
+
+    def _genCred(self, reply, err, issuerId, u, attr):
         credName = reply.result[NAME]
         credVersion = reply.result[VERSION]
         issuerIp = reply.result[IP]
@@ -378,24 +393,10 @@ class SovrinCli(PlenumCli):
         credDef = CredentialDefinition(attrNames=list(keys), name=credName, version=credVersion,
                                        ip=issuerIp, port=issuerPort)
         cred = credDef.generateCredential(u, attr)
-        self.print("Here is credential for prover {}: \n {}", format(proverId, cred))
+        self.print("Credential is {}", format(cred))
         # TODO: For real scenario, do we need to send this credential back or it will be out of band?
 
-    # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
-    # This is required for demo for sure, we'll see if it will be required for real execution or not
-    def _genCredAction(self, matchedVars):
-        if matchedVars.get('gen_cred') == 'send GEN_CRED':
-            issuerId = matchedVars.get('issuer_id')
-            proverId = matchedVars.get('prover_id')
-            name = matchedVars.get('name')
-            version = matchedVars.get('version')
-            u = matchedVars.get('u')
-            attr = matchedVars.get('attr')
-            saveas = matchedVars.get('saveas')
 
-            self._getCredDefAndExecuteCallback(issuerId, self.defaultClient.defaultIdentifier,
-                                               name, version, self._genCred, u, attr)
-    
     def _setGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
             raise NotImplementedError
