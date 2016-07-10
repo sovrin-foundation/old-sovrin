@@ -99,7 +99,7 @@ def tylerPubKey(tylerCLI):
 def trusteeCreated(poolCLI, philPubKey):
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
-    assert "Genesis transaction created." in poolCLI.lastCmdOutput()
+    assert "Genesis transaction added." in poolCLI.lastCmdOutput
 
 
 def createSponsor(nym, steward, cli):

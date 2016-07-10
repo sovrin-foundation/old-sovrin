@@ -11,10 +11,12 @@ CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX = getPipedRegEx(
 CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(CLIENT_GRAMS_USE_KEYPAIR_REG_EX)
 
 # TODO we can genericize the other TXN types in the same way
-TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role>USER|SPONSOR|STEWARD))"
+TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=) \s* (?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role_key>role=) \s* (?P<role>USER|SPONSOR|STEWARD))"
 SEND_NYM_REG_EX = TXN_NYM.format(cmdName='send_nym', cmd='send')
 ADD_GENESIS_NYM_REG_EX = TXN_NYM.format(cmdName='add_genesis',
-                                        cmd='add\s+genesis\s+transaction')
+                                        cmd='add \s+ genesis \s+ transaction')
+
+# ADD_GENESIS_NYM_REG_EX = '|(\s* (?P<add_genesis>add\s+genesis\s+transaction))'
 
 # ADD_GENESIS_REG_EX = \
 #     "(\s*(?P<add_genesis>add \s+ genesis \s+ transaction?) \s+ (?P<type_value>[A-Z_]+) \s+ (?P<dest>dest=)\s*(?P<dest_value>[A-Za-z0-9+=/]+) \s+ (?P<txnId>txnId=)\s*(?P<txnId_value>[a-zA-Z0-9]+) \s+ (?P<role>role=)\s*(?P<role_value>USER|SPONSOR|STEWARD)\s*)"

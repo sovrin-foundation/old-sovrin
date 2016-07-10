@@ -7,6 +7,7 @@ from sovrin.cli.constants import CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_R
 
 def getNewClientGrams():
     return [
+        ADD_GENESIS_FORMATTED_REG_EX,
         # Regex for `new client steward with identifier <nym>`
         CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX,
         # Regex for `client steward add sponsor bob` or `client steward add user bob`
@@ -20,7 +21,6 @@ def getNewClientGrams():
         LIST_CREDS_FORMATTED_REG_EX,
         GEN_CRED_FORMATTED_REG_EX,
         SEND_PROOF_FORMATTED_REG_EX,
-        ADD_GENESIS_FORMATTED_REG_EX,
         INIT_ATTR_REPO_FORMATTED_REG_EX,
         ADD_ATTRS_FORMATTED_REG_EX
     ]
