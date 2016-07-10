@@ -170,6 +170,10 @@ def testGenCred(byuCLI):
     addNewKey([byuCLI])
     assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(byuCLI)
 
+
+def testInitIssuerAttribRepo(byuCLI):
+    pass
+
 # def testAnonCredsCLI(cli):
 #     """
 #     Test to demonstrate anonymous credentials through Sovrin CLI.

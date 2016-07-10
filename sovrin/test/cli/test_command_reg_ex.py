@@ -14,5 +14,13 @@ def grammar():
 def test_req_cred_reg_ex(grammar):
     checkIfMatched(grammar, "request credential Qualifications version 1.0 from o7NzafnAlkhNaEM5njaH+I7Y19BEbEORmFB13p87zhM=")
 
+
 def test_gen_cred_reg_ex(grammar):
     checkIfMatched(grammar, "generate credential credential request")
+
+
+def test_init_attr_repo_reg_ex(grammar):
+    checkIfMatched(grammar, "initialize mock attribute repo")
+
+def test_add_attr_reg_ex(grammar):
+    checkIfMatched(grammar, "add attribute name=Rajesh Kalaria, age=25")

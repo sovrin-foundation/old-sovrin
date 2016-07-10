@@ -36,15 +36,20 @@ ADD_GENESIS_REG_EX = \
     "(\s*(?P<add_genesis>add \s+ genesis \s+ transaction?) \s+ (?P<type_value>[A-Z_]+) \s+ (?P<dest>dest=)\s*(?P<dest_value>[A-Za-z0-9+=/]+) \s+ (?P<txnId>txnId=)\s*(?P<txnId_value>[a-zA-Z0-9]+) \s+ (?P<role>role=)\s*(?P<role_value>USER|SPONSOR|STEWARD)\s*)"
 
 GEN_CRED_REG_EX = \
-    "(\s* (?P<gen_cred>generate\s+credential) " \
+    "(\s* (?P<gen_cred>generate \s+ credential) " \
     "\s+ (?P<gen_cred>[a-zA-Z0-9\s]+) " \
-    ")"
+    "\s*)"
 
 SAVE_CRED_REG_EX = \
-    "(\s* (?P<save_cred>save\s+CRED) " \
+    "(\s* (?P<save_cred>save \s+ CRED) " \
     "\s+ as=\"\s*(?P<as>[a-zA-Z0-9\s]+)\"" \
     "\s+ cred=\"\s*(?P<cred>[a-zA-Z0-9\s]+)\"" \
-    ")"
+    "\s*)"
+
+INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribute \s+ repo)\s*)"
+
+ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9,+=/ ]+) \s*)"
+
 
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
@@ -56,3 +61,5 @@ LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
 GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)
 SEND_PROOF_FORMATTED_REG_EX = getPipedRegEx(SEND_PROOF_REG_EX)
 ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_REG_EX)
+INIT_ATTR_REPO_FORMATTED_REG_EX = getPipedRegEx(INIT_ATTR_REPO_REG_EX)
+ADD_ATTRS_FORMATTED_REG_EX = ADD_ATTRS_REG_EX

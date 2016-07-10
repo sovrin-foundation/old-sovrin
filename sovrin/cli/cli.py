@@ -1,6 +1,7 @@
 import ast
 from typing import Dict
 
+from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition
 
 from plenum.cli.cli import Cli as PlenumCli
@@ -63,7 +64,9 @@ class SovrinCli(PlenumCli):
             'list_cred',
             'send_proof',
             'add_genesis',
-            'gen_cred'
+            'gen_cred',
+            'init_attr_repo',
+            'add_attrs'
         ]
         sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -82,10 +85,27 @@ class SovrinCli(PlenumCli):
         self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
-        self.completers["add_genesis"] = \
-            WordCompleter(["add", "genesis", "transactions"])
+        self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transactions"])
+        self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
+        self.completers["add_attrs"] = WordCompleter(["add", "attribute"])
 
         super().initializeGrammarCompleter()
+
+    def getActionList(self):
+        actions = super().getActionList()
+        # Add more actions to base class for sovrin CLI
+        actions.extend([self._sendNymAction,
+                        self._sendGetNymAction,
+                        self._sendAttribAction,
+                        self._sendCredDefAction,
+                        self._reqCredAction,
+                        self._listCredAction,
+                        self._sendProofAction,
+                        self._setGenesisAction,
+                        self._initAttrRepo,
+                        self._addAttrsToRepo
+                        ])
+        return actions
 
     # def loadGenesisTxns(self):
     #     # TODO: Load from conf dir when its ready
@@ -202,7 +222,6 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.defaultClient, self.getNymReply)
 
-
     def _addNym(self, nym, role, other_client_name=None):
         op = {
             TARGET_NYM: nym,
@@ -308,6 +327,17 @@ class SovrinCli(PlenumCli):
         return CredentialDefinition(attrNames=list(attributes.keys()), name=name,
                                     version=version, ip=ip, port=port)
 
+    def _initAttrRepo(self, matchedVars):
+        if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
+            self.defaultClient.attributeRepo = InMemoryAttributeRepo()
+
+    def _addAttrsToRepo(self, matchedVars):
+        if matchedVars.get('add_attrs') == 'add attribute':
+            attrs = matchedVars.get('attrs')
+            for attr in attrs.split(','):
+                name, value = attr.split('=')
+                self.defaultClient.attributeRepo.addAttributes
+
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
             nym = matchedVars.get('dest_id')
@@ -404,19 +434,6 @@ class SovrinCli(PlenumCli):
     def _setGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
             raise NotImplementedError
-
-    def getActionList(self):
-        actions = super().getActionList()
-        # Add more actions to base class for sovrin CLI
-        actions.extend([self._sendNymAction,
-                        self._sendGetNymAction,
-                        self._sendAttribAction,
-                        self._sendCredDefAction,
-                        self._reqCredAction,
-                        self._listCredAction,
-                        self._sendProofAction,
-                        self._setGenesisAction])
-        return actions
 
     @staticmethod
     def bootstrapClientKey(client, node):
