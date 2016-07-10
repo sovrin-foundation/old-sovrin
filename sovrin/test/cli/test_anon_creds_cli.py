@@ -15,13 +15,14 @@ from sovrin.test.helper import createNym
 """
 Test Plan:
 
-5 CLI instances - 1 to run the consensus pool and 4 for clients.
-4 clients - Phil, Tyler, BookStore and BYU
+6 CLI instances - 1 to run the consensus pool and 4 for clients.
+5 clients - Phil, Tyler, BookStore, BYU and Trustee
 
 Phil is a pre-existing sponsor on Sovrin
 BYU is a sponsor added by Phil to Sovrin
 Tyler is a user added by BYU to Sovrin
 BookStore is a user already on Sovrin
+Trustee is a generic trustee who will add BookStore's nym.
 
 Plenum Fixtures:
 1. For Phil,
@@ -57,6 +58,12 @@ objects from one cli to another directly.
 
 @pytest.yield_fixture(scope="module")
 def poolLooper():
+    with Looper(debug=False) as l:
+        yield l
+
+
+@pytest.yield_fixture(scope="module")
+def trusteeLooper():
     with Looper(debug=False) as l:
         yield l
 
@@ -107,8 +114,13 @@ def byuCLI(nodeRegsForCLI, byuLooper, tdir):
 
 
 @pytest.fixture(scope="module")
-def philCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, os.path.join(tdir, "phil"))
+def philCLI(nodeRegsForCLI, philLooper, tdir):
+    return newCLI(nodeRegsForCLI, philLooper, os.path.join(tdir, "phil"))
+
+
+@pytest.fixture(scope="module")
+def trusteeCLI(nodeRegsForCLI, looper, tdir):
+    return newCLI(nodeRegsForCLI, looper, os.path.join(tdir, "trustee"))
 
 
 @pytest.fixture(scope="module")
@@ -124,6 +136,11 @@ def bookStoreCLI(nodeRegsForCLI, bookStoreLooper, tdir):
 @pytest.fixture(scope="module")
 def philPubKey(philCLI):
     return newKeyPair(philCLI)
+
+
+@pytest.fixture(scope="module")
+def trusteePubKey(trusteeCLI):
+    return newKeyPair(trusteeCLI)
 
 
 def testPhilCreatesNewKeypair(philPubKey):
@@ -162,10 +179,18 @@ def testPhilCreated(philCreated):
 
 
 @pytest.fixture(scope="module")
-def bookStoreCreated(bookStorePubKey, byuCreated, byuCLI):
-    """Is this bookStore sponsored by BYU?"""
-    byuCLI.enterCmd("send NYM {dest}={tylerPubKey} {role}={user}".format(
-        dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
+def trusteeCreated(poolCLI, trusteePubKey):
+    checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
+                  format(trusteePubKey))
+    assert "Genesis transaction added." in poolCLI.lastCmdOutput
+
+
+@pytest.fixture(scope="module")
+def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI):
+    trusteeCLI.enterCmd("send NYM {dest}={bookStorePubKey} {role}={user}".
+                        format(dest=TARGET_NYM,
+                               bookStorePubKey=bookStorePubKey,
+                               role=ROLE, user=USER))
 
 
 @pytest.fixture(scope="module")
@@ -180,10 +205,6 @@ def tylerCreated(tylerPubKey, byuCreated, byuCLI):
         dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
 
 
-def testTylerCretaed(tylerCreated):
-    pass
-
-
 @pytest.fixture(scope="module")
 def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
     for node in poolCLI.nodes.values():
@@ -191,8 +212,7 @@ def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
             node.whitelistClient(cli.defaultClient.name)
 
 
-def testAnonCredsCLI(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI,
-                     setup, philCreated, bookStoreCreated, byuCreated,
+def testAnonCredsCLI(setup, philCreated, bookStoreCreated, byuCreated,
                      tylerCreated):
     pass
 
