@@ -136,7 +136,7 @@ class SovrinCli(PlenumCli):
 
     def newClient(self, clientName, seed=None, identifier=None, signer=None,
                   wallet=None):
-        super().newClient(clientName, seed=seed, identifier=identifier,
+        return super().newClient(clientName, seed=seed, identifier=identifier,
                           signer=signer, wallet=wallet)
         # if clientName == "steward":
         #     for txn in self._genesisTransactions:

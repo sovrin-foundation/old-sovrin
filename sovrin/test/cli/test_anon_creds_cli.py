@@ -3,12 +3,13 @@ import os
 import pytest
 
 from plenum.common.looper import Looper
+from plenum.common.txn import TARGET_NYM
+from plenum.common.util import firstValue
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated
 from sovrin.test.cli.helper import newCLI
-from sovrin.common.txn import SPONSOR, USER
-from sovrin.test.cli.helper import sendNym
+from sovrin.common.txn import SPONSOR, USER, ROLE
 from sovrin.test.helper import createNym
 
 """
@@ -48,15 +49,45 @@ objects from one cli to another directly.
 """
 
 
+# TODO Code duplication in looper fixtures.
+# def newLooper():
+#     with Looper(debug=False) as l:
+#         yield l
+
+
 @pytest.yield_fixture(scope="module")
-def looper():
+def poolLooper():
+    with Looper(debug=False) as l:
+        yield l
+
+
+@pytest.yield_fixture(scope="module")
+def philLooper():
+    with Looper(debug=False) as l:
+        yield l
+
+
+@pytest.yield_fixture(scope="module")
+def byuLooper():
+    with Looper(debug=False) as l:
+        yield l
+
+
+@pytest.yield_fixture(scope="module")
+def tylerLooper():
+    with Looper(debug=False) as l:
+        yield l
+
+
+@pytest.yield_fixture(scope="module")
+def bookStoreLooper():
     with Looper(debug=False) as l:
         yield l
 
 
 @pytest.fixture(scope="module")
-def poolCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="pool")
+def poolCLI(nodeRegsForCLI, poolLooper, tdir):
+    return newCLI(nodeRegsForCLI, poolLooper, tdir, subDirectory="pool")
 
 
 @pytest.fixture(scope="module")
@@ -65,13 +96,14 @@ def poolNodesCreated(poolCLI, nodeNames):
     assertAllNodesCreated(poolCLI, nodeNames)
 
 
+# TODO This test seems to be failing intermittently.
 def testNodesCreatedOnPoolCLI(poolNodesCreated):
     pass
 
 
 @pytest.fixture(scope="module")
-def byuCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="byu")
+def byuCLI(nodeRegsForCLI, byuLooper, tdir):
+    return newCLI(nodeRegsForCLI, byuLooper, tdir, subDirectory="byu")
 
 
 @pytest.fixture(scope="module")
@@ -80,13 +112,13 @@ def philCLI(nodeRegsForCLI, looper, tdir):
 
 
 @pytest.fixture(scope="module")
-def tylerCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="tyler")
+def tylerCLI(nodeRegsForCLI, tylerLooper, tdir):
+    return newCLI(nodeRegsForCLI, tylerLooper, tdir, subDirectory="tyler")
 
 
 @pytest.fixture(scope="module")
-def bookStoreCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="bookStore")
+def bookStoreCLI(nodeRegsForCLI, bookStoreLooper, tdir):
+    return newCLI(nodeRegsForCLI, bookStoreLooper, tdir, subDirectory="bookStore")
 
 
 @pytest.fixture(scope="module")
@@ -114,48 +146,42 @@ def tylerPubKey(tylerCLI):
 
 
 @pytest.fixture(scope="module")
-def trusteeCreated(poolCLI, philPubKey):
+def bookStorePubKey(bookStoreCLI):
+    return newKeyPair(bookStoreCLI, alias='BookStore')
+
+
+@pytest.fixture(scope="module")
+def philCreated(poolCLI, philPubKey):
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
     assert "Genesis transaction added." in poolCLI.lastCmdOutput
 
 
-def createSponsor(nym, steward, cli):
-    createNym(cli.looper, nym, steward, next(iter(steward.signers.values())),
-              SPONSOR)
-
-
-# This method exists for debugging purposes.
-def createUser(nym, sponsor, cli):
-    createNym(cli.looper, nym, sponsor, sponsor.signers[sponsor.name], USER)
-
-
-def testSteward(steward):
+def testPhilCreated(philCreated):
     pass
 
 
-def testPhilCreated(trusteeCreated):
-    pass
-
-
-# This is using plenum fixtures.
-# def testReady(ready):
-#     pass
+@pytest.fixture(scope="module")
+def bookStoreCreated(bookStorePubKey, byuCreated, byuCLI):
+    """Is this bookStore sponsored by BYU?"""
+    byuCLI.enterCmd("send NYM {dest}={tylerPubKey} {role}={user}".format(
+        dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
 
 
 @pytest.fixture(scope="module")
-def bookStoreCreated(bookStorePubKey, stewardCreated, poolCLI):
-    createSponsor(bookStorePubKey, stewardCreated, poolCLI)
-
-
-@pytest.fixture(scope="module")
-def byuCreated(byuPubKey, philCreated, philCLI):
-    sendNym(philCLI, byuPubKey, SPONSOR)
+def byuCreated(byuPubKey, philCreated, philCLI, poolNodesCreated):
+    philCLI.enterCmd("send NYM {dest}={byuPubKey} {role}={sponsor}".format(
+        dest=TARGET_NYM, byuPubKey=byuPubKey, role=ROLE, sponsor=SPONSOR))
 
 
 @pytest.fixture(scope="module")
 def tylerCreated(tylerPubKey, byuCreated, byuCLI):
-    sendNym(byuCLI, tylerPubKey, USER)
+    byuCLI.enterCmd("send NYM {dest}={tylerPubKey} {role}={user}".format(
+        dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
+
+
+def testTylerCretaed(tylerCreated):
+    pass
 
 
 @pytest.fixture(scope="module")
