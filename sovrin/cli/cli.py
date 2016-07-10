@@ -271,11 +271,9 @@ class SovrinCli(PlenumCli):
     def _addCredDef(self, matchedVars):
         credDef = self._buildCredDef(matchedVars)
         op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
-        req, = self._getClient().submit(op)
+        self._getClient().submit(op)
         self.print("Adding cred def {}".
                    format(credDef), Token.BoldBlue)
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self._getClient())
 
     @staticmethod
     def _buildCredDef(matchedVars):
