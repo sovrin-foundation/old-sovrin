@@ -200,7 +200,8 @@ def testReqCred(tylerCLI, byuCLI):
     credDefName ="Qualifications"
     credDefVersion = "1.0"
     issuerIdentifier = byuCLI.activeSigner.verstr
-    tylerCLI.enterCmd("request credential {} version {} from {}".format(credDefName, credDefVersion, issuerIdentifier))
+    tylerCLI.enterCmd("request credential {} version {} from {}"
+                      .format(credDefName, credDefVersion, issuerIdentifier))
     assert "Credential request is: {}".format("<need to put expected value>") == tylerCLI.lastCmdOutput
 
 

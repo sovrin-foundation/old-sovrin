@@ -300,7 +300,7 @@ class SovrinCli(PlenumCli):
         self.print("Getting cred def {} version {} for {}".
                    format(cred_name, cred_version, dest), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        self.looper.loop.call_later(.003, self.ensureReqCompleted,
                                     req.reqId, self._getClient(),
                                     clbk, dest, proverId, *args)
 
@@ -471,7 +471,7 @@ class SovrinCli(PlenumCli):
     def ensureReqCompleted(self, reqId, client, clbk, *args):
         reply, err = client.replyIfConsensus(reqId)
         if reply is None:
-            self.looper.loop.call_later(.2, self.ensureReqCompleted,
+            self.looper.loop.call_later(.003, self.ensureReqCompleted,
                                         reqId, client, clbk, *args)
         else:
             clbk(reply, err, *args)
