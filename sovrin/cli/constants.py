@@ -10,7 +10,15 @@ CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX = getPipedRegEx(
 
 CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(CLIENT_GRAMS_USE_KEYPAIR_REG_EX)
 
-SEND_NYM_REG_EX = "(\s* (?P<send_nym>send\s+NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role>USER|SPONSOR|STEWARD))"
+# TODO we can genericize the other TXN types in the same way
+TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role>USER|SPONSOR|STEWARD))"
+SEND_NYM_REG_EX = TXN_NYM.format(cmdName='send_nym', cmd='send')
+ADD_GENESIS_NYM_REG_EX = TXN_NYM.format(cmdName='add_genesis',
+                                        cmd='add\s+genesis\s+transaction')
+
+# ADD_GENESIS_REG_EX = \
+#     "(\s*(?P<add_genesis>add \s+ genesis \s+ transaction?) \s+ (?P<type_value>[A-Z_]+) \s+ (?P<dest>dest=)\s*(?P<dest_value>[A-Za-z0-9+=/]+) \s+ (?P<txnId>txnId=)\s*(?P<txnId_value>[a-zA-Z0-9]+) \s+ (?P<role>role=)\s*(?P<role_value>USER|SPONSOR|STEWARD)\s*)"
+#
 
 GET_NYM_REG_EX = "(\s* (?P<send_get_nym>send\s+GET_NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[A-Za-z0-9+=/]*) \s*) "
 
@@ -32,9 +40,6 @@ SEND_PROOF_REG_EX = \
     "(\s* (?P<send_proof>send\s+proof) \s+ of \s+ (?P<attr_name>[a-zA-Z0-9\-_]+) \s+ from \s+ (?P<cred_name>[a-zA-Z0-9\-_]+)? \s+ to \s+ " \
     " (?P<dest>[a-fA-F0-9]+) \s*)"
 
-ADD_GENESIS_REG_EX = \
-    "(\s*(?P<add_genesis>add \s+ genesis \s+ transaction?) \s+ (?P<type_value>[A-Z_]+) \s+ (?P<dest>dest=)\s*(?P<dest_value>[A-Za-z0-9+=/]+) \s+ (?P<txnId>txnId=)\s*(?P<txnId_value>[a-zA-Z0-9]+) \s+ (?P<role>role=)\s*(?P<role_value>USER|SPONSOR|STEWARD)\s*)"
-
 GEN_CRED_REG_EX = \
     "(\s* (?P<gen_cred>generate\s+credential) " \
     "\s+ (?P<gen_cred>[a-zA-Z0-9\s]+) " \
@@ -55,4 +60,4 @@ REQ_CRED_FORMATTED_REG_EX = getPipedRegEx(REQ_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
 GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)
 SEND_PROOF_FORMATTED_REG_EX = getPipedRegEx(SEND_PROOF_REG_EX)
-ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_REG_EX)
+ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_NYM_REG_EX)

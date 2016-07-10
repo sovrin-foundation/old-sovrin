@@ -400,10 +400,20 @@ class SovrinCli(PlenumCli):
         self.print("Credential is {}", format(cred))
         # TODO: For real scenario, do we need to send this credential back or it will be out of band?
 
-
-    def _setGenesisAction(self, matchedVars):
+    def _addGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
-            raise NotImplementedError
+            nym = matchedVars.get('dest_id')
+            role = self._getRole(matchedVars)
+            txn = {
+                TXN_TYPE: NYM,
+                TARGET_NYM: nym,
+                TXN_ID: '00000000000000000000000000000000'
+                        '00000000000000000000000000000000',
+                ROLE: STEWARD
+            }
+            # TODO need to compute TXN_ID the way it would be if it were really submitted
+            self._genesisTransactions.append(txn)
+        self.print('Genesis transaction added.')
 
     def getActionList(self):
         actions = super().getActionList()
@@ -415,7 +425,7 @@ class SovrinCli(PlenumCli):
                         self._reqCredAction,
                         self._listCredAction,
                         self._sendProofAction,
-                        self._setGenesisAction])
+                        self._addGenesisAction])
         return actions
 
     @staticmethod
