@@ -154,6 +154,9 @@ class SovrinCli(PlenumCli):
         #     self.print("{} must be first be added by a sponsor or steward".
         #                format(clientName), Token.Error)
 
+    def _getClient(self) -> Client :
+        return super().activeClient
+
     def _clientCommand(self, matchedVars):
         if matchedVars.get('client') == 'client':
             r = super()._clientCommand(matchedVars)
@@ -214,14 +217,14 @@ class SovrinCli(PlenumCli):
             TARGET_NYM: nym,
             TXN_TYPE: GET_NYM,
         }
-        req, = self.defaultClient.submit(op)
+        req, = self._getClient().submit(op)
         self.print("Getting nym {}".format(nym), Token.BoldBlue)
 
         def getNymReply(reply, err):
             print("Reply fot from nym: {}", reply)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.defaultClient, self.getNymReply)
+                                    req.reqId, self._getClient(), self.getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
         op = {
@@ -229,7 +232,7 @@ class SovrinCli(PlenumCli):
             TXN_TYPE: NYM,
             ROLE: role
         }
-        req, = self.defaultClient.submit(op)
+        req, = self._getClient().submit(op)
         printStr = "Adding nym {}".format(nym)
 
         if other_client_name:
@@ -237,8 +240,8 @@ class SovrinCli(PlenumCli):
         self.print(printStr, Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.defaultClient, self.addAlias,
-                                    self.defaultClient, other_client_name,
+                                    req.reqId, self._getClient(), self.addAlias,
+                                    self._getClient(), other_client_name,
                                     self.activeSigner)
         return True
 
@@ -258,20 +261,20 @@ class SovrinCli(PlenumCli):
             op[HASH] = hsh
             data = hsh
 
-        req, = self.defaultClient.submit(op)
+        req, = self._getClient().submit(op)
         self.print("Adding attributes {} for {}".
                    format(data, nym), Token.BoldBlue)
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.defaultClient)
+                                    req.reqId, self._getClient())
 
     def _addCredDef(self, matchedVars):
         credDef = self._buildCredDef(matchedVars)
         op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
-        req, = self.defaultClient.submit(op)
+        req, = self._getClient().submit(op)
         self.print("Adding cred def {}".
                    format(credDef), Token.BoldBlue)
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.defaultClient)
+                                    req.reqId, self._getClient())
 
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
@@ -293,12 +296,12 @@ class SovrinCli(PlenumCli):
                 VERSION: cred_version
             }
         }
-        req, = self.defaultClient.submit(op, identifier=dest)
+        req, = self._getClient().submit(op, identifier=dest)
         self.print("Getting cred def {} version {} for {}".
                    format(cred_name, cred_version, dest), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.defaultClient,
+        self.looper.loop.call_later(.5, self.ensureReqCompleted,
+                                    req.reqId, self._getClient(),
                                     clbk, dest, proverId, *args)
 
     #  callback function which once gets reply for GET_CRED_DEF will send the proper command/msg to issuer
@@ -330,14 +333,14 @@ class SovrinCli(PlenumCli):
 
     def _initAttrRepo(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
-            self.defaultClient.attributeRepo = InMemoryAttributeRepo()
+            self._getClient().attributeRepo = InMemoryAttributeRepo()
 
     def _addAttrsToRepo(self, matchedVars):
         if matchedVars.get('add_attrs') == 'add attribute':
             attrs = matchedVars.get('attrs')
             for attr in attrs.split(','):
                 name, value = attr.split('=')
-                self.defaultClient.attributeRepo.addAttributes
+                self._getClient().attributeRepo.addAttributes
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
@@ -406,14 +409,14 @@ class SovrinCli(PlenumCli):
     # This is required for demo for sure, we'll see if it will be required for real execution or not
     def _genCredAction(self, matchedVars):
         if matchedVars.get('gen_cred') == 'generate credential':
-            issuerId = self.defaultClient.defaultIdentifier
+            issuerId = self._getClient().defaultIdentifier
             name = matchedVars.get('name')
             version = matchedVars.get('version')
             u = matchedVars.get('u')
             attr = matchedVars.get('attr')
             saveas = matchedVars.get('saveas')
 
-            self._getCredDefAndExecuteCallback(issuerId, self.defaultClient.defaultIdentifier,
+            self._getCredDefAndExecuteCallback(issuerId, self._getClient().defaultIdentifier,
                                                name, version, self._genCred, u, attr)
 
             # This is responsible to creating/generating credential on issuer side

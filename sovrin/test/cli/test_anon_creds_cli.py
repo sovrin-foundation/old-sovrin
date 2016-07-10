@@ -156,8 +156,10 @@ def addNewKey(*clis):
     for cli in clis:
         cli.enterCmd("new key")
 
+
 def getLastCliPrintedMsg(cli):
     return cli.printeds[0]['msg']
+
 
 def testReqCred(tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
@@ -169,13 +171,14 @@ def testReqCred(tylerCLI, byuCLI):
     tylerCLI.enterCmd("request credential {} version {} from {}".format(credDefName, credDefVersion, issuerIdentifier))
     assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(tylerCLI)
 
-def testGenCred(byuCLI):
-    addNewKey([byuCLI])
-    assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(byuCLI)
 
-
-def testInitIssuerAttribRepo(byuCLI):
-    pass
+# def testGenCred(byuCLI):
+#     addNewKey([byuCLI])
+#     assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(byuCLI)
+#
+#
+# def testInitIssuerAttribRepo(byuCLI):
+#     pass
 
 # def testAnonCredsCLI(cli):
 #     """
