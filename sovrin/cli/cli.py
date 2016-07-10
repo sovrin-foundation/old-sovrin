@@ -14,7 +14,6 @@ from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, IP, PORT, KEYS
 
-from sovrin.cli.genesisTxns import STEWARD_SEED
 from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, \
@@ -102,7 +101,7 @@ class SovrinCli(PlenumCli):
                         self._reqCredAction,
                         self._listCredAction,
                         self._sendProofAction,
-                        self._setGenesisAction,
+                        self._addGenesisAction,
                         self._initAttrRepo,
                         self._addAttrsToRepo
                         ])
@@ -301,7 +300,7 @@ class SovrinCli(PlenumCli):
         self.print("Getting cred def {} version {} for {}".
                    format(cred_name, cred_version, dest), Token.BoldBlue)
 
-        self.looper.loop.call_later(.5, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self._getClient(),
                                     clbk, dest, proverId, *args)
 
@@ -335,6 +334,8 @@ class SovrinCli(PlenumCli):
     def _initAttrRepo(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
             self._getClient().attributeRepo = InMemoryAttributeRepo()
+            self.print("attribute repo initialized")
+            return True
 
     def _addAttrsToRepo(self, matchedVars):
         if matchedVars.get('add_attrs') == 'add attribute':
@@ -342,12 +343,16 @@ class SovrinCli(PlenumCli):
             proverId = matchedVars.get('prover_id')
 
             attribTypes = []
+            attrInput = {}
             for attr in attrs.split(','):
                 name, value = attr.split('=')
                 attribTypes.append(AttribType(name, encode=True))
+                attrInput[name] = [value]
 
             attribsDef = AttribsDef(self.name, attribTypes)
-
+            attribs = attribsDef.attribs(**attrInput)
+            self.activeClient.attributeRepo.addAttributes(attribs)
+            return True
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
@@ -425,8 +430,8 @@ class SovrinCli(PlenumCli):
 
             self._getCredDefAndExecuteCallback(issuerId, self._getClient().defaultIdentifier,
                                                name, version, self._genCred, u, attr)
-
-            # This is responsible to creating/generating credential on issuer side
+            # TODO: This is responsible to creating/generating credential on issuer side
+            return True
 
     def _genCred(self, reply, err, issuerId, u, attr):
         credName = reply.result[NAME]
@@ -440,6 +445,7 @@ class SovrinCli(PlenumCli):
         cred = credDef.generateCredential(u, attr)
         self.print("Credential is {}", format(cred))
         # TODO: For real scenario, do we need to send this credential back or it will be out of band?
+        return True
 
     def _addGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
@@ -456,19 +462,6 @@ class SovrinCli(PlenumCli):
             self.genesisTransactions.append(txn)
             self.print('Genesis transaction added.')
             return True
-
-    def getActionList(self):
-        actions = super().getActionList()
-        # Add more actions to base class for sovrin CLI
-        actions.extend([self._sendNymAction,
-                        self._sendGetNymAction,
-                        self._sendAttribAction,
-                        self._sendCredDefAction,
-                        self._reqCredAction,
-                        self._listCredAction,
-                        self._sendProofAction,
-                        self._addGenesisAction])
-        return actions
 
     @staticmethod
     def bootstrapClientKey(client, node):

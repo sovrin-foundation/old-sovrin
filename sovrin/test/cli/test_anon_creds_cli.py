@@ -202,19 +202,32 @@ def addNewKey(*clis):
         cli.enterCmd("new key")
 
 
-def getLastCliPrintedMsg(cli):
-    return cli.printeds[0]['msg']
-
-
 def testReqCred(tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
-    # addNewKey(tylerCLI, byuCLI)
+    addNewKey(tylerCLI, byuCLI)
 
     credDefName ="Qualifications"
     credDefVersion = "1.0"
     issuerIdentifier = byuCLI.activeSigner.verstr
     tylerCLI.enterCmd("request credential {} version {} from {}".format(credDefName, credDefVersion, issuerIdentifier))
-    assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(tylerCLI)
+    assert "Credential request is: {}".format("<need to put expected value>") == tylerCLI.lastCmdOutput
+
+
+@pytest.fixture(scope="module")
+def attrRepoInitialized(byuCLI):
+    addNewKey(byuCLI)
+    assert byuCLI.activeClient.attributeRepo is None
+    byuCLI.enterCmd("initialize mock attribute repo")
+    assert byuCLI.lastCmdOutput == "attribute repo initialized"
+    assert byuCLI.activeClient.attributeRepo is not None
+    return byuCLI
+
+def testInitAttrRepo(attrRepoInitialized):
+    pass
+
+@pytest.fixture(scope="module")
+def attrRepoInitialized(byuCLI):
+    pass
 
 
 # def testGenCred(byuCLI):
