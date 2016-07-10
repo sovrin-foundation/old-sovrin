@@ -182,7 +182,7 @@ def getLastCliPrintedMsg(cli):
 
 def testReqCred(tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
-    addNewKey(tylerCLI, byuCLI)
+    # addNewKey(tylerCLI, byuCLI)
 
     credDefName ="Qualifications"
     credDefVersion = "1.0"

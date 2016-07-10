@@ -55,7 +55,7 @@ SAVE_CRED_REG_EX = \
 
 INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribute \s+ repo)\s*)"
 
-ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9,+=/ ]+) \s*)"
+ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9,+=/ ]+) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\-_]+) \s*)"
 
 
 

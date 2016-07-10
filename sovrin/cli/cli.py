@@ -3,6 +3,7 @@ from typing import Dict
 
 from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition
+from anoncreds.protocol.types import AttribsDef, AttribType
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -245,7 +246,7 @@ class SovrinCli(PlenumCli):
                                     self.activeSigner)
         return True
 
-    def _addAttrib(self, nym, raw, enc, hsh):
+    def _addAttribToNym(self, nym, raw, enc, hsh):
         op = {
             TXN_TYPE: ATTRIB,
             TARGET_NYM: nym
@@ -338,9 +339,15 @@ class SovrinCli(PlenumCli):
     def _addAttrsToRepo(self, matchedVars):
         if matchedVars.get('add_attrs') == 'add attribute':
             attrs = matchedVars.get('attrs')
+            proverId = matchedVars.get('prover_id')
+
+            attribTypes = []
             for attr in attrs.split(','):
                 name, value = attr.split('=')
-                self._getClient().attributeRepo.addAttributes
+                attribTypes.append(AttribType(name, encode=True))
+
+            attribsDef = AttribsDef(self.name, attribTypes)
+
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
@@ -365,7 +372,7 @@ class SovrinCli(PlenumCli):
             hsh = matchedVars.get('hash')
             self.print("dest id is {}".format(nym))
             self.print("raw message is {}".format(raw))
-            self._addAttrib(nym, raw, enc, hsh)
+            self._addAttribToNym(nym, raw, enc, hsh)
             return True
 
     def _sendCredDefAction(self, matchedVars):
