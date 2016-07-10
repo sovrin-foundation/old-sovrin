@@ -51,7 +51,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                  wallet: Wallet = None):
         clientDataDir = os.path.join(basedirpath, "data", "clients", name)
         wallet = wallet or \
-                 Wallet(WalletStorageFile(clientDataDir))  # type: Wallet
+                 Wallet(name, WalletStorageFile(clientDataDir))  # type: Wallet
         super().__init__(name,
                          nodeReg,
                          ha,

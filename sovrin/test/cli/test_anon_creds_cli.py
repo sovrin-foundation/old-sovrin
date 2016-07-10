@@ -172,7 +172,18 @@ def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
             node.whitelistClient(cli.defaultClient.name)
 
 
-def testAnonCredsCLI(setup, philCreated, bookStoreCreated, byuCreated,
+@pytest.fixture(scope="module")
+def byuAddsCredDef(byuCLI):  # , byuCreated
+    """BYU writes a credential definition to Sovrin."""
+    cmd = """send CRED_DEF name="Qualifications" version="1.0" type=JC1 ip=10.10.10.10 port=7897 keys={master_secret_rand:<large number>, n:<large number>, S:<large number>, Z:<large number>, attributes: {"first_name":R1, "last_name":R2, "birth_date":R3, "expire_date":R4, "undergrad":R5, "postgrad":R6}}"""
+    checkCmdValid(byuCLI, cmd)
+
+
+def testBYUAddsCredDef(byuAddsCredDef):
+    pass
+
+
+def testAnonCredsCLI(byuCLI, setup, philCreated, bookStoreCreated, byuCreated,
                      tylerCreated):
     pass
 
@@ -202,8 +213,10 @@ def attrRepoInitialized(byuCLI):
     assert byuCLI.activeClient.attributeRepo is not None
     return byuCLI
 
+
 def testInitAttrRepo(attrRepoInitialized):
     pass
+
 
 @pytest.fixture(scope="module")
 def attrRepoInitialized(byuCLI):
