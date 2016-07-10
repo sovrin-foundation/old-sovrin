@@ -351,7 +351,8 @@ class SovrinCli(PlenumCli):
 
             attribsDef = AttribsDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attrInput)
-            self.activeClient.attributeRepo.addAttributes(attribs)
+            self.activeClient.attributeRepo.addAttributes(proverId, attribs)
+            self.print("attribute added successfully")
             return True
 
     def _sendNymAction(self, matchedVars):

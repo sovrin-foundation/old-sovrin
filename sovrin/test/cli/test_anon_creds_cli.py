@@ -245,8 +245,18 @@ def attrRepoInitialized(byuCLI):
 def testInitAttrRepo(attrRepoInitialized):
     pass
 
+
 @pytest.fixture(scope="module")
-def attrRepoInitialized(byuCLI):
+def attrAddedToRepo(attrRepoInitialized):
+    byuCLI = attrRepoInitialized
+    proverId = "Tyler"
+    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
+    byuCLI.enterCmd("add attribute name=Tyler, age=17 for {}".format(proverId))
+    assert byuCLI.lastCmdOutput == "attribute added successfully"
+    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
+
+
+def testAddAttrToRepo(attrAddedToRepo):
     pass
 
 
