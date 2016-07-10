@@ -14,8 +14,8 @@ Cryptonym = str
 class Wallet(PWallet):
     clientNotPresentMsg = "The wallet does not have a client associated with it"
 
-    def __init__(self, storage: WalletStorage):
-        PWallet.__init__(self, storage=storage)
+    def __init__(self, name: str, storage: WalletStorage):
+        PWallet.__init__(self, name, storage=storage)
         # self.attributes = {}
         # self.credDefs = {}
 
