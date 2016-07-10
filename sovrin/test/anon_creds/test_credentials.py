@@ -25,7 +25,6 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     looper.run(user.ensureConnectedToNodes())
     definition = credDef.get()
     op = {
-        ORIGIN: userSignerA.verstr,
         TARGET_NYM: sponsorSigner.verstr,
         TXN_TYPE: GET_CRED_DEF,
         DATA: {

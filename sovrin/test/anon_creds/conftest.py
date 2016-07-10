@@ -121,7 +121,6 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     data = credDef.getSerializable()
 
     op = {
-        ORIGIN: sponsorSigner.verstr,
         TXN_TYPE: CRED_DEF,
         DATA: data
     }

@@ -29,7 +29,6 @@ def nodesCli(nodeRegsForCLI, looper, tdir, nodeNames):
     cli = newCLI(nodeRegsForCLI, looper, tdir)
     cli.enterCmd("new node all")
     checkAllNodesStarted(cli, *nodeNames)
-    cli.looper.run(eventually(checkAllNodesUp, cli, retryWait=1, timeout=20))
     return cli
 
 

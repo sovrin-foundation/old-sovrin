@@ -90,11 +90,12 @@ def bookStoreCLI(nodeRegsForCLI, tdir):
 
 
 @pytest.fixture(scope="module")
-def poolNodesCreated(poolCLI, nodeNames):
+def poolNodesCreated(poolCLI, nodeNames, philCreated):
     createAllNodes(poolCLI)
     assertAllNodesCreated(poolCLI, nodeNames)
     checkAllNodesStarted(poolCLI, *nodeNames)
-    poolCLI.looper.run(eventually(checkAllNodesUp, poolCLI, retryWait=1, timeout=20))
+    poolCLI.looper.run(eventually(checkAllNodesUp, poolCLI, retryWait=1,
+                                  timeout=20))
 
 
 @pytest.fixture(scope="module")
