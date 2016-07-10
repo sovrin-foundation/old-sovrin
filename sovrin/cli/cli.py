@@ -180,8 +180,9 @@ class SovrinCli(PlenumCli):
 
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
-        if role not in ("user", "sponsor"):
-            self.print("Can only add a sponsor or user", Token.Error)
+        validRoles = (USER, SPONSOR, STEWARD)
+        if role not in validRoles:
+            self.print("Invalid role. Valid roles are: {}".format(", ".join(validRoles)), Token.Error)
             return True
         else:
             role = USER if role == "user" else SPONSOR
@@ -413,7 +414,8 @@ class SovrinCli(PlenumCli):
             }
             # TODO need to compute TXN_ID the way it would be if it were really submitted
             self._genesisTransactions.append(txn)
-        self.print('Genesis transaction added.')
+            self.print('Genesis transaction added.')
+            return True
 
     def getActionList(self):
         actions = super().getActionList()
