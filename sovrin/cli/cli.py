@@ -413,7 +413,7 @@ class SovrinCli(PlenumCli):
                 ROLE: STEWARD
             }
             # TODO need to compute TXN_ID the way it would be if it were really submitted
-            self._genesisTransactions.append(txn)
+            self.genesisTransactions.append(txn)
             self.print('Genesis transaction added.')
             return True
 
