@@ -1,17 +1,37 @@
+from _sha256 import sha256
+
 import pytest
 
+from plenum.common.util import randomString
 from plenum.test.cli.helper import checkCmdValid
+from sovrin.common.txn import STEWARD, NYM
+from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
 
 
-@pytest.skip("TODO Make txnId optional in genesis transactions.")
 def testAddGenesisTransactions(cli):
-    checkCmdValid(cli, "add genesis transaction NYM dest=cx3ePPiBdRyab1900mZdtlzF5FGmX06Fj2sAYbMdF18= txnId=0b68b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b role=STEWARD")
+    nym = "cx3ePPiBdRyab1900mZdtlzF5FGmX06Fj2sAYbMdF18="
+    role = STEWARD
+    typ = NYM
+    checkCmdValid(cli, "add genesis transaction {} dest={} role={}"
+                  .format(typ, nym, role))
     txn = {
-        "type": "NYM",
-        "dest": "cx3ePPiBdRyab1900mZdtlzF5FGmX06Fj2sAYbMdF18=",
-        "txnId": "0b68b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-        "role": "STEWARD",
+        TXN_TYPE: typ,
+        TARGET_NYM: nym,
+        TXN_ID: sha256(randomString(6).encode()).hexdigest(),
+        ROLE: role,
     }
-    assert txn in cli.genesisTransactions
+    typeCorrect = False
+    nymCorrect = False
+    roleCorrect = False
+
+    for txn in cli.genesisTransactions:
+        if not nymCorrect and txn.get(TARGET_NYM) == nym:
+            nymCorrect = True
+            if txn.get(TXN_TYPE) == typ:
+                typeCorrect = True
+            if txn.get(ROLE) == role:
+                roleCorrect = True
+
+    assert nymCorrect and typeCorrect and roleCorrect
     assert "Genesis transaction added" in cli.lastCmdOutput
 

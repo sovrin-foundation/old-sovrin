@@ -1,5 +1,6 @@
 import ast
 from typing import Dict
+from hashlib import sha256
 
 from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition
@@ -13,6 +14,7 @@ from pygments.token import Token
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, IP, PORT, KEYS
+from plenum.common.util import randomString
 
 from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
@@ -204,12 +206,11 @@ class SovrinCli(PlenumCli):
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
         validRoles = (USER, SPONSOR, STEWARD)
-        if role not in validRoles:
+        if role and role not in validRoles:
             self.print("Invalid role. Valid roles are: {}".format(", ".join(validRoles)), Token.Error)
-            return True
-        else:
-            role = USER if role == "user" else SPONSOR
-
+            return False
+        elif not role:
+            role = USER
         return role
 
     def _getNym(self, nym):
@@ -304,7 +305,8 @@ class SovrinCli(PlenumCli):
                                     req.reqId, self._getClient(),
                                     clbk, dest, proverId, *args)
 
-    #  callback function which once gets reply for GET_CRED_DEF will send the proper command/msg to issuer
+    #  callback function which once gets reply for GET_CRED_DEF will
+    # send the proper command/msg to issuer
     def _sendCredReqToIssuer(self, reply, err, issuerId, proverId):
         credName = reply.result[NAME]
         credVersion = reply.result[VERSION]
@@ -443,7 +445,8 @@ class SovrinCli(PlenumCli):
 
         credDef = CredentialDefinition(attrNames=list(keys), name=credName, version=credVersion,
                                        ip=issuerIp, port=issuerPort)
-        cred = credDef.generateCredential(u, attr)
+        cred = CredentialDefinition.generateCredential(u, attr, credDef.PK,
+                                                       credDef.p_prime, credDef.q_prime)
         self.print("Credential is {}", format(cred))
         # TODO: For real scenario, do we need to send this credential back or it will be out of band?
         return True
@@ -455,11 +458,9 @@ class SovrinCli(PlenumCli):
             txn = {
                 TXN_TYPE: NYM,
                 TARGET_NYM: nym,
-                TXN_ID: '00000000000000000000000000000000'
-                        '00000000000000000000000000000000',
-                ROLE: STEWARD
+                TXN_ID: sha256(randomString(6).encode()).hexdigest(),
+                ROLE: role
             }
-            # TODO need to compute TXN_ID the way it would be if it were really submitted
             self.genesisTransactions.append(txn)
             self.print('Genesis transaction added.')
             return True

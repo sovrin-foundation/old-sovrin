@@ -5,6 +5,7 @@ from plenum.common.txn import TARGET_NYM
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated
+from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER, ROLE
 
@@ -193,7 +194,7 @@ def addNewKey(*clis):
         cli.enterCmd("new key")
 
 
-def testReqCred(tylerCLI, byuCLI):
+def testReqCred(nodesCli, tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
     addNewKey(tylerCLI, byuCLI)
 
@@ -202,7 +203,11 @@ def testReqCred(tylerCLI, byuCLI):
     issuerIdentifier = byuCLI.activeSigner.verstr
     tylerCLI.enterCmd("request credential {} version {} from {}"
                       .format(credDefName, credDefVersion, issuerIdentifier))
-    assert "Credential request is: {}".format("<need to put expected value>") == tylerCLI.lastCmdOutput
+
+    def chk():
+        assert "Credential request is: {}".format("<need to put expected value>") \
+               == tylerCLI.lastCmdOutput
+    tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
 @pytest.fixture(scope="module")
