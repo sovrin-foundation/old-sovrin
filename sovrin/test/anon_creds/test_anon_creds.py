@@ -27,7 +27,7 @@ setupLogging(DISPLAY_LOG_LEVEL,
              Console.Wordage.mute)
 logger = getlogger("test_anon_creds")
 
-from anoncreds.protocol.attribute_repo import AttributeRepo
+from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
 from anoncreds.protocol.proof import Proof
 
 from plenum.common.txn import DATA
@@ -96,7 +96,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     issuerId = BYU.name
     proverId = proverSigner.identifier
     # Issuer's attribute repository
-    attrRepo = AttributeRepo()
+    attrRepo = InMemoryAttributeRepo()
     attrRepo.attributes = {proverId: attributes}
     issuer.attributeRepo = attrRepo
     name1 = "Qualifications"

@@ -76,6 +76,10 @@ def philPubKey(philCLI):
     return newKeyPair(philCLI)
 
 
+def testPhilCreatesNewKeypair(philPubKey):
+    pass
+
+
 @pytest.fixture(scope="module")
 def bookStoreKey(bookStoreCLI):
     return newKeyPair(bookStoreCLI)
@@ -108,7 +112,6 @@ def createUser(nym, sponsor, cli):
 
 def testSteward(steward):
     pass
-
 
 def testPhilCreated(trusteeCreated):
     pass

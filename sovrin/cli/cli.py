@@ -40,14 +40,14 @@ class SovrinCli(PlenumCli):
 
     NodeClass = Node
     ClientClass = Client
-    _genesisTransactions = None
+    _genesisTransactions = []
 
     def __init__(self, *args, **kwargs):
         self.aliases = {}         # type: Dict[str, Signer]
         self.sponsors = set()
         self.users = set()
         super().__init__(*args, **kwargs)
-        self.loadGenesisTxns()
+        # self.loadGenesisTxns()
 
     def initializeGrammar(self):
         self.clientGrams = getClientGrams() + getNewClientGrams()
@@ -87,19 +87,20 @@ class SovrinCli(PlenumCli):
 
         super().initializeGrammarCompleter()
 
-    def loadGenesisTxns(self):
-        # TODO: Load from conf dir when its ready
-        from sovrin.cli.genesisTxns import GENESIS_TRANSACTIONS
-        self._genesisTransactions = GENESIS_TRANSACTIONS
+    # def loadGenesisTxns(self):
+    #     # TODO: Load from conf dir when its ready
+    #     from sovrin.cli.genesisTxns import GENESIS_TRANSACTIONS
+    #     self._genesisTransactions = GENESIS_TRANSACTIONS
 
     @property
     def genesisTransactions(self):
-        if not self._genesisTransactions:
-            self.loadGenesisTxns()
+        # if not self._genesisTransactions:
+        #     self.loadGenesisTxns()
         return self._genesisTransactions
 
     def reset(self):
-        self.loadGenesisTxns()
+        self._genesisTransactions = []
+        # self.loadGenesisTxns()
 
     def newNode(self, nodeName: str):
         nodesAdded = super().newNode(nodeName)
@@ -112,23 +113,26 @@ class SovrinCli(PlenumCli):
                 node.addGenesisTxns(genTxns)
         return nodesAdded
 
-    def newClient(self, clientName, seed=None, identifier=None, signer=None):
-        if clientName == "steward":
-            for txn in self._genesisTransactions:
-                if txn[TARGET_NYM] == identifier and txn[ROLE] == STEWARD:
-                    self.print("Steward activated", Token.BoldBlue)
-                    # Only one steward is supported for now
-                    if not signer:
-                        signer = SimpleSigner(seed=STEWARD_SEED)
-                    return super().newClient(clientName, signer=signer)
-            else:
-                self.print("No steward found with identifier {}".
-                           format(identifier), Token.Error)
-        elif clientName in self.aliases:
-            return super().newClient(clientName, signer=self.aliases[clientName])
-        else:
-            self.print("{} must be first be added by a sponsor or steward".
-                       format(clientName), Token.Error)
+    def newClient(self, clientName, seed=None, identifier=None, signer=None,
+                  wallet=None):
+        super().newClient(clientName, seed=seed, identifier=identifier,
+                          signer=signer, wallet=wallet)
+        # if clientName == "steward":
+        #     for txn in self._genesisTransactions:
+        #         if txn[TARGET_NYM] == identifier and txn[ROLE] == STEWARD:
+        #             self.print("Steward activated", Token.BoldBlue)
+        #             # Only one steward is supported for now
+        #             return super().newClient(clientName,
+        #                                      seed=STEWARD_SEED,
+        #                                      signer=signer)
+        #     else:
+        #         self.print("No steward found with identifier {}".
+        #                    format(identifier), Token.Error)
+        # elif clientName in self.aliases:
+        #     return super().newClient(clientName, signer=self.aliases[clientName])
+        # else:
+        #     self.print("{} must be first be added by a sponsor or steward".
+        #                format(clientName), Token.Error)
 
     def _clientCommand(self, matchedVars):
         if matchedVars.get('client') == 'client':
