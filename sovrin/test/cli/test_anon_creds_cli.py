@@ -1,16 +1,12 @@
-import os
-
 import pytest
 
 from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM
-from plenum.common.util import firstValue
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER, ROLE
-from sovrin.test.helper import createNym
 
 """
 Test Plan:
@@ -50,51 +46,40 @@ objects from one cli to another directly.
 """
 
 
-# TODO Code duplication in looper fixtures.
-# def newLooper():
-#     with Looper(debug=False) as l:
-#         yield l
+@pytest.yield_fixture(scope="module")
+def poolCLI(nodeRegsForCLI, tdir):
+    with Looper(debug=False) as looper:
+        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="pool")
 
 
 @pytest.yield_fixture(scope="module")
-def poolLooper():
-    with Looper(debug=False) as l:
-        yield l
+def byuCLI(nodeRegsForCLI, tdir):
+    with Looper(debug=False) as looper:
+        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="byu")
 
 
 @pytest.yield_fixture(scope="module")
-def trusteeLooper():
-    with Looper(debug=False) as l:
-        yield l
+def philCLI(nodeRegsForCLI, tdir):
+    with Looper(debug=False) as looper:
+        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="phil")
 
 
 @pytest.yield_fixture(scope="module")
-def philLooper():
-    with Looper(debug=False) as l:
-        yield l
+def trusteeCLI(nodeRegsForCLI, tdir):
+    with Looper(debug=False) as looper:
+        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="trustee")
 
 
 @pytest.yield_fixture(scope="module")
-def byuLooper():
-    with Looper(debug=False) as l:
-        yield l
+def tylerCLI(nodeRegsForCLI, tdir):
+    with Looper(debug=False) as looper:
+        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="tyler")
 
 
 @pytest.yield_fixture(scope="module")
-def tylerLooper():
-    with Looper(debug=False) as l:
-        yield l
-
-
-@pytest.yield_fixture(scope="module")
-def bookStoreLooper():
-    with Looper(debug=False) as l:
-        yield l
-
-
-@pytest.fixture(scope="module")
-def poolCLI(nodeRegsForCLI, poolLooper, tdir):
-    return newCLI(nodeRegsForCLI, poolLooper, tdir, subDirectory="pool")
+def bookStoreCLI(nodeRegsForCLI, tdir):
+    with Looper(debug=False) as looper:
+        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="bookStore")
 
 
 @pytest.fixture(scope="module")
@@ -106,31 +91,6 @@ def poolNodesCreated(poolCLI, nodeNames):
 # TODO This test seems to be failing intermittently.
 def testNodesCreatedOnPoolCLI(poolNodesCreated):
     pass
-
-
-@pytest.fixture(scope="module")
-def byuCLI(nodeRegsForCLI, byuLooper, tdir):
-    return newCLI(nodeRegsForCLI, byuLooper, tdir, subDirectory="byu")
-
-
-@pytest.fixture(scope="module")
-def philCLI(nodeRegsForCLI, philLooper, tdir):
-    return newCLI(nodeRegsForCLI, philLooper, os.path.join(tdir, "phil"))
-
-
-@pytest.fixture(scope="module")
-def trusteeCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, os.path.join(tdir, "trustee"))
-
-
-@pytest.fixture(scope="module")
-def tylerCLI(nodeRegsForCLI, tylerLooper, tdir):
-    return newCLI(nodeRegsForCLI, tylerLooper, tdir, subDirectory="tyler")
-
-
-@pytest.fixture(scope="module")
-def bookStoreCLI(nodeRegsForCLI, bookStoreLooper, tdir):
-    return newCLI(nodeRegsForCLI, bookStoreLooper, tdir, subDirectory="bookStore")
 
 
 @pytest.fixture(scope="module")
