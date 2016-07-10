@@ -277,6 +277,22 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self._getClient())
 
+    @staticmethod
+    def _buildCredDef(matchedVars):
+        """
+        Helper function to build CredentialDefinition function from given values
+        """
+        name = matchedVars.get('name')
+        version = matchedVars.get('version')
+        # TODO: do we need to use type anywhere?
+        # type = matchedVars.get('type')
+        ip = matchedVars.get('ip')
+        port = matchedVars.get('port')
+        keys = matchedVars.get('keys')
+        attributes = [s.strip() for s in keys.split(",")]
+        return CredentialDefinition(attrNames=attributes, name=name,
+                                    version=version, ip=ip, port=port)
+
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
 
@@ -318,20 +334,6 @@ class SovrinCli(PlenumCli):
         u = credDef.PK
         self.print("Credential request is: {}", format(u))
         # TODO: Handling sending of this command to real issuer (based on ip and port) is pending
-
-    # helper function to build CredentialDefinition function from given values
-    def _buildCredDef(self, matchedVars):
-        name = matchedVars.get('name')
-        version = matchedVars.get('version')
-        # TODO: do we need to use type anywhere?
-        # type = matchedVars.get('type')
-        ip = matchedVars.get('ip')
-        port = matchedVars.get('port')
-        keys = ast.literal_eval(matchedVars.get('keys'))
-        attributes = ast.literal_eval(keys.get('attributes'))
-
-        return CredentialDefinition(attrNames=list(attributes.keys()), name=name,
-                                    version=version, ip=ip, port=port)
 
     def _initAttrRepo(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
@@ -385,14 +387,14 @@ class SovrinCli(PlenumCli):
 
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
-            name = matchedVars.get('name')
-            version = matchedVars.get('version')
-            type = matchedVars.get('type')
-            ip = matchedVars.get('ip')
-            port = matchedVars.get('port')
-            keys = ast.literal_eval(matchedVars.get('keys'))
-            self.print("passed values are {}, {}, {}, {}, {}, {}".
-                       format(name, version, type, ip, port, keys))
+            # name = matchedVars.get('name')
+            # version = matchedVars.get('version')
+            # type = matchedVars.get('type')
+            # ip = matchedVars.get('ip')
+            # port = matchedVars.get('port')
+            # keys = matchedVars.get('keys')
+            # self.print("passed values are {}, {}, {}, {}, {}, {}".
+            #            format(name, version, type, ip, port, keys))
             self._addCredDef(matchedVars)
             return True
 
