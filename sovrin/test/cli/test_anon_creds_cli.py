@@ -2,8 +2,10 @@ import os
 
 import pytest
 
-from plenum.test.cli.conftest import nodeRegsForCLI, looper, createAllNodes
-from plenum.test.cli.helper import newKeyPair, checkCmdValid
+from plenum.common.looper import Looper
+from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
+from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
+    assertAllNodesCreated
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER
 from sovrin.test.cli.helper import sendNym
@@ -46,14 +48,30 @@ objects from one cli to another directly.
 """
 
 
+@pytest.yield_fixture(scope="module")
+def looper():
+    with Looper(debug=False) as l:
+        yield l
+
+
 @pytest.fixture(scope="module")
 def poolCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="pool")
+    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="pool")
+
+
+@pytest.fixture(scope="module")
+def poolNodesCreated(poolCLI, nodeNames):
+    createAllNodes(poolCLI)
+    assertAllNodesCreated(poolCLI, nodeNames)
+
+
+def testNodesCreatedOnPoolCLI(poolNodesCreated):
+    pass
 
 
 @pytest.fixture(scope="module")
 def byuCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="byu")
+    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="byu")
 
 
 @pytest.fixture(scope="module")
@@ -63,12 +81,12 @@ def philCLI(nodeRegsForCLI, looper, tdir):
 
 @pytest.fixture(scope="module")
 def tylerCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="tyler")
+    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="tyler")
 
 
 @pytest.fixture(scope="module")
 def bookStoreCLI(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir, subdirectory="bookStore")
+    return newCLI(nodeRegsForCLI, looper, tdir, subDirectory="bookStore")
 
 
 @pytest.fixture(scope="module")
@@ -120,8 +138,9 @@ def testPhilCreated(trusteeCreated):
     pass
 
 
-def testReady(ready):
-    pass
+# This is using plenum fixtures.
+# def testReady(ready):
+#     pass
 
 
 @pytest.fixture(scope="module")
