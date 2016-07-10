@@ -90,12 +90,10 @@ def bookStoreCLI(nodeRegsForCLI, tdir):
 
 
 @pytest.fixture(scope="module")
-def poolNodesCreated(poolCLI, nodeNames, philCreated):
+def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
     createAllNodes(poolCLI)
     assertAllNodesCreated(poolCLI, nodeNames)
     checkAllNodesStarted(poolCLI, *nodeNames)
-    poolCLI.looper.run(eventually(checkAllNodesUp, poolCLI, retryWait=1,
-                                  timeout=20))
 
 
 @pytest.fixture(scope="module")
@@ -130,7 +128,6 @@ def bookStorePubKey(bookStoreCLI):
 
 @pytest.fixture(scope="module")
 def philCreated(poolCLI, philPubKey):
-    poolCLI.looper.runFor(1)
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
     assert "Genesis transaction added." in poolCLI.lastCmdOutput
@@ -165,9 +162,10 @@ def tylerCreated(tylerPubKey, byuCreated, byuCLI):
 
 @pytest.fixture(scope="module")
 def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
-    for node in poolCLI.nodes.values():
-        for cli in [philCLI, bookStoreCLI, byuCLI, tylerCLI]:
-            node.whitelistClient(cli.defaultClient.name)
+    # for node in poolCLI.nodes.values():
+    #     for cli in [philCLI, bookStoreCLI, byuCLI, tylerCLI]:
+    #         node.whitelistClient(cli.defaultClient.name)
+    pass
 
 
 @pytest.fixture(scope="module")
@@ -217,6 +215,11 @@ def testPhilCreatesNewKeypair(philPubKey):
 
 
 def testPhilCreated(philCreated):
+    pass
+
+
+def testBYUCreated(byuCreated, philCLI):
+    philCLI.looper.runFor(5)
     pass
 
 
