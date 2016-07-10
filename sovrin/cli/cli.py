@@ -279,7 +279,7 @@ class SovrinCli(PlenumCli):
         cred_name = matchedVars.get('name')
         cred_version = matchedVars.get('version')
 
-        self._getCredDefAndExecuteCallback(dest, self.defaultClient.defaultIdentifier,
+        self._getCredDefAndExecuteCallback(dest, self.activeSigner.verstr,
                                            cred_name, cred_version,
                                            self._sendCredReqToIssuer)
 
@@ -430,10 +430,33 @@ class SovrinCli(PlenumCli):
         self.print("Credential is {}", format(cred))
         # TODO: For real scenario, do we need to send this credential back or it will be out of band?
 
-
-    def _setGenesisAction(self, matchedVars):
+    def _addGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
-            raise NotImplementedError
+            nym = matchedVars.get('dest_id')
+            role = self._getRole(matchedVars)
+            txn = {
+                TXN_TYPE: NYM,
+                TARGET_NYM: nym,
+                TXN_ID: '00000000000000000000000000000000'
+                        '00000000000000000000000000000000',
+                ROLE: STEWARD
+            }
+            # TODO need to compute TXN_ID the way it would be if it were really submitted
+            self._genesisTransactions.append(txn)
+        self.print('Genesis transaction added.')
+
+    def getActionList(self):
+        actions = super().getActionList()
+        # Add more actions to base class for sovrin CLI
+        actions.extend([self._sendNymAction,
+                        self._sendGetNymAction,
+                        self._sendAttribAction,
+                        self._sendCredDefAction,
+                        self._reqCredAction,
+                        self._listCredAction,
+                        self._sendProofAction,
+                        self._addGenesisAction])
+        return actions
 
     @staticmethod
     def bootstrapClientKey(client, node):
