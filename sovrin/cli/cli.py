@@ -240,9 +240,10 @@ class SovrinCli(PlenumCli):
             printStr = printStr + " for " + other_client_name
         self.print(printStr, Token.BoldBlue)
 
+        client = self._getClient()
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self._getClient(), self.addAlias,
-                                    self._getClient(), other_client_name,
+                                    req.reqId, client, self.addAlias,
+                                    client, other_client_name,
                                     self.activeSigner)
         return True
 
@@ -293,7 +294,6 @@ class SovrinCli(PlenumCli):
 
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
-
         dest = matchedVars.get('issuer_identifier')
         cred_name = matchedVars.get('name')
         cred_version = matchedVars.get('version')
@@ -302,7 +302,8 @@ class SovrinCli(PlenumCli):
                                            cred_name, cred_version,
                                            self._sendCredReqToIssuer)
 
-    def _getCredDefAndExecuteCallback(self, dest, proverId, cred_name, cred_version, clbk, *args):
+    def _getCredDefAndExecuteCallback(self, dest, proverId, cred_name,
+                                      cred_version, clbk, *args):
         op = {
             TARGET_NYM: dest,
             TXN_TYPE: GET_CRED_DEF,
@@ -469,7 +470,7 @@ class SovrinCli(PlenumCli):
     def bootstrapClientKey(client, node):
         pass
 
-    def ensureReqCompleted(self, reqId, client, clbk, *args):
+    def ensureReqCompleted(self, reqId, client, clbk=None, *args):
         reply, err = client.replyIfConsensus(reqId)
         if reply is None:
             self.looper.loop.call_later(.003, self.ensureReqCompleted,
