@@ -4,7 +4,7 @@ from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
-    assertAllNodesCreated
+    assertAllNodesCreated, checkAllNodesStarted, checkAllNodesUp
 from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER, ROLE
@@ -47,6 +47,11 @@ objects from one cli to another directly.
 """
 
 
+def addNewKey(*clis):
+    for cli in clis:
+        cli.enterCmd("new key")
+
+
 @pytest.yield_fixture(scope="module")
 def poolCLI(nodeRegsForCLI, tdir):
     with Looper(debug=False) as looper:
@@ -87,11 +92,8 @@ def bookStoreCLI(nodeRegsForCLI, tdir):
 def poolNodesCreated(poolCLI, nodeNames):
     createAllNodes(poolCLI)
     assertAllNodesCreated(poolCLI, nodeNames)
-
-
-# TODO This test seems to be failing intermittently.
-def testNodesCreatedOnPoolCLI(poolNodesCreated):
-    pass
+    checkAllNodesStarted(poolCLI, *nodeNames)
+    poolCLI.looper.run(eventually(checkAllNodesUp, poolCLI, retryWait=1, timeout=20))
 
 
 @pytest.fixture(scope="module")
@@ -102,10 +104,6 @@ def philPubKey(philCLI):
 @pytest.fixture(scope="module")
 def trusteePubKey(trusteeCLI):
     return newKeyPair(trusteeCLI)
-
-
-def testPhilCreatesNewKeypair(philPubKey):
-    pass
 
 
 @pytest.fixture(scope="module")
@@ -130,13 +128,10 @@ def bookStorePubKey(bookStoreCLI):
 
 @pytest.fixture(scope="module")
 def philCreated(poolCLI, philPubKey):
+    poolCLI.looper.runFor(1)
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
     assert "Genesis transaction added." in poolCLI.lastCmdOutput
-
-
-def testPhilCreated(philCreated):
-    pass
 
 
 @pytest.fixture(scope="module")
@@ -180,6 +175,39 @@ def byuAddsCredDef(byuCLI):  # , byuCreated
     checkCmdValid(byuCLI, cmd)
 
 
+@pytest.fixture(scope="module")
+def attrRepoInitialized(byuCLI):
+    addNewKey(byuCLI)
+    assert byuCLI.activeClient.attributeRepo is None
+    byuCLI.enterCmd("initialize mock attribute repo")
+    assert byuCLI.lastCmdOutput == "attribute repo initialized"
+    assert byuCLI.activeClient.attributeRepo is not None
+    return byuCLI
+
+
+@pytest.fixture(scope="module")
+def attrAddedToRepo(attrRepoInitialized):
+    byuCLI = attrRepoInitialized
+    proverId = "Tyler"
+    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
+    byuCLI.enterCmd("add attribute name=Tyler, age=17 for {}".format(proverId))
+    assert byuCLI.lastCmdOutput == "attribute added successfully"
+    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
+
+
+# TODO This test seems to be failing intermittently.
+def testNodesCreatedOnPoolCLI(poolNodesCreated):
+    pass
+
+
+def testPhilCreatesNewKeypair(philPubKey):
+    pass
+
+
+def testPhilCreated(philCreated):
+    pass
+
+
 def testBYUAddsCredDef(byuAddsCredDef):
     pass
 
@@ -189,12 +217,7 @@ def testAnonCredsCLI(byuCLI, setup, philCreated, bookStoreCreated, byuCreated,
     pass
 
 
-def addNewKey(*clis):
-    for cli in clis:
-        cli.enterCmd("new key")
-
-
-def testReqCred(nodesCli, tylerCLI, byuCLI):
+def testReqCred(poolNodesCreated, tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
     addNewKey(tylerCLI, byuCLI)
 
@@ -210,28 +233,8 @@ def testReqCred(nodesCli, tylerCLI, byuCLI):
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
-@pytest.fixture(scope="module")
-def attrRepoInitialized(byuCLI):
-    addNewKey(byuCLI)
-    assert byuCLI.activeClient.attributeRepo is None
-    byuCLI.enterCmd("initialize mock attribute repo")
-    assert byuCLI.lastCmdOutput == "attribute repo initialized"
-    assert byuCLI.activeClient.attributeRepo is not None
-    return byuCLI
-
-
 def testInitAttrRepo(attrRepoInitialized):
     pass
-
-
-@pytest.fixture(scope="module")
-def attrAddedToRepo(attrRepoInitialized):
-    byuCLI = attrRepoInitialized
-    proverId = "Tyler"
-    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
-    byuCLI.enterCmd("add attribute name=Tyler, age=17 for {}".format(proverId))
-    assert byuCLI.lastCmdOutput == "attribute added successfully"
-    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
 
 def testAddAttrToRepo(attrAddedToRepo):

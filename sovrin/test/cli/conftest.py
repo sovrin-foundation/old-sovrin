@@ -1,10 +1,13 @@
 import pytest
 
 import plenum
+from plenum.test.eventually import eventually
+
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
-from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted
+from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
+    checkAllNodesUp
 from plenum.test.cli.conftest import nodeRegsForCLI, nodeNames
 
 
@@ -20,11 +23,13 @@ def looper():
         yield l
 
 
+# TODO: Probably need to remove
 @pytest.fixture("module")
 def nodesCli(nodeRegsForCLI, looper, tdir, nodeNames):
     cli = newCLI(nodeRegsForCLI, looper, tdir)
     cli.enterCmd("new node all")
     checkAllNodesStarted(cli, *nodeNames)
+    cli.looper.run(eventually(checkAllNodesUp, cli, retryWait=1, timeout=20))
     return cli
 
 
