@@ -146,37 +146,26 @@ def tylerPubKey(tylerCLI):
 
 
 @pytest.fixture(scope="module")
+def bookStorePubKey(bookStoreCLI):
+    return newKeyPair(bookStoreCLI, alias='BookStore')
+
+
+@pytest.fixture(scope="module")
 def philCreated(poolCLI, philPubKey):
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
     assert "Genesis transaction added." in poolCLI.lastCmdOutput
 
 
-def createSponsor(nym, steward, cli):
-    createNym(cli.looper, nym, steward, firstValue(steward.signers), SPONSOR)
-
-
-# This method exists for debugging purposes.
-def createUser(nym, sponsor, cli):
-    createNym(cli.looper, nym, sponsor, sponsor.signers[sponsor.name], USER)
-
-
-# def testSteward(steward):
-#     pass
-
-
 def testPhilCreated(philCreated):
     pass
 
 
-# This is using plenum fixtures.
-# def testReady(ready):
-#     pass
-
-
 @pytest.fixture(scope="module")
-def bookStoreCreated(bookStorePubKey, stewardCreated, poolCLI):
-    createSponsor(bookStorePubKey, stewardCreated, poolCLI)
+def bookStoreCreated(bookStorePubKey, byuCreated, byuCLI):
+    """Is this bookStore sponsored by BYU?"""
+    byuCLI.enterCmd("send NYM {dest}={tylerPubKey} {role}={user}".format(
+        dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
 
 
 @pytest.fixture(scope="module")
@@ -185,14 +174,14 @@ def byuCreated(byuPubKey, philCreated, philCLI, poolNodesCreated):
         dest=TARGET_NYM, byuPubKey=byuPubKey, role=ROLE, sponsor=SPONSOR))
 
 
-def testBYUCreated(byuCreated):
-    pass
-
-
 @pytest.fixture(scope="module")
 def tylerCreated(tylerPubKey, byuCreated, byuCLI):
     byuCLI.enterCmd("send NYM {dest}={tylerPubKey} {role}={user}".format(
         dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
+
+
+def testTylerCretaed(tylerCreated):
+    pass
 
 
 @pytest.fixture(scope="module")
