@@ -87,7 +87,7 @@ class SovrinCli(PlenumCli):
         self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
-        self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transactions"])
+        self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
         self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
         self.completers["add_attrs"] = WordCompleter(["add", "attribute"])
 
@@ -319,7 +319,7 @@ class SovrinCli(PlenumCli):
                                     req.reqId, self.activeClient,
                                     clbk, dest, proverId, *args)
 
-    #  callback function which once gets reply for GET_CRED_DEF will
+    # callback function which once gets reply for GET_CRED_DEF will
     # send the proper command/msg to issuer
     def _sendCredReqToIssuer(self, reply, err, issuerId, proverId):
         credName = reply.result[NAME]
