@@ -449,7 +449,6 @@ class SovrinCli(PlenumCli):
             self.print('\n'.join(self.activeWallet.credNames))
             return True
 
-
     def _prepProofAction(self, matchedVars):
         if matchedVars.get('prep_proof') == 'prepare proof of':
             nonce = matchedVars.get('nonce')

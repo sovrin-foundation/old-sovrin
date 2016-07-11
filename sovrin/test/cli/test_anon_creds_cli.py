@@ -216,7 +216,7 @@ def byuAddsCredDef(byuCLI, byuCreated):
                    for txn in txns)
 
     byuCLI.looper.run(eventually(checkCredAdded, retryWait=1, timeout=15))
-    output = byuCLI.lastCmdOutput()
+    output = byuCLI.lastCmdOutput
     assert "credential definition is published" in output
     assert "Degree" in output
 
@@ -301,6 +301,7 @@ def testInitAttrRepo(attrRepoInitialized):
 
 def testAddAttrToRepo(attrAddedToRepo):
     pass
+
 
 def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
