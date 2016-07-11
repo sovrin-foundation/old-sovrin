@@ -241,6 +241,7 @@ def storedCred(tylerCLI):
     assert len(tylerCLI.activeWallet.credNames) == 0
     tylerCLI.enterCmd("store credential msccs as degree")
     assert len(tylerCLI.activeWallet.credNames) == 1
+    assert tylerCLI.lastCmdOutput == "Credential stored"
     return tylerCLI
 
 
@@ -313,7 +314,7 @@ def testGenCred(poolNodesCreated, byuCLI, U):
     assert False
 
 
-def testStoreCrd(storedCred):
+def testStoreCred(storedCred):
     pass
 
 
