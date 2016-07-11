@@ -34,7 +34,7 @@ REQ_CRED_REG_EX = \
     "\s+ (?P<name>[a-zA-Z0-9\-]+)" \
     "\s+ version \s+ (?P<version>[0-9\.]+)" \
     "\s+ from \s+ (?P<issuer_identifier>[A-Za-z0-9+=/]+)" \
-    "\s+ for (?P<prover_id>[a-zA-Z0-9\s]+)" \
+    "\s+ for \s+ (?P<prover_id>[a-zA-Z0-9]+)" \
     "\s*)"
 
 LIST_CREDS_REG_EX = "(\s* (?P<list_cred>list\s+CRED) \s*) "

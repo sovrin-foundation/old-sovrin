@@ -3,7 +3,6 @@ import re
 
 from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM, DATA, NAME, VERSION
-from plenum.common.util import getlogger
 from plenum.test.eventually import eventually
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
@@ -12,9 +11,6 @@ from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
 from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
-
-
-logger = getlogger()
 
 
 """
@@ -194,7 +190,7 @@ def byuConnected(byuCreated, byuCLI, poolNodesCreated, nodeNames):
     byuCLI.looper.run(eventually(checkClientConnected, byuCLI, nodeNames,
                                  byuCLI.activeClient.name, retryWait=1,
                                   timeout=5))
-    logger.debug("BYU connected")
+    byuCLI.logger.debug("BYU connected")
 
 
 @pytest.fixture(scope="module")
@@ -207,7 +203,7 @@ def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames):
     tylerCLI.looper.run(eventually(checkClientConnected, tylerCLI, nodeNames,
                                    tylerCLI.activeClient.name, retryWait=1,
                                   timeout=5))
-    logger.debug("Tyler connected")
+    tylerCLI.logger.debug("Tyler connected")
 
 
 #TODO: Remove
@@ -220,7 +216,15 @@ def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
 
 
 @pytest.fixture(scope="module")
-def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey):
+def credDefNameVersion():
+    credDefName = "Degree"
+    credDefVersion = "1.0"
+    return credDefName, credDefVersion
+
+
+@pytest.fixture(scope="module")
+def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey, credDefNameVersion):
+    credDefName, credDefVersion = credDefNameVersion
     # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
     cmd = ("send CRED_DEF name=Degree version=1.0 "
@@ -230,15 +234,44 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey):
 
     def checkCredAdded():
         txns = byuCLI.activeClient.getTxnsByType(CRED_DEF)
-        assert any(txn[NAME] == 'Degree' and
-                   txn[VERSION] == '1.0'
+        assert any(txn[NAME] == credDefName and
+                   txn[VERSION] == credDefVersion
                    for txn in txns)
 
     byuCLI.looper.run(eventually(checkCredAdded, retryWait=1, timeout=15))
     output = byuCLI.lastCmdOutput
     assert "credential definition is published" in output
-    assert "Degree" in output
+    assert credDefName in output
     return byuCLI.activeSigner.verstr
+
+
+@pytest.fixture(scope="module")
+def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
+                attrAddedToRepo, byuAddsCredDef, tylerConnected,
+                   credDefNameVersion):
+    credDefName, credDefVersion = credDefNameVersion
+    issuerIdentifier = byuAddsCredDef
+    proverId = tylerCLI.activeSigner.alias
+    tylerCLI.enterCmd("request credential {} version {} from {} for {}"
+                      .format(credDefName, credDefVersion, issuerIdentifier,
+                              proverId))
+
+    U = None
+    proofId = None
+    pat = re.compile("Proof id is ([a-f0-9\-]+) and U is ([0-9]+)")
+
+    def chk():
+        global proofId, U
+        out = "Credential request for {} for {} {} is".format(proverId,
+                                                              credDefName,
+                                                              credDefVersion)
+        assert tylerCLI.printeds[0]['msg'].startswith(out)
+
+    tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
+    m = pat.search(tylerCLI.printeds[0]['msg'])
+    if m:
+        proofId, U = m.groups()
+    return proofId, U
 
 
 @pytest.fixture(scope="module")
@@ -267,7 +300,6 @@ def storedCredAlias():
 
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias):
-    # addNewKey(tylerCLI)
     assert len(tylerCLI.activeWallet.credNames) == 0
     tylerCLI.enterCmd("store credential {} as degree".format(storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
@@ -322,29 +354,17 @@ def testAddAttrToRepo(attrAddedToRepo):
     pass
 
 
-def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
-                attrAddedToRepo, byuAddsCredDef, tylerConnected):
-    # # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
-    # addNewKey(tylerCLI, byuCLI)
+def testReqCred(tylerPreparedU):
+    pass
 
-    credDefName = "Degree"
-    credDefVersion = "1.0"
-    issuerIdentifier = byuAddsCredDef
+
+def testGenCred(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
+                credDefNameVersion):
+    credDefName, credDefVersion = credDefNameVersion
+    proofId, U = tylerPreparedU
     proverId = tylerCLI.activeSigner.alias
-    tylerCLI.enterCmd("request credential {} version {} from {} for {}"
-                      .format(credDefName, credDefVersion, issuerIdentifier,
-                              proverId))
-
-    def chk():
-        out = "Credential request for {} for {} {} is".format(proverId,
-                                                                   credDefName,
-                                                                   credDefVersion)
-        assert tylerCLI.printeds[0]['msg'].startswith(out)
-    tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
-
-
-def testGenCred(poolNodesCreated, byuCLI, U):
-    byuCLI.enterCmd("generate credential for {} with U {}".format(tylerPubKey, ))
+    byuCLI.enterCmd("generate credential for {} for {} version {} with {}"
+                    .format(proverId, credDefName, credDefVersion, U))
     assert False
 
 

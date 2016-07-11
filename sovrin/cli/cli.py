@@ -122,7 +122,8 @@ class SovrinCli(PlenumCli):
                         self._addAttrsToRepoAction,
                         self._storeCredAction,
                         self._genVerifNonceAction,
-                        self._prepProofAction
+                        self._prepProofAction,
+                        self._genCredAction
                         ])
         return actions
 
@@ -289,6 +290,8 @@ class SovrinCli(PlenumCli):
 
     def _addCredDef(self, matchedVars):
         credDef = self._buildCredDef(matchedVars)
+        self.activeClient.wallet.addCredDefSk(credDef.name, credDef.version,
+                                              credDef.serializedSK)
         op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
         req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         self.print("The following credential definition is published to the"
@@ -311,7 +314,10 @@ class SovrinCli(PlenumCli):
         keys = matchedVars.get('keys')
         attributes = [s.strip() for s in keys.split(",")]
         return CredentialDefinition(attrNames=attributes, name=name,
-                                    version=version, ip=ip, port=port)
+                                    version=version, ip=ip, port=port,
+                                    # TODO: Just for testing, Remove once done
+                                    p_prime=integer(157329491389375793912190594961134932804032426403110797476730107804356484516061051345332763141806005838436304922612495876180233509449197495032194146432047460167589034147716097417880503952139805241591622353828629383332869425029086898452227895418829799945650973848983901459733426212735979668835984691928193677469),
+                                    q_prime=integer(151323892648373196579515752826519683836764873607632072057591837216698622729557534035138587276594156320800768525825023728398410073692081011811496168877166664537052088207068061172594879398773872352920912390983199416927388688319207946493810449203702100559271439586753256728900713990097168484829574000438573295723))
 
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
@@ -346,18 +352,9 @@ class SovrinCli(PlenumCli):
     # send the proper command/msg to issuer
     def _sendCredReqToIssuer(self, reply, err, credName,
                                            credVersion, issuerId, proverId):
-        # data = reply[DATA]
-        # credName = reply[NAME]
-        # credVersion = reply[VERSION]
-        # issuerIp = reply[IP]
-        # issuerPort = reply[PORT]
-        # keys = reply[KEYS]
         credDef = self.activeClient.wallet.getCredDef(credName,
                                            credVersion, issuerId)
-
-        # credDef = CredentialDefinition(attrNames=keys, name=credName,
-        #                                version=credVersion, ip=issuerIp,
-        #                                port=issuerPort)
+        self.logger.debug("cred def is {}".format(credDef))
         keys = credDef[KEYS]
         N = self.strTointeger(base58decode(keys["N"]))
         S = self.strTointeger(base58decode(keys["S"]))
@@ -374,7 +371,6 @@ class SovrinCli(PlenumCli):
         self.print("Credential request for {} for {} {} is: Proof id is {} "
                    "and U is {}".format(proverId, credName, credVersion,
                                         proof.id, u))
-        # TODO: Handling sending of this command to real issuer (based on ip and port) is pending
 
     # TODO: Move it to util module
     @staticmethod
@@ -508,8 +504,17 @@ class SovrinCli(PlenumCli):
             proverId = matchedVars.get('prover_id')
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
-            uValue = matchedVars.get('u_value')
-
+            uValue = integer(matchedVars.get('u_value'))
+            credDef = None
+            pk = None
+            for txn in self.activeClient.getTxnsByType(CRED_DEF):
+                if txn[NAME] == credName and txn[VERSION] == credVersion:
+                    credDef = txn
+                    break
+            attributes = self.activeClient.attributeRepo.getAttributes(proverId).encoded()
+            sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
+            p, q = CredentialDefinition.getDeserializedSK(sk)
+            CredentialDefinition.generateCredential(uValue, attributes, pk, p, q)
             cred = self.activeClient.createCredential(proverId, credName, credVersion, uValue)
 
             self.print("Credential is {}", format(cred))
