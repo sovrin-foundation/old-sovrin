@@ -49,11 +49,11 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None,
                  wallet: Wallet = None):
-        if wallet:
-            self.wallet = wallet
-        else:
-            storage = WalletStorageFile.fromName(name, basedirpath)
-            self.wallet = Wallet(name, storage)
+        # if wallet:
+        #     self.wallet = wallet
+        # else:
+        #     storage = WalletStorageFile.fromName(name, basedirpath)
+        #     self.wallet = Wallet(name, storage)
         super().__init__(name,
                          nodeReg,
                          ha,
@@ -94,6 +94,13 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                          msgHandler=self.handlePeerMessage)
             self.peerStack.sign = self.sign
             self.peerInbox = deque()
+
+    def setupWallet(self, wallet=None):
+        if wallet:
+            self.wallet = wallet
+        else:
+            storage = WalletStorageFile.fromName(self.name, self.basedirpath)
+            self.wallet = Wallet(self.name, storage)
 
     def handlePeerMessage(self, msg):
         """
