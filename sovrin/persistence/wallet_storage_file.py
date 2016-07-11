@@ -18,10 +18,13 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         credFileName = "credentials"
         credDefKeys = "credential_definition_keys"
         dataDir = self.getDataLocation()
+
         self.attrStore = AttributeStoreFile(dataDir, attrsDirName)
         # type: AttributeStoreFile
+
         self.credDefStore = CredDefStoreFile(dataDir, credDefDirName)
         # type: CredDefStoreFile
+
         self.credStore = TextFileStore(dataDir, credFileName,
                                        storeContentHash=False)
         self.credDefKeyStore = TextFileStore(dataDir, credDefKeys,
@@ -52,6 +55,13 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
 
     def getCredential(self, name: str):
         return self.credStore.get(name)
+
+    @property
+    def credNames(self):
+        keys = []
+        for k, v in self.credStore.iterator():
+            keys.append(k)
+        return keys
 
     @staticmethod
     def credDefKeyStoreKey(name, version):

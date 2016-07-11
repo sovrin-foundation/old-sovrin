@@ -30,9 +30,11 @@ ADD_ATTRIB_REG_EX = \
 SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)\s*(?P<type_key>type=)\s*(?P<type>[A-Z0-9]+)\s*(?P<ip_key>ip=)\s*(?P<ip>[0-9.]+)\s+(?P<port_key>port=)\s*(?P<port>[0-9]+)\s+(?P<keys_key>keys=)\s*(?P<keys>[a-zA-Z-_,\s]+)\s*)"
 
 REQ_CRED_REG_EX = \
-    "(\s*(?P<req_cred>request\s+credential)\s+(?P<name>[a-zA-Z0-9\-]+)" \
-    "\s+version\s(?P<version>[0-9\.]+)" \
-    "\s+from\s+(?P<issuer_identifier>[A-Za-z0-9+=/]*)\s*)"
+    "(\s*(?P<req_cred>request\s+credential) \s+ (?P<name>[a-zA-Z0-9\-]+)" \
+    "\s+ version \s+ (?P<version>[0-9\.]+)" \
+    "\s+ from \s+ (?P<issuer_identifier>[A-Za-z0-9+=/]*)" \
+    "\s+ for (?P<prover_id>[a-zA-Z0-9\s]+)" \
+    "\s*)"
 
 LIST_CREDS_REG_EX = "(\s* (?P<list_cred>list\s+CRED) \s*) "
 
@@ -41,14 +43,15 @@ SEND_PROOF_REG_EX = \
     " (?P<dest>[a-fA-F0-9]+) \s*)"
 
 GEN_CRED_REG_EX = \
-    "(\s* (?P<gen_cred>generate \s+ credential) " \
-    "\s+ (?P<gen_cred>[a-zA-Z0-9\s]+) " \
+    "(\s* (?P<gen_cred>generate \s+ credential) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\s]+) " \
+    "\s+ for (?P<cred_name>[a-zA-Z0-9\s]+) \s+ (?P<cred_version>[a-zA-Z0-9\s]+)" \
+    "\s+ with \s+ (?P<u_value>[a-zA-Z0-9\s]+) " \
     "\s*)"
 
-SAVE_CRED_REG_EX = \
-    "(\s* (?P<save_cred>save \s+ CRED) " \
-    "\s+ as=\"\s*(?P<as>[a-zA-Z0-9\s]+)\"" \
-    "\s+ cred=\"\s*(?P<cred>[a-zA-Z0-9\s]+)\"" \
+STORE_CRED_REG_EX = \
+    "(\s* (?P<store_cred>store \s+ credential) " \
+    "\s+ (?P<cred>[a-zA-Z0-9]+)" \
+    "\s+ as (?P<alias>[a-zA-Z0-9-\s]+)" \
     "\s*)"
 
 INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribute \s+ repo)\s*)"
@@ -66,5 +69,7 @@ LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
 GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)
 SEND_PROOF_FORMATTED_REG_EX = getPipedRegEx(SEND_PROOF_REG_EX)
 ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_NYM_REG_EX)
+STORE_CRED_FORMATTED_REG_EX = getPipedRegEx(STORE_CRED_REG_EX)
 INIT_ATTR_REPO_FORMATTED_REG_EX = getPipedRegEx(INIT_ATTR_REPO_REG_EX)
 ADD_ATTRS_FORMATTED_REG_EX = ADD_ATTRS_REG_EX
+

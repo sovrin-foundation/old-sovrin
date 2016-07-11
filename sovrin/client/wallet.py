@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 from typing import Optional
 
 from plenum.client.wallet import Wallet as PWallet
@@ -16,8 +16,6 @@ class Wallet(PWallet):
 
     def __init__(self, name: str, storage: WalletStorage):
         PWallet.__init__(self, name, storage=storage)
-        # self.attributes = {}
-        # self.credDefs = {}
 
     def addAttribute(self,
                      name: str,
@@ -58,6 +56,13 @@ class Wallet(PWallet):
 
     def getCredDefSk(self, name: str, version: str):
         return self.storage.getCredDefSk(name, version)
+
+    def addCredential(self, name: str, data: Dict):
+        self.storage.addCredential(name, data)
+
+    @property
+    def credNames(self):
+        return self.storage.credNames
 
 
 # class UserWallet(Wallet):

@@ -235,6 +235,13 @@ def attrAddedToRepo(attrRepoInitialized):
     assert byuCLI.lastCmdOutput == "attribute added successfully"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
+@pytest.fixture(scope="module")
+def storedCred(tylerCLI):
+    addNewKey(tylerCLI)
+    assert len(tylerCLI.activeWallet.credNames) == 0
+    tylerCLI.enterCmd("store credential msccs as degree")
+    assert len(tylerCLI.activeWallet.credNames) == 1
+
 
 # TODO This test seems to be failing intermittently.
 def testNodesCreatedOnPoolCLI(poolNodesCreated):
@@ -289,6 +296,10 @@ def testReqCred(poolNodesCreated, tylerCLI, byuCLI):
 def testGenCred(poolNodesCreated, byuCLI, U):
     byuCLI.enterCmd("generate credential for {} with U {}".format(tylerPubKey, ))
     assert False
+
+
+def testStoreCrd(storedCred):
+    pass
 
 
 def testInitAttrRepo(attrRepoInitialized):

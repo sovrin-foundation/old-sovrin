@@ -18,9 +18,11 @@ from plenum.common.util import randomString
 
 from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
+from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, \
     NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getCredDefTxnData
+from sovrin.persistence.wallet_storage_file import WalletStorageFile
 from sovrin.server.node import Node
 
 """
@@ -66,7 +68,9 @@ class SovrinCli(PlenumCli):
             'list_cred',
             'send_proof',
             'add_genesis',
+            'req_cred',
             'gen_cred',
+            'store_cred',
             'init_attr_repo',
             'add_attrs'
         ]
@@ -85,6 +89,7 @@ class SovrinCli(PlenumCli):
         self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
         self.completers["req_cred"] = WordCompleter(["request", "credential"])
         self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
+        self.completers["store_cred"] = WordCompleter(["store", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
         self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
@@ -104,10 +109,15 @@ class SovrinCli(PlenumCli):
                         self._listCredAction,
                         self._sendProofAction,
                         self._addGenesisAction,
-                        self._initAttrRepo,
-                        self._addAttrsToRepo
+                        self._initAttrRepoAction,
+                        self._addAttrsToRepoAction,
+                        self._storeCredAction
                         ])
         return actions
+
+    def _buildWalletClass(self, nm):
+        storage = WalletStorageFile.fromName(nm, self.basedirpath)
+        return Wallet(nm, storage)
 
     # def loadGenesisTxns(self):
     #     # TODO: Load from conf dir when its ready
@@ -294,14 +304,15 @@ class SovrinCli(PlenumCli):
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
         dest = matchedVars.get('issuer_identifier')
-        cred_name = matchedVars.get('name')
-        cred_version = matchedVars.get('version')
+        credName = matchedVars.get('name')
+        credVersion = matchedVars.get('version')
+        proverId = matchedVars.get('prover_id')
 
         self._getCredDefAndExecuteCallback(dest, self.activeSigner.verstr,
-                                           cred_name, cred_version,
-                                           self._sendCredReqToIssuer)
+                                           credName, credVersion,
+                                           self._sendCredReqToIssuer, dest, proverId)
 
-    def _getCredDefAndExecuteCallback(self, dest, proverId, cred_name,
+    def _getCredDefAndExecuteCallback(self, dest, cred_name,
                                       cred_version, clbk, *args):
         op = {
             TARGET_NYM: dest,
@@ -317,7 +328,7 @@ class SovrinCli(PlenumCli):
 
         self.looper.loop.call_later(.003, self.ensureReqCompleted,
                                     req.reqId, self.activeClient,
-                                    clbk, dest, proverId, *args)
+                                    clbk, dest *args)
 
     # callback function which once gets reply for GET_CRED_DEF will
     # send the proper command/msg to issuer
@@ -330,16 +341,23 @@ class SovrinCli(PlenumCli):
 
         credDef = CredentialDefinition(attrNames=keys, name=credName, version=credVersion, ip=issuerIp, port=issuerPort)
         u = credDef.PK
-        self.print("Credential request is: {}", format(u))
+        self.print("Credential request for {} for {} {} is: {}", format(proverId, credName, credVersion, u))
         # TODO: Handling sending of this command to real issuer (based on ip and port) is pending
 
-    def _initAttrRepo(self, matchedVars):
+    def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
             self.activeClient.attributeRepo = InMemoryAttributeRepo()
             self.print("attribute repo initialized")
             return True
 
-    def _addAttrsToRepo(self, matchedVars):
+    def _storeCredAction(self, matchedVars):
+        if matchedVars.get('store_cred') == 'store credential':
+            cred = matchedVars.get('cred')
+            alias = matchedVars.get('alias')
+            # TODO: is the below way of storing cred in dict ok?
+            self.activeWallet.addCredential(alias, {"cred": cred})
+
+    def _addAttrsToRepoAction(self, matchedVars):
         if matchedVars.get('add_attrs') == 'add attribute':
             attrs = matchedVars.get('attrs')
             proverId = matchedVars.get('prover_id')
@@ -409,7 +427,8 @@ class SovrinCli(PlenumCli):
 
     def _listCredAction(self, matchedVars):
         if matchedVars.get('list_cred') == 'list CRED':
-            # TODO:LH Add method to list creds
+            self.print('\n'.join(self.activeWallet.credNames))
+
             return True
 
     def _sendProofAction(self, matchedVars):
@@ -424,32 +443,27 @@ class SovrinCli(PlenumCli):
     # This is required for demo for sure, we'll see if it will be required for real execution or not
     def _genCredAction(self, matchedVars):
         if matchedVars.get('gen_cred') == 'generate credential':
-            issuerId = self.activeClient.defaultIdentifier
-            name = matchedVars.get('name')
-            version = matchedVars.get('version')
-            u = matchedVars.get('u')
-            attr = matchedVars.get('attr')
-            saveas = matchedVars.get('saveas')
+            proverId = matchedVars.get('prover_id')
+            credName = matchedVars.get('cred_name')
+            credVersion = matchedVars.get('cred_version')
+            uValue = matchedVars.get('u_value')
 
-            self._getCredDefAndExecuteCallback(issuerId, self.activeClient.defaultIdentifier,
-                                               name, version, self._genCred, u, attr)
-            # TODO: This is responsible to creating/generating credential on issuer side
+            cred = self.activeClient.createCredential(proverId, credName, credVersion, uValue)
+
+            self.print("Credential is {}", format(cred))
+            # TODO: For real scenario, do we need to send this credential back or it will be out of band?
             return True
 
-    def _genCred(self, reply, err, issuerId, u, attr):
-        credName = reply.result[NAME]
-        credVersion = reply.result[VERSION]
-        issuerIp = reply.result[IP]
-        issuerPort = reply.result[PORT]
-        keys = reply.result[KEYS]
 
-        credDef = CredentialDefinition(attrNames=list(keys), name=credName, version=credVersion,
-                                       ip=issuerIp, port=issuerPort)
-        cred = CredentialDefinition.generateCredential(u, attr, credDef.PK,
-                                                       credDef.p_prime, credDef.q_prime)
-        self.print("Credential is {}", format(cred))
-        # TODO: For real scenario, do we need to send this credential back or it will be out of band?
-        return True
+    # def _genCred(self, reply, err, proverId, credName, credVersion, uValue):
+    #     credName = reply.result[NAME]
+    #     credVersion = reply.result[VERSION]
+    #
+    #     cred = self.activeClient.createCredential(proverId, credName, credVersion, uValue)
+    #
+    #     self.print("Credential is {}", format(cred))
+    #     # TODO: For real scenario, do we need to send this credential back or it will be out of band?
+    #     return True
 
     def _addGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
