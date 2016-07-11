@@ -1,4 +1,5 @@
 import pytest
+import re
 
 from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM, DATA, NAME, VERSION
@@ -52,6 +53,7 @@ objects from one cli to another directly.
 def addNewKey(*clis):
     for cli in clis:
         cli.enterCmd("new key")
+        assert 'Key created in wallet' in cli.lastCmdOutput
 
 
 def chkNymAddedOutput(cli, nym):
@@ -240,18 +242,21 @@ def attrAddedToRepo(attrRepoInitialized):
 
 
 @pytest.fixture(scope="module")
-def storedCred(tylerCLI):
-    addNewKey(tylerCLI)
-    assert len(tylerCLI.activeWallet.credNames) == 0
-    tylerCLI.enterCmd("store credential msccs as degree")
-    assert len(tylerCLI.activeWallet.credNames) == 1
-    assert tylerCLI.lastCmdOutput == "Credential stored"
-    return tylerCLI
+def storedCredAlias():
+    return 'msccs'
 
 
 @pytest.fixture(scope="module")
-def listedCred(storedCred):
-    tylerCLI = storedCred
+def storedCred(tylerCLI, storedCredAlias):
+    addNewKey(tylerCLI)
+    assert len(tylerCLI.activeWallet.credNames) == 0
+    tylerCLI.enterCmd("store credential {} as degree".format(storedCredAlias))
+    assert len(tylerCLI.activeWallet.credNames) == 1
+    assert tylerCLI.lastCmdOutput == "Credential stored"
+
+
+@pytest.fixture(scope="module")
+def listedCred(tylerCLI, storedCred):
     tylerCLI.enterCmd("list CRED")
     assert "Degree" in tylerCLI.lastCmdOutput
 
@@ -326,11 +331,30 @@ def testListCred(listedCred):
     pass
 
 
-def testGenVerifNonce(bookStoreCLI):
+@pytest.fixture(scope="module")
+def verifNonce(bookStoreCLI):
     addNewKey(bookStoreCLI)
     bookStoreCLI.enterCmd("generate verification nonce")
-    commonString = "Verification nonce is "
-    assert commonString in bookStoreCLI.lastCmdOutput
+    search = re.search("^Verification nonce is (.*)$",
+                       bookStoreCLI.lastCmdOutput,
+                       re.MULTILINE)
+    assert search
+    nonce = search.group(1)
+    assert nonce
+    return nonce
+
+
+def testGenVerifNonce(verifNonce):
+    pass
+
+
+def testPrepareProof(tylerCLI, storedCred, verifNonce, storedCredAlias):
+    """
+    prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
+    """
+    tylerCLI.enterCmd("prepare proof of {} using nonce {} for {}".
+                      format(storedCredAlias, verifNonce, revealeds))
+    assert "Proof is " in bookStoreCLI.lastCmdOutput
 
 
 # def testGenCred(byuCLI):
