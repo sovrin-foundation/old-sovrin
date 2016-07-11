@@ -4,7 +4,7 @@ from hashlib import sha256
 
 from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition
-from anoncreds.protocol.types import AttribsDef, AttribType
+from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -286,8 +286,9 @@ class SovrinCli(PlenumCli):
         credDef = self._buildCredDef(matchedVars)
         op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
         req, = self.activeClient.submit(op)
-        self.print("Adding cred def {}".
-                   format(credDef), Token.BoldBlue)
+        self.print("The following credential definition is published to the"
+                   " Sovrin distributed ledger  \n{}".
+                   format(credDef.get(serFmt=SerFmt.base58)), Token.BoldBlue)
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient)
 
