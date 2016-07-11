@@ -284,12 +284,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     "sponsor {}".format(ex))
         elif txn[ROLE] == STEWARD:
             try:
-                self.storage.addSteward(txn.get(TXN_ID), origin)
-            except (pyorient.PyOrientCommandException,
-                    pyorient.PyOrientORecordDuplicatedException) as ex:
+                self.storage.addSteward(txn.get(TXN_ID),
+                                        nym=txn.get(TARGET_NYM), frm=origin)
+            except pyorient.PyOrientCommandException as ex:
                 logger.error(
                     "An exception was raised while adding "
                     "steward {}".format(ex))
+            except pyorient.PyOrientORecordDuplicatedException:
+                logger.debug("The steward {} was already added to graph".format(
+                    txn.get(TARGET_NYM)))
         else:
             raise ValueError("Unknown role for nym, cannot add nym to graph")
 

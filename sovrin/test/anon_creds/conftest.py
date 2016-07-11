@@ -117,7 +117,7 @@ def credDef(attrNames):
 
 @pytest.fixture(scope="module")
 def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
-                            sponsorSigner, looper, tdir, nodeSet, credDef):
+                              sponsorSigner, looper, tdir, nodeSet, credDef):
     data = credDef.getSerializable()
 
     op = {
