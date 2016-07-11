@@ -42,4 +42,3 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     assert recvdCredDef[NAME] == definition[NAME]
     assert recvdCredDef[VERSION] == definition[VERSION]
     assert json.loads(recvdCredDef[KEYS]) == definition[KEYS]
-
