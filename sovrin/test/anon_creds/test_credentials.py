@@ -1,5 +1,6 @@
 import json
 
+from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
     KEYS
 from plenum.test.eventually import eventually
@@ -23,7 +24,7 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     user = genTestClient(nodeSet, signer=userSignerA, tmpdir=tdir)
     looper.add(user)
     looper.run(user.ensureConnectedToNodes())
-    definition = credDef.get()
+    definition = credDef.get(serFmt=SerFmt.base58)
     op = {
         TARGET_NYM: sponsorSigner.verstr,
         TXN_TYPE: GET_CRED_DEF,

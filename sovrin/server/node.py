@@ -22,7 +22,7 @@ from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
-    ROLE, STEWARD, USER, GET_ATTR, DISCLO, ORIGIN, DATA, GET_NYM, \
+    ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig, dateTimeEncoding
@@ -231,7 +231,7 @@ class Node(PlenumNode):
                 # creation transaction also
                 if addNymTxn.get(ROLE) == USER:
                     sponsorNymTxn = self.graphStorage.getAddNymTxn(
-                        addNymTxn.get(ORIGIN))
+                        addNymTxn.get(f.IDENTIFIER.nm))
                     txnIds = [sponsorNymTxn[TXN_ID], ] + txnIds
                 result = self.secondaryStorage.getReplies(
                     *txnIds, seqNo=data)
