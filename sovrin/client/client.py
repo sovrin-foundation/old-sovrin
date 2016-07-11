@@ -26,7 +26,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
-    DISCLO, NONCE, ORIGIN, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
+    DISCLO, NONCE, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
@@ -248,7 +248,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
 
                 elif result[TXN_TYPE] == CRED_DEF:
                     data = result.get(DATA)
-                    self.storage.addCredDef(frm=result[ORIGIN],
+                    self.storage.addCredDef(frm=result[f.IDENTIFIER.nm],
                                             txnId=result[TXN_ID],
                                             txnTime=result[TXN_TIME],
                                             name=data.get(NAME),
@@ -423,7 +423,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
     def doGetTxn(self, txnId, identifier=None):
         identifier = identifier if identifier else self.defaultIdentifier
         op = {
-            ORIGIN: identifier,
             TARGET_NYM: identifier,
             TXN_TYPE: GET_TXN,
             DATA: txnId
