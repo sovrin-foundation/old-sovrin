@@ -286,6 +286,11 @@ def testReqCred(poolNodesCreated, tylerCLI, byuCLI):
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
+def testGenCred(poolNodesCreated, byuCLI, U):
+    byuCLI.enterCmd("generate credential for {} with U {}".format(tylerPubKey, ))
+    assert False
+
+
 def testInitAttrRepo(attrRepoInitialized):
     pass
 

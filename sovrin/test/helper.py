@@ -333,6 +333,12 @@ class TestClient(Client, StackedTester):
 
     def onStopping(self, *args, **kwargs):
         self.storage.cleanupDataLocation()
+        # # TODO: find a better way to clear wallet
+        # try:
+        #     shutil.rmtree(self.wallet.storage.getDataLocation())
+        # except Exception as ex:
+        #     logger.debug("Exception while deleting {}'s wallet {}"
+        #                  .format(self, ex))
         super().onStopping(*args, **kwargs)
 
 
