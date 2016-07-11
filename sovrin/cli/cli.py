@@ -284,7 +284,7 @@ class SovrinCli(PlenumCli):
 
     def _addCredDef(self, matchedVars):
         credDef = self._buildCredDef(matchedVars)
-        op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
+        op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
         req, = self.activeClient.submit(op)
         self.print("The following credential definition is published to the"
                    " Sovrin distributed ledger  \n{}".

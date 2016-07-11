@@ -111,6 +111,10 @@ def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
     checkAllNodesStarted(poolCLI, *nodeNames)
 
 
+def testPoolNodesCreated(poolNodesCreated):
+    pass
+
+
 @pytest.fixture(scope="module")
 def philPubKey(philCLI):
     return newKeyPair(philCLI)
@@ -202,7 +206,8 @@ def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
 
 
 @pytest.fixture(scope="module")
-def byuAddsCredDef(byuCLI, byuCreated):
+def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey):
+    # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
     cmd = ("send CRED_DEF name=Degree version=1.0 "
            "type=JC1 ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
@@ -211,8 +216,8 @@ def byuAddsCredDef(byuCLI, byuCreated):
 
     def checkCredAdded():
         txns = byuCLI.activeClient.getTxnsByType(CRED_DEF)
-        assert any(txn[DATA][NAME] == 'Degree' and
-                   txn[DATA][VERSION] == '1.0'
+        assert any(txn[NAME] == 'Degree' and
+                   txn[VERSION] == '1.0'
                    for txn in txns)
 
     byuCLI.looper.run(eventually(checkCredAdded, retryWait=1, timeout=15))
