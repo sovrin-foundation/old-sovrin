@@ -237,11 +237,11 @@ class SovrinCli(PlenumCli):
             printStr = printStr + " for " + other_client_name
         self.print(printStr, Token.BoldBlue)
 
-        client = self.activeClient
+        def out(reply, error):
+            self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, client, self.addAlias,
-                                    client, other_client_name,
-                                    self.activeSigner)
+                                    req.reqId, self.activeClient, out)
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
@@ -362,7 +362,7 @@ class SovrinCli(PlenumCli):
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
             self._addNym(nym, role)
-            self.print("dest id is {}".format(nym))
+            # self.print("dest id is {}".format(nym))
             return True
 
     def _sendGetNymAction(self, matchedVars):
@@ -472,9 +472,9 @@ class SovrinCli(PlenumCli):
     def ensureReqCompleted(self, reqId, client, clbk=None, *args):
         reply, err = client.replyIfConsensus(reqId)
         if reply is None:
-            self.looper.loop.call_later(.003, self.ensureReqCompleted,
+            self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                         reqId, client, clbk, *args)
-        else:
+        elif clbk:
             clbk(reply, err, *args)
 
     def addAlias(self, reply, err, client, alias, signer):

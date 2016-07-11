@@ -272,7 +272,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             # Since only a steward can add a sponsor, check if the steward
             # is present. If not then add the steward
             if origin and not self.storage.hasSteward(origin):
-                # A better way is to oo a GET_NYM for the steward.
+                # A better way is to do a GET_NYM for the steward.
                 self.storage.addSteward(None, nym=origin)
             try:
                 self.storage.addSponsor(txn.get(TXN_ID), txn.get(TARGET_NYM),

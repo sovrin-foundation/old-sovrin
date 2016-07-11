@@ -5,7 +5,8 @@ from plenum.common.txn import TARGET_NYM, DATA, NAME, VERSION
 from plenum.test.eventually import eventually
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
-    assertAllNodesCreated, checkAllNodesStarted, checkAllNodesUp
+    assertAllNodesCreated, checkAllNodesStarted, checkAllNodesUp, \
+    checkClientConnected
 from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
@@ -51,6 +52,18 @@ objects from one cli to another directly.
 def addNewKey(*clis):
     for cli in clis:
         cli.enterCmd("new key")
+
+
+def chkNymAddedOutput(cli, nym):
+    assert cli.printeds[0]['msg'] == "Nym {} added".format(nym)
+
+
+def ensureNymAdded(cli, nym, role=USER):
+    cli.enterCmd("send NYM {dest}={nym} {ROLE}={role}".format(
+        dest=TARGET_NYM, nym=nym, ROLE=ROLE, role=role))
+    cli.looper.run(
+        eventually(chkNymAddedOutput, cli, nym, retryWait=1,
+                   timeout=10))
 
 
 @pytest.yield_fixture(scope="module")
@@ -133,6 +146,7 @@ def philCreated(poolCLI, philPubKey):
     assert "Genesis transaction added." in poolCLI.lastCmdOutput
 
 
+# TODO: Find a better name for `trustee`.
 @pytest.fixture(scope="module")
 def trusteeCreated(poolCLI, trusteePubKey):
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
@@ -141,25 +155,42 @@ def trusteeCreated(poolCLI, trusteePubKey):
 
 
 @pytest.fixture(scope="module")
-def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI):
-    trusteeCLI.enterCmd("send NYM {dest}={bookStorePubKey} {role}={user}".
-                        format(dest=TARGET_NYM,
-                               bookStorePubKey=bookStorePubKey,
-                               role=ROLE, user=USER))
+def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
+    philCLI.looper.run(eventually(checkClientConnected, philCLI, nodeNames,
+                                  philCLI.activeClient.name, retryWait=1,
+                                  timeout=5))
 
 
 @pytest.fixture(scope="module")
-def byuCreated(byuPubKey, philCreated, philCLI, poolNodesCreated):
-    philCLI.enterCmd("send NYM {dest}={byuPubKey} {role}={sponsor}".format(
-        dest=TARGET_NYM, byuPubKey=byuPubKey, role=ROLE, sponsor=SPONSOR))
+def trusteeConnected(trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
+    trusteeCLI.looper.run(eventually(checkClientConnected, trusteeCLI, nodeNames,
+                                     trusteeCLI.activeClient.name, retryWait=1,
+                                    timeout=5))
 
 
 @pytest.fixture(scope="module")
-def tylerCreated(tylerPubKey, byuCreated, byuCLI):
-    byuCLI.enterCmd("send NYM {dest}={tylerPubKey} {role}={user}".format(
-        dest=TARGET_NYM, tylerPubKey=tylerPubKey, role=ROLE, user=USER))
+def bookStoreCreated(bookStorePubKey, trusteeConnected, trusteeCLI):
+    ensureNymAdded(trusteeCLI, bookStorePubKey, USER)
 
 
+@pytest.fixture(scope="module")
+def byuCreated(byuPubKey, philConnected, philCLI):
+    ensureNymAdded(philCLI, byuPubKey, SPONSOR)
+
+
+@pytest.fixture(scope="module")
+def byuConnected(byuCreated, byuCLI, poolNodesCreated, nodeNames):
+    byuCLI.looper.run(eventually(checkClientConnected, byuCLI, nodeNames,
+                                 byuCLI.activeClient.name, retryWait=1,
+                                  timeout=5))
+
+
+@pytest.fixture(scope="module")
+def tylerCreated(tylerPubKey, byuConnected, byuCLI):
+    ensureNymAdded(byuCLI, tylerPubKey, USER)
+
+
+#TODO: Remove
 @pytest.fixture(scope="module")
 def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
     # for node in poolCLI.nodes.values():
@@ -218,8 +249,15 @@ def testPhilCreated(philCreated):
     pass
 
 
-def testBYUCreated(byuCreated, philCLI):
-    philCLI.looper.runFor(5)
+def testBYUCreated(byuCreated):
+    pass
+
+
+def testTylerCreated(tylerCreated):
+    pass
+
+
+def testBookStoreCreated(bookStoreCreated):
     pass
 
 
