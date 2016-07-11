@@ -1,10 +1,15 @@
 import ast
 from typing import Dict
+
+from charm.core.math.integer import integer
 from hashlib import sha256
 
 from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
-from anoncreds.protocol.credential_definition import CredentialDefinition
-from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt
+from anoncreds.protocol.credential_definition import CredentialDefinition, \
+    serialize, base58encode, base58decodedInt, base58decode
+from anoncreds.protocol.proof import Proof
+from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt, \
+    IssuerPublicKey
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -285,7 +290,7 @@ class SovrinCli(PlenumCli):
     def _addCredDef(self, matchedVars):
         credDef = self._buildCredDef(matchedVars)
         op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
-        req, = self.activeClient.submit(op)
+        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         self.print("The following credential definition is published to the"
                    " Sovrin distributed ledger  \n{}".
                    format(credDef.get(serFmt=SerFmt.base58)), Token.BoldBlue)
@@ -315,41 +320,70 @@ class SovrinCli(PlenumCli):
         credVersion = matchedVars.get('version')
         proverId = matchedVars.get('prover_id')
 
-        self._getCredDefAndExecuteCallback(dest, self.activeSigner.verstr,
-                                           credName, credVersion,
-                                           self._sendCredReqToIssuer, dest, proverId)
+        self._getCredDefAndExecuteCallback(dest, credName, credVersion,
+                                           self._sendCredReqToIssuer, credName,
+                                           credVersion, dest, proverId)
 
-    def _getCredDefAndExecuteCallback(self, dest, cred_name,
-                                      cred_version, clbk, *args):
+    def _getCredDefAndExecuteCallback(self, dest, credName,
+                                      credVersion, clbk, *args):
         op = {
             TARGET_NYM: dest,
             TXN_TYPE: GET_CRED_DEF,
             DATA: {
-                NAME: cred_name,
-                VERSION: cred_version
+                NAME: credName,
+                VERSION: credVersion
             }
         }
-        req, = self.activeClient.submit(op, identifier=dest)
+        req, = self.activeClient.submit(op)
         self.print("Getting cred def {} version {} for {}".
-                   format(cred_name, cred_version, dest), Token.BoldBlue)
+                   format(credName, credVersion, dest), Token.BoldBlue)
 
-        self.looper.loop.call_later(.003, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient,
-                                    clbk, dest *args)
+                                    clbk, *args)
 
     # callback function which once gets reply for GET_CRED_DEF will
     # send the proper command/msg to issuer
-    def _sendCredReqToIssuer(self, reply, err, issuerId, proverId):
-        credName = reply.result[NAME]
-        credVersion = reply.result[VERSION]
-        issuerIp = reply.result[IP]
-        issuerPort = reply.result[PORT]
-        keys = reply.result[KEYS]
+    def _sendCredReqToIssuer(self, reply, err, credName,
+                                           credVersion, issuerId, proverId):
+        # data = reply[DATA]
+        # credName = reply[NAME]
+        # credVersion = reply[VERSION]
+        # issuerIp = reply[IP]
+        # issuerPort = reply[PORT]
+        # keys = reply[KEYS]
+        credDef = self.activeClient.wallet.getCredDef(credName,
+                                           credVersion, issuerId)
 
-        credDef = CredentialDefinition(attrNames=keys, name=credName, version=credVersion, ip=issuerIp, port=issuerPort)
-        u = credDef.PK
-        self.print("Credential request for {} for {} {} is: {}", format(proverId, credName, credVersion, u))
+        # credDef = CredentialDefinition(attrNames=keys, name=credName,
+        #                                version=credVersion, ip=issuerIp,
+        #                                port=issuerPort)
+        keys = credDef[KEYS]
+        N = self.strTointeger(base58decode(keys["N"]))
+        S = self.strTointeger(base58decode(keys["S"]))
+        Z = self.strTointeger(base58decode(keys["Z"]))
+        R = {}
+        for k, v in keys["R"].items():
+            R[k] = self.strTointeger(base58decode(v))
+        pk = {
+            issuerId: IssuerPublicKey(N, R, S, Z)
+        }
+        proof = Proof(pk)
+        self.activeClient.proofs[proof.id] = proof
+        u = proof.U[issuerId]
+        self.print("Credential request for {} for {} {} is: Proof id is {} "
+                   "and U is {}".format(proverId, credName, credVersion,
+                                        proof.id, u))
         # TODO: Handling sending of this command to real issuer (based on ip and port) is pending
+
+    # TODO: Move it to util module
+    @staticmethod
+    def strTointeger(n):
+        if "mod" in n:
+            a, b = n.split("mod")
+            return integer(a.strip()) % integer(b.strip())
+        else:
+            return integer(n)
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':

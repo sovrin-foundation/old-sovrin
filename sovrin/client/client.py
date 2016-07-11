@@ -27,7 +27,7 @@ from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
 from anoncreds.protocol.issuer import Issuer
@@ -257,6 +257,24 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                             typ=data.get(TYPE),
                                             ip=data.get(IP),
                                             port=data.get(PORT))
+                elif result[TXN_TYPE] == GET_CRED_DEF:
+                    data = result.get(DATA)
+                    try:
+                        data = json.loads(data)
+                        keys = json.loads(data[KEYS])
+                    except Exception as ex:
+                        # Checking if data was converted to JSON, if it was then
+                        #  exception was raised while converting KEYS
+                        # TODO: Check fails if data was a dictionary.
+                        if isinstance(data, dict):
+                            logger.error(
+                                "Keys {} cannot be converted to JSON".format(data[KEYS]))
+                        else:
+                            logger.error("{} cannot be converted to JSON".format(data))
+                    else:
+                        self.wallet.addCredDef(data[NAME], data[VERSION],
+                                               result[TARGET_NYM], data[TYPE],
+                                               data[IP], data[PORT], keys)
 
                 if result[TXN_TYPE] in (NYM, ATTRIB, CRED_DEF):
                     self.storage.addToTransactionLog(reqId, result)

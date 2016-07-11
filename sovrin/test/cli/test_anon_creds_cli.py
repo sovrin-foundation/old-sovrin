@@ -3,6 +3,7 @@ import re
 
 from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM, DATA, NAME, VERSION
+from plenum.common.util import getlogger
 from plenum.test.eventually import eventually
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
@@ -11,6 +12,10 @@ from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
 from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
+
+
+logger = getlogger()
+
 
 """
 Test Plan:
@@ -189,11 +194,20 @@ def byuConnected(byuCreated, byuCLI, poolNodesCreated, nodeNames):
     byuCLI.looper.run(eventually(checkClientConnected, byuCLI, nodeNames,
                                  byuCLI.activeClient.name, retryWait=1,
                                   timeout=5))
+    logger.debug("BYU connected")
 
 
 @pytest.fixture(scope="module")
 def tylerCreated(tylerPubKey, byuConnected, byuCLI):
     ensureNymAdded(byuCLI, tylerPubKey, USER)
+
+
+@pytest.fixture(scope="module")
+def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames):
+    tylerCLI.looper.run(eventually(checkClientConnected, tylerCLI, nodeNames,
+                                   tylerCLI.activeClient.name, retryWait=1,
+                                  timeout=5))
+    logger.debug("Tyler connected")
 
 
 #TODO: Remove
@@ -224,11 +238,11 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey):
     output = byuCLI.lastCmdOutput
     assert "credential definition is published" in output
     assert "Degree" in output
+    return byuCLI.activeSigner.verstr
 
 
 @pytest.fixture(scope="module")
-def attrRepoInitialized(byuCLI):
-    addNewKey(byuCLI)
+def attrRepoInitialized(byuCLI, byuCreated):
     assert byuCLI.activeClient.attributeRepo is None
     byuCLI.enterCmd("initialize mock attribute repo")
     assert byuCLI.lastCmdOutput == "attribute repo initialized"
@@ -253,7 +267,7 @@ def storedCredAlias():
 
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias):
-    addNewKey(tylerCLI)
+    # addNewKey(tylerCLI)
     assert len(tylerCLI.activeWallet.credNames) == 0
     tylerCLI.enterCmd("store credential {} as degree".format(storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
@@ -308,22 +322,25 @@ def testAddAttrToRepo(attrAddedToRepo):
     pass
 
 
-def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI, attrAddedToRepo):
+def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
+                attrAddedToRepo, byuAddsCredDef, tylerConnected):
     # # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
     # addNewKey(tylerCLI, byuCLI)
 
-    credDefName ="Qualifications"
+    credDefName = "Degree"
     credDefVersion = "1.0"
-    issuerIdentifier = byuCLI.activeSigner.verstr
-    proverIdentifier = tylerCLI.activeSigner.alias
+    issuerIdentifier = byuAddsCredDef
+    proverId = tylerCLI.activeSigner.alias
     tylerCLI.enterCmd("request credential {} version {} from {} for {}"
                       .format(credDefName, credDefVersion, issuerIdentifier,
-                              proverIdentifier))
+                              proverId))
 
     def chk():
-        assert "Credential request is: {}".format("<need to put expected value>") \
-               == tylerCLI.lastCmdOutput
-    tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=5))
+        out = "Credential request for {} for {} {} is".format(proverId,
+                                                                   credDefName,
+                                                                   credDefVersion)
+        assert tylerCLI.printeds[0]['msg'].startswith(out)
+    tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
 
 
 def testGenCred(poolNodesCreated, byuCLI, U):
@@ -341,7 +358,7 @@ def testListCred(listedCred):
 
 @pytest.fixture(scope="module")
 def verifNonce(bookStoreCLI):
-    addNewKey(bookStoreCLI)
+    # addNewKey(bookStoreCLI)
     bookStoreCLI.enterCmd("generate verification nonce")
     search = re.search("^Verification nonce is (.*)$",
                        bookStoreCLI.lastCmdOutput,
@@ -360,6 +377,7 @@ def testPrepareProof(tylerCLI, storedCred, verifNonce, storedCredAlias):
     """
     prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
     """
+    revealeds = ("undergrad", )
     tylerCLI.enterCmd("prepare proof of {} using nonce {} for {}".
                       format(storedCredAlias, verifNonce, revealeds))
     assert "Proof is " in bookStoreCLI.lastCmdOutput

@@ -48,7 +48,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         self.credDefStore.addCredDef(name, version, dest, type, ip, port, keys)
 
     def getCredDef(self, name: str, version: str, dest: str = None):
-        return self.credDefStore.getCredDef(name, version)
+        return self.credDefStore.getCredDef(name, version, dest)
 
     def addCredential(self, name: str, data: Dict):
         self.credStore.put(key=name, value=json.dumps(data))

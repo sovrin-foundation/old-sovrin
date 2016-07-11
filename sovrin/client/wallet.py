@@ -51,6 +51,13 @@ class Wallet(PWallet):
     def attributes(self):
         return self.storage.attributes
 
+    def addCredDef(self, name: str, version: str, dest: str, typ: str, ip: str,
+                   port: int, keys: Dict):
+        self.storage.addCredDef(name, version, dest, typ, ip, port, keys)
+
+    def getCredDef(self, name: str, version: str, dest: str = None):
+        return self.storage.getCredDef(name, version, dest)
+
     def addCredDefSk(self, name: str, version: str, secretKey):
         self.storage.addCredDefSk(name, version, secretKey)
 

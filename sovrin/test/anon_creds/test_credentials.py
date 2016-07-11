@@ -43,3 +43,5 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     assert recvdCredDef[NAME] == definition[NAME]
     assert recvdCredDef[VERSION] == definition[VERSION]
     assert json.loads(recvdCredDef[KEYS]) == definition[KEYS]
+    # TODO: Check whether cred def is added to wallet and then compare cred def
+    # retrieved from wallet
