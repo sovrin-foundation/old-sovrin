@@ -321,6 +321,13 @@ def testListCred(listedCred):
     pass
 
 
+def testGenVerifNonce(bookStoreCLI):
+    addNewKey(bookStoreCLI)
+    bookStoreCLI.enterCmd("generate verification nonce")
+    commonString = "Verification nonce is "
+    assert commonString in bookStoreCLI.lastCmdOutput
+
+
 # def testGenCred(byuCLI):
 #     addNewKey([byuCLI])
 #     assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(byuCLI)

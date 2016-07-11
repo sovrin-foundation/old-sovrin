@@ -31,5 +31,9 @@ def test_gen_cred_reg_ex(grammar):
 def test_store_cred_reg_ex(grammar):
     checkIfMatched(grammar, "store credential actualcredential as tyler-degree")
 
+
 def test_list_cred_reg_ex(grammar):
     checkIfMatched(grammar, "list CRED")
+
+def test_gen_verif_nonce_reg_ex(grammar):
+    checkIfMatched(grammar, "generate verification nonce")

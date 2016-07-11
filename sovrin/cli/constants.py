@@ -58,6 +58,7 @@ INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribut
 
 ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9,+=/ ]+) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\-_]+) \s*)"
 
+GEN_VERIF_NONCE_REG_EX = "(\s*(?P<gen_verif_nonce>generate \s+ verification \s+ nonce)\s*)"
 
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
@@ -70,6 +71,7 @@ GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)
 SEND_PROOF_FORMATTED_REG_EX = getPipedRegEx(SEND_PROOF_REG_EX)
 ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_NYM_REG_EX)
 STORE_CRED_FORMATTED_REG_EX = getPipedRegEx(STORE_CRED_REG_EX)
+GEN_VERIF_NONCE_FORMATTED_REG_EX = getPipedRegEx(GEN_VERIF_NONCE_REG_EX)
 INIT_ATTR_REPO_FORMATTED_REG_EX = getPipedRegEx(INIT_ATTR_REPO_REG_EX)
 ADD_ATTRS_FORMATTED_REG_EX = ADD_ATTRS_REG_EX
 

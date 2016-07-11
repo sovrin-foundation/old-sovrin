@@ -71,6 +71,7 @@ class SovrinCli(PlenumCli):
             'req_cred',
             'gen_cred',
             'store_cred',
+            'gen_verif_nonce',
             'init_attr_repo',
             'add_attrs'
         ]
@@ -91,6 +92,7 @@ class SovrinCli(PlenumCli):
         self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
         self.completers["store_cred"] = WordCompleter(["store", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
+        self.completers["gen_verif_nonce"] = WordCompleter(["generate", "verification", "nonce"])
         self.completers["send_proof"] = WordCompleter(["send", "proof"])
         self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
         self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
@@ -111,7 +113,8 @@ class SovrinCli(PlenumCli):
                         self._addGenesisAction,
                         self._initAttrRepoAction,
                         self._addAttrsToRepoAction,
-                        self._storeCredAction
+                        self._storeCredAction,
+                        self._genVerifNonceAction
                         ])
         return actions
 
@@ -350,12 +353,25 @@ class SovrinCli(PlenumCli):
             self.print("attribute repo initialized")
             return True
 
+    def _genVerifNonceAction(self, matchedVars):
+        if matchedVars.get('gen_verif_nonce') == 'generate verification nonce':
+            # TODO: For now I am generating random interaction id, but we need to come back to us,
+            # assuming it will work, test cases will confirm it
+            interactionId = randomString(7)
+            nonce = self.activeClient.generateNonce(interactionId)
+            self.print("Verification nonce is {}".format(nonce))
+            return True
+
+
     def _storeCredAction(self, matchedVars):
         if matchedVars.get('store_cred') == 'store credential':
             cred = matchedVars.get('cred')
             alias = matchedVars.get('alias')
+            # TODO: What if alias is not given (we don't have issuer id and cred name here) ???
             # TODO: is the below way of storing cred in dict ok?
             self.activeWallet.addCredential(alias, {"cred": cred})
+            self.print("Credential stored")
+            return True
 
     def _addAttrsToRepoAction(self, matchedVars):
         if matchedVars.get('add_attrs') == 'add attribute':
