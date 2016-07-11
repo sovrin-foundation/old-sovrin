@@ -66,7 +66,8 @@ class SovrinCli(PlenumCli):
             'send_cred_def',
             'send_cred',
             'list_cred',
-            'send_proof',
+            'prep_proof',
+            'verif_proof',
             'add_genesis',
             'req_cred',
             'gen_cred',
@@ -93,7 +94,8 @@ class SovrinCli(PlenumCli):
         self.completers["store_cred"] = WordCompleter(["store", "credential"])
         self.completers["list_cred"] = WordCompleter(["list", "CRED"])
         self.completers["gen_verif_nonce"] = WordCompleter(["generate", "verification", "nonce"])
-        self.completers["send_proof"] = WordCompleter(["send", "proof"])
+        self.completers["prep_proof"] = WordCompleter(["prepare", "proof", "of"])
+        self.completers["verif_proof"] = WordCompleter(["verify", "status", "is"])
         self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
         self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
         self.completers["add_attrs"] = WordCompleter(["add", "attribute"])
@@ -109,12 +111,13 @@ class SovrinCli(PlenumCli):
                         self._sendCredDefAction,
                         self._reqCredAction,
                         self._listCredAction,
-                        self._sendProofAction,
+                        self._verifyProofAction,
                         self._addGenesisAction,
                         self._initAttrRepoAction,
                         self._addAttrsToRepoAction,
                         self._storeCredAction,
-                        self._genVerifNonceAction
+                        self._genVerifNonceAction,
+                        self._prepProofAction
                         ])
         return actions
 
@@ -362,7 +365,6 @@ class SovrinCli(PlenumCli):
             self.print("Verification nonce is {}".format(nonce))
             return True
 
-
     def _storeCredAction(self, matchedVars):
         if matchedVars.get('store_cred') == 'store credential':
             cred = matchedVars.get('cred')
@@ -444,15 +446,25 @@ class SovrinCli(PlenumCli):
     def _listCredAction(self, matchedVars):
         if matchedVars.get('list_cred') == 'list CRED':
             self.print('\n'.join(self.activeWallet.credNames))
-
             return True
 
-    def _sendProofAction(self, matchedVars):
-        if matchedVars.get('send_proof') == 'send proof':
-            attrName = matchedVars.get('attr_name')
-            credName = matchedVars.get('cred_name')
-            dest = matchedVars.get('dest')
-            self.print("{}, {}, {}".format(attrName, credName, dest))
+
+    def _prepProofAction(self, matchedVars):
+        if matchedVars.get('prep_proof') == 'prepare proof of':
+            nonce = matchedVars.get('nonce')
+            revealedAttrs = matchedVars.get('revealed_attrs')
+            # required to prepare proof: credential: Dict[str, Credential], attrs: Dict[str, Dict[str, T]], revealedAttrs: Sequence[str], nonce
+            # TODO: Build proof here and print it
+            return True
+
+    def _verifyProofAction(self, matchedVars):
+        if matchedVars.get('verif_proof') == 'verif proof':
+            status = matchedVars.get('status')
+            proof = matchedVars.get('proof')
+
+            # required to do verification: issuerId, name, version, proof, nonce, attrs, revealedAttrs
+            # TODO: do verification here
+            self.print("Proof verified successfully")
             return True
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover

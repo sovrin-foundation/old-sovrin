@@ -293,7 +293,7 @@ def testInitAttrRepo(attrRepoInitialized):
 def testAddAttrToRepo(attrAddedToRepo):
     pass
 
-def testReqCred(poolNodesCreated, tylerCLI, byuCLI):
+def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
     addNewKey(tylerCLI, byuCLI)
 

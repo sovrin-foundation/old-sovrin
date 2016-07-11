@@ -38,14 +38,21 @@ REQ_CRED_REG_EX = \
 
 LIST_CREDS_REG_EX = "(\s* (?P<list_cred>list\s+CRED) \s*) "
 
-SEND_PROOF_REG_EX = \
-    "(\s* (?P<send_proof>send\s+proof) \s+ of \s+ (?P<attr_name>[a-zA-Z0-9\-_]+) \s+ from \s+ (?P<cred_name>[a-zA-Z0-9\-_]+)? \s+ to \s+ " \
-    " (?P<dest>[a-fA-F0-9]+) \s*)"
+PREP_PROOF_REG_EX = \
+    "(\s*(?P<prep_proof>prepare \s+ proof \s+ of) \s+ (?P<cred_alias>[a-zA-Z0-9-\s]+) " \
+    "\s+ using \s+ nonce \s+ (?P<nonce>[a-zA-Z0-9-\s]+)" \
+    "\s+ for \s+ (?P<revealed_attrs>[a-zA-Z0-9-\s]+)" \
+    "\s*) "
+
+VERIFY_PROOF_REG_EX = \
+    "(\s*(?P<verif_proof>verify \s+ status \s+ is) \s+ (?P<status>[a-zA-Z0-9-\s]+) " \
+    "\s+ in \s+ proof \s+ (?P<proof>[a-zA-Z0-9-\s]+)" \
+    "\s*) "
 
 GEN_CRED_REG_EX = \
-    "(\s* (?P<gen_cred>generate \s+ credential) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\s]+) " \
-    "\s+ for (?P<cred_name>[a-zA-Z0-9\s]+) \s+ (?P<cred_version>[a-zA-Z0-9\s]+)" \
-    "\s+ with \s+ (?P<u_value>[a-zA-Z0-9\s]+) " \
+    "(\s*(?P<gen_cred>generate \s+ credential) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\s]+) " \
+    "\s+ for (?P<cred_name>[a-zA-Z0-9\s]+) \s+ version \s+ (?P<cred_version>[a-zA-Z0-9\s]+) " \
+    "\s+ with \s+ (?P<u_value>[a-zA-Z0-9\s]+)" \
     "\s*)"
 
 STORE_CRED_REG_EX = \
@@ -68,10 +75,11 @@ SEND_CRED_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_DEF_REG_EX)
 REQ_CRED_FORMATTED_REG_EX = getPipedRegEx(REQ_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
 GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)
-SEND_PROOF_FORMATTED_REG_EX = getPipedRegEx(SEND_PROOF_REG_EX)
 ADD_GENESIS_FORMATTED_REG_EX = getPipedRegEx(ADD_GENESIS_NYM_REG_EX)
 STORE_CRED_FORMATTED_REG_EX = getPipedRegEx(STORE_CRED_REG_EX)
 GEN_VERIF_NONCE_FORMATTED_REG_EX = getPipedRegEx(GEN_VERIF_NONCE_REG_EX)
+PREP_PROOF_FORMATTED_REG_EX = getPipedRegEx(PREP_PROOF_REG_EX)
+VERIFY_PROOF_FORMATTED_REG_EX = getPipedRegEx(VERIFY_PROOF_REG_EX)
 INIT_ATTR_REPO_FORMATTED_REG_EX = getPipedRegEx(INIT_ATTR_REPO_REG_EX)
 ADD_ATTRS_FORMATTED_REG_EX = ADD_ATTRS_REG_EX
 
