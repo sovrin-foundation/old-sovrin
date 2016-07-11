@@ -241,6 +241,14 @@ def storedCred(tylerCLI):
     assert len(tylerCLI.activeWallet.credNames) == 0
     tylerCLI.enterCmd("store credential msccs as degree")
     assert len(tylerCLI.activeWallet.credNames) == 1
+    return tylerCLI
+
+
+@pytest.fixture(scope="module")
+def listedCred(storedCred):
+    tylerCLI = storedCred
+    tylerCLI.enterCmd("list CRED")
+    assert "degree" in tylerCLI.lastCmdOutput
 
 
 # TODO This test seems to be failing intermittently.
@@ -277,6 +285,13 @@ def testAnonCredsCLI(byuCLI, setup, philCreated, bookStoreCreated, byuCreated,
     pass
 
 
+def testInitAttrRepo(attrRepoInitialized):
+    pass
+
+
+def testAddAttrToRepo(attrAddedToRepo):
+    pass
+
 def testReqCred(poolNodesCreated, tylerCLI, byuCLI):
     # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
     addNewKey(tylerCLI, byuCLI)
@@ -302,11 +317,7 @@ def testStoreCrd(storedCred):
     pass
 
 
-def testInitAttrRepo(attrRepoInitialized):
-    pass
-
-
-def testAddAttrToRepo(attrAddedToRepo):
+def testListCred(listedCred):
     pass
 
 
