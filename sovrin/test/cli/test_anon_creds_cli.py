@@ -202,18 +202,19 @@ def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
 @pytest.fixture(scope="module")
 def byuAddsCredDef(byuCLI, byuCreated):
     """BYU writes a credential definition to Sovrin."""
-    cmd = ("send CRED_DEF name=Qualifications version=1.0 "
+    cmd = ("send CRED_DEF name=Degree version=1.0 "
            "type=JC1 ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
-           "first_name,birth_date,postgrad,expire_date")
+           "first_name,birth_date,postgrad,expiry_date")
     checkCmdValid(byuCLI, cmd)
 
     def checkCredAdded():
         txns = byuCLI.activeClient.getTxnsByType(CRED_DEF)
-        assert any(txn[DATA][NAME] == 'Qualifications' and
+        assert any(txn[DATA][NAME] == 'Degree' and
                    txn[DATA][VERSION] == '1.0'
                    for txn in txns)
 
     byuCLI.looper.run(eventually(checkCredAdded, retryWait=1, timeout=15))
+    assert byuCLI.lastCmdOutput()
 
 
 @pytest.fixture(scope="module")
@@ -235,6 +236,7 @@ def attrAddedToRepo(attrRepoInitialized):
     assert byuCLI.lastCmdOutput == "attribute added successfully"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
+
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI):
     addNewKey(tylerCLI)
@@ -249,7 +251,7 @@ def storedCred(tylerCLI):
 def listedCred(storedCred):
     tylerCLI = storedCred
     tylerCLI.enterCmd("list CRED")
-    assert "degree" in tylerCLI.lastCmdOutput
+    assert "Degree" in tylerCLI.lastCmdOutput
 
 
 # TODO This test seems to be failing intermittently.

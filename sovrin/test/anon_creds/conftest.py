@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from anoncreds.protocol.types import SerFmt
 from anoncreds.protocol.utils import encodeAttrs
 
 from plenum.client.signer import SimpleSigner
@@ -118,7 +119,7 @@ def credDef(attrNames):
 @pytest.fixture(scope="module")
 def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorSigner, looper, tdir, nodeSet, credDef):
-    data = credDef.getSerializable()
+    data = credDef.get(serFmt=SerFmt.base58)
 
     op = {
         TXN_TYPE: CRED_DEF,
