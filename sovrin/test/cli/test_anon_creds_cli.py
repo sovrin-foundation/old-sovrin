@@ -308,15 +308,17 @@ def testAddAttrToRepo(attrAddedToRepo):
     pass
 
 
-def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI):
-    # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
-    addNewKey(tylerCLI, byuCLI)
+def testReqCred(poolNodesCreated, tylerCreated, tylerCLI, byuCLI, attrAddedToRepo):
+    # # TODO: following step is to ensure "defaultClient.defaultIdentifier" is initialized
+    # addNewKey(tylerCLI, byuCLI)
 
     credDefName ="Qualifications"
     credDefVersion = "1.0"
     issuerIdentifier = byuCLI.activeSigner.verstr
-    tylerCLI.enterCmd("request credential {} version {} from {}"
-                      .format(credDefName, credDefVersion, issuerIdentifier))
+    proverIdentifier = tylerCLI.activeSigner.alias
+    tylerCLI.enterCmd("request credential {} version {} from {} for {}"
+                      .format(credDefName, credDefVersion, issuerIdentifier,
+                              proverIdentifier))
 
     def chk():
         assert "Credential request is: {}".format("<need to put expected value>") \
