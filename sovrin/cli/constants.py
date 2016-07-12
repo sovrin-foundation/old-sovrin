@@ -1,14 +1,16 @@
-from plenum.cli.constants import CLIENT_GRAMS_CLIENT_COMMAND_REG_EX, relist, CLI_CMDS, getPipedRegEx, \
+from plenum.cli.constants import CLIENT_GRAMS_CLIENT_COMMAND_REG_EX, relist, \
+    CLI_CMDS, getPipedRegEx, \
     CLIENT_GRAMS_USE_KEYPAIR_REG_EX
 
 CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX = getPipedRegEx(
-    CLIENT_GRAMS_CLIENT_COMMAND_REG_EX + "\s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9=]+) \s*")\
+    CLIENT_GRAMS_CLIENT_COMMAND_REG_EX + "\s+ (?P<with_identifier>with\s+identifier) \s+ (?P<nym>[a-zA-Z0-9=]+) \s*") \
     .format(relist(CLI_CMDS))
 
 CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX = getPipedRegEx(
     "(\s* (?P<client>client) \s+ (?P<client_name>[a-zA-Z0-9]+) \s+ (?P<cli_action>add) \s+ (?P<role>sponsor|user) \s+ (?P<other_client_name>[a-zA-Z0-9]+) \s*)")
 
-CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(CLIENT_GRAMS_USE_KEYPAIR_REG_EX)
+CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(
+    CLIENT_GRAMS_USE_KEYPAIR_REG_EX)
 
 # TODO we can genericize the other TXN types in the same way
 TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=) \s* (?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role_key>role=) \s* (?P<role>USER|SPONSOR|STEWARD))"
@@ -59,19 +61,26 @@ GEN_CRED_REG_EX = \
     "\s+ with \s+ (?P<u_value>[a-zA-Z0-9\s]+)" \
     "\s*)"
 
+# STORE_CRED_REG_EX = \
+#     "(\s* (?P<store_cred>store \s+ credential)" \
+#     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
+#     "\s+ for (?P<cred_def>[\.A-Za-z0-9_,+=/ ]+)" \
+# "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
+# "\s*)"
+
+
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-    "\s+ for (?P<cred_def>[\.A-Za-z0-9_,+=/ ]+)" \
-    "\s+ as (?P<alias>[a-zA-Z0-9-\s]+)" \
-    "\s*)"
+"\s+ for \s+ proof \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+"\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
+"\s*)"
 
 INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribute \s+ repo)\s*)"
 
 ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9_,+=/ ]+) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\-_]+) \s*)"
 
 GEN_VERIF_NONCE_REG_EX = "(\s*(?P<gen_verif_nonce>generate \s+ verification \s+ nonce)\s*)"
-
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -87,4 +96,3 @@ PREP_PROOF_FORMATTED_REG_EX = getPipedRegEx(PREP_PROOF_REG_EX)
 VERIFY_PROOF_FORMATTED_REG_EX = getPipedRegEx(VERIFY_PROOF_REG_EX)
 INIT_ATTR_REPO_FORMATTED_REG_EX = getPipedRegEx(INIT_ATTR_REPO_REG_EX)
 ADD_ATTRS_FORMATTED_REG_EX = ADD_ATTRS_REG_EX
-

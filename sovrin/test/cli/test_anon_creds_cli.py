@@ -340,13 +340,12 @@ def revealedAtrr():
 
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
-               credDefNameVersion, byuPubKey, byuCLI):
-    A, e, vprime = byuCreatedCredential
+               credDefNameVersion, byuPubKey, byuCLI, tylerPreparedU):
+    proofId, U = tylerPreparedU
+    # A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
-    tylerCLI.enterCmd("store credential A={}, e={}, vprime={} for name={}, "
-                      "version={}, issuer={} as {}"
-                      .format(*byuCreatedCredential, *credDefNameVersion,
-                              byuPubKey, storedCredAlias))
+    tylerCLI.enterCmd("store credential A={}, e={}, vprimeprime={} for proof {} as {}"
+                      .format(*byuCreatedCredential, proofId, storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
 
@@ -359,7 +358,8 @@ def listedCred(tylerCLI, storedCred, storedCredAlias):
 
 
 @pytest.fixture(scope="module")
-def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias, revealedAtrr):
+def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
+                  tylerPreparedU, revealedAtrr):
     """
        prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
        """

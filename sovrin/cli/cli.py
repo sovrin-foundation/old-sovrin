@@ -363,10 +363,22 @@ class SovrinCli(PlenumCli):
         if masterSecret:
             masterSecret = integer(int(masterSecret))
         proof = Proof(pk, masterSecret)
+        attributes = self.activeClient.attributes[issuerId]
+        attribTypes = []
+        for nm in attributes.keys():
+            attribTypes.append(AttribType(nm, encode=True))
+        attribsDef = AttribsDef(self.name, attribTypes)
+        attribs = attribsDef.attribs(**attributes).encoded()
+        encodedAttrs = {
+            issuerId: list(attribs.values())[0]
+        }
+        proof.setAttrs(encodedAttrs)
         if not masterSecret:
             self.activeClient.wallet.addMasterSecret(str(proof.masterSecret))
 
-        self.activeClient.proofs[proof.id] = proof
+        #TODO: Should probably be persisting proof objects
+        self.activeClient.proofs[proof.id] = (proof, credName, credVersion,
+                                              issuerId)
         u = proof.U[issuerId]
         self.print("Credential request for {} for {} {} is: Proof id is {} "
                    "and U is {}".format(proverId, credName, credVersion,
@@ -399,7 +411,8 @@ class SovrinCli(PlenumCli):
 
     def _genVerifNonceAction(self, matchedVars):
         if matchedVars.get('gen_verif_nonce') == 'generate verification nonce':
-            # TODO: For now I am generating random interaction id, but we need to come back to us,
+            # TODO: For now I am generating random interaction id, but we need
+            # to come back to us,
             # assuming it will work, test cases will confirm it
             interactionId = randomString(7)
             nonce = self.activeClient.generateNonce(interactionId)
@@ -408,15 +421,25 @@ class SovrinCli(PlenumCli):
 
     def _storeCredAction(self, matchedVars):
         if matchedVars.get('store_cred') == 'store credential':
+            # TODO: Assuming single issuer credential only, make it acccept multi-issuer credential
+            # multi issuer credential
             cred = matchedVars.get('cred')
             alias = matchedVars.get('alias').strip()
-            credDef = matchedVars.get('cred_def')
+            # credDef = matchedVars.get('cred_def')
+            proofId = matchedVars.get('prf_id').strip()
             credential = {}
-            for val in (credDef.split(',') + cred.split(",")):
+            for val in cred.split(","):
                 name, value = val.split('=', 1)
                 name, value = name.strip(), value.strip()
                 credential[name] = value
-
+            proof, credName, credVersion, issuerId = self.activeClient.proofs[proofId]
+            credential["issuer"] = issuerId
+            credential[NAME] = credName
+            credential[VERSION] = credVersion
+            # TODO: refactor to use issuerId
+            credential["v"] = str(next(iter(proof.vprime.values())) + \
+                              int(credential["vprimeprime"]))
+            credential["encodedAttrs"] = {k: str(v) for k, v in next(iter(proof.attrs.values())).items()}
             # TODO: What if alias is not given (we don't have issuer id and cred name here) ???
             # TODO: is the below way of storing cred in dict ok?
             self.activeWallet.addCredential(alias, credential)
@@ -508,9 +531,10 @@ class SovrinCli(PlenumCli):
             issuer = credential.get("issuer")
             A = credential.get("A")
             e = credential.get("e")
-            vprime = credential.get("vprime")
-            cred = Credential(self.strTointeger(A), self.strTointeger(e), self.strTointeger(vprime))
-            # TODO: Need to create presentation token from crendetial
+            v = credential.get("v")
+            cred = Credential(self.strTointeger(A), self.strTointeger(e),
+                              self.strTointeger(v))
+            # TODO: Need to create presentation token from crendential
             credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
             keys = credDef[KEYS]
             pk = {
@@ -535,7 +559,7 @@ class SovrinCli(PlenumCli):
             attribsDef = AttribsDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes).encoded()
             encodedAttrs = {
-                issuer: list(attribs.values())[0]
+                issuer: next(iter(attribs.values()))
             }
             prf = Proof.prepareProof(pk_i=pk, masterSecret=masterSecret,
                                credential={issuer: cred},
