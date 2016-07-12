@@ -382,7 +382,7 @@ class SovrinCli(PlenumCli):
         self.activeClient.proofs[proof.id] = (proof, credName, credVersion,
                                               issuerId)
         u = proof.U[issuerId]
-        self.print("Credential request for {} for {} {} is: Proof id is {} "
+        self.print("Credential request for {} for {} {} is: Credential id is {} "
                    "and U is {}".format(proverId, credName, credVersion,
                                         proof.id, u))
 

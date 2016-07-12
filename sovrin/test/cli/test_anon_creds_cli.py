@@ -282,7 +282,7 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
     U = None
     proofId = None
-    pat = re.compile("Proof id is ([a-f0-9\-]+) and U is ([0-9]+)")
+    pat = re.compile("Credential id is ([a-f0-9\-]+) and U is ([0-9]+)")
     m = pat.search(tylerCLI.printeds[0]['msg'])
     if m:
         proofId, U = m.groups()
