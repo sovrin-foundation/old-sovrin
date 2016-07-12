@@ -246,7 +246,7 @@ class SovrinCli(PlenumCli):
             print("Reply fot from nym: {}", reply)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.activeClient, self.getNymReply)
+                                    req.reqId, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
         op = {
