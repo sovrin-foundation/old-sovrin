@@ -10,8 +10,10 @@ from anoncreds.protocol.credential_definition import CredentialDefinition, \
     serialize, base58encode, base58decodedInt, base58decode
 from anoncreds.protocol.proof import Proof
 from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt, \
-    IssuerPublicKey, Credential
+    IssuerPublicKey, Credential, Proof as ProofTuple
+
 from anoncreds.protocol.utils import encodeAttrs
+from anoncreds.protocol.verifier import verify_proof
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -565,20 +567,64 @@ class SovrinCli(PlenumCli):
                                credential={issuer: cred},
                                revealedAttrs=revealedAttrs, nonce=nonce,
                                attrs=encodedAttrs)
+            out = {}
+            proof = {}
+            proof["Aprime"] = {issuer: str(prf.Aprime[issuer])}
+            proof["c"] = str(prf.c)
+            proof["evect"] = {issuer: str(prf.evect[issuer])}
+            proof["mvect"] = {k: str(v) for k, v in prf.mvect.items()}
+            proof["vvect"] = {issuer: str(prf.vvect[issuer])}
+            out["proof"] = proof
+            out[NAME] = name
+            out[VERSION] = version
+            out["issuer"] = issuer
+            out["nonce"] = str(nonce)
+            out["attrs"] = {
+                issuer: {k: str(v) for k,v in next(iter(attribs.values())).items()}
+            }
+            out["revealedAttrs"] = revealedAttrs
             self.print(
-                "Proof is: {}".format((prf.c, prf.evect, prf.mvect,
-                                            prf.vvect, prf.Aprime)))
+                "Proof is: {}".format(json.dumps(out)))
             return True
 
     def _verifyProofAction(self, matchedVars):
         if matchedVars.get('verif_proof') == 'verify status is':
             status = matchedVars.get('status')
-            proof = matchedVars.get('proof')
-
+            proof = json.loads(matchedVars.get('proof'))
+            self._verifyProof(status, proof)
             # required to do verification: issuerId, name, version, proof, nonce, attrs, revealedAttrs
-            # TODO: do verification here
-            self.print("Proof verified successfully")
             return True
+
+    def _verifyProof(self, status, proof):
+        self._getCredDefAndExecuteCallback(proof["issuer"], proof[NAME], proof[VERSION],
+                                           self.doVerification, status, proof)
+
+    def doVerification(self, reply, err, status, proof):
+        # TODO: do verification here
+        issuer = proof["issuer"]
+        credDef = self.activeClient.wallet.getCredDef(proof[NAME], proof[VERSION],
+                                            issuer)
+        keys = credDef[KEYS]
+        pk = {
+            issuer: self.pKFromCredDef(keys)
+        }
+        prf = proof["proof"]
+        prfArgs = {}
+        prfArgs["Aprime"] = {issuer: self.strTointeger(prf["Aprime"][issuer])}
+        prfArgs["c"] = self.strTointeger(prf["c"])
+        prfArgs["evect"] = {issuer: self.strTointeger(prf["evect"][issuer])}
+        prfArgs["mvect"] = {k: self.strTointeger(v) for k, v in prf["mvect"].items()}
+        prfArgs["vvect"] = {issuer: self.strTointeger(prf["vvect"][issuer])}
+        prf = ProofTuple(**prfArgs)
+        attrs = {
+            issuer: {k: self.strTointeger(v) for k, v in
+                         next(iter(proof["attrs"].values())).items()}
+        }
+        result = verify_proof(pk, prf, self.strTointeger(proof["nonce"]), attrs,
+                              proof["revealedAttrs"])
+        if result and status in proof["revealedAttrs"]:
+            self.print("Proof verified successfully")
+
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
     # This is required for demo for sure, we'll see if it will be required for real execution or not
