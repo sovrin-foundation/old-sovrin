@@ -274,7 +274,6 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
                               proverId))
 
     def chk():
-        global proofId, U
         out = "Credential request for {} for {} {} is".format(proverId,
                                                               credDefName,
                                                               credDefVersion)
@@ -283,7 +282,7 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
     U = None
     proofId = None
-    pat = re.compile("Proof id is ([a-f0-9\-]+) and U is ([0-9]+)")
+    pat = re.compile("Credential id is ([a-f0-9\-]+) and U is ([0-9]+)")
     m = pat.search(tylerCLI.printeds[0]['msg'])
     if m:
         proofId, U = m.groups()
@@ -367,7 +366,7 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
                       format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
     pat = re.compile(
-        "Proof is: \((.+)\)$")
+        "Proof is: (.+)$")
     m = pat.search(tylerCLI.lastCmdOutput)
     if m:
         proof = m.groups()[0]
@@ -459,7 +458,12 @@ def testPrepareProof(preparedProof):
 def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected, revealedAtrr):
     bookStoreCLI.enterCmd("verify status is {} in proof {}"
                           .format(revealedAtrr, preparedProof))
-    pass
+
+    def chk():
+        out = "Proof verified successfully"
+        assert bookStoreCLI.lastCmdOutput == out
+
+    bookStoreCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
 
 
 def testStrTointeger():
