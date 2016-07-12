@@ -387,9 +387,9 @@ class SovrinCli(PlenumCli):
     def strTointeger(n):
         if "mod" in n:
             a, b = n.split("mod")
-            return integer(a.strip()) % integer(b.strip())
+            return integer(int(a.strip())) % integer(int(b.strip()))
         else:
-            return integer(n)
+            return integer(int(n))
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
