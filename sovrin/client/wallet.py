@@ -67,6 +67,16 @@ class Wallet(PWallet):
     def addCredential(self, name: str, data: Dict):
         self.storage.addCredential(name, data)
 
+    def getCredential(self, name: str):
+        return self.storage.getCredential(name)
+
+    def addMasterSecret(self, masterSecret):
+        self.storage.addMasterSecret(masterSecret)
+
+    # TODO Make a property
+    def getMasterSecret(self):
+        return self.storage.getMasterSecret()
+
     @property
     def credNames(self):
         return self.storage.credNames

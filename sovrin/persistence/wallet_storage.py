@@ -42,3 +42,11 @@ class WalletStorage(PWalletStorage):
     @abstractmethod
     def getCredential(self, name: str):
         pass
+
+    @abstractmethod
+    def addMasterSecret(self, masterSecret):
+        pass
+
+    @abstractmethod
+    def getMasterSecret(self):
+        pass

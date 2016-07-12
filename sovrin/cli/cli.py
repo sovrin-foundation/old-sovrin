@@ -1,4 +1,5 @@
 import ast
+import json
 from typing import Dict
 
 from charm.core.math.integer import integer
@@ -356,21 +357,31 @@ class SovrinCli(PlenumCli):
                                            credVersion, issuerId)
         self.logger.debug("cred def is {}".format(credDef))
         keys = credDef[KEYS]
-        N = self.strTointeger(base58decode(keys["N"]))
-        S = self.strTointeger(base58decode(keys["S"]))
-        Z = self.strTointeger(base58decode(keys["Z"]))
-        R = {}
-        for k, v in keys["R"].items():
-            R[k] = self.strTointeger(base58decode(v))
         pk = {
-            issuerId: IssuerPublicKey(N, R, S, Z)
+            issuerId: self.pKFromCredDef(keys)
         }
-        proof = Proof(pk)
+        masterSecret = self.activeClient.wallet.getMasterSecret()
+        if masterSecret:
+            masterSecret = integer(masterSecret)
+        proof = Proof(pk, masterSecret)
+        if not masterSecret:
+            self.activeClient.wallet.addMasterSecret(str(proof.masterSecret))
+
         self.activeClient.proofs[proof.id] = proof
         u = proof.U[issuerId]
         self.print("Credential request for {} for {} {} is: Proof id is {} "
                    "and U is {}".format(proverId, credName, credVersion,
                                         proof.id, u))
+
+    @staticmethod
+    def pKFromCredDef(keys):
+        N = SovrinCli.strTointeger(base58decode(keys["N"]))
+        S = SovrinCli.strTointeger(base58decode(keys["S"]))
+        Z = SovrinCli.strTointeger(base58decode(keys["Z"]))
+        R = {}
+        for k, v in keys["R"].items():
+            R[k] = SovrinCli.strTointeger(base58decode(v))
+        return IssuerPublicKey(N, R, S, Z)
 
     # TODO: Move it to util module
     @staticmethod
@@ -399,10 +410,15 @@ class SovrinCli(PlenumCli):
     def _storeCredAction(self, matchedVars):
         if matchedVars.get('store_cred') == 'store credential':
             cred = matchedVars.get('cred')
-            alias = matchedVars.get('alias')
+            alias = matchedVars.get('alias').strip()
+            credential = {}
+            for val in cred.split(','):
+                name, value = val.split('=')
+                name, value = name.strip(), value.strip()
+                credential[name] = value
             # TODO: What if alias is not given (we don't have issuer id and cred name here) ???
             # TODO: is the below way of storing cred in dict ok?
-            self.activeWallet.addCredential(alias, {"cred": cred})
+            self.activeWallet.addCredential(alias, credential)
             self.print("Credential stored")
             return True
 
@@ -415,6 +431,7 @@ class SovrinCli(PlenumCli):
             attrInput = {}
             for attr in attrs.split(','):
                 name, value = attr.split('=')
+                name, value = name.strip(), value.strip()
                 attribTypes.append(AttribType(name, encode=True))
                 attrInput[name] = [value]
 
@@ -482,9 +499,22 @@ class SovrinCli(PlenumCli):
     def _prepProofAction(self, matchedVars):
         if matchedVars.get('prep_proof') == 'prepare proof of':
             nonce = matchedVars.get('nonce')
-            revealedAttrs = matchedVars.get('revealed_attrs')
-            # required to prepare proof: credential: Dict[str, Credential], attrs: Dict[str, Dict[str, T]], revealedAttrs: Sequence[str], nonce
+            revealedAttrs = (matchedVars.get('revealed_attrs'), )
+            credAlias = matchedVars.get('cred_alias')
+            credential = self.activeClient.wallet.getCredential(credAlias)
+            masterSecret = integer(self.activeClient.wallet.getMasterSecret())
+            # TODO: In walet for credential, store the corresponding credential
+            # definition's name, version and issuerId so the corresponding
+            # credential definition can be fetched and PK can be constructed
+            # which is needed for the proof.
+            # TODO: Have some way for Tyler to have attributes that are there
+            # in issuer's repo. Maybe need a command
             # TODO: Build proof here and print it
+            # attributes = self.activeClient.attributeRepo.getAttributes(
+            #     self.activeSigner.alias).encoded()
+            # if attributes:
+            #     attributes = list(attributes.values())[0]
+            Proof.prepareProof()
             return True
 
     def _verifyProofAction(self, matchedVars):
@@ -505,19 +535,21 @@ class SovrinCli(PlenumCli):
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
             uValue = integer(matchedVars.get('u_value'))
-            credDef = None
-            pk = None
-            for txn in self.activeClient.getTxnsByType(CRED_DEF):
-                if txn[NAME] == credName and txn[VERSION] == credVersion:
-                    credDef = txn
-                    break
+            credDef = self.activeClient.storage.getCredDef(
+                self.activeClient.defaultIdentifier, credName, credVersion)
+            keys = json.loads(credDef[KEYS])
+            pk = self.pKFromCredDef(keys)
             attributes = self.activeClient.attributeRepo.getAttributes(proverId).encoded()
+            if attributes:
+                attributes = list(attributes.values())[0]
             sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
-            p, q = CredentialDefinition.getDeserializedSK(sk)
-            CredentialDefinition.generateCredential(uValue, attributes, pk, p, q)
-            cred = self.activeClient.createCredential(proverId, credName, credVersion, uValue)
+            sk = CredentialDefinition.getDeserializedSK(sk)
+            p_prime, q_prime = CredentialDefinition.getPPrime(sk), \
+                               CredentialDefinition.getQPrime(sk)
+            cred = CredentialDefinition.generateCredential(uValue, attributes, pk,
+                                                    p_prime, q_prime)
 
-            self.print("Credential is {}", format(cred))
+            self.print("Credential: A is {}, e is {}, vprime is {}".format(*cred))
             # TODO: For real scenario, do we need to send this credential back or it will be out of band?
             return True
 

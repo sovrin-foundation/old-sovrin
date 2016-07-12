@@ -181,6 +181,14 @@ def bookStoreCreated(bookStorePubKey, trusteeConnected, trusteeCLI):
 
 
 @pytest.fixture(scope="module")
+def bookStoreConnected(bookStoreCreated, bookStoreCLI, poolNodesCreated, nodeNames):
+    bookStoreCLI.looper.run(eventually(checkClientConnected, bookStoreCLI, nodeNames,
+                                       bookStoreCLI.activeClient.name,
+                                       retryWait=1, timeout=5))
+    bookStoreCLI.logger.debug("Book store connected")
+
+
+@pytest.fixture(scope="module")
 def byuCreated(byuPubKey, philConnected, philCLI):
     ensureNymAdded(philCLI, byuPubKey, SPONSOR)
 
@@ -256,10 +264,6 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
                       .format(credDefName, credDefVersion, issuerIdentifier,
                               proverId))
 
-    U = None
-    proofId = None
-    pat = re.compile("Proof id is ([a-f0-9\-]+) and U is ([0-9]+)")
-
     def chk():
         global proofId, U
         out = "Credential request for {} for {} {} is".format(proverId,
@@ -268,10 +272,30 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
         assert tylerCLI.printeds[0]['msg'].startswith(out)
 
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
+    U = None
+    proofId = None
+    pat = re.compile("Proof id is ([a-f0-9\-]+) and U is ([0-9]+)")
     m = pat.search(tylerCLI.printeds[0]['msg'])
     if m:
         proofId, U = m.groups()
     return proofId, U
+
+
+@pytest.fixture(scope="module")
+def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
+                credDefNameVersion):
+    credDefName, credDefVersion = credDefNameVersion
+    proofId, U = tylerPreparedU
+    proverId = tylerCLI.activeSigner.alias
+    byuCLI.enterCmd("generate credential for {} for {} version {} with {}"
+                    .format(proverId, credDefName, credDefVersion, U))
+    assert byuCLI.printeds[0]['msg'].startswith("Credential:")
+    pat = re.compile(
+        "A is ([mod0-9\s]+), e is ([mod0-9\s]+), vprime is ([mod0-9\s]+)")
+    m = pat.search(byuCLI.printeds[0]['msg'])
+    if m:
+        A, e, vprime = m.groups()
+        return A, e, vprime
 
 
 @pytest.fixture(scope="module")
@@ -288,28 +312,31 @@ def attrAddedToRepo(attrRepoInitialized):
     byuCLI = attrRepoInitialized
     proverId = "Tyler"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
-    byuCLI.enterCmd("add attribute name=Tyler, age=17 for {}".format(proverId))
+    byuCLI.enterCmd("add attribute first_name=Tyler, last_name=Ruff, birth_date=30, expiry_date=100, undergrad=true, postgrad=false for {}".format(proverId))
     assert byuCLI.lastCmdOutput == "attribute added successfully"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
 
 @pytest.fixture(scope="module")
 def storedCredAlias():
-    return 'msccs'
+    return 'degree'
 
 
 @pytest.fixture(scope="module")
-def storedCred(tylerCLI, storedCredAlias):
+def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential):
+    A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
-    tylerCLI.enterCmd("store credential {} as degree".format(storedCredAlias))
+    tylerCLI.enterCmd("store credential A={}, e={}, vprime={} as {}".format(*byuCreatedCredential,
+                                                         storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
 
 
 @pytest.fixture(scope="module")
-def listedCred(tylerCLI, storedCred):
+def listedCred(tylerCLI, storedCred, storedCredAlias):
+    credName = storedCredAlias
     tylerCLI.enterCmd("list CRED")
-    assert "Degree" in tylerCLI.lastCmdOutput
+    assert credName in tylerCLI.lastCmdOutput
 
 
 # TODO This test seems to be failing intermittently.
@@ -358,26 +385,20 @@ def testReqCred(tylerPreparedU):
     pass
 
 
-def testGenCred(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
-                credDefNameVersion):
-    credDefName, credDefVersion = credDefNameVersion
-    proofId, U = tylerPreparedU
-    proverId = tylerCLI.activeSigner.alias
-    byuCLI.enterCmd("generate credential for {} for {} version {} with {}"
-                    .format(proverId, credDefName, credDefVersion, U))
-    assert False
-
-
-def testStoreCred(storedCred):
+def testGenCred(byuCreatedCredential):
     pass
 
 
-def testListCred(listedCred):
+def testStoreCred(byuCreatedCredential, tylerCLI, storedCred):
+    pass
+
+
+def testListCred(byuCreatedCredential, storedCred, listedCred):
     pass
 
 
 @pytest.fixture(scope="module")
-def verifNonce(bookStoreCLI):
+def verifNonce(bookStoreCLI, bookStoreConnected):
     # addNewKey(bookStoreCLI)
     bookStoreCLI.enterCmd("generate verification nonce")
     search = re.search("^Verification nonce is (.*)$",
@@ -397,10 +418,10 @@ def testPrepareProof(tylerCLI, storedCred, verifNonce, storedCredAlias):
     """
     prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
     """
-    revealeds = ("undergrad", )
+    revealeds = "undergrad"
     tylerCLI.enterCmd("prepare proof of {} using nonce {} for {}".
                       format(storedCredAlias, verifNonce, revealeds))
-    assert "Proof is " in bookStoreCLI.lastCmdOutput
+    assert "Proof is " in tylerCLI.lastCmdOutput
 
 
 # def testGenCred(byuCLI):

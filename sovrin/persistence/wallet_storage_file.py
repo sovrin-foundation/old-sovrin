@@ -17,6 +17,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         credDefDirName = "credential_definitions"
         credFileName = "credentials"
         credDefKeys = "credential_definition_keys"
+        masterSecret = "master_secret"
         dataDir = self.getDataLocation()
 
         self.attrStore = AttributeStoreFile(dataDir, attrsDirName)
@@ -29,6 +30,9 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
                                        storeContentHash=False)
         self.credDefKeyStore = TextFileStore(dataDir, credDefKeys,
                                              storeContentHash=False)
+        self.masterSecretStore = TextFileStore(dataDir, masterSecret,
+                                        isLineNoKey = True,
+                                        storeContentHash=False)
 
     def addAttribute(self, name: str, val: Any, origin: str, dest: str = None,
                      encKey: str = None, encType: str = None,
@@ -74,3 +78,9 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
     def getCredDefSk(self, name: str, version: str):
         key = self.credDefKeyStoreKey(name, version)
         return self.credDefKeyStore.get(key)
+
+    def addMasterSecret(self, masterSecret):
+        self.masterSecretStore.put(value=masterSecret)
+
+    def getMasterSecret(self):
+        return self.masterSecretStore.get("1")

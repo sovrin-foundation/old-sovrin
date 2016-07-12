@@ -61,13 +61,13 @@ GEN_CRED_REG_EX = \
 
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
-    "\s+ (?P<cred>[a-zA-Z0-9]+)" \
+    "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
     "\s+ as (?P<alias>[a-zA-Z0-9-\s]+)" \
     "\s*)"
 
 INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribute \s+ repo)\s*)"
 
-ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9,+=/ ]+) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\-_]+) \s*)"
+ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9_,+=/ ]+) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\-_]+) \s*)"
 
 GEN_VERIF_NONCE_REG_EX = "(\s*(?P<gen_verif_nonce>generate \s+ verification \s+ nonce)\s*)"
 
