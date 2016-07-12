@@ -20,7 +20,7 @@ def test_init_attr_repo_reg_ex(grammar):
 
 
 def test_add_attr_reg_ex(grammar):
-    checkIfMatched(grammar, "add attribute name=Tyler Ruff, age=25 for Tyler")
+    checkIfMatched(grammar, "add attribute first_name=Tyler,last_name=Ruff,birth_date=12/17/1991,undergrad=True,postgrad=True,expiry_date=12/31/2101 for Tyler")
 
 
 def test_req_cred_reg_ex(grammar):
@@ -33,7 +33,7 @@ def test_gen_cred_reg_ex(grammar):
 
 
 def test_store_cred_reg_ex(grammar):
-    checkIfMatched(grammar, "store credential actualcredential as tyler-degree")
+    checkIfMatched(grammar, "store credential A=avalue, e=evalue, vprime=vprimevalue for proof proofid as tyler-degree")
 
 
 def test_list_cred_reg_ex(grammar):
