@@ -10,7 +10,7 @@ from anoncreds.protocol.credential_definition import CredentialDefinition, \
     serialize, base58encode, base58decodedInt, base58decode
 from anoncreds.protocol.proof import Proof
 from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt, \
-    IssuerPublicKey
+    IssuerPublicKey, Credential
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -308,8 +308,6 @@ class SovrinCli(PlenumCli):
         """
         name = matchedVars.get('name')
         version = matchedVars.get('version')
-        # TODO: do we need to use type anywhere?
-        # type = matchedVars.get('type')
         ip = matchedVars.get('ip')
         port = matchedVars.get('port')
         keys = matchedVars.get('keys')
@@ -411,11 +409,13 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('store_cred') == 'store credential':
             cred = matchedVars.get('cred')
             alias = matchedVars.get('alias').strip()
+            credDef = matchedVars.get('cred_def')
             credential = {}
-            for val in cred.split(','):
-                name, value = val.split('=')
+            for val in (credDef.split(',') + cred.split(",")):
+                name, value = val.split('=', 1)
                 name, value = name.strip(), value.strip()
                 credential[name] = value
+
             # TODO: What if alias is not given (we don't have issuer id and cred name here) ???
             # TODO: is the below way of storing cred in dict ok?
             self.activeWallet.addCredential(alias, credential)
@@ -498,10 +498,22 @@ class SovrinCli(PlenumCli):
 
     def _prepProofAction(self, matchedVars):
         if matchedVars.get('prep_proof') == 'prepare proof of':
-            nonce = matchedVars.get('nonce')
+            nonce = integer(matchedVars.get('nonce'))
             revealedAttrs = (matchedVars.get('revealed_attrs'), )
             credAlias = matchedVars.get('cred_alias')
-            credential = self.activeClient.wallet.getCredential(credAlias)
+            credential = json.loads(self.activeClient.wallet.getCredential(credAlias))
+            name = credential.get(NAME)
+            version = credential.get(VERSION)
+            issuer = credential.get("issuer")
+            A = credential.get("A")
+            e = credential.get("e")
+            vprime = credential.get("vprime")
+            cred = Credential(self.strTointeger(A), self.strTointeger(e), self.strTointeger(vprime))
+            credDef = self.activeClient.storage.getCredDef(issuer, name, version)
+            keys = json.loads(credDef[KEYS])
+            pk = {
+                issuer: self.pKFromCredDef(keys)
+            }
             masterSecret = integer(self.activeClient.wallet.getMasterSecret())
             # TODO: In walet for credential, store the corresponding credential
             # definition's name, version and issuerId so the corresponding
@@ -514,7 +526,7 @@ class SovrinCli(PlenumCli):
             #     self.activeSigner.alias).encoded()
             # if attributes:
             #     attributes = list(attributes.values())[0]
-            Proof.prepareProof()
+            Proof.prepareProof(pk_i=pk, masterSecret=masterSecret, credential={issuer: cred}, revealedAttrs=revealedAttrs, nonce=nonce)
             return True
 
     def _verifyProofAction(self, matchedVars):

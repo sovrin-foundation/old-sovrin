@@ -49,11 +49,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None,
                  wallet: Wallet = None):
-        # if wallet:
-        #     self.wallet = wallet
-        # else:
-        #     storage = WalletStorageFile.fromName(name, basedirpath)
-        #     self.wallet = Wallet(name, storage)
         super().__init__(name,
                          nodeReg,
                          ha,

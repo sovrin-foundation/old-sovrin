@@ -207,10 +207,19 @@ def tylerCreated(tylerPubKey, byuConnected, byuCLI):
 
 
 @pytest.fixture(scope="module")
-def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames):
+def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
     tylerCLI.looper.run(eventually(checkClientConnected, tylerCLI, nodeNames,
                                    tylerCLI.activeClient.name, retryWait=1,
                                   timeout=5))
+    tylerCLI.activeClient.attributes = {}
+    tylerCLI.activeClient.attributes[byuCLI.activeSigner.verstr] = {
+        "first_name": "Tyler",
+        "last_name": "Ruff",
+        "birth_date": "30",
+        "expiry_date": 100,
+        "undergrad": "true",
+        "postgrad": "false",
+    }
     tylerCLI.logger.debug("Tyler connected")
 
 
@@ -312,7 +321,9 @@ def attrAddedToRepo(attrRepoInitialized):
     byuCLI = attrRepoInitialized
     proverId = "Tyler"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
-    byuCLI.enterCmd("add attribute first_name=Tyler, last_name=Ruff, birth_date=30, expiry_date=100, undergrad=true, postgrad=false for {}".format(proverId))
+    byuCLI.enterCmd("add attribute first_name=Tyler, last_name=Ruff, "
+                    "birth_date=30, expiry_date=100, undergrad=true, "
+                    "postgrad=false for {}".format(proverId))
     assert byuCLI.lastCmdOutput == "attribute added successfully"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
@@ -323,11 +334,14 @@ def storedCredAlias():
 
 
 @pytest.fixture(scope="module")
-def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential):
+def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
+               credDefNameVersion, byuPubKey):
     A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
-    tylerCLI.enterCmd("store credential A={}, e={}, vprime={} as {}".format(*byuCreatedCredential,
-                                                         storedCredAlias))
+    tylerCLI.enterCmd("store credential A={}, e={}, vprime={} for name={}, "
+                      "version={}, issuer={} as {}"
+                      .format(*byuCreatedCredential, *credDefNameVersion,
+                              byuPubKey, storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
 
