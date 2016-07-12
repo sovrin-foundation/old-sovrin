@@ -91,7 +91,7 @@ class SovrinCli(PlenumCli):
     def initializeGrammarCompleter(self):
         self.nymWC = WordCompleter([])
         self.completers["nym"] = self.nymWC
-        self.completers["role"] = WordCompleter(["user", "sponsor"])
+        self.completers["role"] = WordCompleter(["USER", "SPONSOR", "STEWARD"])
         self.completers["send_nym"] = WordCompleter(["send", "NYM"])
         self.completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
         self.completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
@@ -601,7 +601,7 @@ class SovrinCli(PlenumCli):
                 TXN_TYPE: NYM,
                 TARGET_NYM: nym,
                 TXN_ID: sha256(randomString(6).encode()).hexdigest(),
-                ROLE: role
+                ROLE: role.upper()
             }
             self.genesisTransactions.append(txn)
             self.print('Genesis transaction added.')
