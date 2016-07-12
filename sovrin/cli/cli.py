@@ -361,7 +361,7 @@ class SovrinCli(PlenumCli):
         }
         masterSecret = self.activeClient.wallet.getMasterSecret()
         if masterSecret:
-            masterSecret = integer(masterSecret)
+            masterSecret = integer(int(masterSecret))
         proof = Proof(pk, masterSecret)
         if not masterSecret:
             self.activeClient.wallet.addMasterSecret(str(proof.masterSecret))
@@ -499,7 +499,7 @@ class SovrinCli(PlenumCli):
 
     def _prepProofAction(self, matchedVars):
         if matchedVars.get('prep_proof') == 'prepare proof of':
-            nonce = integer(matchedVars.get('nonce'))
+            nonce = integer(int(matchedVars.get('nonce')))
             revealedAttrs = (matchedVars.get('revealed_attrs'), )
             credAlias = matchedVars.get('cred_alias')
             credential = json.loads(self.activeClient.wallet.getCredential(credAlias))
@@ -510,12 +510,13 @@ class SovrinCli(PlenumCli):
             e = credential.get("e")
             vprime = credential.get("vprime")
             cred = Credential(self.strTointeger(A), self.strTointeger(e), self.strTointeger(vprime))
+            # TODO: Need to create presentation token from crendetial
             credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
             keys = credDef[KEYS]
             pk = {
                 issuer: self.pKFromCredDef(keys)
             }
-            masterSecret = integer(self.activeClient.wallet.getMasterSecret())
+            masterSecret = integer(int(self.activeClient.wallet.getMasterSecret()))
             # TODO: In walet for credential, store the corresponding credential
             # definition's name, version and issuerId so the corresponding
             # credential definition can be fetched and PK can be constructed
@@ -536,14 +537,17 @@ class SovrinCli(PlenumCli):
             encodedAttrs = {
                 issuer: list(attribs.values())[0]
             }
-            Proof.prepareProof(pk_i=pk, masterSecret=masterSecret,
+            prf = Proof.prepareProof(pk_i=pk, masterSecret=masterSecret,
                                credential={issuer: cred},
                                revealedAttrs=revealedAttrs, nonce=nonce,
                                attrs=encodedAttrs)
+            self.print(
+                "Proof is: {}".format((prf.c, prf.evect, prf.mvect,
+                                            prf.vvect, prf.Aprime)))
             return True
 
     def _verifyProofAction(self, matchedVars):
-        if matchedVars.get('verif_proof') == 'verif proof':
+        if matchedVars.get('verif_proof') == 'verify status is':
             status = matchedVars.get('status')
             proof = matchedVars.get('proof')
 
@@ -559,7 +563,7 @@ class SovrinCli(PlenumCli):
             proverId = matchedVars.get('prover_id')
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
-            uValue = integer(matchedVars.get('u_value'))
+            uValue = integer(int(matchedVars.get('u_value')))
             credDef = self.activeClient.storage.getCredDef(
                 self.activeClient.defaultIdentifier, credName, credVersion)
             keys = json.loads(credDef[KEYS])

@@ -334,6 +334,11 @@ def storedCredAlias():
 
 
 @pytest.fixture(scope="module")
+def revealedAtrr():
+    return "undergrad"
+
+
+@pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
                credDefNameVersion, byuPubKey, byuCLI):
     A, e, vprime = byuCreatedCredential
@@ -351,6 +356,22 @@ def listedCred(tylerCLI, storedCred, storedCredAlias):
     credName = storedCredAlias
     tylerCLI.enterCmd("list CRED")
     assert credName in tylerCLI.lastCmdOutput
+
+
+@pytest.fixture(scope="module")
+def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias, revealedAtrr):
+    """
+       prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
+       """
+    tylerCLI.enterCmd("prepare proof of {} using nonce {} for {}".
+                      format(storedCredAlias, verifNonce, revealedAtrr))
+    assert tylerCLI.lastCmdOutput.startswith("Proof is:")
+    pat = re.compile(
+        "Proof is: \((.+)\)$")
+    m = pat.search(tylerCLI.lastCmdOutput)
+    if m:
+        proof = m.groups()[0]
+        return proof
 
 
 # TODO This test seems to be failing intermittently.
@@ -428,14 +449,17 @@ def testGenVerifNonce(verifNonce):
     pass
 
 
-def testPrepareProof(tylerCLI, storedCred, verifNonce, storedCredAlias):
+def testPrepareProof(preparedProof):
     """
     prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
     """
-    revealeds = "undergrad"
-    tylerCLI.enterCmd("prepare proof of {} using nonce {} for {}".
-                      format(storedCredAlias, verifNonce, revealeds))
-    assert "Proof is " in tylerCLI.lastCmdOutput
+    pass
+
+
+def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected, revealedAtrr):
+    bookStoreCLI.enterCmd("verify status is {} in proof {}"
+                          .format(revealedAtrr, preparedProof))
+    pass
 
 
 def testStrTointeger():

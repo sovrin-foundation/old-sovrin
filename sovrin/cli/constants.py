@@ -48,7 +48,7 @@ PREP_PROOF_REG_EX = \
 
 VERIFY_PROOF_REG_EX = \
     "(\s*(?P<verif_proof>verify \s+ status \s+ is) \s+ (?P<status>[a-zA-Z0-9-\s]+) " \
-    "\s+ in \s+ proof \s+ (?P<proof>[a-zA-Z0-9-\s]+)" \
+    "\s+ in \s+ proof \s+ (?P<proof>.+)" \
     "\s*) "
 
 GEN_CRED_REG_EX = \
