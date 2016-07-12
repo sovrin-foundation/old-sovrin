@@ -11,6 +11,10 @@ def grammar():
     return compile("".join(grams))
 
 
+def test_send_attrib_reg_ex(grammar):
+    checkIfMatched(grammar, 'send ATTRIB dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= raw={"legal org": "BRIGHAM YOUNG UNIVERSITY, PROVO, UT", "email":"mail@byu.edu"}')
+
+
 def test_init_attr_repo_reg_ex(grammar):
     checkIfMatched(grammar, "initialize mock attribute repo")
 

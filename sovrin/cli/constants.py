@@ -25,7 +25,7 @@ ADD_GENESIS_NYM_REG_EX = TXN_NYM.format(cmdName='add_genesis',
 GET_NYM_REG_EX = "(\s* (?P<send_get_nym>send\s+GET_NYM) \s+ (?P<dest>dest=)\s*(?P<dest_id>[A-Za-z0-9+=/]*) \s*) "
 
 ADD_ATTRIB_REG_EX = \
-    "(\s* (?P<send_attrib>send\s+ATTRIB) \s+ dest=\s*(?P<dest_id>[a-fA-F0-9]+) \s+ raw=(?P<raw>\{\s*.*\}) \s*) "
+    "(\s* (?P<send_attrib>send\s+ATTRIB) \s+ dest=\s*(?P<dest_id>[A-Za-z0-9+=/]+) \s+ raw=(?P<raw>\{\s*.*\}) \s*) "
 
 SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)\s*(?P<type_key>type=)\s*(?P<type>[A-Z0-9]+)\s*(?P<ip_key>ip=)\s*(?P<ip>[0-9.]+)\s+(?P<port_key>port=)\s*(?P<port>[0-9]+)\s+(?P<keys_key>keys=)\s*(?P<keys>[a-zA-Z-_,\s]+)\s*)"
 
