@@ -11,6 +11,7 @@ from anoncreds.protocol.credential_definition import CredentialDefinition, \
 from anoncreds.protocol.proof import Proof
 from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt, \
     IssuerPublicKey, Credential
+from anoncreds.protocol.utils import encodeAttrs
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -509,8 +510,8 @@ class SovrinCli(PlenumCli):
             e = credential.get("e")
             vprime = credential.get("vprime")
             cred = Credential(self.strTointeger(A), self.strTointeger(e), self.strTointeger(vprime))
-            credDef = self.activeClient.storage.getCredDef(issuer, name, version)
-            keys = json.loads(credDef[KEYS])
+            credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
+            keys = credDef[KEYS]
             pk = {
                 issuer: self.pKFromCredDef(keys)
             }
@@ -526,7 +527,19 @@ class SovrinCli(PlenumCli):
             #     self.activeSigner.alias).encoded()
             # if attributes:
             #     attributes = list(attributes.values())[0]
-            Proof.prepareProof(pk_i=pk, masterSecret=masterSecret, credential={issuer: cred}, revealedAttrs=revealedAttrs, nonce=nonce)
+            attributes = self.activeClient.attributes[issuer]
+            attribTypes = []
+            for nm in attributes.keys():
+                attribTypes.append(AttribType(nm, encode=True))
+            attribsDef = AttribsDef(self.name, attribTypes)
+            attribs = attribsDef.attribs(**attributes).encoded()
+            encodedAttrs = {
+                issuer: list(attribs.values())[0]
+            }
+            Proof.prepareProof(pk_i=pk, masterSecret=masterSecret,
+                               credential={issuer: cred},
+                               revealedAttrs=revealedAttrs, nonce=nonce,
+                               attrs=encodedAttrs)
             return True
 
     def _verifyProofAction(self, matchedVars):

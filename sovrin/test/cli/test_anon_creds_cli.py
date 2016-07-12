@@ -335,7 +335,7 @@ def storedCredAlias():
 
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
-               credDefNameVersion, byuPubKey):
+               credDefNameVersion, byuPubKey, byuCLI):
     A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
     tylerCLI.enterCmd("store credential A={}, e={}, vprime={} for name={}, "
