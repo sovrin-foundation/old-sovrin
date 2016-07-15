@@ -372,7 +372,7 @@ class SovrinCli(PlenumCli):
         attribsDef = AttribsDef(self.name, attribTypes)
         attribs = attribsDef.attribs(**attributes).encoded()
         encodedAttrs = {
-            issuerId: list(attribs.values())[0]
+            issuerId: next(iter(attribs.values()))
         }
         proof.setAttrs(encodedAttrs)
         if not masterSecret:
@@ -459,8 +459,7 @@ class SovrinCli(PlenumCli):
                 name, value = attr.split('=')
                 name, value = name.strip(), value.strip()
                 attribTypes.append(AttribType(name, encode=True))
-                attrInput[name] = [value]
-
+                attrInput[name] = value
             attribsDef = AttribsDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attrInput)
             self.activeClient.attributeRepo.addAttributes(proverId, attribs)
@@ -536,7 +535,6 @@ class SovrinCli(PlenumCli):
             v = credential.get("v")
             cred = Credential(self.strTointeger(A), self.strTointeger(e),
                               self.strTointeger(v))
-            # TODO: Need to create presentation token from crendential
             credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
             keys = credDef[KEYS]
             pk = {

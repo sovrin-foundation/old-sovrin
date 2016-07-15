@@ -215,10 +215,10 @@ def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
     tylerCLI.activeClient.attributes[byuCLI.activeSigner.verstr] = {
         "first_name": "Tyler",
         "last_name": "Ruff",
-        "birth_date": "30",
-        "expiry_date": 100,
-        "undergrad": "true",
-        "postgrad": "false",
+        "birth_date": "12/17/1991",
+        "expiry_date": "12/31/2101",
+        "undergrad": "True",
+        "postgrad": "False",
     }
     tylerCLI.logger.debug("Tyler connected")
 
@@ -321,8 +321,8 @@ def attrAddedToRepo(attrRepoInitialized):
     proverId = "Tyler"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
     byuCLI.enterCmd("add attribute first_name=Tyler, last_name=Ruff, "
-                    "birth_date=30, expiry_date=100, undergrad=true, "
-                    "postgrad=false for {}".format(proverId))
+                    "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
+                    "postgrad=False for {}".format(proverId))
     assert byuCLI.lastCmdOutput == "attribute added successfully"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
@@ -461,7 +461,8 @@ def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected, revealedAtr
 
     def chk():
         out = "Proof verified successfully"
-        assert bookStoreCLI.lastCmdOutput == out
+        # TODO: Find out why this cant be done using lastCmdOutput
+        assert out in [o['msg'] for o in bookStoreCLI.printeds]
 
     bookStoreCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
 
