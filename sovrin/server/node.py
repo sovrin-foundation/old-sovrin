@@ -103,7 +103,7 @@ class Node(PlenumNode):
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
-            genTxnsCount += 1
+                genTxnsCount += 1
                 # if txn[TXN_TYPE] == NYM:
                 #     self.addNymToGraph(txn)
                 # Till now we just have NYM in genesis transaction.
