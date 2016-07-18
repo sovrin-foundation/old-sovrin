@@ -226,7 +226,7 @@ class SovrinCli(PlenumCli):
                         op[HASH] = hsh
                         data = hsh
 
-                    req, = client.submit(op)
+                    req, = client.submit(op, identifier=self.activeSigner.identifier)
                     self.print("Adding attributes {} for {}".
                                format(data, nym), Token.BoldBlue)
                     self.looper.loop.call_later(.2, self.ensureReqCompleted,
@@ -247,7 +247,7 @@ class SovrinCli(PlenumCli):
             TARGET_NYM: nym,
             TXN_TYPE: GET_NYM,
         }
-        req, = self.activeClient.submit(op)
+        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         self.print("Getting nym {}".format(nym), Token.BoldBlue)
 
         def getNymReply(reply, err):
@@ -262,7 +262,7 @@ class SovrinCli(PlenumCli):
             TXN_TYPE: NYM,
             ROLE: role
         }
-        req, = self.activeClient.submit(op)
+        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         printStr = "Adding nym {}".format(nym)
 
         if other_client_name:
@@ -292,7 +292,7 @@ class SovrinCli(PlenumCli):
             op[HASH] = hsh
             data = hsh
 
-        req, = self.activeClient.submit(op)
+        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         self.print("Adding attributes {} for {}".
                    format(data, nym), Token.BoldBlue)
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
@@ -348,7 +348,7 @@ class SovrinCli(PlenumCli):
                 VERSION: credVersion
             }
         }
-        req, = self.activeClient.submit(op)
+        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         self.print("Getting cred def {} version {} for {}".
                    format(credName, credVersion, dest), Token.BoldBlue)
 
@@ -705,7 +705,7 @@ class SovrinCli(PlenumCli):
         }
         self.print("Adding alias {}".format(alias), Token.BoldBlue)
         self.aliases[alias] = signer
-        client.submit(op)
+        client.submit(op, identifier=self.activeSigner.identifier)
 
     def print(self, msg, token=None, newline=True):
         super().print(msg, token=token, newline=newline)
