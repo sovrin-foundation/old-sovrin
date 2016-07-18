@@ -6,8 +6,7 @@ from plenum.test.eventually import eventually
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
-from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
-    checkAllNodesUp
+from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted
 from plenum.test.cli.conftest import nodeRegsForCLI, nodeNames
 
 

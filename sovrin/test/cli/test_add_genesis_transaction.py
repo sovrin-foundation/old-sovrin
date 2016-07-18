@@ -1,8 +1,3 @@
-from _sha256 import sha256
-
-import pytest
-
-from plenum.common.util import randomString
 from plenum.test.cli.helper import checkCmdValid
 from sovrin.common.txn import STEWARD, NYM
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
