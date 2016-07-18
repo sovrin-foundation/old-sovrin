@@ -27,5 +27,6 @@ def sendNym(cli, nym, role):
 
 def checkGetNym(cli, nym):
     cli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym))
-    printeds = ["Getting nym {}".format(nym), "dest id is {}".format(nym)]
+    printeds = ["Getting nym {}".format(nym), "dest id is {}".format(nym),
+                "Reply got from nym"]
     assert all(x in cli.lastCmdOutput for x in printeds)

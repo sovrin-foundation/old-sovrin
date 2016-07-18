@@ -45,7 +45,8 @@ def testSendNym(nymAdded):
 
 
 def testGetNym(stewardCli, looper, sponsorSigner, nymAdded):
-    looper.run(eventually(checkGetNym, stewardCli, sponsorSigner.verstr))
+    looper.run(eventually(checkGetNym, stewardCli, sponsorSigner.verstr,
+                          retryWait=1, timeout=5))
 
 
 @pytest.mark.skipif(True, reason="CLI command not implemented")

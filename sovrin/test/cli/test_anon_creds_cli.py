@@ -52,7 +52,7 @@ objects from one cli to another directly.
 
 
 def chkNymAddedOutput(cli, nym):
-    assert cli.printeds[0]['msg'] == "Nym {} added".format(nym)
+    assert any(x['msg'] == "Nym {} added".format(nym) for x in cli.printeds)
 
 
 def ensureNymAdded(cli, nym, role=USER):
