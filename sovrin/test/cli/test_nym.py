@@ -2,7 +2,7 @@ import pytest
 
 from plenum.client.signer import SimpleSigner
 from plenum.test.eventually import eventually
-from sovrin.test.cli.helper import newCLI, checkGetNym
+from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 
 
 @pytest.fixture("module")
@@ -31,20 +31,21 @@ def nymAdded(nodesCli, looper, stewardCli, sponsorSigner):
     Assume steward is created, create a sponsor an then from the sponsor cli
     create a user
     """
+    nym = sponsorSigner.verstr
     stewardCli.enterCmd("send NYM dest={} role=SPONSOR"
-                        .format(sponsorSigner.verstr))
+                        .format(nym))
 
-    def chk():
-        assert "Adding nym" in stewardCli.lastCmdOutput
-
-    looper.run(eventually(chk, retryWait=1, timeout=5))
+    looper.run(eventually(chkNymAddedOutput, stewardCli, nym, retryWait=1,
+                          timeout=5))
 
 
+@pytest.mark.skipif(True, reason="Obsolete implemtation")
 def testSendNym(nymAdded):
     pass
 
 
-def testGetNym(stewardCli, looper, sponsorSigner, nymAdded):
+@pytest.mark.skipif(True, reason="Obsolete implemtation")
+def testGetNym(nymAdded, stewardCli, looper, sponsorSigner):
     looper.run(eventually(checkGetNym, stewardCli, sponsorSigner.verstr,
                           retryWait=1, timeout=5))
 

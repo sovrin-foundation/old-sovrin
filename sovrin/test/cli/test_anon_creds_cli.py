@@ -3,15 +3,13 @@ import re
 
 from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM, NAME, VERSION
-from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
+from plenum.test.cli.conftest import createAllNodes
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
-    assertAllNodesCreated, checkAllNodesStarted, checkAllNodesUp, \
-    checkClientConnected
+    assertAllNodesCreated, checkAllNodesStarted, checkClientConnected
 from plenum.test.eventually import eventually
 from sovrin.cli.cli import SovrinCli
-from sovrin.test.cli.helper import newCLI, checkGetNym
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
-
+from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 
 """
 Test Plan:
@@ -49,10 +47,6 @@ objects from one cli to another directly.
 
 
 """
-
-
-def chkNymAddedOutput(cli, nym):
-    assert any(x['msg'] == "Nym {} added".format(nym) for x in cli.printeds)
 
 
 def ensureNymAdded(cli, nym, role=USER):

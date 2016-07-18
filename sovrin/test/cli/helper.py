@@ -29,4 +29,12 @@ def checkGetNym(cli, nym):
     cli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym))
     printeds = ["Getting nym {}".format(nym), "dest id is {}".format(nym),
                 "Reply got from nym"]
-    assert all(x in cli.lastCmdOutput for x in printeds)
+    checks = [x in cli.lastCmdOutput for x in printeds]
+    assert all(checks)
+    # TODO: These give NameError, don't know why
+    # assert all([x in cli.lastCmdOutput for x in printeds])
+    # assert all(x in cli.lastCmdOutput for x in printeds)
+
+
+def chkNymAddedOutput(cli, nym):
+    assert any(x['msg'] == "Nym {} added".format(nym) for x in cli.printeds)
