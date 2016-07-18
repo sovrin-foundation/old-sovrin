@@ -278,14 +278,17 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
 
     def addNymToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
+        # TODO: Refactor this try-catch handling, duplicate code there
         if ROLE not in txn or txn[ROLE] == USER:
             if origin and not self.storage.hasNym(origin):
                 logger.warn("While adding user, origin not found in the graph")
             try:
                 self.storage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
                                      origin, reference=txn.get(REFERENCE))
-            except (pyorient.PyOrientCommandException,
-                    pyorient.PyOrientORecordDuplicatedException) as ex:
+            except pyorient.PyOrientORecordDuplicatedException:
+                logger.debug("The user {} was already added to graph".format(
+                    txn.get(TARGET_NYM)))
+            except pyorient.PyOrientCommandException as ex:
                 logger.error("An exception was raised while adding "
                              "user {}".format(ex))
         elif txn[ROLE] == SPONSOR:
@@ -297,8 +300,10 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             try:
                 self.storage.addSponsor(txn.get(TXN_ID), txn.get(TARGET_NYM),
                                         origin)
-            except (pyorient.PyOrientCommandException,
-                    pyorient.PyOrientORecordDuplicatedException) as ex:
+            except pyorient.PyOrientORecordDuplicatedException:
+                logger.debug("The sponsor {} was already added to graph".format(
+                    txn.get(TARGET_NYM)))
+            except pyorient.PyOrientCommandException as ex:
                 logger.error(
                     "An exception was raised while adding "
                     "sponsor {}".format(ex))

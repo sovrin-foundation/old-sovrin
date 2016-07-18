@@ -1,6 +1,7 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
+from plenum.common.txn import TARGET_NYM
 from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 
@@ -46,7 +47,9 @@ def testSendNym(nymAdded):
 
 @pytest.mark.skipif(True, reason="Obsolete implemtation")
 def testGetNym(nymAdded, stewardCli, looper, sponsorSigner):
-    looper.run(eventually(checkGetNym, stewardCli, sponsorSigner.verstr,
+    nym = sponsorSigner.verstr
+    stewardCli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym))
+    looper.run(eventually(checkGetNym, stewardCli, nym,
                           retryWait=1, timeout=5))
 
 
