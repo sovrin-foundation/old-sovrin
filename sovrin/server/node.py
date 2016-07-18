@@ -85,6 +85,7 @@ class Node(PlenumNode):
 
     # TODO: Should adding of genesis transactions be part of start method
     def addGenesisTxns(self, genTxns=None):
+        genTxnsCount = 0
         if self.primaryStorage.size == 0:
             gt = genTxns or getGenesisTxns()
             reqIds = {}
@@ -102,9 +103,12 @@ class Node(PlenumNode):
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
+            genTxnsCount += 1
                 # if txn[TXN_TYPE] == NYM:
                 #     self.addNymToGraph(txn)
                 # Till now we just have NYM in genesis transaction.
+        logger.debug("{} genesis transactions added.".format(genTxnsCount))
+        return genTxnsCount
 
     def addNymToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)

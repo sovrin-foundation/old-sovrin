@@ -155,10 +155,16 @@ class SovrinCli(PlenumCli):
         if nodesAdded is not None:
             genTxns = self.genesisTransactions
             for node in nodesAdded:
-                tokens = [(Token.BoldBlue, "{} adding genesis transaction {}".
-                           format(node.name, t)) for t in genTxns]
-                self.printTokens(tokens=tokens, end='\n')
-                node.addGenesisTxns(genTxns)
+                txnCount = node.addGenesisTxns(genTxns)
+                if txnCount == len(genTxns):
+                    tokens = [(Token.BoldBlue, "{} adding genesis transactions {}".
+                               format(node.name, t)) for t in genTxns]
+                    self.printTokens(tokens=tokens, end='\n')
+                else:
+                    self.logger.warn("{} genesis transactions added whereas"
+                                         " {} should have been added.".
+                                         format(txnCount, len(genTxns)))
+
         return nodesAdded
 
     def newClient(self, clientName, seed=None, identifier=None, signer=None,

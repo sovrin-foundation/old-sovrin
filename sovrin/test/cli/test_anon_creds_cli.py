@@ -16,7 +16,7 @@ from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
 """
 Test Plan:
 
-6 CLI instances - 1 to run the consensus pool and 4 for clients.
+6 CLI instances - 1 to run the consensus pool and 5 for clients.
 5 clients - Phil, Tyler, BookStore, BYU and Trustee
 
 Phil is a pre-existing sponsor on Sovrin
