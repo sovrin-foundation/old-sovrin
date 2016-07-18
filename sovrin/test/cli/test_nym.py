@@ -32,7 +32,8 @@ def testSendNym(nodesCli, looper, stewardCli, sponsorSigner):
     Assume steward is created, create a sponsor an then from the sponsor cli
     create a user
     """
-    stewardCli.enterCmd("send NYM dest={} role=SPONSOR".format(sponsorSigner.verstr))
+    stewardCli.enterCmd("send NYM dest={} role=SPONSOR"
+                        .format(sponsorSigner.verstr))
 
     def chk():
         assert "Adding nym" in stewardCli.lastCmdOutput

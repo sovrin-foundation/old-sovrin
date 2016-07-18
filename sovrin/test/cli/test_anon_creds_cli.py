@@ -170,8 +170,10 @@ def bookStoreCreated(bookStorePubKey, trusteeConnected, trusteeCLI):
 
 
 @pytest.fixture(scope="module")
-def bookStoreConnected(bookStoreCreated, bookStoreCLI, poolNodesCreated, nodeNames):
-    bookStoreCLI.looper.run(eventually(checkClientConnected, bookStoreCLI, nodeNames,
+def bookStoreConnected(bookStoreCreated, bookStoreCLI, poolNodesCreated,
+                       nodeNames):
+    bookStoreCLI.looper.run(eventually(checkClientConnected, bookStoreCLI,
+                                       nodeNames,
                                        bookStoreCLI.activeClient.name,
                                        retryWait=1, timeout=5))
     bookStoreCLI.logger.debug("Book store connected")
@@ -212,15 +214,6 @@ def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
     tylerCLI.logger.debug("Tyler connected")
 
 
-#TODO: Remove
-@pytest.fixture(scope="module")
-def setup(poolCLI, philCLI, bookStoreCLI, byuCLI, tylerCLI):
-    # for node in poolCLI.nodes.values():
-    #     for cli in [philCLI, bookStoreCLI, byuCLI, tylerCLI]:
-    #         node.whitelistClient(cli.defaultClient.name)
-    pass
-
-
 @pytest.fixture(scope="module")
 def credDefNameVersion():
     credDefName = "Degree"
@@ -229,7 +222,8 @@ def credDefNameVersion():
 
 
 @pytest.fixture(scope="module")
-def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey, credDefNameVersion):
+def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
+                   credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
@@ -332,8 +326,9 @@ def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
     proofId, U = tylerPreparedU
     # A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
-    tylerCLI.enterCmd("store credential A={}, e={}, vprimeprime={} for proof {} as {}"
-                      .format(*byuCreatedCredential, proofId, storedCredAlias))
+    tylerCLI.enterCmd("store credential A={}, e={}, vprimeprime={} for "
+                      "proof {} as {}".format(*byuCreatedCredential, proofId,
+                                              storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
 
@@ -438,7 +433,8 @@ def testPrepareProof(preparedProof):
     pass
 
 
-def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected, revealedAtrr):
+def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected,
+                    revealedAtrr):
     bookStoreCLI.enterCmd("verify status is {} in proof {}"
                           .format(revealedAtrr, preparedProof))
 
