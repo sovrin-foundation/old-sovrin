@@ -52,12 +52,6 @@ objects from one cli to another directly.
 """
 
 
-def addNewKey(*clis):
-    for cli in clis:
-        cli.enterCmd("new key")
-        assert 'Key created in wallet' in cli.lastCmdOutput
-
-
 def chkNymAddedOutput(cli, nym):
     assert cli.printeds[0]['msg'] == "Nym {} added".format(nym)
 
@@ -110,10 +104,6 @@ def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
     createAllNodes(poolCLI)
     assertAllNodesCreated(poolCLI, nodeNames)
     checkAllNodesStarted(poolCLI, *nodeNames)
-
-
-def testPoolNodesCreated(poolNodesCreated):
-    pass
 
 
 @pytest.fixture(scope="module")
@@ -373,6 +363,18 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
         return proof
 
 
+@pytest.fixture(scope="module")
+def verifNonce(bookStoreCLI, bookStoreConnected):
+    bookStoreCLI.enterCmd("generate verification nonce")
+    search = re.search("^Verification nonce is (.*)$",
+                       bookStoreCLI.lastCmdOutput,
+                       re.MULTILINE)
+    assert search
+    nonce = search.group(1)
+    assert nonce
+    return nonce
+
+
 # TODO This test seems to be failing intermittently.
 def testNodesCreatedOnPoolCLI(poolNodesCreated):
     pass
@@ -394,16 +396,11 @@ def testTylerCreated(tylerCreated):
     pass
 
 
-def testBookStoreCreated(bookStoreCreated):
-    pass
-
-
 def testBYUAddsCredDef(byuAddsCredDef):
     pass
 
 
-def testAnonCredsCLI(byuCLI, setup, philCreated, bookStoreCreated, byuCreated,
-                     tylerCreated):
+def testBookStoreCreated(bookStoreCreated):
     pass
 
 
@@ -429,19 +426,6 @@ def testStoreCred(byuCreatedCredential, tylerCLI, storedCred):
 
 def testListCred(byuCreatedCredential, storedCred, listedCred):
     pass
-
-
-@pytest.fixture(scope="module")
-def verifNonce(bookStoreCLI, bookStoreConnected):
-    # addNewKey(bookStoreCLI)
-    bookStoreCLI.enterCmd("generate verification nonce")
-    search = re.search("^Verification nonce is (.*)$",
-                       bookStoreCLI.lastCmdOutput,
-                       re.MULTILINE)
-    assert search
-    nonce = search.group(1)
-    assert nonce
-    return nonce
 
 
 def testGenVerifNonce(verifNonce):
@@ -508,52 +492,3 @@ def testStrTointeger():
         "865483244806147104667605098138613899840626729916612169723470228930801507396158440259774040553984850335586645194467365045176677506537296253654429662975816874630847874003647935529333964941855401786336352853043803498640759072173609203160413437402970023625421911392981092263211748047448929085861379410272047860536995972453496075851660446485058108906037436369067625674495155937598646143535510599911729010586276679305856525112130907097314388354485920043436412137797426978774012573863335500074359101826932761239032674620096110906293228090163"
     i = SovrinCli.strTointeger(s)
     assert str(i) == s
-
-# def testGenCred(byuCLI):
-#     addNewKey([byuCLI])
-#     assert "Credential request is: {}".format("<need to put expected value>") == getLastCliPrintedMsg(byuCLI)
-#
-#
-# def testInitIssuerAttribRepo(byuCLI):
-#     pass
-
-# def testAnonCredsCLI(cli):
-#     """
-#     Test to demonstrate anonymous credentials through Sovrin CLI.
-#     """
-#     cli.enterCmd("new keypair")
-#     assert len(cli.defaultClient.signers) == 2
-#     BYUPubKeyMsg = cli.lastPrintArgs['msg']
-#     assert BYUPubKeyMsg.startswith('Public key')
-#     BYUPubKey = BYUPubKeyMsg.split(" ")[-1]
-#     cli.enterCmd("list ids")
-#     cli.enterCmd("send NYM dest={}".format(BYUPubKey))  # TODO incomplete
-#     cli.enterCmd("send GET_NYM dest={}".format(BYUPubKey))  # TODO incomplete
-#     cli.enterCmd("send ATTRIB dest={key} "
-#                  "raw={{email: mail@byu.edu}}".format(key=BYUPubKey))
-#     cli.enterCmd(
-#         'send CRED_DEF name="Qualifications" version="1.0" type=JC1 '
-#         'ip=10.10.10.10 port=7897 keys={master_secret:<large number>, '
-#         'n:<large number>, S:<large number>, Z:<large number>, '
-#         'attributes: {'
-#         '"first_name":R1, "last_name":R2, "birth_date":R3, "expire_date":R4, '
-#         '"undergrad":R5, "postgrad":R6}}')
-#     cli.enterCmd('new keypair BYU')
-#     TylerPubKeyMsg = cli.lastPrintArgs['msg']
-#     assert TylerPubKeyMsg.startswith('Public key')
-#     TylerPubKey = TylerPubKeyMsg.split(" ")[-1]
-#     cli.enterCmd('use keypair {}'.format(BYUPubKey))
-#     assert cli.activeSigner.verstr == BYUPubKey
-#     cli.enterCmd("send NYM dest={}".format(TylerPubKey))  # TODO incomplete
-#     cli.enterCmd("send GET_NYM dest={}".format(TylerPubKey))  # TODO
-# incomplete
-#     cli.enterCmd("become {}".format(TylerPubKey))
-#     assert cli.activeSigner.verstr == TylerPubKey
-#     cli.enterCmd("send to {} saveas BYU-QUAL REQ_CRED name=Qualifications"
-#                  " version=1.0 attrs=undergrad,postgrad".format(BYUPubKey))
-#     cli.enterCmd("list CRED")
-#     cli.enterCmd("become {}".format(TylerPubKey))
-#     # TODO Verifier: BookStore must already exist on Sovrin
-#     bookStorePubKey = None
-#     cli.enterCmd("send proof of undergrad from CRED-BYU-QUAL to"
-#                  " {}".format(bookStorePubKey))
