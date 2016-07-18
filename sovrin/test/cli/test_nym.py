@@ -35,7 +35,6 @@ def nymAdded(nodesCli, looper, stewardCli, sponsorSigner):
     nym = sponsorSigner.verstr
     stewardCli.enterCmd("send NYM dest={} role=SPONSOR"
                         .format(nym))
-
     looper.run(eventually(chkNymAddedOutput, stewardCli, nym, retryWait=1,
                           timeout=5))
 

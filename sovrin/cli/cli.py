@@ -629,7 +629,6 @@ class SovrinCli(PlenumCli):
         if result and status in proof["revealedAttrs"]:
             self.print("Proof verified successfully")
 
-
     # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
     # This is required for demo for sure, we'll see if it will be required for real execution or not
     def _genCredAction(self, matchedVars):
