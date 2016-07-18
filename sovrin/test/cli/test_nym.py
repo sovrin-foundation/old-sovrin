@@ -32,23 +32,24 @@ def testSendNym(nodesCli, looper, stewardCli, sponsorSigner):
     Assume steward is created, create a sponsor an then from the sponsor cli
     create a user
     """
-    stewardCli.enterCmd("send nym dest={}".format(sponsorSigner.verstr))
+    stewardCli.enterCmd("send NYM dest={} role=SPONSOR".format(sponsorSigner.verstr))
 
     def chk():
-        assert "Adding nym" in ",".join(stewardCli.printeds)
+        assert "Adding nym" in stewardCli.lastCmdOutput
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
+@pytest.mark.skipif(True, reason="CLI command not implemented")
 def testSendAttrib(nodesCli, looper, stewardCli, sponsorSigner, attrib):
     """
     Assume steward is created, sponsor is created, steward adds attribute
     for sponsor
     """
-    stewardCli.enterCmd("send attrib dest={} raw={}".format(sponsorSigner.verstr
+    stewardCli.enterCmd("send ATTRIB dest={} raw={}".format(sponsorSigner.verstr
                                                             , attrib))
 
     def chk():
-        assert "Adding attrib" in ",".join(stewardCli.printeds)
+        assert "Adding attrib" in stewardCli.lastCmdOutput
 
     looper.run(eventually(chk, retryWait=1, timeout=5))

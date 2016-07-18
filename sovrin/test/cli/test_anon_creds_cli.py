@@ -2,8 +2,7 @@ import pytest
 import re
 
 from plenum.common.looper import Looper
-from plenum.common.txn import TARGET_NYM, DATA, NAME, VERSION
-from plenum.test.eventually import eventually
+from plenum.common.txn import TARGET_NYM, NAME, VERSION
 from plenum.test.cli.conftest import nodeRegsForCLI, createAllNodes, nodeNames
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated, checkAllNodesStarted, checkAllNodesUp, \

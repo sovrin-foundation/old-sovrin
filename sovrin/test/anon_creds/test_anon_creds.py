@@ -157,7 +157,8 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
                    "{}".format(revealedAttrs))
     proof.setParams(encodedAttributes, presentationToken,
                     revealedAttrs, nonce)
-    prf = proof.prepareProof(credential=presentationToken,
+    prf = Proof.prepareProof(pk_i=proof.pk_i, masterSecret=proof.masterSecret,
+                             credential=presentationToken,
                              attrs=attributes.encoded(),
                              revealedAttrs=revealedAttrs,
                              nonce=nonce)
