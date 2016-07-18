@@ -1,10 +1,8 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
-from plenum.test.cli.helper import checkAllNodesStarted
 from plenum.test.eventually import eventually
-from sovrin.common.txn import USER
-from sovrin.test.cli.helper import sendNym, TestCLI, newCLI
+from sovrin.test.cli.helper import newCLI, checkGetNym
 
 
 @pytest.fixture("module")
@@ -27,7 +25,8 @@ def sponsorCli(nodeRegsForCLI, looper, tdir):
     return newCLI(nodeRegsForCLI, looper, tdir)
 
 
-def testSendNym(nodesCli, looper, stewardCli, sponsorSigner):
+@pytest.fixture("module")
+def nymAdded(nodesCli, looper, stewardCli, sponsorSigner):
     """
     Assume steward is created, create a sponsor an then from the sponsor cli
     create a user
@@ -41,14 +40,22 @@ def testSendNym(nodesCli, looper, stewardCli, sponsorSigner):
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
+def testSendNym(nymAdded):
+    pass
+
+
+def testGetNym(stewardCli, looper, sponsorSigner, nymAdded):
+    looper.run(eventually(checkGetNym, stewardCli, sponsorSigner.verstr))
+
+
 @pytest.mark.skipif(True, reason="CLI command not implemented")
 def testSendAttrib(nodesCli, looper, stewardCli, sponsorSigner, attrib):
     """
     Assume steward is created, sponsor is created, steward adds attribute
     for sponsor
     """
-    stewardCli.enterCmd("send ATTRIB dest={} raw={}".format(sponsorSigner.verstr
-                                                            , attrib))
+    stewardCli.enterCmd("send ATTRIB dest={} raw={}".format(
+        sponsorSigner.verstr, attrib))
 
     def chk():
         assert "Adding attrib" in stewardCli.lastCmdOutput

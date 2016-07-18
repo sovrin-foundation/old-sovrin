@@ -9,7 +9,7 @@ from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     checkClientConnected
 from plenum.test.eventually import eventually
 from sovrin.cli.cli import SovrinCli
-from sovrin.test.cli.helper import newCLI
+from sovrin.test.cli.helper import newCLI, checkGetNym
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
 
 
@@ -60,6 +60,7 @@ def ensureNymAdded(cli, nym, role=USER):
         dest=TARGET_NYM, nym=nym, ROLE=ROLE, role=role))
     cli.looper.run(
         eventually(chkNymAddedOutput, cli, nym, retryWait=1, timeout=10))
+    cli.looper.run(eventually(checkGetNym, cli, nym, retryWait=1, timeout=10))
 
 
 @pytest.yield_fixture(scope="module")
@@ -161,7 +162,7 @@ def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
 def trusteeConnected(trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
     trusteeCLI.looper.run(eventually(checkClientConnected, trusteeCLI, nodeNames,
                                      trusteeCLI.activeClient.name, retryWait=1,
-                                    timeout=5))
+                                     timeout=5))
 
 
 @pytest.fixture(scope="module")
@@ -201,7 +202,7 @@ def tylerCreated(tylerPubKey, byuConnected, byuCLI):
 def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
     tylerCLI.looper.run(eventually(checkClientConnected, tylerCLI, nodeNames,
                                    tylerCLI.activeClient.name, retryWait=1,
-                                  timeout=5))
+                                   timeout=5))
     tylerCLI.activeClient.attributes = {}
     tylerCLI.activeClient.attributes[byuCLI.activeSigner.verstr] = {
         "first_name": "Tyler",
