@@ -655,7 +655,7 @@ class SovrinCli(PlenumCli):
             credVersion = matchedVars.get('cred_version')
             uValue = SovrinCli.strTointeger(matchedVars.get('u_value'))
             credDef = self.activeClient.storage.getCredDef(
-                self.activeClient.defaultIdentifier, credName, credVersion)
+                self.activeSigner.identifier, credName, credVersion)
             keys = json.loads(credDef[KEYS])
             pk = self.pKFromCredDef(keys)
             attributes = self.activeClient.attributeRepo.getAttributes(proverId).encoded()
