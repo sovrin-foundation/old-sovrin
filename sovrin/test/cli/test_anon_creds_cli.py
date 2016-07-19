@@ -234,9 +234,10 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
     credDefName, credDefVersion = credDefNameVersion
     # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
-    cmd = ("send CRED_DEF name=Degree version=1.0 "
+    cmd = ("send CRED_DEF name={} version={} "
            "type=JC1 ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
-           "first_name,birth_date,postgrad,expiry_date")
+           "first_name,birth_date,postgrad,expiry_date".
+           format(credDefName, credDefVersion))
     checkCmdValid(byuCLI, cmd)
 
     def checkCredAdded():

@@ -251,7 +251,7 @@ class SovrinCli(PlenumCli):
         self.print("Getting nym {}".format(nym), Token.BoldBlue)
 
         def getNymReply(reply, err):
-            self.print("NYM transaction for {}: {}".format(nym, reply))
+            self.print("Transaction id for NYM {} is {}".format(nym, reply[TXN_ID]))
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient, getNymReply)

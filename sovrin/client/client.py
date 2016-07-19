@@ -29,7 +29,7 @@ from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
-from sovrin.persistence.identity_graph import IdentityGraph, getEdgeFromType
+from sovrin.persistence.identity_graph import getEdgeFromType
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.verifier import Verifier
@@ -211,12 +211,13 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                               )
                 elif result[TXN_TYPE] == GET_NYM:
                     if DATA in result and result[DATA]:
-                        try:
-                            self.addNymToGraph(json.loads(result[DATA]))
-                        except PyOrientCommandException as ex:
-                            logger.error(
-                                "An exception was raised while adding "
-                                "nym {}".format(ex))
+                        self.addNymToGraph(json.loads(result[DATA]))
+                        # try:
+                        #     self.addNymToGraph(json.loads(result[DATA]))
+                        # except PyOrientCommandException as ex:
+                        #     logger.error(
+                        #         "An exception was raised while adding "
+                        #         "nym {}".format(ex))
                 elif result[TXN_TYPE] == GET_TXNS:
                     if DATA in result and result[DATA]:
                         data = json.loads(result[DATA])
