@@ -172,7 +172,8 @@ def trusteeConnected(trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
 
 
 @pytest.fixture(scope="module")
-def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
+def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI,
+                     poolNodesCreated, nodeNames):
     ensureNymAdded(trusteeCLI, bookStorePubKey, USER)
 
 
@@ -222,6 +223,15 @@ def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
 
 
 @pytest.fixture(scope="module")
+def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, byuCLI):
+    issuerId = byuCLI.activeSigner.verstr
+    checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
+                    "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
+                    "postgrad=False".format(issuerId))
+    assert issuerId in tylerCLI.activeClient.attributes
+
+
+@pytest.fixture(scope="module")
 def credDefNameVersion():
     credDefName = "Degree"
     credDefVersion = "1.0"
@@ -260,7 +270,7 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
     credDefName, credDefVersion = credDefNameVersion
     issuerIdentifier = byuAddsCredDef
     proverId = tylerCLI.activeSigner.alias
-    tylerCLI.enterCmd("request credential {} version {} from {} for {}"
+    checkCmdValid(tylerCLI, "request credential {} version {} from {} for {}"
                       .format(credDefName, credDefVersion, issuerIdentifier,
                               proverId))
 
@@ -286,7 +296,7 @@ def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
     credDefName, credDefVersion = credDefNameVersion
     proofId, U = tylerPreparedU
     proverId = tylerCLI.activeSigner.alias
-    byuCLI.enterCmd("generate credential for {} for {} version {} with {}"
+    checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
                     .format(proverId, credDefName, credDefVersion, U))
     assert byuCLI.printeds[0]['msg'].startswith("Credential:")
     pat = re.compile(
@@ -311,7 +321,7 @@ def attrAddedToRepo(attrRepoInitialized):
     byuCLI = attrRepoInitialized
     proverId = "Tyler"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
-    byuCLI.enterCmd("add attribute first_name=Tyler, last_name=Ruff, "
+    checkCmdValid(byuCLI, "add attribute first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False for {}".format(proverId))
     assert byuCLI.lastCmdOutput == "attribute added successfully"
@@ -334,7 +344,7 @@ def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
     proofId, U = tylerPreparedU
     # A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
-    tylerCLI.enterCmd("store credential A={}, e={}, vprimeprime={} for "
+    checkCmdValid(tylerCLI, "store credential A={}, e={}, vprimeprime={} for "
                       "proof {} as {}".format(*byuCreatedCredential, proofId,
                                               storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
@@ -354,7 +364,7 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
     """
        prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
        """
-    tylerCLI.enterCmd("prepare proof of {} using nonce {} for {}".
+    checkCmdValid(tylerCLI, "prepare proof of {} using nonce {} for {}".
                       format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
     pat = re.compile(
@@ -367,7 +377,7 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
 
 @pytest.fixture(scope="module")
 def verifNonce(bookStoreCLI, bookStoreConnected):
-    bookStoreCLI.enterCmd("generate verification nonce")
+    checkCmdValid(bookStoreCLI, "generate verification nonce")
     search = re.search("^Verification nonce is (.*)$",
                        bookStoreCLI.lastCmdOutput,
                        re.MULTILINE)
@@ -414,6 +424,10 @@ def testAddAttrToRepo(attrAddedToRepo):
     pass
 
 
+def testTylerAddsBYUKnownAttributes(tylerStoresAttributesAsKnownToBYU):
+    pass
+
+
 def testReqCred(tylerPreparedU):
     pass
 
@@ -443,7 +457,7 @@ def testPrepareProof(preparedProof):
 
 def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected,
                     revealedAtrr):
-    bookStoreCLI.enterCmd("verify status is {} in proof {}"
+    checkCmdValid(bookStoreCLI, "verify status is {} in proof {}"
                           .format(revealedAtrr, preparedProof))
 
     def chk():

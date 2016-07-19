@@ -23,6 +23,10 @@ def test_add_attr_reg_ex(grammar):
     checkIfMatched(grammar, "add attribute first_name=Tyler,last_name=Ruff,birth_date=12/17/1991,undergrad=True,postgrad=True,expiry_date=12/31/2101 for Tyler")
 
 
+def test_add_attr_prover_reg_ex(grammar):
+    checkIfMatched(grammar, "attribute known to BYU first_name=Tyler, last_name=Ruff, birth_date=12/17/1991, undergrad=True, postgrad=True, expiry_date=12/31/2101")
+
+
 def test_req_cred_reg_ex(grammar):
     checkIfMatched(grammar,
                    "request credential Degree version 1.0 from o7NzafnAlkhNaEM5njaH+I7Y19BEbEORmFB13p87zhM= for Tyler")

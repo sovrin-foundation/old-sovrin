@@ -35,7 +35,7 @@ REQ_CRED_REG_EX = \
     "(\s*(?P<req_cred>request\s+credential) " \
     "\s+ (?P<name>[a-zA-Z0-9\-]+)" \
     "\s+ version \s+ (?P<version>[0-9\.]+)" \
-    "\s+ from \s+ (?P<issuer_identifier>[A-Za-z0-9+=/]+)" \
+    "\s+ from \s+ (?P<issuer_id>[A-Za-z0-9+=/]+)" \
     "\s+ for \s+ (?P<prover_id>[a-zA-Z0-9]+)" \
     "\s*)"
 
@@ -76,6 +76,8 @@ STORE_CRED_REG_EX = \
 "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
 "\s*)"
 
+ADD_ATTRS_PROVER_REG_EX = "(\s*(?P<add_attrs>attribute \s+ known \s+ to) \s+ (?P<issuer_id>[A-Za-z0-9+=/]+) \s+ (?P<attrs>[A-Za-z0-9_,+=/ ]+) \s*)"
+
 INIT_ATTR_REPO_REG_EX = "(\s*(?P<init_attr_repo>initialize \s+ mock \s+ attribute \s+ repo)\s*)"
 
 ADD_ATTRS_REG_EX = "(\s*(?P<add_attrs>add \s+ attribute) \s+ (?P<attrs>[A-Za-z0-9_,+=/ ]+) \s+ for \s+ (?P<prover_id>[a-zA-Z0-9\-_]+) \s*)"
@@ -95,4 +97,4 @@ GEN_VERIF_NONCE_FORMATTED_REG_EX = getPipedRegEx(GEN_VERIF_NONCE_REG_EX)
 PREP_PROOF_FORMATTED_REG_EX = getPipedRegEx(PREP_PROOF_REG_EX)
 VERIFY_PROOF_FORMATTED_REG_EX = getPipedRegEx(VERIFY_PROOF_REG_EX)
 INIT_ATTR_REPO_FORMATTED_REG_EX = getPipedRegEx(INIT_ATTR_REPO_REG_EX)
-ADD_ATTRS_FORMATTED_REG_EX = ADD_ATTRS_REG_EX
+ADD_ATTRS_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRS_REG_EX)

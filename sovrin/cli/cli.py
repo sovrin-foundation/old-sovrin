@@ -124,6 +124,7 @@ class SovrinCli(PlenumCli):
                         self._addGenesisAction,
                         self._initAttrRepoAction,
                         self._addAttrsToRepoAction,
+                        self._addAttrsToProverAction,
                         self._storeCredAction,
                         self._genVerifNonceAction,
                         self._prepProofAction,
@@ -329,7 +330,7 @@ class SovrinCli(PlenumCli):
 
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
-        dest = matchedVars.get('issuer_identifier')
+        dest = matchedVars.get('issuer_id')
         credName = matchedVars.get('name')
         credVersion = matchedVars.get('version')
         proverId = matchedVars.get('prover_id')
@@ -454,22 +455,38 @@ class SovrinCli(PlenumCli):
             self.print("Credential stored")
             return True
 
+    @staticmethod
+    def parseAttributeString(attrs):
+        attrInput = {}
+        for attr in attrs.split(','):
+            name, value = attr.split('=')
+            name, value = name.strip(), value.strip()
+            attrInput[name] = value
+        return attrInput
+
     def _addAttrsToRepoAction(self, matchedVars):
         if matchedVars.get('add_attrs') == 'add attribute':
             attrs = matchedVars.get('attrs')
             proverId = matchedVars.get('prover_id')
-
             attribTypes = []
-            attrInput = {}
-            for attr in attrs.split(','):
-                name, value = attr.split('=')
-                name, value = name.strip(), value.strip()
+            attributes = self.parseAttributeString(attrs)
+            for name in attributes:
                 attribTypes.append(AttribType(name, encode=True))
-                attrInput[name] = value
             attribsDef = AttribsDef(self.name, attribTypes)
-            attribs = attribsDef.attribs(**attrInput)
+            attribs = attribsDef.attribs(**attributes)
             self.activeClient.attributeRepo.addAttributes(proverId, attribs)
             self.print("attribute added successfully")
+            return True
+
+    def _addAttrsToProverAction(self, matchedVars):
+        if matchedVars.get('add_attrs') == 'attribute known to':
+            attrs = matchedVars.get('attrs')
+            issuerId = matchedVars.get('issuer_id')
+            attributes = self.parseAttributeString(attrs)
+            # TODO: Refactor ASAP
+            if not hasattr(self.activeClient, "attributes"):
+                self.activeClient.attributes = {}
+            self.activeClient.attributes[issuerId] = attributes
             return True
 
     def _sendNymAction(self, matchedVars):
@@ -513,7 +530,7 @@ class SovrinCli(PlenumCli):
 
     def _reqCredAction(self, matchedVars):
         if matchedVars.get('req_cred') == 'request credential':
-            dest = matchedVars.get('issuer_identifier')
+            dest = matchedVars.get('issuer_id')
             credName = matchedVars.get('cred_name')
             name = matchedVars.get('name')
             version = matchedVars.get('version')
