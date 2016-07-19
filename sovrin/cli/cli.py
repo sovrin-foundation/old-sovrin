@@ -653,7 +653,7 @@ class SovrinCli(PlenumCli):
             proverId = matchedVars.get('prover_id')
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
-            uValue = integer(int(matchedVars.get('u_value')))
+            uValue = SovrinCli.strTointeger(matchedVars.get('u_value'))
             credDef = self.activeClient.storage.getCredDef(
                 self.activeClient.defaultIdentifier, credName, credVersion)
             keys = json.loads(credDef[KEYS])
