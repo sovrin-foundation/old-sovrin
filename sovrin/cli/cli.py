@@ -425,16 +425,15 @@ class SovrinCli(PlenumCli):
             # assuming it will work, test cases will confirm it
             interactionId = randomString(7)
             nonce = self.activeClient.generateNonce(interactionId)
-            self.print("Verification nonce is {}".format(nonce))
+            self.print("Verification nonce is {}".format(nonce), Token.BoldOrange)
             return True
 
     def _storeCredAction(self, matchedVars):
         if matchedVars.get('store_cred') == 'store credential':
-            # TODO: Assuming single issuer credential only, make it acccept multi-issuer credential
-            # multi issuer credential
+            # TODO: Assuming single issuer credential only, make it accept
+            # multi-issuer credential
             cred = matchedVars.get('cred')
             alias = matchedVars.get('alias').strip()
-            # credDef = matchedVars.get('cred_def')
             proofId = matchedVars.get('prf_id').strip()
             credential = {}
             for val in cred.split(","):
