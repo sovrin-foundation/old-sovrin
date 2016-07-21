@@ -63,11 +63,8 @@ class SovrinCli(PlenumCli):
         super().__init__(*args, **kwargs)
         # self.loadGenesisTxns()
 
-    def initializeGrammar(self):
-        self.clientGrams = getClientGrams() + getNewClientGrams()
-        super().initializeGrammar()
-
-    def initializeGrammarLexer(self):
+    @property
+    def lexers(self):
         lexerNames = [
             'send_nym',
             'send_get_nym',
@@ -85,34 +82,86 @@ class SovrinCli(PlenumCli):
             'init_attr_repo',
             'add_attrs'
         ]
-        sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
+        lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
-        self.lexers = {**self.lexers, **sovrinLexers}
-        super().initializeGrammarLexer()
+        return {**super().lexers, **lexers}
 
-    def initializeGrammarCompleter(self):
-        self.nymWC = WordCompleter([])
-        self.completers["nym"] = self.nymWC
-        self.completers["role"] = WordCompleter(["USER", "SPONSOR", "STEWARD"])
-        self.completers["send_nym"] = WordCompleter(["send", "NYM"])
-        self.completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
-        self.completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
-        self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
-        self.completers["req_cred"] = WordCompleter(["request", "credential"])
-        self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
-        self.completers["store_cred"] = WordCompleter(["store", "credential"])
-        self.completers["list_cred"] = WordCompleter(["list", "CRED"])
-        self.completers["gen_verif_nonce"] = WordCompleter(["generate", "verification", "nonce"])
-        self.completers["prep_proof"] = WordCompleter(["prepare", "proof", "of"])
-        self.completers["verif_proof"] = WordCompleter(["verify", "status", "is"])
-        self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
-        self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
-        self.completers["add_attrs"] = WordCompleter(["add", "attribute"])
+    @property
+    def completers(self):
+        completers = {}
+        completers["nym"] = WordCompleter([])
+        completers["role"] = WordCompleter(["USER", "SPONSOR", "STEWARD"])
+        completers["send_nym"] = WordCompleter(["send", "NYM"])
+        completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
+        completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
+        completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
+        completers["req_cred"] = WordCompleter(["request", "credential"])
+        completers["gen_cred"] = WordCompleter(["generate", "credential"])
+        completers["store_cred"] = WordCompleter(["store", "credential"])
+        completers["list_cred"] = WordCompleter(["list", "CRED"])
+        completers["gen_verif_nonce"] = WordCompleter(
+            ["generate", "verification", "nonce"])
+        completers["prep_proof"] = WordCompleter(
+            ["prepare", "proof", "of"])
+        completers["verif_proof"] = WordCompleter(
+            ["verify", "status", "is"])
+        completers["add_genesis"] = WordCompleter(
+            ["add", "genesis", "transaction"])
+        completers["init_attr_repo"] = WordCompleter(
+            ["initialize", "mock", "attribute", "repo"])
+        completers["add_attrs"] = WordCompleter(["add", "attribute"])
+        return {**super().completers, **completers}
 
-        super().initializeGrammarCompleter()
+    def initializeGrammar(self):
+        self.clientGrams = getClientGrams() + getNewClientGrams()
+        super().initializeGrammar()
 
-    def getActionList(self):
-        actions = super().getActionList()
+    # def initializeGrammarLexer(self):
+    #     lexerNames = [
+    #         'send_nym',
+    #         'send_get_nym',
+    #         'send_attrib',
+    #         'send_cred_def',
+    #         'send_cred',
+    #         'list_cred',
+    #         'prep_proof',
+    #         'verif_proof',
+    #         'add_genesis',
+    #         'req_cred',
+    #         'gen_cred',
+    #         'store_cred',
+    #         'gen_verif_nonce',
+    #         'init_attr_repo',
+    #         'add_attrs'
+    #     ]
+    #     sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
+    #     # Add more lexers to base class lexers
+    #     self.lexers = {**self.lexers, **sovrinLexers}
+    #     super().initializeGrammarLexer()
+
+    # def initializeGrammarCompleter(self):
+    #     self.completers["nym"] = WordCompleter([])
+    #     self.completers["role"] = WordCompleter(["USER", "SPONSOR", "STEWARD"])
+    #     self.completers["send_nym"] = WordCompleter(["send", "NYM"])
+    #     self.completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
+    #     self.completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
+    #     self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
+    #     self.completers["req_cred"] = WordCompleter(["request", "credential"])
+    #     self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
+    #     self.completers["store_cred"] = WordCompleter(["store", "credential"])
+    #     self.completers["list_cred"] = WordCompleter(["list", "CRED"])
+    #     self.completers["gen_verif_nonce"] = WordCompleter(["generate", "verification", "nonce"])
+    #     self.completers["prep_proof"] = WordCompleter(["prepare", "proof", "of"])
+    #     self.completers["verif_proof"] = WordCompleter(["verify", "status", "is"])
+    #     self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
+    #     self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
+    #     self.completers["add_attrs"] = WordCompleter(["add", "attribute"])
+    #
+    #     super().initializeGrammarCompleter()
+
+    @property
+    def actions(self):
+        actions = super().actions
         # Add more actions to base class for sovrin CLI
         actions.extend([self._sendNymAction,
                         self._sendGetNymAction,

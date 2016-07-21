@@ -305,10 +305,13 @@ class TestNodeSet(PlenumTestNodeSet):
                  keyshare=True,
                  primaryDecider=None,
                  opVerificationPluginPath=None,
+                 reqProcessorPluginPath=None,
                  testNodeClass=TestNode):
         super().__init__(names, count, nodeReg, tmpdir, keyshare,
-                         primaryDecider, opVerificationPluginPath,
-                         testNodeClass)
+                         primaryDecider=primaryDecider,
+                         opVerificationPluginPath=opVerificationPluginPath,
+                         reqProcessorPluginPath=reqProcessorPluginPath,
+                         testNodeClass=testNodeClass)
 
 
 class TestClientStorage(TempStorage, ClientStorage):

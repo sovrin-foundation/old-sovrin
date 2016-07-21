@@ -44,6 +44,7 @@ class Node(PlenumNode):
                  basedirpath=None,
                  primaryDecider=None,
                  opVerifiers=None,
+                 reqProcessors=None,
                  storage=None,
                  config=None):
         self.config = config or getConfig()
@@ -57,6 +58,7 @@ class Node(PlenumNode):
                          basedirpath=basedirpath,
                          primaryDecider=primaryDecider,
                          opVerifiers=opVerifiers,
+                         reqProcessors=reqProcessors,
                          storage=storage,
                          config=self.config)
 
