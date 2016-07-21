@@ -116,49 +116,6 @@ class SovrinCli(PlenumCli):
         self.clientGrams = getClientGrams() + getNewClientGrams()
         super().initializeGrammar()
 
-    # def initializeGrammarLexer(self):
-    #     lexerNames = [
-    #         'send_nym',
-    #         'send_get_nym',
-    #         'send_attrib',
-    #         'send_cred_def',
-    #         'send_cred',
-    #         'list_cred',
-    #         'prep_proof',
-    #         'verif_proof',
-    #         'add_genesis',
-    #         'req_cred',
-    #         'gen_cred',
-    #         'store_cred',
-    #         'gen_verif_nonce',
-    #         'init_attr_repo',
-    #         'add_attrs'
-    #     ]
-    #     sovrinLexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
-    #     # Add more lexers to base class lexers
-    #     self.lexers = {**self.lexers, **sovrinLexers}
-    #     super().initializeGrammarLexer()
-
-    # def initializeGrammarCompleter(self):
-    #     self.completers["nym"] = WordCompleter([])
-    #     self.completers["role"] = WordCompleter(["USER", "SPONSOR", "STEWARD"])
-    #     self.completers["send_nym"] = WordCompleter(["send", "NYM"])
-    #     self.completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
-    #     self.completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
-    #     self.completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
-    #     self.completers["req_cred"] = WordCompleter(["request", "credential"])
-    #     self.completers["gen_cred"] = WordCompleter(["generate", "credential"])
-    #     self.completers["store_cred"] = WordCompleter(["store", "credential"])
-    #     self.completers["list_cred"] = WordCompleter(["list", "CRED"])
-    #     self.completers["gen_verif_nonce"] = WordCompleter(["generate", "verification", "nonce"])
-    #     self.completers["prep_proof"] = WordCompleter(["prepare", "proof", "of"])
-    #     self.completers["verif_proof"] = WordCompleter(["verify", "status", "is"])
-    #     self.completers["add_genesis"] = WordCompleter(["add", "genesis", "transaction"])
-    #     self.completers["init_attr_repo"] = WordCompleter(["initialize", "mock", "attribute", "repo"])
-    #     self.completers["add_attrs"] = WordCompleter(["add", "attribute"])
-    #
-    #     super().initializeGrammarCompleter()
-
     @property
     def actions(self):
         actions = super().actions
@@ -192,13 +149,10 @@ class SovrinCli(PlenumCli):
 
     @property
     def genesisTransactions(self):
-        # if not self._genesisTransactions:
-        #     self.loadGenesisTxns()
         return self._genesisTransactions
 
     def reset(self):
         self._genesisTransactions = []
-        # self.loadGenesisTxns()
 
     def newNode(self, nodeName: str):
         nodesAdded = super().newNode(nodeName)
@@ -616,8 +570,6 @@ class SovrinCli(PlenumCli):
             # definition's name, version and issuerId so the corresponding
             # credential definition can be fetched and PK can be constructed
             # which is needed for the proof.
-            # TODO: Have some way for Tyler to have attributes that are there
-            # in issuer's repo. Maybe need a command
             # TODO: Build proof here and print it
             # attributes = self.activeClient.attributeRepo.getAttributes(
             #     self.activeSigner.alias).encoded()
