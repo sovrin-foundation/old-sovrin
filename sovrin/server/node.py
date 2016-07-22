@@ -4,6 +4,7 @@ import time
 from _sha256 import sha256
 from copy import deepcopy
 from operator import itemgetter
+from typing import Dict, Iterable
 
 import pyorient
 from ledger.compact_merkle_tree import CompactMerkleTree
@@ -43,8 +44,7 @@ class Node(PlenumNode):
                  cliha=None,
                  basedirpath=None,
                  primaryDecider=None,
-                 opVerifiers=None,
-                 reqProcessors=None,
+                 pluginPaths: Iterable[str] = None,
                  storage=None,
                  config=None):
         self.config = config or getConfig()
@@ -57,8 +57,7 @@ class Node(PlenumNode):
                          cliha=cliha,
                          basedirpath=basedirpath,
                          primaryDecider=primaryDecider,
-                         opVerifiers=opVerifiers,
-                         reqProcessors=reqProcessors,
+                         pluginPaths=pluginPaths,
                          storage=storage,
                          config=self.config)
 

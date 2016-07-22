@@ -275,7 +275,7 @@ class TempStorage:
 class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)
-        TestNodeCore.__init__(self)
+        TestNodeCore.__init__(self, *args, **kwargs)
 
     def _getOrientDbStore(self, name, dbType):
         if not hasattr(self, '_orientDbStore'):
@@ -304,13 +304,11 @@ class TestNodeSet(PlenumTestNodeSet):
                  tmpdir=None,
                  keyshare=True,
                  primaryDecider=None,
-                 opVerificationPluginPath=None,
-                 reqProcessorPluginPath=None,
+                 pluginPaths: Iterable[str]=None,
                  testNodeClass=TestNode):
         super().__init__(names, count, nodeReg, tmpdir, keyshare,
                          primaryDecider=primaryDecider,
-                         opVerificationPluginPath=opVerificationPluginPath,
-                         reqProcessorPluginPath=reqProcessorPluginPath,
+                         pluginPaths=pluginPaths,
                          testNodeClass=testNodeClass)
 
 

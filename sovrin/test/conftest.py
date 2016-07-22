@@ -1,6 +1,7 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
+from plenum.test.plugin.helper import pluginPath
 
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, USER
 from sovrin.common.txn import getGenesisTxns, STEWARD, NYM, \
@@ -12,6 +13,11 @@ from plenum.test.conftest import getValueFromModule
 
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
     nodeReg, up, ready, keySharedNodes, whitelist, logcapture
+
+
+@pytest.fixture(scope="module")
+def allPluginsPath():
+    return [pluginPath('stats_consumer')]
 
 
 @pytest.fixture(scope="module")
@@ -39,12 +45,11 @@ def genesisTxns(stewardSigner):
         ROLE: STEWARD
     },]
 
-
 @pytest.yield_fixture(scope="module")
-def nodeSet(request, tdir, nodeReg):
+def nodeSet(request, tdir, nodeReg, allPluginsPath):
     primaryDecider = getValueFromModule(request, "PrimaryDecider", None)
     with TestNodeSet(nodeReg=nodeReg, tmpdir=tdir,
-                     primaryDecider=primaryDecider) as ns:
+                     primaryDecider=primaryDecider,pluginPaths=allPluginsPath) as ns:
         yield ns
 
 
