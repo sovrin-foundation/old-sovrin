@@ -4,7 +4,7 @@ import time
 from _sha256 import sha256
 from copy import deepcopy
 from operator import itemgetter
-from typing import Dict, Iterable
+from typing import Iterable
 
 import pyorient
 from ledger.compact_merkle_tree import CompactMerkleTree
