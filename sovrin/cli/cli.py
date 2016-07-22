@@ -668,7 +668,7 @@ class SovrinCli(PlenumCli):
             cred = CredentialDefinition.generateCredential(uValue, attributes, pk,
                                                     p_prime, q_prime)
 
-            self.print("Credential: A is {}, e is {}, vprime is {}".format(*cred))
+            self.print("Credential: A is {}, e is {}, vprimeprime is {}".format(*cred))
             # TODO: For real scenario, do we need to send this credential back or it will be out of band?
             return True
 

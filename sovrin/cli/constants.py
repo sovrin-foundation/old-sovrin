@@ -72,7 +72,7 @@ GEN_CRED_REG_EX = \
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-"\s+ for \s+ proof \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+"\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
 "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
 "\s*)"
 

@@ -102,7 +102,7 @@ def johnCLI(nodeRegsForCLI, tdir):
 
 @pytest.fixture(scope="module")
 def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
-    createAllNodes(poolCLI)
+    poolCLI.enterCmd("new node all")
     assertAllNodesCreated(poolCLI, nodeNames)
     checkAllNodesStarted(poolCLI, *nodeNames)
 
@@ -300,11 +300,11 @@ def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
                     .format(proverId, credDefName, credDefVersion, U))
     assert byuCLI.printeds[0]['msg'].startswith("Credential:")
     pat = re.compile(
-        "A is ([mod0-9\s]+), e is ([mod0-9\s]+), vprime is ([mod0-9\s]+)")
+        "A is ([mod0-9\s]+), e is ([mod0-9\s]+), vprimeprime is ([mod0-9\s]+)")
     m = pat.search(byuCLI.printeds[0]['msg'])
     if m:
-        A, e, vprime = m.groups()
-        return A, e, vprime
+        A, e, vprimeprime = m.groups()
+        return A, e, vprimeprime
 
 
 @pytest.fixture(scope="module")
@@ -342,10 +342,9 @@ def revealedAtrr():
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
                credDefNameVersion, byuPubKey, byuCLI, tylerPreparedU):
     proofId, U = tylerPreparedU
-    # A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
     checkCmdValid(tylerCLI, "store credential A={}, e={}, vprimeprime={} for "
-                      "proof {} as {}".format(*byuCreatedCredential, proofId,
+                      "credential {} as {}".format(*byuCreatedCredential, proofId,
                                               storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
