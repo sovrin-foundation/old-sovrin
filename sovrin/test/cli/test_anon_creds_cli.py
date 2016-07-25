@@ -278,13 +278,13 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
         out = "Credential request for {} for {} {} is".format(proverId,
                                                               credDefName,
                                                               credDefVersion)
-        assert tylerCLI.printeds[0]['msg'].startswith(out)
+        assert out in tylerCLI.lastCmdOutput
 
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
     U = None
     proofId = None
     pat = re.compile("Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
-    m = pat.search(tylerCLI.printeds[0]['msg'])
+    m = pat.search(tylerCLI.lastCmdOutput)
     if m:
         proofId, U = m.groups()
     return proofId, U
@@ -298,10 +298,10 @@ def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
     proverId = tylerCLI.activeSigner.alias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
                     .format(proverId, credDefName, credDefVersion, U))
-    assert byuCLI.printeds[0]['msg'].startswith("Credential:")
+    assert "Credential:" in byuCLI.lastCmdOutput
     pat = re.compile(
         "A is ([mod0-9\s]+), e is ([mod0-9\s]+), vprimeprime is ([mod0-9\s]+)")
-    m = pat.search(byuCLI.printeds[0]['msg'])
+    m = pat.search(byuCLI.lastCmdOutput)
     if m:
         A, e, vprimeprime = m.groups()
         return A, e, vprimeprime
