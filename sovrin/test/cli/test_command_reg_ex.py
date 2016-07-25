@@ -30,6 +30,8 @@ def test_add_attr_prover_reg_ex(grammar):
 def test_req_cred_reg_ex(grammar):
     getMatchedVariables(grammar,
                    "request credential Degree version 1.0 from o7NzafnAlkhNaEM5njaH+I7Y19BEbEORmFB13p87zhM= for Tyler")
+    getMatchedVariables(grammar,
+                        "request credential Degree version 1.0 from utNKIOcuy796g3jc+cQclAYn2/NUWRtyy/4q+EvZqQM= for Tyler")
 
 
 def test_gen_cred_reg_ex(grammar):

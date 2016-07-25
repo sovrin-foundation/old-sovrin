@@ -534,7 +534,7 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('req_cred') == 'request credential':
             dest = matchedVars.get('issuer_id')
             credName = matchedVars.get('cred_name')
-            name = matchedVars.get('name')
+            name = matchedVars.get('prover_id')
             version = matchedVars.get('version')
             self.print("passed values are {}, {}, {}, {}".
                   format(dest, credName, name, version))
@@ -643,8 +643,12 @@ class SovrinCli(PlenumCli):
         }
         result = verify_proof(pk, prf, self.strTointeger(proof["nonce"]), attrs,
                               proof["revealedAttrs"])
-        if result and status in proof["revealedAttrs"]:
+        if not result:
+            self.print("Proof verification failed")
+        elif result and status in proof["revealedAttrs"]:
             self.print("Proof verified successfully")
+        else:
+            self.print("Status not in proof")
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
     # This is required for demo for sure, we'll see if it will be required for real execution or not
