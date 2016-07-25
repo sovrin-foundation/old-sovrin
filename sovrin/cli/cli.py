@@ -730,5 +730,3 @@ class SovrinCli(PlenumCli):
 
     def print(self, msg, token=None, newline=True):
         super().print(msg, token=token, newline=newline)
-        if newline:
-            msg += "\n"
