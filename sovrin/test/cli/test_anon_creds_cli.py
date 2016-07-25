@@ -300,7 +300,7 @@ def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
                     .format(proverId, credDefName, credDefVersion, U))
     assert "Credential:" in byuCLI.lastCmdOutput
     pat = re.compile(
-        "A is ([mod0-9\s]+), e is ([mod0-9\s]+), vprimeprime is ([mod0-9\s]+)")
+        "A\s*=\s*([mod0-9\s]+), e\s*=\s*([mod0-9\s]+), vprimeprime\s*=\s*([mod0-9\s]+)")
     m = pat.search(byuCLI.lastCmdOutput)
     if m:
         A, e, vprimeprime = m.groups()
