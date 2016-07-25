@@ -334,7 +334,7 @@ class SovrinCli(PlenumCli):
     # will get invoked when prover cli enters request credential command
     def _reqCred(self, matchedVars):
         dest = matchedVars.get('issuer_id')
-        credName = matchedVars.get('name')
+        credName = matchedVars.get('cred_name')
         credVersion = matchedVars.get('version')
         proverId = matchedVars.get('prover_id')
 
@@ -530,6 +530,7 @@ class SovrinCli(PlenumCli):
             self._addCredDef(matchedVars)
             return True
 
+    # TODO: Why does this method exists?
     def _reqCredAction(self, matchedVars):
         if matchedVars.get('req_cred') == 'request credential':
             dest = matchedVars.get('issuer_id')
