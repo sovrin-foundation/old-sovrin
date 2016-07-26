@@ -6,7 +6,7 @@ import os
 from typing import Tuple, Union
 
 import libnacl.secret
-
+from charm.core.math.integer import integer
 from plenum.common.txn import KEYS
 from plenum.common.util import isHex, error, getConfig as PlenumConfig
 
@@ -93,3 +93,11 @@ def getCredDefTxnData(credDef):
     }
     credDef[KEYS] = json.dumps(keys)
     return credDef
+
+
+def strToCharmInteger(n):
+    if "mod" in n:
+        a, b = n.split("mod")
+        return integer(int(a.strip())) % integer(int(b.strip()))
+    else:
+        return integer(int(n))

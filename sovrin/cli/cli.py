@@ -4,15 +4,15 @@ from typing import Dict
 
 from charm.core.math.integer import integer
 from hashlib import sha256
+from sovrin.common.util import strToCharmInteger
 
 from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition, \
-    serialize, base58encode, base58decodedInt, base58decode
+    base58decode
 from anoncreds.protocol.proof import Proof
 from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt, \
     IssuerPublicKey, Credential, Proof as ProofTuple
 
-from anoncreds.protocol.utils import encodeAttrs
 from anoncreds.protocol.verifier import verify_proof
 
 from plenum.cli.cli import Cli as PlenumCli
@@ -22,15 +22,14 @@ from pygments.token import Token
 
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
-from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, IP, PORT, KEYS
+from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS
 from plenum.common.util import randomString
 
 from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
 from sovrin.client.wallet import Wallet
-from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, \
-    NYM, SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF
-from sovrin.common.util import getCredDefTxnData
+from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
+    SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 from sovrin.server.node import Node
 
@@ -61,7 +60,6 @@ class SovrinCli(PlenumCli):
         self.sponsors = set()
         self.users = set()
         super().__init__(*args, **kwargs)
-        # self.loadGenesisTxns()
 
     @property
     def lexers(self):
@@ -141,11 +139,6 @@ class SovrinCli(PlenumCli):
     def _buildWalletClass(self, nm):
         storage = WalletStorageFile.fromName(nm, self.basedirpath)
         return Wallet(nm, storage)
-
-    # def loadGenesisTxns(self):
-    #     # TODO: Load from conf dir when its ready
-    #     from sovrin.cli.genesisTxns import GENESIS_TRANSACTIONS
-    #     self._genesisTransactions = GENESIS_TRANSACTIONS
 
     @property
     def genesisTransactions(self):
@@ -302,18 +295,6 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient)
 
-    def _addCredDef(self, matchedVars):
-        credDef = self._buildCredDef(matchedVars)
-        self.activeClient.wallet.addCredDefSk(credDef.name, credDef.version,
-                                              credDef.serializedSK)
-        op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
-        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
-        self.print("The following credential definition is published to the"
-                   " Sovrin distributed ledger\n", Token.BoldBlue, newline=False)
-        self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.activeClient)
-
     @staticmethod
     def _buildCredDef(matchedVars):
         """
@@ -330,17 +311,6 @@ class SovrinCli(PlenumCli):
                                     # TODO: Just for testing, Remove once done
                                     p_prime=integer(157329491389375793912190594961134932804032426403110797476730107804356484516061051345332763141806005838436304922612495876180233509449197495032194146432047460167589034147716097417880503952139805241591622353828629383332869425029086898452227895418829799945650973848983901459733426212735979668835984691928193677469),
                                     q_prime=integer(151323892648373196579515752826519683836764873607632072057591837216698622729557534035138587276594156320800768525825023728398410073692081011811496168877166664537052088207068061172594879398773872352920912390983199416927388688319207946493810449203702100559271439586753256728900713990097168484829574000438573295723))
-
-    # will get invoked when prover cli enters request credential command
-    def _reqCred(self, matchedVars):
-        dest = matchedVars.get('issuer_id')
-        credName = matchedVars.get('cred_name')
-        credVersion = matchedVars.get('version')
-        proverId = matchedVars.get('prover_id')
-
-        self._getCredDefAndExecuteCallback(dest, credName, credVersion,
-                                           self._sendCredReqToIssuer, credName,
-                                           credVersion, dest, proverId)
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):
@@ -373,7 +343,7 @@ class SovrinCli(PlenumCli):
         }
         masterSecret = self.activeClient.wallet.getMasterSecret()
         if masterSecret:
-            masterSecret = integer(int(masterSecret))
+            masterSecret = strToCharmInteger(masterSecret)
         proof = Proof(pk, masterSecret)
         attributes = self.activeClient.attributes[issuerId]
         attribTypes = []
@@ -400,22 +370,13 @@ class SovrinCli(PlenumCli):
 
     @staticmethod
     def pKFromCredDef(keys):
-        N = SovrinCli.strTointeger(base58decode(keys["N"]))
-        S = SovrinCli.strTointeger(base58decode(keys["S"]))
-        Z = SovrinCli.strTointeger(base58decode(keys["Z"]))
+        N = strToCharmInteger(base58decode(keys["N"]))
+        S = strToCharmInteger(base58decode(keys["S"]))
+        Z = strToCharmInteger(base58decode(keys["Z"]))
         R = {}
         for k, v in keys["R"].items():
-            R[k] = SovrinCli.strTointeger(base58decode(v))
+            R[k] = strToCharmInteger(base58decode(v))
         return IssuerPublicKey(N, R, S, Z)
-
-    # TODO: Move it to util module
-    @staticmethod
-    def strTointeger(n):
-        if "mod" in n:
-            a, b = n.split("mod")
-            return integer(int(a.strip())) % integer(int(b.strip()))
-        else:
-            return integer(int(n))
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
@@ -450,10 +411,13 @@ class SovrinCli(PlenumCli):
             credential[NAME] = credName
             credential[VERSION] = credVersion
             # TODO: refactor to use issuerId
-            credential["v"] = str(next(iter(proof.vprime.values())) + \
-                              int(credential["vprimeprime"]))
-            credential["encodedAttrs"] = {k: str(v) for k, v in next(iter(proof.attrs.values())).items()}
-            # TODO: What if alias is not given (we don't have issuer id and cred name here) ???
+            credential["v"] = str(next(iter(proof.vprime.values())) +
+                                  int(credential["vprimeprime"]))
+            credential["encodedAttrs"] = {
+                k: str(v) for k, v in next(iter(proof.attrs.values())).items()
+            }
+            # TODO: What if alias is not given (we don't have issuer id and
+            # cred name here) ???
             # TODO: is the below way of storing cred in dict ok?
             self.activeWallet.addCredential(alias, credential)
             self.print("Credential stored", Token.BoldBlue)
@@ -518,13 +482,31 @@ class SovrinCli(PlenumCli):
 
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
-            self._addCredDef(matchedVars)
+            credDef = self._buildCredDef(matchedVars)
+            self.activeClient.wallet.addCredDefSk(credDef.name, credDef.version,
+                                                  credDef.serializedSK)
+            op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
+            req, = self.activeClient.submit(op,
+                                            identifier=self.activeSigner.identifier)
+            self.print("The following credential definition is published to the"
+                       " Sovrin distributed ledger\n", Token.BoldBlue,
+                       newline=False)
+            self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
+            self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                        req.reqId, self.activeClient)
             return True
 
-    # TODO: Why does this method exists?
+    # will get invoked when prover cli enters request credential command
     def _reqCredAction(self, matchedVars):
         if matchedVars.get('req_cred') == 'request credential':
-            self._reqCred(matchedVars)
+            dest = matchedVars.get('issuer_id')
+            credName = matchedVars.get('cred_name')
+            proverName = matchedVars.get('prover_id')
+            credVersion = matchedVars.get('version')
+            self._getCredDefAndExecuteCallback(dest, credName, credVersion,
+                                               self._sendCredReqToIssuer,
+                                               credName,
+                                               credVersion, dest, proverName)
             return True
 
     def _listCredAction(self, matchedVars):
@@ -534,7 +516,7 @@ class SovrinCli(PlenumCli):
 
     def _prepProofAction(self, matchedVars):
         if matchedVars.get('prep_proof') == 'prepare proof of':
-            nonce = integer(int(matchedVars.get('nonce')))
+            nonce = strToCharmInteger(matchedVars.get('nonce'))
             revealedAttrs = (matchedVars.get('revealed_attrs'), )
             credAlias = matchedVars.get('cred_alias')
             credential = json.loads(self.activeClient.wallet.getCredential(credAlias))
@@ -544,23 +526,15 @@ class SovrinCli(PlenumCli):
             A = credential.get("A")
             e = credential.get("e")
             v = credential.get("v")
-            cred = Credential(self.strTointeger(A), self.strTointeger(e),
-                              self.strTointeger(v))
+            cred = Credential(strToCharmInteger(A), strToCharmInteger(e),
+                              strToCharmInteger(v))
             credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
             keys = credDef[KEYS]
             pk = {
                 issuer: self.pKFromCredDef(keys)
             }
-            masterSecret = integer(int(self.activeClient.wallet.getMasterSecret()))
-            # TODO: In walet for credential, store the corresponding credential
-            # definition's name, version and issuerId so the corresponding
-            # credential definition can be fetched and PK can be constructed
-            # which is needed for the proof.
-            # TODO: Build proof here and print it
-            # attributes = self.activeClient.attributeRepo.getAttributes(
-            #     self.activeSigner.alias).encoded()
-            # if attributes:
-            #     attributes = list(attributes.values())[0]
+            masterSecret = strToCharmInteger(self.activeClient.wallet.
+                                             getMasterSecret())
             attributes = self.activeClient.attributes[issuer]
             attribTypes = []
             for nm in attributes.keys():
@@ -571,9 +545,9 @@ class SovrinCli(PlenumCli):
                 issuer: next(iter(attribs.values()))
             }
             prf = Proof.prepareProof(pk_i=pk, masterSecret=masterSecret,
-                               credential={issuer: cred},
-                               revealedAttrs=revealedAttrs, nonce=nonce,
-                               attrs=encodedAttrs)
+                                     credential={issuer: cred},
+                                     revealedAttrs=revealedAttrs,
+                                     nonce=nonce, attrs=encodedAttrs)
             out = {}
             proof = {}
             proof["Aprime"] = {issuer: str(prf.Aprime[issuer])}
@@ -599,7 +573,6 @@ class SovrinCli(PlenumCli):
             status = matchedVars.get('status')
             proof = json.loads(matchedVars.get('proof'))
             self._verifyProof(status, proof)
-            # required to do verification: issuerId, name, version, proof, nonce, attrs, revealedAttrs
             return True
 
     def _verifyProof(self, status, proof):
@@ -607,7 +580,6 @@ class SovrinCli(PlenumCli):
                                            self.doVerification, status, proof)
 
     def doVerification(self, reply, err, status, proof):
-        # TODO: do verification here
         issuer = proof["issuer"]
         credDef = self.activeClient.wallet.getCredDef(proof[NAME], proof[VERSION],
                                             issuer)
@@ -617,17 +589,17 @@ class SovrinCli(PlenumCli):
         }
         prf = proof["proof"]
         prfArgs = {}
-        prfArgs["Aprime"] = {issuer: self.strTointeger(prf["Aprime"][issuer])}
-        prfArgs["c"] = self.strTointeger(prf["c"])
-        prfArgs["evect"] = {issuer: self.strTointeger(prf["evect"][issuer])}
-        prfArgs["mvect"] = {k: self.strTointeger(v) for k, v in prf["mvect"].items()}
-        prfArgs["vvect"] = {issuer: self.strTointeger(prf["vvect"][issuer])}
+        prfArgs["Aprime"] = {issuer: strToCharmInteger(prf["Aprime"][issuer])}
+        prfArgs["c"] = strToCharmInteger(prf["c"])
+        prfArgs["evect"] = {issuer: strToCharmInteger(prf["evect"][issuer])}
+        prfArgs["mvect"] = {k: strToCharmInteger(v) for k, v in prf["mvect"].items()}
+        prfArgs["vvect"] = {issuer: strToCharmInteger(prf["vvect"][issuer])}
         prf = ProofTuple(**prfArgs)
         attrs = {
-            issuer: {k: self.strTointeger(v) for k, v in
-                         next(iter(proof["attrs"].values())).items()}
+            issuer: {k: strToCharmInteger(v) for k, v in
+                     next(iter(proof["attrs"].values())).items()}
         }
-        result = verify_proof(pk, prf, self.strTointeger(proof["nonce"]), attrs,
+        result = verify_proof(pk, prf, strToCharmInteger(proof["nonce"]), attrs,
                               proof["revealedAttrs"])
         if not result:
             self.print("Proof verification failed", Token.BoldOrange)
@@ -636,14 +608,15 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
-    # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
-    # This is required for demo for sure, we'll see if it will be required for real execution or not
+    # This function would be invoked, when, issuer cli enters the send GEN_CRED
+    # command received from prover. This is required for demo for sure, we'll
+    # see if it will be required for real execution or not
     def _genCredAction(self, matchedVars):
         if matchedVars.get('gen_cred') == 'generate credential':
             proverId = matchedVars.get('prover_id')
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
-            uValue = SovrinCli.strTointeger(matchedVars.get('u_value'))
+            uValue = strToCharmInteger(matchedVars.get('u_value'))
             credDef = self.activeClient.storage.getCredDef(
                 self.activeSigner.identifier, credName, credVersion)
             keys = json.loads(credDef[KEYS])
@@ -658,21 +631,12 @@ class SovrinCli(PlenumCli):
             cred = CredentialDefinition.generateCredential(uValue, attributes, pk,
                                                     p_prime, q_prime)
 
+            # TODO: For real scenario, do we need to send this credential back
+            # or it will be out of band?
             self.print("Credential: ", newline=False)
             self.print("A={}, e={}, vprimeprime={}".format(*cred), Token.BoldBlue)
             # TODO: For real scenario, do we need to send this credential back or it will be out of band?
             return True
-
-
-    # def _genCred(self, reply, err, proverId, credName, credVersion, uValue):
-    #     credName = reply.result[NAME]
-    #     credVersion = reply.result[VERSION]
-    #
-    #     cred = self.activeClient.createCredential(proverId, credName, credVersion, uValue)
-    #
-    #     self.print("Credential is {}", format(cred))
-    #     # TODO: For real scenario, do we need to send this credential back or it will be out of band?
-    #     return True
 
     def _addGenesisAction(self, matchedVars):
         if matchedVars.get('add_genesis'):
@@ -716,5 +680,3 @@ class SovrinCli(PlenumCli):
 
     def print(self, msg, token=None, newline=True):
         super().print(msg, token=token, newline=newline)
-        # if newline:
-        #     msg += "\n"
