@@ -228,6 +228,7 @@ def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, 
     checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False".format(issuerId))
+    # assert tylerCLI.lastCmdOutput == "attribute added successfully for issuer id {}".format(issuerId)
     assert issuerId in tylerCLI.activeClient.attributes
 
 
@@ -324,7 +325,7 @@ def attrAddedToRepo(attrRepoInitialized):
     checkCmdValid(byuCLI, "add attribute first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False for {}".format(proverId))
-    assert byuCLI.lastCmdOutput == "attribute added successfully"
+    assert byuCLI.lastCmdOutput == "attribute added successfully for prover id {}".format(proverId)
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
 
@@ -366,8 +367,7 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
     checkCmdValid(tylerCLI, "prepare proof of {} using nonce {} for {}".
                       format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
-    pat = re.compile(
-        "Proof is: (.+)$")
+    pat = re.compile("Proof is: (.+)$")
     m = pat.search(tylerCLI.lastCmdOutput)
     if m:
         proof = m.groups()[0]

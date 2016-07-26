@@ -255,7 +255,7 @@ class SovrinCli(PlenumCli):
         self.print("Getting nym {}".format(nym), Token.BoldBlue)
 
         def getNymReply(reply, err):
-            self.print("Transaction id for NYM {} is {}".format(nym, reply[TXN_ID]))
+            self.print("Transaction id for NYM {} is {}".format(nym, reply[TXN_ID]), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient, getNymReply)
@@ -309,8 +309,8 @@ class SovrinCli(PlenumCli):
         op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
         req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
         self.print("The following credential definition is published to the"
-                   " Sovrin distributed ledger  \n{}".
-                   format(credDef.get(serFmt=SerFmt.base58)), Token.BoldBlue)
+                   " Sovrin distributed ledger\n", Token.BoldBlue, newline=False)
+        self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient)
 
@@ -394,7 +394,7 @@ class SovrinCli(PlenumCli):
         u = proof.U[issuerId]
         self.print("Credential request for {} for {} {} is: Credential id is {} "
                    "and U is {}".format(proverId, credName, credVersion,
-                                        proof.id, u))
+                                        proof.id, u), Token.BoldBlue)
 
     @staticmethod
     def pKFromCredDef(keys):
@@ -418,7 +418,7 @@ class SovrinCli(PlenumCli):
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
             self.activeClient.attributeRepo = InMemoryAttributeRepo()
-            self.print("attribute repo initialized")
+            self.print("attribute repo initialized", Token.BoldBlue)
             return True
 
     def _genVerifNonceAction(self, matchedVars):
@@ -428,7 +428,7 @@ class SovrinCli(PlenumCli):
             # assuming it will work, test cases will confirm it
             interactionId = randomString(7)
             nonce = self.activeClient.generateNonce(interactionId)
-            self.print("Verification nonce is {}".format(nonce), Token.BoldOrange)
+            self.print("Verification nonce is {}".format(nonce), Token.BoldBlue)
             return True
 
     def _storeCredAction(self, matchedVars):
@@ -454,7 +454,7 @@ class SovrinCli(PlenumCli):
             # TODO: What if alias is not given (we don't have issuer id and cred name here) ???
             # TODO: is the below way of storing cred in dict ok?
             self.activeWallet.addCredential(alias, credential)
-            self.print("Credential stored")
+            self.print("Credential stored", Token.BoldBlue)
             return True
 
     @staticmethod
@@ -477,7 +477,7 @@ class SovrinCli(PlenumCli):
             attribsDef = AttribsDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes)
             self.activeClient.attributeRepo.addAttributes(proverId, attribs)
-            self.print("attribute added successfully")
+            self.print("attribute added successfully for prover id {}".format(proverId), Token.BoldBlue)
             return True
 
     def _addAttrsToProverAction(self, matchedVars):
@@ -489,6 +489,7 @@ class SovrinCli(PlenumCli):
             if not hasattr(self.activeClient, "attributes"):
                 self.activeClient.attributes = {}
             self.activeClient.attributes[issuerId] = attributes
+            self.print("attribute added successfully for issuer id {}".format(issuerId), Token.BoldBlue)
             return True
 
     def _sendNymAction(self, matchedVars):
@@ -519,14 +520,6 @@ class SovrinCli(PlenumCli):
 
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
-            # name = matchedVars.get('name')
-            # version = matchedVars.get('version')
-            # type = matchedVars.get('type')
-            # ip = matchedVars.get('ip')
-            # port = matchedVars.get('port')
-            # keys = matchedVars.get('keys')
-            # self.print("passed values are {}, {}, {}, {}, {}, {}".
-            #            format(name, version, type, ip, port, keys))
             self._addCredDef(matchedVars)
             return True
 
@@ -605,8 +598,8 @@ class SovrinCli(PlenumCli):
                 issuer: {k: str(v) for k,v in next(iter(attribs.values())).items()}
             }
             out["revealedAttrs"] = revealedAttrs
-            self.print(
-                "Proof is: {}".format(json.dumps(out)))
+            self.print("Proof is: ", newline=False)
+            self.print("{}".format(json.dumps(out)), Token.BoldBlue)
             return True
 
     def _verifyProofAction(self, matchedVars):
@@ -645,11 +638,11 @@ class SovrinCli(PlenumCli):
         result = verify_proof(pk, prf, self.strTointeger(proof["nonce"]), attrs,
                               proof["revealedAttrs"])
         if not result:
-            self.print("Proof verification failed")
+            self.print("Proof verification failed", Token.BoldOrange)
         elif result and status in proof["revealedAttrs"]:
-            self.print("Proof verified successfully")
+            self.print("Proof verified successfully", Token.BoldBlue)
         else:
-            self.print("Status not in proof")
+            self.print("Status not in proof", Token.BoldOrange)
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED command received from prover
     # This is required for demo for sure, we'll see if it will be required for real execution or not
@@ -673,7 +666,8 @@ class SovrinCli(PlenumCli):
             cred = CredentialDefinition.generateCredential(uValue, attributes, pk,
                                                     p_prime, q_prime)
 
-            self.print("Credential: A={}, e={}, vprimeprime={}".format(*cred))
+            self.print("Credential: ", newline=False)
+            self.print("A={}, e={}, vprimeprime={}".format(*cred), Token.BoldBlue)
             # TODO: For real scenario, do we need to send this credential back or it will be out of band?
             return True
 
@@ -730,3 +724,5 @@ class SovrinCli(PlenumCli):
 
     def print(self, msg, token=None, newline=True):
         super().print(msg, token=token, newline=newline)
+        # if newline:
+        #     msg += "\n"
