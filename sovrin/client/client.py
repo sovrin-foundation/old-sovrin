@@ -168,9 +168,12 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             self.storage.addRequest(r)
         return requests
 
-    def handleOneNodeMsg(self, wrappedMsg) -> None:
-        super().handleOneNodeMsg(wrappedMsg)
+    def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
+        # Do not print result of transaction type `GET_TXNS` on the CLI
+        excludeFromCli = excludeFromCli or (msg.get(OP_FIELD_NAME) == REPLY and
+                                            msg[f.RESULT.nm][TXN_TYPE] == GET_TXNS)
+        super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
         elif msg[OP_FIELD_NAME] == REQACK:
