@@ -392,9 +392,11 @@ class SovrinCli(PlenumCli):
         self.activeClient.proofs[proof.id] = (proof, credName, credVersion,
                                               issuerId)
         u = proof.U[issuerId]
-        self.print("Credential request for {} for {} {} is: Credential id is {} "
-                   "and U is {}".format(proverId, credName, credVersion,
-                                        proof.id, u), Token.BoldBlue)
+        self.print("Credential request for {} for {} {} is: ".format(proverId, credName, credVersion), Token.BolBlue, newline=False)
+        self.print("Credential id is ", newline=False)
+        self.print("{} ".format(proof.id), Token.BoldBlue, newline=False)
+        self.print("and U is ", newline=False)
+        self.print("{}".format(u), Token.BoldBlue)
 
     @staticmethod
     def pKFromCredDef(keys):
@@ -497,14 +499,12 @@ class SovrinCli(PlenumCli):
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
             self._addNym(nym, role)
-            # self.print("dest id is {}".format(nym))
             return True
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
             destId = matchedVars.get('dest_id')
             self._getNym(destId)
-            self.print("dest id is {}".format(destId))
             return True
 
     def _sendAttribAction(self, matchedVars):
@@ -513,8 +513,6 @@ class SovrinCli(PlenumCli):
             raw = ast.literal_eval(matchedVars.get('raw'))
             enc = ast.literal_eval(matchedVars.get('enc'))
             hsh = matchedVars.get('hash')
-            self.print("dest id is {}".format(nym))
-            self.print("raw message is {}".format(raw))
             self._addAttribToNym(nym, raw, enc, hsh)
             return True
 
@@ -526,12 +524,6 @@ class SovrinCli(PlenumCli):
     # TODO: Why does this method exists?
     def _reqCredAction(self, matchedVars):
         if matchedVars.get('req_cred') == 'request credential':
-            dest = matchedVars.get('issuer_id')
-            credName = matchedVars.get('cred_name')
-            name = matchedVars.get('prover_id')
-            version = matchedVars.get('version')
-            self.print("passed values are {}, {}, {}, {}".
-                  format(dest, credName, name, version))
             self._reqCred(matchedVars)
             return True
 
