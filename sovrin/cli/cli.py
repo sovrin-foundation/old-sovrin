@@ -362,11 +362,20 @@ class SovrinCli(PlenumCli):
         self.activeClient.proofs[proof.id] = (proof, credName, credVersion,
                                               issuerId)
         u = proof.U[issuerId]
-        self.print("Credential request for {} for {} {} is: ".format(proverId, credName, credVersion), Token.BolBlue, newline=False)
-        self.print("Credential id is ", newline=False)
-        self.print("{} ".format(proof.id), Token.BoldBlue, newline=False)
-        self.print("and U is ", newline=False)
-        self.print("{}".format(u), Token.BoldBlue)
+        tokens = []
+        tokens.append((Token.BolBlue, "Credential request for {} for {} {} is: ".format(proverId, credName, credVersion)))
+        tokens.append((Token, "Credential id is"))
+        tokens.append((Token.BolBlue, "{} ".format(proof.id)))
+        tokens.append((Token, "and U is "))
+        tokens.append((Token.BoldBlue, "{}".format(u)))
+        tokens.append((Token, "\n"))
+        self.printTokens(tokens, separator='')
+
+        # self.print("Credential request for {} for {} {} is: ".format(proverId, credName, credVersion), Token.BolBlue, newline=False)
+        # self.print("Credential id is ", newline=False)
+        # self.print("{} ".format(proof.id), Token.BoldBlue, newline=False)
+        # self.print("and U is ", newline=False)
+        # self.print("{}".format(u), Token.BoldBlue)
 
     @staticmethod
     def pKFromCredDef(keys):
