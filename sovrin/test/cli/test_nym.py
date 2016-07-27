@@ -33,8 +33,7 @@ def nymAdded(nodesCli, looper, stewardCli, sponsorSigner):
     create a user
     """
     nym = sponsorSigner.verstr
-    stewardCli.enterCmd("send NYM dest={} role=SPONSOR"
-                        .format(nym))
+    stewardCli.enterCmd("send NYM dest={} role=SPONSOR".format(nym))
     looper.run(eventually(chkNymAddedOutput, stewardCli, nym, retryWait=1,
                           timeout=5))
 
@@ -47,7 +46,8 @@ def testSendNym(nymAdded):
 @pytest.mark.skipif(True, reason="Obsolete implemtation")
 def testGetNym(nymAdded, stewardCli, looper, sponsorSigner):
     nym = sponsorSigner.verstr
-    stewardCli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym))
+    stewardCli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM,
+                                                           nym=nym))
     looper.run(eventually(checkGetNym, stewardCli, nym,
                           retryWait=1, timeout=5))
 

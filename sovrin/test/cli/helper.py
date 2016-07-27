@@ -26,8 +26,7 @@ def sendNym(cli, nym, role):
 
 
 def checkGetNym(cli, nym):
-    printeds = ["Getting nym {}".format(nym), "dest id is {}".format(nym),
-                "Transaction id for NYM {} is ".format(nym)]
+    printeds = ["Getting nym {}".format(nym), "Transaction id for NYM {} is ".format(nym)]
     checks = [x in cli.lastCmdOutput for x in printeds]
     assert all(checks)
     # TODO: These give NameError, don't know why

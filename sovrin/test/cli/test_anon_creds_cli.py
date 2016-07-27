@@ -7,8 +7,8 @@ from plenum.test.cli.conftest import createAllNodes
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated, checkAllNodesStarted, checkClientConnected
 from plenum.test.eventually import eventually
-from sovrin.cli.cli import SovrinCli
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
+from sovrin.common.util import strToCharmInteger
 from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 
 """
@@ -102,7 +102,7 @@ def johnCLI(nodeRegsForCLI, tdir):
 
 @pytest.fixture(scope="module")
 def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
-    createAllNodes(poolCLI)
+    poolCLI.enterCmd("new node all")
     assertAllNodesCreated(poolCLI, nodeNames)
     checkAllNodesStarted(poolCLI, *nodeNames)
 
@@ -228,6 +228,7 @@ def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, 
     checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False".format(issuerId))
+    # assert tylerCLI.lastCmdOutput == "attribute added successfully for issuer id {}".format(issuerId)
     assert issuerId in tylerCLI.activeClient.attributes
 
 
@@ -245,7 +246,7 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
     # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
     cmd = ("send CRED_DEF name={} version={} "
-           "type=JC1 ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
+           "type=CL ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
            "first_name,birth_date,postgrad,expiry_date".
            format(credDefName, credDefVersion))
     checkCmdValid(byuCLI, cmd)
@@ -269,22 +270,22 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
                    credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     issuerIdentifier = byuAddsCredDef
-    proverId = tylerCLI.activeSigner.alias
+    proverName = tylerCLI.activeSigner.alias
     checkCmdValid(tylerCLI, "request credential {} version {} from {} for {}"
                       .format(credDefName, credDefVersion, issuerIdentifier,
-                              proverId))
+                              proverName))
 
     def chk():
-        out = "Credential request for {} for {} {} is".format(proverId,
+        out = "Credential request for {} for {} {} is".format(proverName,
                                                               credDefName,
                                                               credDefVersion)
-        assert tylerCLI.printeds[0]['msg'].startswith(out)
+        assert out in tylerCLI.lastCmdOutput
 
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
     U = None
     proofId = None
     pat = re.compile("Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
-    m = pat.search(tylerCLI.printeds[0]['msg'])
+    m = pat.search(tylerCLI.lastCmdOutput)
     if m:
         proofId, U = m.groups()
     return proofId, U
@@ -298,13 +299,13 @@ def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
     proverId = tylerCLI.activeSigner.alias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
                     .format(proverId, credDefName, credDefVersion, U))
-    assert byuCLI.printeds[0]['msg'].startswith("Credential:")
+    assert "Credential:" in byuCLI.lastCmdOutput
     pat = re.compile(
-        "A is ([mod0-9\s]+), e is ([mod0-9\s]+), vprime is ([mod0-9\s]+)")
-    m = pat.search(byuCLI.printeds[0]['msg'])
+        "A\s*=\s*([mod0-9\s]+), e\s*=\s*([mod0-9\s]+), vprimeprime\s*=\s*([mod0-9\s]+)")
+    m = pat.search(byuCLI.lastCmdOutput)
     if m:
-        A, e, vprime = m.groups()
-        return A, e, vprime
+        A, e, vprimeprime = m.groups()
+        return A, e, vprimeprime
 
 
 @pytest.fixture(scope="module")
@@ -324,13 +325,13 @@ def attrAddedToRepo(attrRepoInitialized):
     checkCmdValid(byuCLI, "add attribute first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False for {}".format(proverId))
-    assert byuCLI.lastCmdOutput == "attribute added successfully"
+    assert byuCLI.lastCmdOutput == "attribute added successfully for prover id {}".format(proverId)
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
 
 @pytest.fixture(scope="module")
 def storedCredAlias():
-    return 'degree'
+    return 'CRED-BYU-QUAL'
 
 
 @pytest.fixture(scope="module")
@@ -342,10 +343,9 @@ def revealedAtrr():
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
                credDefNameVersion, byuPubKey, byuCLI, tylerPreparedU):
     proofId, U = tylerPreparedU
-    # A, e, vprime = byuCreatedCredential
     assert len(tylerCLI.activeWallet.credNames) == 0
     checkCmdValid(tylerCLI, "store credential A={}, e={}, vprimeprime={} for "
-                      "proof {} as {}".format(*byuCreatedCredential, proofId,
+                      "credential {} as {}".format(*byuCreatedCredential, proofId,
                                               storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
@@ -367,8 +367,7 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
     checkCmdValid(tylerCLI, "prepare proof of {} using nonce {} for {}".
                       format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
-    pat = re.compile(
-        "Proof is: (.+)$")
+    pat = re.compile("Proof is: (.+)$")
     m = pat.search(tylerCLI.lastCmdOutput)
     if m:
         proof = m.groups()[0]
@@ -507,7 +506,7 @@ def testStrTointeger():
         "41915506224275376177925859647928995537185609046742534998874286371343" \
         "66703575716284805303334603968057185045321034098727958620904195146881" \
         "865483244806147104667605098138613899840626729916612169723470228930801507396158440259774040553984850335586645194467365045176677506537296253654429662975816874630847874003647935529333964941855401786336352853043803498640759072173609203160413437402970023625421911392981092263211748047448929085861379410272047860536995972453496075851660446485058108906037436369067625674495155937598646143535510599911729010586276679305856525112130907097314388354485920043436412137797426978774012573863335500074359101826932761239032674620096110906293228090163"
-    i = SovrinCli.strTointeger(s)
+    i = strToCharmInteger(s)
     assert str(i) == s
 
 

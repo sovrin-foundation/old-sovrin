@@ -33,7 +33,7 @@ SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)\s+(?P<name_key>na
 
 REQ_CRED_REG_EX = \
     "(\s*(?P<req_cred>request\s+credential) " \
-    "\s+ (?P<name>[a-zA-Z0-9\-]+)" \
+    "\s+ (?P<cred_name>[a-zA-Z0-9\-]+)" \
     "\s+ version \s+ (?P<version>[0-9\.]+)" \
     "\s+ from \s+ (?P<issuer_id>[A-Za-z0-9+=/]+)" \
     "\s+ for \s+ (?P<prover_id>[a-zA-Z0-9]+)" \
@@ -72,7 +72,7 @@ GEN_CRED_REG_EX = \
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-"\s+ for \s+ proof \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+"\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
 "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
 "\s*)"
 
