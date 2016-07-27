@@ -365,7 +365,7 @@ class SovrinCli(PlenumCli):
         tokens = []
         tokens.append((Token.BolBlue, "Credential request for {} for {} {} is: ".format(proverId, credName, credVersion)))
         tokens.append((Token, "Credential id is "))
-        tokens.append((Token.BolBlue, "{} ".format(proof.id)))
+        tokens.append((Token.BoldBlue, "{} ".format(proof.id)))
         tokens.append((Token, "and U is "))
         tokens.append((Token.BoldBlue, "{}".format(u)))
         tokens.append((Token, "\n"))
