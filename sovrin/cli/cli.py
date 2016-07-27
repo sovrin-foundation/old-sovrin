@@ -245,7 +245,7 @@ class SovrinCli(PlenumCli):
             TXN_TYPE: GET_NYM,
         }
         req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
-        self.print("Getting nym {}".format(nym), Token.BoldBlue)
+        self.print("Getting nym {}".format(nym))
 
         def getNymReply(reply, err):
             self.print("Transaction id for NYM {} is {}".format(nym, reply[TXN_ID]), Token.BoldBlue)
@@ -264,7 +264,7 @@ class SovrinCli(PlenumCli):
 
         if other_client_name:
             printStr = printStr + " for " + other_client_name
-        self.print(printStr, Token.BoldBlue)
+        self.print(printStr)
 
         def out(reply, error):
             self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
