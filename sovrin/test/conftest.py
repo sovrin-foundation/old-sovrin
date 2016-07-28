@@ -1,7 +1,7 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
-from plenum.test.plugin.helper import pluginPath
+from plenum.test.plugin.helper import getPluginPath
 
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, USER
 from sovrin.common.txn import getGenesisTxns, STEWARD, NYM, \
@@ -17,7 +17,7 @@ from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
 
 @pytest.fixture(scope="module")
 def allPluginsPath():
-    return [pluginPath('stats_consumer')]
+    return [getPluginPath('stats_consumer')]
 
 
 @pytest.fixture(scope="module")
