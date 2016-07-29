@@ -82,5 +82,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
     def addMasterSecret(self, masterSecret):
         self.masterSecretStore.put(value=masterSecret)
 
-    def getMasterSecret(self):
+    @property
+    def masterSecret(self):
+        # Getting the first line of the file, so using key `1`
         return self.masterSecretStore.get("1")

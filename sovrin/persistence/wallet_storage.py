@@ -47,6 +47,6 @@ class WalletStorage(PWalletStorage):
     def addMasterSecret(self, masterSecret):
         pass
 
-    @abstractmethod
-    def getMasterSecret(self):
+    @abstractproperty
+    def masterSecret(self):
         pass

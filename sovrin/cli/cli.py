@@ -341,7 +341,7 @@ class SovrinCli(PlenumCli):
         pk = {
             issuerId: self.pKFromCredDef(keys)
         }
-        masterSecret = self.activeClient.wallet.getMasterSecret()
+        masterSecret = self.activeClient.wallet.masterSecret
         if masterSecret:
             masterSecret = strToCharmInteger(masterSecret)
         proof = Proof(pk, masterSecret)
@@ -543,7 +543,7 @@ class SovrinCli(PlenumCli):
                 issuer: self.pKFromCredDef(keys)
             }
             masterSecret = strToCharmInteger(self.activeClient.wallet.
-                                             getMasterSecret())
+                                             masterSecret)
             attributes = self.activeClient.attributes[issuer]
             attribTypes = []
             for nm in attributes.keys():
