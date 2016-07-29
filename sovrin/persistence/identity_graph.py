@@ -103,16 +103,13 @@ class IdentityGraph(OrientDbGraphStore):
         self.createUniqueNymVertexClass(Vertices.Nym)
 
     def createStewardClass(self):
-        self.client.command("create class {} extends {}".
-                            format(Vertices.Steward, Vertices.Nym))
+        self.createClass(Vertices.Steward, Vertices.Nym)
 
     def createSponsorClass(self):
-        self.client.command("create class {} extends {}".
-                            format(Vertices.Sponsor, Vertices.Nym))
+        self.createClass(Vertices.Sponsor, Vertices.Nym)
 
     def createUserClass(self):
-        self.client.command("create class {} extends {}".
-                            format(Vertices.User, Vertices.Nym))
+        self.createClass(Vertices.User, Vertices.Nym)
 
     def createAttributeClass(self):
         self.createVertexClass(Vertices.Attribute,
@@ -164,17 +161,10 @@ class IdentityGraph(OrientDbGraphStore):
         self.addEdgeConstraint(Edges.AddsCredDef, iN=Vertices.CredDef)
 
     def getEdgeByTxnId(self, edgeClassName, txnId):
-        result = self.client.command("select from {} where {} = '{}'".
-                                     format(edgeClassName, TXN_ID, txnId))
-        return None if not result else result[0]
+        return self.getEntityByUniqueAttr(edgeClassName, TXN_ID, txnId)
 
     def getAddsNymEdge(self, nym):
-        nymEdge = self.client.command("select from {} where {} = '{}'".
-                                      format(Edges.AddsNym, NYM, nym))
-        if not nymEdge:
-            return None
-        else:
-            return nymEdge[0]
+        return self.getEntityByUniqueAttr(Edges.AddsNym, NYM, nym)
 
     def addSteward(self, txnId, nym, frm=None):
         # Add the steward
@@ -268,8 +258,8 @@ class IdentityGraph(OrientDbGraphStore):
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
-    def addAttribute(self, frm, txnId, txnTime=None, raw=None, enc=None, hash=None,
-                     to=None):
+    def addAttribute(self, frm, txnId, txnTime=None, raw=None, enc=None,
+                     hash=None, to=None):
         if raw:
             attrVertex = self.createVertex(Vertices.Attribute, raw=raw)
         elif enc:
@@ -339,29 +329,29 @@ class IdentityGraph(OrientDbGraphStore):
                     }
 
     def getNym(self, nym):
-        cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
-        try:
-            result = self.client.command(cmd)
-        except Exception as ex:
-            print("error executing command {} {}".format(cmd, ex))
-            raise ex
-        return result and result[0]
+        # cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
+        # try:
+        #     result = self.client.command(cmd)
+        # except Exception as ex:
+        #     print("error executing command {} {}".format(cmd, ex))
+        #     raise ex
+        # return result and result[0]
+        return self.getEntityByUniqueAttr(Vertices.Nym, NYM, nym)
+
+    def getSteward(self, nym):
+        return self.getEntityByUniqueAttr(Vertices.Steward, NYM, nym)
+
+    def getSponsor(self, nym):
+        return self.getEntityByUniqueAttr(Vertices.Sponsor, NYM, nym)
 
     def getUser(self, nym):
-        result = self.client.command("select from {} where {} = '{}'".
-                                     format(Vertices.User, NYM, nym))
-        if not result:
-            return None
-        else:
-            return result[0]
+        return self.getEntityByUniqueAttr(Vertices.User, NYM, nym)
 
     def hasSteward(self, nym):
-        return bool(self.client.command("select from {} where {} = '{}'".
-                                        format(Vertices.Steward, NYM, nym)))
+        return bool(self.getSteward(nym))
 
     def hasSponsor(self, nym):
-        return bool(self.client.command("select from {} where {} = '{}'".
-                                        format(Vertices.Sponsor, NYM, nym)))
+        return bool(self.getSponsor(nym))
 
     def hasUser(self, nym):
         return bool(self.getUser(nym))
@@ -380,10 +370,7 @@ class IdentityGraph(OrientDbGraphStore):
         sponsor = self.client.command("select expand (in('{}')) from {} where "
                                    "{} = '{}'".format(Edges.Sponsors,
                                                       Vertices.User, NYM, nym))
-        if not sponsor:
-            return None
-        else:
-            return sponsor[0].oRecordData.get(NYM)
+        return None if not sponsor else sponsor[0].oRecordData.get(NYM)
 
     def getAddNymTxn(self, nym):
         nymEdge = self.getAddsNymEdge(nym)
@@ -412,11 +399,8 @@ class IdentityGraph(OrientDbGraphStore):
     def getAddAttributeTxnIds(self, nym):
         attrEdges = self.client.command("select {} from {} where {} = '{}'".
                                         format(TXN_ID, Edges.AddsAttribute,
-                                               TARGET_NYM, nym))
-        if not attrEdges:
-            return []
-        else:
-            return [edge.oRecordData[TXN_ID] for edge in attrEdges]
+                                               TARGET_NYM, nym)) or []
+        return [edge.oRecordData[TXN_ID] for edge in attrEdges]
 
     def getTxn(self, identifier, reqId, **kwargs):
         type = kwargs[TXN_TYPE]
@@ -425,7 +409,7 @@ class IdentityGraph(OrientDbGraphStore):
                                      "clientId = '{}' and reqId = {}".
                                      format(edgeClass, identifier, reqId))
         return None if not result \
-            else result[0].oRecordData['reply']
+            else result[0].oRecordData.get('reply')
 
     def getRepliesForTxnIds(self, *txnIds, seqNo=None) -> dict:
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])

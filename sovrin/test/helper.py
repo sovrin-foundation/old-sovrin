@@ -30,9 +30,9 @@ from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
-from sovrin.client.wallet import Wallet#, UserWallet
-from sovrin.common.txn import ATTRIB, NYM, \
-    TARGET_NYM, TXN_TYPE, ROLE, ORIGIN, TXN_ID, USER
+from sovrin.client.wallet import Wallet
+from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
+    TXN_ID, USER
 from sovrin.server.node import Node
 
 logger = getlogger()
@@ -448,3 +448,8 @@ def addNym(ha, looper, nym, sponsNym, sponsor):
         DATA: json.dumps({'ha': ha})
     }
     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
+
+
+class TestGraphStorage:
+    def __init__(self):
+        pass

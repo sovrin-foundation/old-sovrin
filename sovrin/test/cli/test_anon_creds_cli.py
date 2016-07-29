@@ -228,7 +228,6 @@ def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, 
     checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False".format(issuerId))
-    # assert tylerCLI.lastCmdOutput == "attribute added successfully for issuer id {}".format(issuerId)
     assert issuerId in tylerCLI.activeClient.attributes
 
 
@@ -515,7 +514,5 @@ def johnCreated(johnPubKey, trusteeCLI, trusteeCreated, poolNodesCreated):
     ensureNymAdded(trusteeCLI, johnPubKey, SPONSOR)
 
 
-# TODO: This test fails when the whole suite is run but passes when run
-# individually.
 def testJohnCreated(johnCreated):
     pass
