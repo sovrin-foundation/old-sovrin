@@ -10,11 +10,10 @@ from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
 from sovrin.common.txn import ATTRIB, NYM, \
-    TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, DATA, USER, \
+    TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck
-
 
 logger = getlogger()
 
@@ -151,6 +150,26 @@ def testNonSponsorCannotCreateAUser(genned, looper, nodeSet, tdir, nonSponsor):
 
 
 def testSponsorCreatesAUser(updatedSteward, userSignerA):
+    pass
+
+
+@pytest.fixture(scope="module")
+def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, sponsor):
+    usigner = SimpleSigner()
+    opA = {
+        TARGET_NYM: usigner.verstr,
+        TXN_TYPE: NYM,
+        ROLE: USER
+    }
+    opB = opA
+    sponsor.submit(opA, opB, identifier=sponsor.getSigner().verstr)
+    submitAndCheckNacks(looper, sponsor, opA,
+                        identifier=sponsor.getSigner().verstr)
+    submitAndCheckNacks(looper, sponsor, opB,
+                        identifier=sponsor.getSigner().verstr)
+
+
+def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):
     pass
 
 
