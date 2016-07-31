@@ -162,11 +162,11 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
         ROLE: USER
     }
     opB = opA
-    sponsor.submit(opA, opB, identifier=sponsor.getSigner().verstr)
-    submitAndCheckNacks(looper, sponsor, opA,
-                        identifier=sponsor.getSigner().verstr)
-    submitAndCheckNacks(looper, sponsor, opB,
-                        identifier=sponsor.getSigner().verstr)
+    sponsorNym = sponsor.getSigner().verstr
+    sponsor.submit(opA, opB, identifier=sponsorNym)
+    submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
+    submitAndCheckNacks(looper, sponsor, opB, identifier=sponsorNym,
+                        contains="is already present")
 
 
 def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):

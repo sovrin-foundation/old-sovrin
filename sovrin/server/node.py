@@ -290,7 +290,7 @@ class Node(PlenumNode):
         result = deepcopy(reply.result)
         result[F.seqNo.name] = merkleInfo[F.seqNo.name]
         reply.result.update(merkleInfo)
-        # TODO: In case of genesis transactions when no identifier is present
+        # In case of genesis transactions when no identifier is present
         if identifier in self.clientIdentifiers:
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
         else:
@@ -357,7 +357,7 @@ class Node(PlenumNode):
         #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
         #     if attrs:
         #         result[ATTRIBUTES] = attrs
-        # TODO: Just for the time being. Remove ASAP
+        #
         result.update(operation)
         result.update({
             f.IDENTIFIER.nm: req.identifier,
