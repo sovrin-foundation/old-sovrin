@@ -200,10 +200,6 @@ class Node(PlenumNode):
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStorage)
 
-    @staticmethod
-    def genTxnId(identifier, reqId):
-        return sha256("{}{}".format(identifier, reqId).encode()).hexdigest()
-
     async def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
@@ -273,8 +269,16 @@ class Node(PlenumNode):
             await super().processRequest(request, frm)
 
     async def storeTxnAndSendToClient(self, identifier, reply, txnId):
+        """
+        Does 4 things in following order
+         1. Add reply to ledger.
+         2. Send the reply to client.
+         3. Add the reply to identity if needed.
+         4. Add the reply to storage so it can be served later if the
+         client requests it.
+        """
         if reply.result[TXN_TYPE] == ATTRIB:
-            result = deepcopy(reply.result)
+            result = reply.result
             if RAW in result:
                 result[RAW] = sha256(result[RAW].encode()).hexdigest()
             elif ENC in result:
@@ -287,9 +291,14 @@ class Node(PlenumNode):
             merkleInfo = await self.addToLedger(identifier, reply, txnId)
         else:
             merkleInfo = await self.addToLedger(identifier, reply, txnId)
+
+        # Creating copy of result which does not contain merkle info (seq no,
+        # audit path and root hash)
         result = deepcopy(reply.result)
         result[F.seqNo.name] = merkleInfo[F.seqNo.name]
+
         reply.result.update(merkleInfo)
+
         # In case of genesis transactions when no identifier is present
         if identifier in self.clientIdentifiers:
             self.transmitToClient(reply, self.clientIdentifiers[identifier])
@@ -327,7 +336,8 @@ class Node(PlenumNode):
     async def getReplyFor(self, request):
         result = await self.secondaryStorage.getReply(request.identifier,
                                                       request.reqId,
-                                                      type=request.operation[TXN_TYPE])
+                                                      type=request.operation[
+                                                          TXN_TYPE])
         return Reply(result) if result else None
 
     async def doCustomAction(self, ppTime: float, req: Request) -> None:
