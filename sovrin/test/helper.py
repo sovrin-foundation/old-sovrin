@@ -244,9 +244,6 @@ class Organization:
 
 
 class TempStorage:
-    def getDataLocation(self):
-        # TODO: Need some way to clear the tempdir
-        return os.path.join(tempfile.gettempdir(), self.dataDir, self.name)
 
     def cleanupDataLocation(self):
         loc = self.getDataLocation()

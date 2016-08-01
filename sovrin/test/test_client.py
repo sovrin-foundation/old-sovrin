@@ -1,14 +1,22 @@
 import json
+import os
+from collections import OrderedDict
 
 import base58
 import libnacl.public
 import pytest
 
+from ledger.compact_merkle_tree import CompactMerkleTree
+from ledger.ledger import Ledger
+from ledger.serializers.compact_serializer import CompactSerializer
+from ledger.stores.file_hash_store import FileHashStore
+from ledger.util import F
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import REQNACK, ENC, RAW
-from plenum.common.types import f, OP_FIELD_NAME
+from plenum.common.txn import REQNACK, ENC, RAW, TXN_TIME
+from plenum.common.types import f, OP_FIELD_NAME, NODE_HASH_STORE_SUFFIX
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
+from sovrin import config
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE
@@ -154,7 +162,7 @@ def testSponsorCreatesAUser(updatedSteward, userSignerA):
 
 
 @pytest.fixture(scope="module")
-def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, sponsor):
+def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, sponsor, tdir):
     usigner = SimpleSigner()
     opA = {
         TARGET_NYM: usigner.verstr,
@@ -164,10 +172,29 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
     opB = opA
     sponsorNym = sponsor.getSigner().verstr
     sponsor.submit(opA, opB, identifier=sponsorNym)
-    submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
-    submitAndCheckNacks(looper, sponsor, opB, identifier=sponsorNym,
-                        contains="is already present")
+    # submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
+    # submitAndCheckNacks(looper, sponsor, opB, identifier=sponsorNym,
+    #                     contains="is already present")
 
+    fields = OrderedDict([
+        (f.IDENTIFIER.nm, (str, str)),
+        (f.REQ_ID.nm, (str, int)),
+        (TXN_ID, (str, str)),
+        (TXN_TIME, (str, float)),
+        (TXN_TYPE, (str, str)),
+        (F.seqNo.name, (str, int))
+    ])
+
+    dataDir = os.path.join(tdir, config.dataDir, list(config.nodeReg.keys())[0])
+    hashStore = FileHashStore(dataDir=dataDir,
+                  fileNamePrefix=NODE_HASH_STORE_SUFFIX)
+    ledger = Ledger(CompactMerkleTree(hashStore=hashStore),
+                dataDir=dataDir,
+                serializer=CompactSerializer(fields=fields),
+                fileName=config.domainTransactionsFile)
+    for _, txn in ledger.getAllTxn().items():
+        if txn[TXN_TYPE] == NYM:
+            print("**********" + txn)
 
 @pytest.mark.skipif(True, reason="Implementation pending")
 def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):
