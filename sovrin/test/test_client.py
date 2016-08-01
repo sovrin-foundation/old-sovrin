@@ -185,6 +185,10 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
         (F.seqNo.name, (str, int))
     ])
 
+    # TODO: Dont create ledgers but use the nodeSet returned by genned, and then
+    #  iterate over the nodeSet to check ledger of each node using
+    # `domainLedger` attribute of node.
+
     dataDir = os.path.join(tdir, config.dataDir, list(config.nodeReg.keys())[0])
     hashStore = FileHashStore(dataDir=dataDir,
                   fileNamePrefix=NODE_HASH_STORE_SUFFIX)
@@ -196,7 +200,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
         if txn[TXN_TYPE] == NYM:
             print("**********" + txn)
 
-@pytest.mark.skipif(True, reason="Implementation pending")
+# @pytest.mark.skipif(True, reason="Implementation pending")
 def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):
     pass
 
