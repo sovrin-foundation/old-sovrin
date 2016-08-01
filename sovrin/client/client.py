@@ -151,7 +151,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     aval = list(data.values())[0]
                     hashed = sha256(aval.encode()).hexdigest()
                     op[HASH] = {anm: hashed}
-                    # attributeVals.append(op[HASH])
                     self.wallet.addAttribute(name=anm, val=aval,
                                              origin=origin,
                                              dest=op.get(TARGET_NYM),
@@ -215,12 +214,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                 elif result[TXN_TYPE] == GET_NYM:
                     if DATA in result and result[DATA]:
                         self.addNymToGraph(json.loads(result[DATA]))
-                        # try:
-                        #     self.addNymToGraph(json.loads(result[DATA]))
-                        # except PyOrientCommandException as ex:
-                        #     logger.error(
-                        #         "An exception was raised while adding "
-                        #         "nym {}".format(ex))
                 elif result[TXN_TYPE] == GET_TXNS:
                     if DATA in result and result[DATA]:
                         data = json.loads(result[DATA])
@@ -371,7 +364,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         op = {
             TARGET_NYM: identifier,
             TXN_TYPE: GET_ATTR,
-            # TODO: Need to encrypt get query
             DATA: json.dumps({"name": attrName})
         }
         self.submit(op, identifier=identifier)
@@ -401,17 +393,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     if walletAttribute[NAME] == attrName:
                         return {walletAttribute[NAME]: walletAttribute[HASH]}
 
-        # attributeReq = self.storage.getAttributeRequestForNym(nym, attrName,
-        #                                                       identifier)
-        # if attributeReq is None:
-        #     return None
-        # reply, error = self.replyIfConsensus(attributeReq[f.REQ_ID.nm])
-        # if reply is None:
-        #     return None
-        # else:
-        #     return self._getDecryptedData(reply[DATA],
-        #                                   attributeReq['attribute']['skey'])
-
     def getAllAttributesForNym(self, nym, identifier=None):
         walletAttributes = self.wallet.attributes
         attributes = []
@@ -423,15 +404,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     attributes.append(self._getDecryptedData(attr[ENC], attr[SKEY]))
                 elif HASH in attr:
                     attributes.append({attr[NAME]: attr[HASH]})
-        # attributeReqs = self.storage.getAllAttributeRequestsForNym(nym,
-        #                                                            identifier)
-        # attributes = []
-        # for req in attributeReqs.values():
-        #     reply, error = self.replyIfConsensus(req[f.REQ_ID.nm])
-        #     if reply is not None:
-        #         attr = self._getDecryptedData(reply[DATA],
-        #                                       req['attribute']['skey'])
-        #         attributes.append(attr)
         return attributes
 
     def doGetNym(self, nym, identifier=None):

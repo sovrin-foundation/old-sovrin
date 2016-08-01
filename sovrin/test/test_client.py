@@ -169,6 +169,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
                         contains="is already present")
 
 
+@pytest.mark.skipif(True, reason="Implementation pending")
 def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):
     pass
 

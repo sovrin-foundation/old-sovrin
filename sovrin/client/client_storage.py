@@ -215,43 +215,6 @@ class SecondaryStorage(IdentityGraph):
         })
         self.store.createIndexOnClass(ATTR_DATA, TARGET_NYM)
 
-    def addClientAttribute(self, reqId, attrData):
-        data = json.dumps(attrData)
-        result = self.client.command("insert into {} content {}".
-                                     format(ATTR_DATA, data))
-        self.client.command("update {} set attribute = {} where {} = {}".
-                            format(REQ_DATA, result[0].oRecordData,
-                                   f.REQ_ID.nm, reqId))
-
-    def getAttributeRequestForNym(self, nym, attrName, identifier=None):
-        whereClause = "attribute.{} = '{}' and attribute.name = '{}'". \
-            format(TARGET_NYM, nym, attrName)
-        if identifier:
-            whereClause += " and {} = '{}'".format(f.IDENTIFIER.nm,
-                                                   identifier)
-        cmd = "select from {} where {} order by {} desc limit 1". \
-            format(REQ_DATA, whereClause, TXN_TIME)
-        result = self.client.command(cmd)
-        return None if not result else result[0].oRecordData
-
-    def getAllAttributeRequestsForNym(self, nym, identifier=None):
-        whereClause = "attribute.{} = '{}'". \
-            format(TARGET_NYM, nym)
-        if identifier:
-            whereClause += " and {} = '{}'".format(f.IDENTIFIER.nm, identifier)
-        cmd = "select from {} where {} order by {} desc". \
-            format(REQ_DATA, whereClause, TXN_TIME)
-        # TODO: May be can use a better sql query using group by attribute name
-        # and getting last attribute request of each group
-        result = self.client.command(cmd)
-        attributeReqs = {}  # Dict[str, Dict]
-        for r in result:
-            data = r.oRecordData
-            if "attribute" in data and data["attribute"]["name"] \
-                    not in attributeReqs:
-                attributeReqs[data["attribute"]["name"]] = data
-        return attributeReqs
-
 
 class ClientStorage(PrimaryStorage, SecondaryStorage):
 

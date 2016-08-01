@@ -329,13 +329,6 @@ class IdentityGraph(OrientDbGraphStore):
                     }
 
     def getNym(self, nym):
-        # cmd = "select from {} where {} = '{}'".format(Vertices.Nym, NYM, nym)
-        # try:
-        #     result = self.client.command(cmd)
-        # except Exception as ex:
-        #     print("error executing command {} {}".format(cmd, ex))
-        #     raise ex
-        # return result and result[0]
         return self.getEntityByUniqueAttr(Vertices.Nym, NYM, nym)
 
     def getSteward(self, nym):
