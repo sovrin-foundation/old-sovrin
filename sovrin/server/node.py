@@ -343,6 +343,8 @@ class Node(PlenumNode):
     def isOkToProceed(self, req: Request) -> bool:
         if req.operation[TXN_TYPE] == NYM:
             return not self.graphStorage.hasNym(req.operation[TARGET_NYM])
+        else:
+            return True
 
     async def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
