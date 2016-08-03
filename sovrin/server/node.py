@@ -25,7 +25,7 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
-    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF
+    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -100,7 +100,7 @@ class Node(PlenumNode):
                     f.IDENTIFIER.nm: identifier
                 })
                 reply = Reply(txn)
-                # TODO Why this is called here
+                # Add genesis transactions from code to the ledger and graph
                 asyncio.ensure_future(
                     self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
                                                  reply, txn[TXN_ID]))
@@ -108,17 +108,25 @@ class Node(PlenumNode):
         logger.debug("{} genesis transactions added.".format(genTxnsCount))
         return genTxnsCount
 
-    def addNymToGraph(self, txn):
-        origin = txn.get(f.IDENTIFIER.nm)
-        if ROLE not in txn or txn[ROLE] == USER:
-            self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], origin,
-                                      reference=txn.get(REFERENCE))
-        elif txn[ROLE] == SPONSOR:
-            self.graphStorage.addSponsor(txn[TXN_ID], txn[TARGET_NYM], origin)
-        elif txn[ROLE] == STEWARD:
-            self.graphStorage.addSteward(txn[TXN_ID], txn[TARGET_NYM], origin)
-        else:
-            raise ValueError("Unknown role for nym, cannot add nym to graph")
+    # def addNymToGraph(self, txn):
+    #     origin = txn.get(f.IDENTIFIER.nm)
+    #     role = txn.get(ROLE, USER)
+    #     if role not in (STEWARD, SPONSOR, USER):
+    #         raise ValueError("Unknown role {} for nym, cannot add nym to graph"
+    #                          .format(role))
+    #     else:
+    #         self.graphStorage.addNym(txn[TXN_ID], txn[TARGET_NYM], role,
+    #                                  frm=origin, reference=txn.get(REFERENCE))
+
+        # if ROLE not in txn or txn[ROLE] == USER:
+        #     self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], origin,
+        #                               reference=txn.get(REFERENCE))
+        # elif txn[ROLE] == SPONSOR:
+        #     self.graphStorage.addSponsor(txn[TXN_ID], txn[TARGET_NYM], origin)
+        # elif txn[ROLE] == STEWARD:
+        #     self.graphStorage.addSteward(txn[TXN_ID], txn[TARGET_NYM], origin)
+        # else:
+        #     raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def checkValidOperation(self, identifier, reqId, msg):
         self.checkValidSovrinOperation(identifier, reqId, msg)
@@ -157,6 +165,11 @@ class Node(PlenumNode):
                                            format(TARGET_NYM))
 
         if msg[TXN_TYPE] == NYM:
+            role = msg.get(ROLE, USER)
+            if not isValidRole(role):
+                raise InvalidClientRequest(identifier, reqId,
+                                           "{} not a valid role".
+                                           format(role))
             if self.graphStorage.hasNym(msg[TARGET_NYM]):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} is already present".
@@ -278,7 +291,10 @@ class Node(PlenumNode):
          client requests it.
         """
         if reply.result[TXN_TYPE] == ATTRIB:
-            result = reply.result
+            # Creating copy of result so that `RAW`, `ENC` or `HASH` can be
+            # replaced by their hashes. We do not insert actual attribute data
+            # in the ledger but only the hash of it.
+            result = deepcopy(reply.result)
             if RAW in result:
                 result[RAW] = sha256(result[RAW].encode()).hexdigest()
             elif ENC in result:
@@ -287,13 +303,12 @@ class Node(PlenumNode):
                 result[HASH] = result[HASH]
             else:
                 error("Transaction missing required field")
-            reply = Reply(result)
-            merkleInfo = await self.addToLedger(identifier, reply, txnId)
+            merkleInfo = await self.addToLedger(identifier, Reply(result), txnId)
         else:
             merkleInfo = await self.addToLedger(identifier, reply, txnId)
 
         # Creating copy of result which does not contain merkle info (seq no,
-        # audit path and root hash)
+        # audit path and root hash). We do not insert merkle info in the database
         result = deepcopy(reply.result)
         result[F.seqNo.name] = merkleInfo[F.seqNo.name]
 
@@ -305,28 +320,30 @@ class Node(PlenumNode):
         else:
             logger.debug("Adding genesis transaction")
         if result[TXN_TYPE] == NYM:
-            self.addNymToGraph(result)
+            self.graphStorage.addNymTxnToGraph(result)
         elif result[TXN_TYPE] == ATTRIB:
-            self.graphStorage.addAttribute(frm=identifier,
-                                           txnId=txnId,
-                                           txnTime=None,
-                                           raw=result.get(RAW),
-                                           enc=result.get(ENC),
-                                           hash=result.get(HASH),
-                                           to=result.get(TARGET_NYM)
-                                           )
+            self.graphStorage.addAttribTxnToGraph(result)
+            # self.graphStorage.addAttribute(frm=identifier,
+            #                                txnId=txnId,
+            #                                txnTime=None,
+            #                                raw=result.get(RAW),
+            #                                enc=result.get(ENC),
+            #                                hash=result.get(HASH),
+            #                                to=result.get(TARGET_NYM)
+            #                                )
         elif result[TXN_TYPE] == CRED_DEF:
-            data = result.get(DATA)
-            self.graphStorage.addCredDef(frm=identifier,
-                                         txnId=txnId,
-                                         txnTime=None,
-                                         name=data.get(NAME),
-                                         version=data.get(VERSION),
-                                         keys=data.get(KEYS),
-                                         typ=data.get(TYPE),
-                                         ip=data.get(IP),
-                                         port=data.get(PORT))
-        self.secondaryStorage.storeReply(Reply(result))
+            self.graphStorage.addCredDefTxnToGraph(result)
+            # data = result.get(DATA)
+            # self.graphStorage.addCredDef(frm=identifier,
+            #                              txnId=txnId,
+            #                              txnTime=None,
+            #                              name=data.get(NAME),
+            #                              version=data.get(VERSION),
+            #                              keys=data.get(KEYS),
+            #                              typ=data.get(TYPE),
+            #                              ip=data.get(IP),
+            #                              port=data.get(PORT))
+        # self.secondaryStorage.storeReply(Reply(result))
 
     async def addToLedger(self, identifier, reply, txnId):
         merkleInfo = await self.primaryStorage.append(

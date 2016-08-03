@@ -28,7 +28,7 @@ class SecondaryStorage(PlenumSS):
         return Reply(result)
 
     def getReplies(self, *txnIds, seqNo=None):
-        txnData = self._txnStore.getRepliesForTxnIds(*txnIds, seqNo)
+        txnData = self._txnStore.getRepliesForTxnIds(*txnIds, seqNo=seqNo)
         if not txnData:
             return txnData
         else:
