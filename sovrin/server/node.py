@@ -340,12 +340,6 @@ class Node(PlenumNode):
                                                           TXN_TYPE])
         return Reply(result) if result else None
 
-    def isOkToProceed(self, req: Request) -> bool:
-        if req.operation[TXN_TYPE] == NYM:
-            return not self.graphStorage.hasNym(req.operation[TARGET_NYM])
-        else:
-            return True
-
     async def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
@@ -353,7 +347,11 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        if self.isOkToProceed(req):
+        if req.operation[TXN_TYPE] == NYM and self.graphStorage.hasNym(req.operation[TARGET_NYM]):
+            reason = "nym {} is already added".format(req.operation[TARGET_NYM])
+            if req.identifier in self.clientIdentifiers:
+                self.transmitToClient(RequestNack(req.reqId, reason), self.clientIdentifiers[req.identifier])
+        else:
             reply = self.generateReply(int(ppTime), req)
             txnId = reply.result[TXN_ID]
             await self.storeTxnAndSendToClient(req.identifier, reply, txnId)

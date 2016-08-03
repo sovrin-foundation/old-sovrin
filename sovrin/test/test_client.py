@@ -155,7 +155,7 @@ def testSponsorCreatesAUser(updatedSteward, userSignerA):
 
 
 @pytest.fixture(scope="module")
-def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, sponsor, tdir):
+def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, sponsor):
     usigner = SimpleSigner()
     opA = {
         TARGET_NYM: usigner.verstr,
@@ -167,7 +167,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
     sponsor.submit(opA, opB, identifier=sponsorNym)
     try:
         submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
-        submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
+        submitAndCheckNacks(looper, sponsor, opB, identifier=sponsorNym)
     except Exception as ex:
         pass
 
@@ -180,8 +180,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
 
     assert(count == len(genned.nodes))
 
-# @pytest.mark.skipif(True, reason="Implementation pending")
-def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):
+def testAddNymsInQuickSuccession(nymsAddedInQuickSuccession):
     pass
 
 
