@@ -1,22 +1,15 @@
 import json
-import os
-from collections import OrderedDict
 
 import base58
 import libnacl.public
 import pytest
 
-from ledger.compact_merkle_tree import CompactMerkleTree
-from ledger.ledger import Ledger
-from ledger.serializers.compact_serializer import CompactSerializer
-from ledger.stores.file_hash_store import FileHashStore
-from ledger.util import F
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import REQNACK, ENC, RAW, TXN_TIME
-from plenum.common.types import f, OP_FIELD_NAME, NODE_HASH_STORE_SUFFIX
+from plenum.common.txn import REQNACK, ENC, RAW
+from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
-from sovrin import config
+
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE
@@ -174,35 +167,18 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
     sponsor.submit(opA, opB, identifier=sponsorNym)
     try:
         submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
-        submitAndCheckNacks(looper, sponsor, opB, identifier=sponsorNym,
-                        contains="is already present")
+        submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
     except Exception as ex:
         pass
 
-    fields = OrderedDict([
-        (f.IDENTIFIER.nm, (str, str)),
-        (f.REQ_ID.nm, (str, int)),
-        (TXN_ID, (str, str)),
-        (TXN_TIME, (str, float)),
-        (TXN_TYPE, (str, str)),
-    ])
+    count = 0
+    for name, node in genned.nodes.items():
+        txns = node.domainLedger.getAllTxn()
+        for seq, txn in txns.items():
+            if txn[TXN_TYPE] == NYM and txn[TARGET_NYM] == usigner.verstr:
+                count += 1
 
-    # TODO: Dont create ledgers but use the nodeSet returned by genned, and then
-    #  iterate over the nodeSet to check ledger of each node using
-    # `domainLedger` attribute of node. One of the node will have 2 entries by
-    # same NYM. Once you have verified that, fix the bug and update the test to
-    # check each ledger has just one and only one entry for a NYM.
-    dataDir = os.path.join(tdir, config.dataDir, list(config.nodeReg.keys())[0])
-    hashStore = FileHashStore(dataDir=dataDir,
-                  fileNamePrefix=NODE_HASH_STORE_SUFFIX)
-    ledger = Ledger(CompactMerkleTree(hashStore=hashStore),
-                dataDir=dataDir,
-                serializer=CompactSerializer(fields=fields),
-                fileName=config.domainTransactionsFile)
-    for _, txn in ledger.getAllTxn().items():
-        if txn[TXN_TYPE] == NYM:
-            print("**********" + str(txn))
-
+    assert(count == len(genned.nodes))
 
 # @pytest.mark.skipif(True, reason="Implementation pending")
 def testAddNymsInQuickSuccession(updatedSteward, nymsAddedInQuickSuccession):
