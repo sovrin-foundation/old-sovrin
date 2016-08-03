@@ -356,22 +356,33 @@ class IdentityGraph(OrientDbGraphStore):
         self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
 
     def getCredDef(self, frm, name, version):
-        credDefs = self.client.command("select expand(out('{}')) from "
-                                       "{} where {}='{}'"
-                                       .format(Edges.AddsCredDef, Vertices.Nym,
-                                               NYM, frm))
+        cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {} where " \
+              "name = '{}' and version = '{}'".format(Vertices.Nym, NYM, frm,
+                                                 Vertices.CredDef,
+                                                 Edges.AddsCredDef, name,
+                                                 version)
+        credDefs = self.client.command(cmd)
         if credDefs:
-            for cd in credDefs:
-                record = cd.oRecordData
-                if record.get(NAME) == name and record.get(VERSION) == version:
-                    return {
-                        NAME: name,
-                        VERSION: version,
-                        IP: record.get(IP),
-                        PORT: record.get(PORT),
-                        TYPE: record.get(TYPE),
-                        KEYS: record.get(KEYS)
-                    }
+            credDef = credDefs[0].oRecordData
+            return {
+                NAME: name,
+                VERSION: version,
+                IP: credDef.get(IP),
+                PORT: credDef.get(PORT),
+                TYPE: credDef.get(TYPE),
+                KEYS: credDef.get(KEYS)
+            }
+            # for cd in credDefs:
+            #     record = cd.oRecordData
+            #     if record.get(NAME) == name and record.get(VERSION) == version:
+            #         return {
+            #             NAME: name,
+            #             VERSION: version,
+            #             IP: record.get(IP),
+            #             PORT: record.get(PORT),
+            #             TYPE: record.get(TYPE),
+            #             KEYS: record.get(KEYS)
+            #         }
 
     def getNym(self, nym, role=None):
         """
@@ -458,18 +469,23 @@ class IdentityGraph(OrientDbGraphStore):
     def getTxn(self, identifier, reqId, **kwargs):
         type = kwargs[TXN_TYPE]
         edgeClass = getEdgeFromType(type)
-        result = self.client.command("select from {} where "
-                                     "clientId = '{}' and reqId = {}".
-                                     format(edgeClass, identifier, reqId))
-        return None if not result \
-            else result[0].oRecordData.get('reply')
+        edgeProps = ", ".join("@this.{} as {}".format(name, name) for name in
+                              txnEdgeProps)
+        vertexProps = ", ".join("in.{} as {}".format(name, name) for name in
+                                chain.from_iterable(
+                                    Vertices._Properties.values()))
+        cmd = "select {}, {} from {} where {} = '{}' and {} = {}". \
+            format(edgeProps, vertexProps, edgeClass, f.IDENTIFIER.nm,
+                   identifier, f.REQ_ID.nm, reqId)
 
-    def getRepliesForTxnIds(self, *txnIds, seqNo=None) -> dict:
+        result = self.client.command(cmd)
+        return None if not result \
+            else self.makeResult(edgeClass, result[0].oRecordData)
+
+    def getResultForTxnIds(self, *txnIds, seqNo=None) -> dict:
         txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
 
         def delegate(edgeClass):
-            # cmd = "select EXPAND(@this.exclude('in', 'out')) from {} where {}" \
-            #       " in [{}]".format(edgeClass, TXN_ID, txnIds)
             # TODO: Need to do this to get around a bug in pyorient,
             # https://github.com/mogui/pyorient/issues/207
             edgeProps = ", ".join("@this.{} as {}".format(name, name) for name in
@@ -482,14 +498,14 @@ class IdentityGraph(OrientDbGraphStore):
                 cmd += " and {} > {}".format(F.seqNo.name, seqNo)
             result = self.client.command(cmd)
             return {} if not result else \
-                {r.oRecordData[F.seqNo.name]: self.makeReply(
+                {r.oRecordData[F.seqNo.name]: self.makeResult(
                     edgeClass, r.oRecordData) for r in result}
 
         return reduce(lambda d1, d2: {**d1, **d2},
                       map(delegate, list(txnEdges.values())))
 
     @staticmethod
-    def makeReply(edgeClass, oRecordData):
+    def makeResult(edgeClass, oRecordData):
         result = {
             F.seqNo.name: oRecordData.get(F.seqNo.name),
             TXN_ID: oRecordData.get(TXN_ID),
@@ -498,24 +514,36 @@ class IdentityGraph(OrientDbGraphStore):
             f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
         }
 
+        if TARGET_NYM in oRecordData:
+            result[TARGET_NYM] = oRecordData[TARGET_NYM]
+
         if edgeClass == Edges.AddsNym:
             result.update({
                 TXN_TYPE: NYM,
-                TARGET_NYM: oRecordData.get(TARGET_NYM),
                 ROLE: oRecordData.get(ROLE)
             })
 
         if edgeClass == Edges.AddsAttribute:
-            result.update({
+            extra = {
                 TXN_TYPE: ATTRIB,
-            })
+            }
+            for n in [RAW, ENC, HASH]:
+                if n in oRecordData:
+                    extra[n] = oRecordData[n]
+            result.update(extra)
 
         if edgeClass == Edges.AddsCredDef:
-            result.update({
+            extra = {
                 TXN_TYPE: CRED_DEF,
-            })
+                DATA: {}
+            }
+            for n in [IP, PORT, KEYS, TYPE, NAME, VERSION]:
+                if n in oRecordData:
+                    extra[DATA][n] = oRecordData[n]
+            result.update(extra)
 
         return result
+
     # def storeReply(self, reply: Reply):
     #     # TODO: This stores all data in the edge, fix it ASAP.
     #     edgeClass = getEdgeFromType(reply.result[TXN_TYPE])
@@ -544,7 +572,6 @@ class IdentityGraph(OrientDbGraphStore):
     #     return updateCmd
 
     def _updateTxnIdEdgeWithTxn(self, txnId, edgeClass, txn, properties=None):
-        # TODO: Remove un-necessary elements from `defaultProps`
         properties = properties or txnEdgeProps
         updates = ', '.join(["{}={}".format(prop, txn[prop])
                              if isinstance(txn[prop], (int, float)) else

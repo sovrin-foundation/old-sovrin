@@ -163,7 +163,7 @@ def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
                                   philCLI.activeClient.name, retryWait=1,
                                   timeout=5))
 
-
+# TODO: Need to remove since not needed anymore
 @pytest.fixture(scope="module")
 def trusteeConnected(trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
     trusteeCLI.looper.run(eventually(checkClientConnected, trusteeCLI, nodeNames,

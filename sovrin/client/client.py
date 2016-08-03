@@ -19,7 +19,7 @@ from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME, ENC, \
     HASH, RAW, NAME, VERSION, KEYS, TYPE, IP, PORT
-from plenum.common.types import OP_FIELD_NAME, Request, f, HA
+from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
@@ -107,11 +107,11 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         return self.peerMsgRouter.handle(msg)
 
     def sign(self, msg: Dict, signer: Signer) -> Dict:
-        if msg["operation"].get(TXN_TYPE) == ATTRIB:
+        if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
             msgCopy = deepcopy(msg)
             keyName = {RAW, ENC, HASH}.intersection(
-                set(msgCopy["operation"].keys())).pop()
-            msgCopy["operation"][keyName] = sha256(msgCopy["operation"][keyName]
+                set(msgCopy[OPERATION].keys())).pop()
+            msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
                                                    .encode()).hexdigest()
             msg[f.SIG.nm] = signer.sign(msgCopy)
             return msg
@@ -333,7 +333,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         #     raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def getTxnById(self, txnId: str):
-        serTxn = list(self.storage.getRepliesForTxnIds(txnId).values())[0]
+        serTxn = list(self.storage.getResultForTxnIds(txnId).values())[0]
         # TODO Add merkleInfo as well
         return deserializeTxn(serTxn)
 
