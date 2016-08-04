@@ -59,7 +59,7 @@ class Wallet(PWallet):
         self.storage.addCredential(name, data)
 
     def getCredential(self, name: str):
-        return self.storage.getCredential(name)
+        return self.storage.getCred(name)
 
     def addMasterSecret(self, masterSecret):
         self.storage.addMasterSecret(masterSecret)

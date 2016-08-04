@@ -7,7 +7,7 @@ from ioflo.aid.consoling import Console
 
 from anoncreds.protocol.types import AttribsDef, AttribType
 from anoncreds.protocol.verifier import verify_proof
-from anoncreds.temp_primes import P_PRIME, Q_PRIME
+from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
 
 
 def out(record, extra_cli_value=None):
@@ -28,7 +28,7 @@ setupLogging(DISPLAY_LOG_LEVEL,
 logger = getlogger("test_anon_creds")
 
 from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
-from anoncreds.protocol.proof import Proof
+from anoncreds.protocol.proof_builder import ProofBuilder
 
 from plenum.common.txn import DATA
 from plenum.common.txn import TXN_TYPE
@@ -107,7 +107,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
 
     # Issuer publishes credential definition to Sovrin ledger
     credDef = issuer.newCredDef(attrNames, name1, version1,
-                                p_prime=P_PRIME, q_prime=Q_PRIME,
+                                p_prime=P_PRIME1, q_prime=Q_PRIME1,
                                 ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
     logger.display("Issuer: Creating version {} of credential definition"
@@ -128,13 +128,13 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     encodedAttributes = attributes.encoded()
     revealedAttrs = ["undergrad"]
     pk = {
-        issuerId: prover.getPkFromCredDef(credDef)
+        issuerId: prover.getPk(credDef)
     }
-    proof = Proof(pk)
+    proof = ProofBuilder(pk)
     proofId = proof.id
     prover.proofs[proofId] = proof
-    cred = issuer.createCredential(proverId, name1, version1,
-                                   proof.U[issuerId])
+    cred = issuer.createCred(proverId, name1, version1,
+                             proof.U[issuerId])
     logger.display("Prover: Received credential from "
                    "{}".format(issuerSigner.verstr))
 
@@ -157,11 +157,11 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
                    "{}".format(revealedAttrs))
     proof.setParams(encodedAttributes, presentationToken,
                     revealedAttrs, nonce)
-    prf = Proof.prepareProof(pk_i=proof.pk_i, masterSecret=proof.masterSecret,
-                             credential=presentationToken,
-                             attrs=attributes.encoded(),
-                             revealedAttrs=revealedAttrs,
-                             nonce=nonce)
+    prf = ProofBuilder.prepareProof(pk_i=proof.credDefPks, masterSecret=proof.masterSecret,
+                                    credential=presentationToken,
+                                    attrs=attributes.encoded(),
+                                    revealedAttrs=revealedAttrs,
+                                    nonce=nonce)
     logger.display("Prover: Proof prepared.")
     logger.display("Prover: Proof submitted")
     logger.display("Verifier: Proof received.")

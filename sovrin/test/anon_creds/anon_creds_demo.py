@@ -15,7 +15,7 @@ logger = getlogger("anon_creds_demo")
 
 from anoncreds.protocol.attribute_repo import AttributeRepo, \
     InMemoryAttributeRepo
-from anoncreds.protocol.proof import Proof
+from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.verifier import verify_proof
 
 from anoncreds.protocol.utils import encodeAttrs
@@ -163,12 +163,12 @@ def runAnonCredFlow():
 
     encodedAttributes = {issuerId: encodeAttrs(attributes)}
     pk = {
-        issuerId: prover.getPkFromCredDef(credDef)
+        issuerId: prover.getPk(credDef)
     }
-    proof = Proof(pk)
+    proof = ProofBuilder(pk)
     proofId = proof.id
     prover.proofs[proofId] = proof
-    cred = issuer.createCredential(proverId, name1, version1, proof.U[issuerId])
+    cred = issuer.createCred(proverId, name1, version1, proof.U[issuerId])
     input()
     logger.display("Prover: Received credential from "
                 "{}".format(issuerSigner.verstr))

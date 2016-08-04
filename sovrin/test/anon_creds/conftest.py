@@ -9,7 +9,7 @@ from plenum.client.signer import SimpleSigner
 
 from plenum.test.helper import genHa
 from anoncreds.protocol.credential_definition import CredentialDefinition
-from anoncreds.temp_primes import P_PRIME, Q_PRIME
+from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
 from anoncreds.test.conftest import credDef1, attrNames1, primes1
 from sovrin.test.helper import submitAndCheck, addNym
 
@@ -112,7 +112,7 @@ def attrNames():
 def credDef(attrNames):
     ip, port = genHa()
     return CredentialDefinition(attrNames, 'name1', 'version1',
-                                p_prime=P_PRIME, q_prime=Q_PRIME,
+                                p_prime=P_PRIME1, q_prime=Q_PRIME1,
                                 ip=ip, port=port)
 
 
