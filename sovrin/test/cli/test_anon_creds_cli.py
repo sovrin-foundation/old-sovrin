@@ -94,12 +94,6 @@ def bookStoreCLI(nodeRegsForCLI, tdir):
         yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="bookStore")
 
 
-@pytest.yield_fixture(scope="module")
-def johnCLI(nodeRegsForCLI, tdir):
-    with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="john")
-
-
 @pytest.fixture(scope="module")
 def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
     poolCLI.enterCmd("new node all")
@@ -133,16 +127,6 @@ def bookStorePubKey(bookStoreCLI):
 
 
 @pytest.fixture(scope="module")
-def johnPubKey(johnCLI):
-    return newKeyPair(johnCLI, alias='John')
-
-
-@pytest.fixture(scope="module")
-def johnPubKey(bookStoreCLI):
-    return newKeyPair(bookStoreCLI, alias='John')
-
-
-@pytest.fixture(scope="module")
 def philCreated(poolCLI, philPubKey):
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
@@ -162,13 +146,6 @@ def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
     philCLI.looper.run(eventually(checkClientConnected, philCLI, nodeNames,
                                   philCLI.activeClient.name, retryWait=1,
                                   timeout=5))
-
-# TODO: Need to remove since not needed anymore
-@pytest.fixture(scope="module")
-def trusteeConnected(trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
-    trusteeCLI.looper.run(eventually(checkClientConnected, trusteeCLI, nodeNames,
-                                     trusteeCLI.activeClient.name, retryWait=1,
-                                     timeout=5))
 
 
 @pytest.fixture(scope="module")
@@ -193,33 +170,8 @@ def byuCreated(byuPubKey, philCreated, philCLI, poolNodesCreated, nodeNames):
 
 
 @pytest.fixture(scope="module")
-def byuConnected(byuCreated, byuCLI, poolNodesCreated, nodeNames):
-    byuCLI.looper.run(eventually(checkClientConnected, byuCLI, nodeNames,
-                                 byuCLI.activeClient.name, retryWait=1,
-                                  timeout=5))
-    byuCLI.logger.debug("BYU connected")
-
-
-@pytest.fixture(scope="module")
 def tylerCreated(tylerPubKey, byuCreated, byuCLI, poolNodesCreated, nodeNames):
     ensureNymAdded(byuCLI, tylerPubKey, USER)
-
-
-@pytest.fixture(scope="module")
-def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
-    tylerCLI.looper.run(eventually(checkClientConnected, tylerCLI, nodeNames,
-                                   tylerCLI.activeClient.name, retryWait=1,
-                                   timeout=5))
-    tylerCLI.activeClient.attributes = {}
-    tylerCLI.activeClient.attributes[byuCLI.activeSigner.verstr] = {
-        "first_name": "Tyler",
-        "last_name": "Ruff",
-        "birth_date": "12/17/1991",
-        "expiry_date": "12/31/2101",
-        "undergrad": "True",
-        "postgrad": "False",
-    }
-    tylerCLI.logger.debug("Tyler connected")
 
 
 @pytest.fixture(scope="module")
@@ -265,7 +217,7 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 
 @pytest.fixture(scope="module")
 def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
-                attrAddedToRepo, byuAddsCredDef, tylerConnected,
+                attrAddedToRepo, byuAddsCredDef,
                    credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     issuerIdentifier = byuAddsCredDef

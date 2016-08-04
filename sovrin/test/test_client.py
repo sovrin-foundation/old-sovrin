@@ -180,6 +180,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, spon
 
     assert(count == len(genned.nodes))
 
+
 def testAddNymsInQuickSuccession(nymsAddedInQuickSuccession):
     pass
 
