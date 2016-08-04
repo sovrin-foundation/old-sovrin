@@ -325,9 +325,14 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        reply = self.generateReply(int(ppTime), req)
-        txnId = reply.result[TXN_ID]
-        await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
+        if req.operation[TXN_TYPE] == NYM and self.graphStorage.hasNym(req.operation[TARGET_NYM]):
+            reason = "nym {} is already added".format(req.operation[TARGET_NYM])
+            if req.identifier in self.clientIdentifiers:
+                self.transmitToClient(RequestNack(req.reqId, reason), self.clientIdentifiers[req.identifier])
+        else:
+            reply = self.generateReply(int(ppTime), req)
+            txnId = reply.result[TXN_ID]
+            await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
 
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation

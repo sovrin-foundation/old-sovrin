@@ -57,6 +57,7 @@ def nodeSet(request, tdir, nodeReg, allPluginsPath):
 def genned(nodeSet, genesisTxns):
     for n in nodeSet:
         n.addGenesisTxns(genesisTxns)
+    return nodeSet
 
 
 @pytest.fixture(scope="module")
