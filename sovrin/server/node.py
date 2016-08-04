@@ -108,26 +108,6 @@ class Node(PlenumNode):
         logger.debug("{} genesis transactions added.".format(genTxnsCount))
         return genTxnsCount
 
-    # def addNymToGraph(self, txn):
-    #     origin = txn.get(f.IDENTIFIER.nm)
-    #     role = txn.get(ROLE, USER)
-    #     if role not in (STEWARD, SPONSOR, USER):
-    #         raise ValueError("Unknown role {} for nym, cannot add nym to graph"
-    #                          .format(role))
-    #     else:
-    #         self.graphStorage.addNym(txn[TXN_ID], txn[TARGET_NYM], role,
-    #                                  frm=origin, reference=txn.get(REFERENCE))
-
-        # if ROLE not in txn or txn[ROLE] == USER:
-        #     self.graphStorage.addUser(txn[TXN_ID], txn[TARGET_NYM], origin,
-        #                               reference=txn.get(REFERENCE))
-        # elif txn[ROLE] == SPONSOR:
-        #     self.graphStorage.addSponsor(txn[TXN_ID], txn[TARGET_NYM], origin)
-        # elif txn[ROLE] == STEWARD:
-        #     self.graphStorage.addSteward(txn[TXN_ID], txn[TARGET_NYM], origin)
-        # else:
-        #     raise ValueError("Unknown role for nym, cannot add nym to graph")
-
     def checkValidOperation(self, identifier, reqId, msg):
         self.checkValidSovrinOperation(identifier, reqId, msg)
         super().checkValidOperation(identifier, reqId, msg)
@@ -323,27 +303,8 @@ class Node(PlenumNode):
             self.graphStorage.addNymTxnToGraph(result)
         elif result[TXN_TYPE] == ATTRIB:
             self.graphStorage.addAttribTxnToGraph(result)
-            # self.graphStorage.addAttribute(frm=identifier,
-            #                                txnId=txnId,
-            #                                txnTime=None,
-            #                                raw=result.get(RAW),
-            #                                enc=result.get(ENC),
-            #                                hash=result.get(HASH),
-            #                                to=result.get(TARGET_NYM)
-            #                                )
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStorage.addCredDefTxnToGraph(result)
-            # data = result.get(DATA)
-            # self.graphStorage.addCredDef(frm=identifier,
-            #                              txnId=txnId,
-            #                              txnTime=None,
-            #                              name=data.get(NAME),
-            #                              version=data.get(VERSION),
-            #                              keys=data.get(KEYS),
-            #                              typ=data.get(TYPE),
-            #                              ip=data.get(IP),
-            #                              port=data.get(PORT))
-        # self.secondaryStorage.storeReply(Reply(result))
 
     async def addToLedger(self, identifier, reply, txnId):
         merkleInfo = await self.primaryStorage.append(

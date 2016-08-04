@@ -19,9 +19,6 @@ logger = getlogger()
 
 class Vertices:
     Nym = NYM
-    # Steward = STEWARD
-    # Sponsor = SPONSOR
-    # User = USER
     Attribute = "Attribute"
     CredDef = "CredDef"
 
@@ -43,7 +40,6 @@ class Edges:
     # TODO: Create OwnsAttribute in case user takes control of his identity
     # TODO: Create KnowsAttribute in case the attribute is shared (disclosed)
     # with someone
-    # Sponsors = "Sponsors"
     AliasOf = "AliasOf"
     AddsCredDef = "AddsCredDef"
 
@@ -127,15 +123,6 @@ class IdentityGraph(OrientDbGraphStore):
         self.createUniqueNymVertexClass(Vertices.Nym,
                                         properties={ROLE: "string"})
 
-    # def createStewardClass(self):
-    #     self.createClass(Vertices.Steward, Vertices.Nym)
-    #
-    # def createSponsorClass(self):
-    #     self.createClass(Vertices.Sponsor, Vertices.Nym)
-    #
-    # def createUserClass(self):
-    #     self.createClass(Vertices.User, Vertices.Nym)
-
     def createAttributeClass(self):
         self.createVertexClass(Vertices.Attribute,
                                properties={"data": "string"})
@@ -159,11 +146,6 @@ class IdentityGraph(OrientDbGraphStore):
         # if not then `iN` need to be a USER
         self.addEdgeConstraint(Edges.AliasOf, iN=Vertices.Nym,
                                out=Vertices.Nym)
-
-    # def createSponsorsClass(self):
-    #     self.createUniqueTxnIdEdgeClass(Edges.Sponsors)
-    #     self.addEdgeConstraint(Edges.Sponsors, iN=Vertices.User,
-    #                            out=Vertices.Sponsor)
 
     def createAddsAttributeClass(self):
         self.createEdgeClassWithTxnData(Edges.AddsAttribute,
@@ -225,95 +207,6 @@ class IdentityGraph(OrientDbGraphStore):
                     TXN_ID: txnId
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, toV, **kwargs)
-
-    # def addSteward(self, txnId, nym, frm=None):
-    #     # Add the steward
-    #     if not frm:
-    #         logger.debug("frm not available while adding steward")
-    #         kwargs = {
-    #             NYM: nym,
-    #             TXN_ID: txnId
-    #         }
-    #         self.createVertex(Vertices.Steward, **kwargs)
-    #     else:
-    #         self.createVertex(Vertices.Steward, nym=nym, frm=frm)
-    #
-    #         # Now add an edge from from another steward to this steward, since only
-    #         # a steward can create a steward
-    #         frm = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM,
-    #                                                          frm)
-    #         to = "(select from {} where {} = '{}')".format(Vertices.Steward, NYM,
-    #                                                         nym)
-    #         # Let there be an error in edge creation if `frm` does not exist
-    #         # because if system is behaving correctly then `frm` would exist
-    #         kwargs = {
-    #             NYM: nym,
-    #             ROLE: STEWARD,
-    #             TXN_ID: txnId
-    #         }
-    #         self.createEdge(Edges.AddsNym, frm, to, **kwargs)
-    #
-    # def addSponsor(self, txnId, nym, frm=None):
-    #     # Add the sponsor
-    #     if not frm:
-    #         logger.debug("frm not available while adding sponsor")
-    #         self.createVertex(Vertices.Sponsor, nym=nym)
-    #     else:
-    #         self.createVertex(Vertices.Sponsor, nym=nym, frm=frm)
-    #
-    #         # Now add an edge from steward to sponsor, since only
-    #         # a steward can create a sponsor
-    #         frm = "(select from {} where {} = '{}')".format(
-    #             Vertices.Steward, NYM, frm)
-    #         to = "(select from {} where {} = '{}')".format(
-    #             Vertices.Sponsor, NYM, nym)
-    #         # Let there be an error in edge creation if `frm` does not
-    #         # exist because if system is behaving correctly then `frm`
-    #         #  would exist
-    #         kwargs = {
-    #             NYM: nym,
-    #             ROLE: SPONSOR,
-    #             TXN_ID: txnId
-    #         }
-    #         self.createEdge(Edges.AddsNym, frm, to, **kwargs)
-    #
-    # # TODO: Consider if sponsors or stewards would have aliases too
-    # def addUser(self, txnId, nym, frm=None, reference=None):
-    #     # Add the user
-    #     if not frm:
-    #         logger.debug("frm not available while adding user")
-    #         self.createVertex(Vertices.User, nym=nym)
-    #     else:
-    #         self.createVertex(Vertices.User, nym=nym, frm=frm)
-    #
-    #         # TODO: After implementing agents, check if `frm` is agent
-    #         typ = self.getRole(frm)
-    #         # Now add an edge from SPONSOR to USER
-    #         frm = "(select from {} where {} = '{}')".format(typ, NYM, frm)
-    #         to = "(select from {} where {} = '{}')".format(Vertices.User, NYM,
-    #                                                        nym)
-    #         # Let there be an error in edge creation if `frm` does not
-    #         #  exist because if system is behaving correctly then `frm`
-    #         #  would exist
-    #         kwargs = {
-    #             NYM: nym,
-    #             ROLE: USER,
-    #             TXN_ID: txnId
-    #         }
-    #         self.createEdge(Edges.AddsNym, frm, to, **kwargs)
-    #         if typ == Vertices.Sponsor:
-    #             kwargs = {
-    #                 TXN_ID: txnId
-    #             }
-    #             self.createEdge(Edges.Sponsors, frm, to, **kwargs)
-    #         if reference:
-    #             nymEdge = self.getEdgeByTxnId(Edges.AddsNym, txnId=reference)
-    #             referredNymRid = nymEdge.oRecordData['in'].get()
-    #             kwargs = {
-    #                 REFERENCE: reference,
-    #                 TXN_ID: txnId
-    #             }
-    #             self.createEdge(Edges.AliasOf, referredNymRid, to, **kwargs)
 
     def addAttribute(self, frm, txnId, raw=None, enc=None,
                      hash=None, to=None):
@@ -382,17 +275,6 @@ class IdentityGraph(OrientDbGraphStore):
                 TYPE: credDef.get(TYPE),
                 KEYS: credDef.get(KEYS)
             }
-            # for cd in credDefs:
-            #     record = cd.oRecordData
-            #     if record.get(NAME) == name and record.get(VERSION) == version:
-            #         return {
-            #             NAME: name,
-            #             VERSION: version,
-            #             IP: record.get(IP),
-            #             PORT: record.get(PORT),
-            #             TYPE: record.get(TYPE),
-            #             KEYS: record.get(KEYS)
-            #         }
 
     def getNym(self, nym, role=None):
         """
@@ -518,11 +400,6 @@ class IdentityGraph(OrientDbGraphStore):
                     out[oRecordData[F.seqNo.name]] = self.makeResult(NYM,
                                                                        oRecordData)
                 return out
-                # return {
-                #     r.oRecordData[F.seqNo.name]: self.makeResult(
-                #         getTxnTypeFromEdge(edgeClass),
-                #         self.cleanKeyNames(r.oRecordData)) for r in result
-                # }
 
         result = reduce(lambda d1, d2: {**d1, **d2},
                       map(delegate, list(txnEdges.values())))
@@ -544,7 +421,7 @@ class IdentityGraph(OrientDbGraphStore):
     @staticmethod
     def makeResult(txnType, oRecordData):
         result = {
-            F.seqNo.name: oRecordData.get(F.seqNo.name),
+            F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
             TXN_ID: oRecordData.get(TXN_ID),
             TXN_TIME: oRecordData.get(TXN_TIME),
@@ -588,35 +465,6 @@ class IdentityGraph(OrientDbGraphStore):
                 r.oRecordData[TARGET_NYM] = r.oRecordData.pop(NYM)
                 out[r.oRecordData[F.seqNo.name]] = self.makeResult(NYM, r.oRecordData)
             return out
-        # return {} if not result else \
-        #     {r.oRecordData[F.seqNo.name]: self.makeResult(NYM, r.oRecordData) for r in result}
-
-    # def storeReply(self, reply: Reply):
-    #     # TODO: This stores all data in the edge, fix it ASAP.
-    #     edgeClass = getEdgeFromType(reply.result[TXN_TYPE])
-    #     assert reply.result[TXN_ID]
-    #     updateCmd = self._updateProperties(reply.result, edgeClass,
-    #                                        reply.result[TXN_ID])
-    #     self.client.command(updateCmd)
-    #
-    # @staticmethod
-    # def _updateProperties(props, edgeClass, txnId):
-    #     intTypes = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm]
-    #     auditPath = props.get(F.auditPath.name)
-    #     if auditPath:
-    #         props[F.auditPath.name] = ",".join(auditPath)
-    #
-    #     # TODO: Temporary fix, fix it ASAP.
-    #     if DATA in props and not isinstance(props[DATA], str):
-    #         props[DATA] = json.dumps(props[DATA])
-    #
-    #     updates = ', '.join(["{}='{}'".format(x, props[x])
-    #                          if x not in intTypes else
-    #                          "{}={}".format(x, props[x])
-    #                          for x in props if props[x]])
-    #     updateCmd = "update {} set {} upsert where {}='{}'". \
-    #         format(edgeClass, updates, TXN_ID, txnId)
-    #     return updateCmd
 
     def _updateTxnIdEdgeWithTxn(self, txnId, edgeClass, txn, properties=None):
         properties = properties or txnEdgeProps

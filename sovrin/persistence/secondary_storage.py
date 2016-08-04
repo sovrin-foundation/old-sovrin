@@ -9,9 +9,6 @@ from sovrin.common.txn import NYM
 
 class SecondaryStorage(PlenumSS):
 
-    # def storeReply(self, reply: Reply):
-    #     return self._txnStore.storeReply(reply)
-
     def _merkleInfo(self, seqNo):
         tree = self._primaryStorage.tree
         rootHash = tree.merkle_tree_hash(0, int(seqNo))
@@ -26,17 +23,6 @@ class SecondaryStorage(PlenumSS):
         if txn:
             txn.update(self._merkleInfo(txn.seqNo))
             return Reply(txn)
-
-    # def _addMerkleInfo(self, txn):
-    #     seqNo = txn.seqNo
-    #     tree = self._primaryStorage.tree
-    #     rootHash = tree.merkle_tree_hash(seqNo)
-    #     auditPath = tree.inclusion_proof(0, seqNo)
-    #     result = txn.update({
-    #         F.rootHash.name: rootHash,
-    #         F.auditPath.name: auditPath
-    #     })
-    #     return Reply(result)
 
     def getReplies(self, *txnIds, seqNo=None):
         txnData = self._txnStore.getResultForTxnIds(*txnIds, seqNo=seqNo)
