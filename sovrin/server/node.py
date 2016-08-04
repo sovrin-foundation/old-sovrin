@@ -233,8 +233,8 @@ class Node(PlenumNode):
                 msg = "You can only receive transactions for yourself"
                 self.transmitToClient(RequestNack(request.reqId, msg), frm)
             else:
-                data = request.operation.get(DATA)
                 self.transmitToClient(RequestAck(request.reqId), frm)
+                data = request.operation.get(DATA)
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)

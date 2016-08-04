@@ -26,7 +26,7 @@ class Vertices:
     CredDef = "CredDef"
 
     _Properties = {
-        Nym: (NYM, TXN_ID, ROLE),
+        Nym: (NYM, TXN_ID, ROLE, F.seqNo.name),
         Attribute: (RAW, ENC, HASH),
         CredDef: (TYPE, IP, PORT, KEYS)
     }
@@ -57,7 +57,13 @@ txnEdges = {
 txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm, TARGET_NYM, NAME, VERSION]
 
 
-def getEdgeFromType(txnType: str): return txnEdges.get(txnType)
+def getEdgeFromTxnType(txnType: str): return txnEdges.get(txnType)
+
+
+def getTxnTypeFromEdge(edgeClass: str):
+    for typ, edge in txnEdges.items():
+        if edge == edgeClass:
+            return typ
 
 
 class IdentityGraph(OrientDbGraphStore):
@@ -183,14 +189,18 @@ class IdentityGraph(OrientDbGraphStore):
     def getAddsNymEdge(self, nym):
         return self.getEntityByUniqueAttr(Edges.AddsNym, NYM, nym)
 
-    def addNym(self, txnId, nym, role, frm=None, reference=None):
+    def addNym(self, txnId, nym, role, frm=None, reference=None, seqNo=None):
         kwargs = {
             NYM: nym,
             TXN_ID: txnId,
-            ROLE: role,    # Need to have role as a property of the vertex since
-            #  there might not be an AddsNym edge in case of a genesis
-            # transaction
+            ROLE: role,    # Need to have role as a property of the vertex it
+            # makes faster to query roles by vertex. TODO: move ROLE to edge
         }
+
+        if not frm:
+            # In case of geneseis transaction
+            kwargs[F.seqNo.name] = seqNo
+
         self.createVertex(Vertices.Nym, **kwargs)
         if not frm:
             logger.debug("frm not available while adding nym")
@@ -447,7 +457,8 @@ class IdentityGraph(OrientDbGraphStore):
             else:
                 return {
                     TXN_ID: nymV.oRecordData.get(TXN_ID),
-                    TARGET_NYM: nym
+                    TARGET_NYM: nym,
+                    ROLE: nymV.oRecordData.get(ROLE)
                 }
         else:
             result = {
@@ -467,11 +478,11 @@ class IdentityGraph(OrientDbGraphStore):
         return [edge.oRecordData[TXN_ID] for edge in attrEdges]
 
     def getTxn(self, identifier, reqId, **kwargs):
-        type = kwargs[TXN_TYPE]
-        edgeClass = getEdgeFromType(type)
-        edgeProps = ", ".join("@this.{} as {}".format(name, name) for name in
+        typ = kwargs[TXN_TYPE]
+        edgeClass = getEdgeFromTxnType(typ)
+        edgeProps = ", ".join("@this.{} as __e_{}".format(name, name) for name in
                               txnEdgeProps)
-        vertexProps = ", ".join("in.{} as {}".format(name, name) for name in
+        vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
                                 chain.from_iterable(
                                     Vertices._Properties.values()))
         cmd = "select {}, {} from {} where {} = '{}' and {} = {}". \
@@ -480,34 +491,61 @@ class IdentityGraph(OrientDbGraphStore):
 
         result = self.client.command(cmd)
         return None if not result \
-            else self.makeResult(edgeClass, result[0].oRecordData)
+            else self.makeResult(typ, self.cleanKeyNames(result[0].oRecordData))
 
     def getResultForTxnIds(self, *txnIds, seqNo=None) -> dict:
-        txnIds = ",".join(["'{}'".format(tid) for tid in txnIds])
+        txnIds = set(txnIds)
+        txnIdsStr = ",".join(["'{}'".format(tid) for tid in txnIds])
 
         def delegate(edgeClass):
             # TODO: Need to do this to get around a bug in pyorient,
             # https://github.com/mogui/pyorient/issues/207
-            edgeProps = ", ".join("@this.{} as {}".format(name, name) for name in
+            edgeProps = ", ".join("@this.{} as __e_{}".format(name, name) for name in
                                   txnEdgeProps)
-            vertexProps = ", ".join("in.{} as {}".format(name, name) for name in
+            vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
                                     chain.from_iterable(Vertices._Properties.values()))
             cmd = "select {}, {} from {} where {} in [{}]".\
-                format(edgeProps, vertexProps, edgeClass, TXN_ID, txnIds)
+                format(edgeProps, vertexProps, edgeClass, TXN_ID, txnIdsStr)
             if seqNo:
                 cmd += " and {} > {}".format(F.seqNo.name, seqNo)
             result = self.client.command(cmd)
-            return {} if not result else \
-                {r.oRecordData[F.seqNo.name]: self.makeResult(
-                    edgeClass, r.oRecordData) for r in result}
+            if not result:
+                return {}
+            else:
+                out = {}
+                for r in result:
+                    oRecordData = self.cleanKeyNames(r.oRecordData)
+                    out[oRecordData[F.seqNo.name]] = self.makeResult(NYM,
+                                                                       oRecordData)
+                return out
+                # return {
+                #     r.oRecordData[F.seqNo.name]: self.makeResult(
+                #         getTxnTypeFromEdge(edgeClass),
+                #         self.cleanKeyNames(r.oRecordData)) for r in result
+                # }
 
-        return reduce(lambda d1, d2: {**d1, **d2},
+        result = reduce(lambda d1, d2: {**d1, **d2},
                       map(delegate, list(txnEdges.values())))
 
+        if len(txnIds) > len(result):
+            # Some transactions missing so look for transactions without edges
+            result.update(self.getTxnsWithoutEdge(*(txnIds.difference(
+                {r.get(TXN_ID) for r in result.values()}))))
+        return result
+
     @staticmethod
-    def makeResult(edgeClass, oRecordData):
+    def cleanKeyNames(oRecordData):
+        # Removing `__e_` and `__v_` from key names of oRecordData.
+        # They are added to make select queries work which can contain
+        # duplicate key names
+        return {k[4:] if (k.startswith("__e_") or k.startswith("__v_")) else k:
+                    v for k, v in oRecordData.items()}
+
+    @staticmethod
+    def makeResult(txnType, oRecordData):
         result = {
             F.seqNo.name: oRecordData.get(F.seqNo.name),
+            TXN_TYPE: txnType,
             TXN_ID: oRecordData.get(TXN_ID),
             TXN_TIME: oRecordData.get(TXN_TIME),
             f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
@@ -517,32 +555,41 @@ class IdentityGraph(OrientDbGraphStore):
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
 
-        if edgeClass == Edges.AddsNym:
-            result.update({
-                TXN_TYPE: NYM,
-                ROLE: oRecordData.get(ROLE)
-            })
+        if txnType == NYM:
+            result[ROLE] = oRecordData.get(ROLE)
 
-        if edgeClass == Edges.AddsAttribute:
-            extra = {
-                TXN_TYPE: ATTRIB,
-            }
+        if txnType == ATTRIB:
             for n in [RAW, ENC, HASH]:
                 if n in oRecordData:
-                    extra[n] = oRecordData[n]
-            result.update(extra)
+                    result[n] = oRecordData[n]
+                    break
 
-        if edgeClass == Edges.AddsCredDef:
-            extra = {
-                TXN_TYPE: CRED_DEF,
-                DATA: {}
-            }
+        if txnType == CRED_DEF:
+            result[DATA] = {}
             for n in [IP, PORT, KEYS, TYPE, NAME, VERSION]:
                 if n in oRecordData:
-                    extra[DATA][n] = oRecordData[n]
-            result.update(extra)
+                    result[DATA][n] = oRecordData[n]
 
         return result
+
+    def getTxnsWithoutEdge(self, *txnIds):
+        # For getting transactions for which have no edges in the graph as in
+        # case of genesis transactions, currently looking for only `NYM`
+        # transactions
+        txnIdsStr = ",".join(["'{}'".format(tid) for tid in txnIds])
+        cmd = "select from {} where {} in [{}]".format(Vertices.Nym, TXN_ID,
+                                                       txnIdsStr)
+        result = self.client.command(cmd)
+        if not result:
+            return {}
+        else:
+            out = {}
+            for r in result:
+                r.oRecordData[TARGET_NYM] = r.oRecordData.pop(NYM)
+                out[r.oRecordData[F.seqNo.name]] = self.makeResult(NYM, r.oRecordData)
+            return out
+        # return {} if not result else \
+        #     {r.oRecordData[F.seqNo.name]: self.makeResult(NYM, r.oRecordData) for r in result}
 
     # def storeReply(self, reply: Reply):
     #     # TODO: This stores all data in the edge, fix it ASAP.
@@ -577,7 +624,7 @@ class IdentityGraph(OrientDbGraphStore):
                              if isinstance(txn[prop], (int, float)) else
                              "{}='{}'".format(prop, txn[prop])
                              for prop in properties if prop in txn])
-        updateCmd = "update {} set {} upsert where {}='{}'". \
+        updateCmd = "update {} set {} where {}='{}'". \
             format(edgeClass, updates, TXN_ID, txnId)
         self.client.command(updateCmd)
 
@@ -592,7 +639,8 @@ class IdentityGraph(OrientDbGraphStore):
             try:
                 txnId = txn[TXN_ID]
                 self.addNym(txnId, nym, role,
-                            frm=origin, reference=txn.get(REFERENCE))
+                            frm=origin, reference=txn.get(REFERENCE),
+                            seqNo=txn.get(F.seqNo.name))
                 self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
             except pyorient.PyOrientORecordDuplicatedException:
                 logger.debug("The nym {} was already added to graph".format(

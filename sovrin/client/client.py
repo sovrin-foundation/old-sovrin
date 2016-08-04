@@ -29,7 +29,7 @@ from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
-from sovrin.persistence.identity_graph import getEdgeFromType
+from sovrin.persistence.identity_graph import getEdgeFromTxnType
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.verifier import Verifier
@@ -342,7 +342,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         pass
 
     def getTxnsByType(self, txnType):
-        edgeClass = getEdgeFromType(txnType)
+        edgeClass = getEdgeFromTxnType(txnType)
         if edgeClass:
             cmd = "select from {}".format(edgeClass)
             result = self.storage.client.command(cmd)
