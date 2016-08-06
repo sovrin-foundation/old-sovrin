@@ -155,11 +155,12 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     # Prover discovers Issuer's credential definition
     logger.display("Prover: Preparing proof for attributes: "
                    "{}".format(revealedAttrs))
-    proofBuilder.setParams(encodedAttributes, presentationToken,
+    proofBuilder.setParams(presentationToken,
                     revealedAttrs, nonce)
-    prf = ProofBuilder.prepareProof(credDefPks=proofBuilder.credDefPks, masterSecret=proofBuilder.masterSecret,
+    prf = ProofBuilder.prepareProof(credDefPks=proofBuilder.credDefPks,
+                                    masterSecret=proofBuilder.masterSecret,
                                     credential=presentationToken,
-                                    attrs=attributes.encoded(),
+                                    encodedAttrs=encodedAttributes,
                                     revealedAttrs=revealedAttrs,
                                     nonce=nonce)
     logger.display("Prover: Proof prepared.")

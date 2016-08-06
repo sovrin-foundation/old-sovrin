@@ -347,7 +347,7 @@ class SovrinCli(PlenumCli):
         masterSecret = self.activeClient.wallet.masterSecret
         if masterSecret:
             masterSecret = strToCharmInteger(masterSecret)
-        proof = ProofBuilder(pk, masterSecret)
+        proofBuilder = ProofBuilder(pk, masterSecret)
         attributes = self.activeClient.attributes[issuerId]
         attribTypes = []
         for nm in attributes.keys():
@@ -357,18 +357,18 @@ class SovrinCli(PlenumCli):
         encodedAttrs = {
             issuerId: next(iter(attribs.values()))
         }
-        proof.setAttrs(encodedAttrs)
+        proofBuilder.setEncodedAttrs(encodedAttrs)
         if not masterSecret:
-            self.activeClient.wallet.addMasterSecret(str(proof.masterSecret))
+            self.activeClient.wallet.addMasterSecret(str(proofBuilder.masterSecret))
 
         #TODO: Should probably be persisting proof objects
-        self.activeClient.proofBuilders[proof.id] = (proof, credName, credVersion,
+        self.activeClient.proofBuilders[proofBuilder.id] = (proofBuilder, credName, credVersion,
                                               issuerId)
-        u = proof.U[issuerId]
+        u = proofBuilder.U[issuerId]
         tokens = []
         tokens.append((Token.BolBlue, "Credential request for {} for {} {} is: ".format(proverId, credName, credVersion)))
         tokens.append((Token, "Credential id is "))
-        tokens.append((Token.BoldBlue, "{} ".format(proof.id)))
+        tokens.append((Token.BoldBlue, "{} ".format(proofBuilder.id)))
         tokens.append((Token, "and U is "))
         tokens.append((Token.BoldBlue, "{}".format(u)))
         tokens.append((Token, "\n"))
@@ -413,15 +413,15 @@ class SovrinCli(PlenumCli):
                 name, value = val.split('=', 1)
                 name, value = name.strip(), value.strip()
                 credential[name] = value
-            proof, credName, credVersion, issuerId = self.activeClient.proofBuilders[proofId]
+            proofBuilder, credName, credVersion, issuerId = self.activeClient.proofBuilders[proofId]
             credential["issuer"] = issuerId
             credential[NAME] = credName
             credential[VERSION] = credVersion
             # TODO: refactor to use issuerId
-            credential[CRED_V] = str(next(iter(proof.vprime.values())) +
+            credential[CRED_V] = str(next(iter(proofBuilder.vprime.values())) +
                                   int(credential["vprimeprime"]))
             credential["encodedAttrs"] = {
-                k: str(v) for k, v in next(iter(proof.attrs.values())).items()
+                k: str(v) for k, v in next(iter(proofBuilder.encodedAttrs.values())).items()
             }
             # TODO: What if alias is not given (we don't have issuer id and
             # cred name here) ???
@@ -554,7 +554,7 @@ class SovrinCli(PlenumCli):
             prf = ProofBuilder.prepareProof(credDefPks=credDefPks, masterSecret=masterSecret,
                                             credential={issuer: cred},
                                             revealedAttrs=revealedAttrs,
-                                            nonce=nonce, attrs=encodedAttrs)
+                                            nonce=nonce, encodedAttrs=encodedAttrs)
             out = {}
             proof = {}
             proof[APRIME] = {issuer: str(prf.Aprime[issuer])}
