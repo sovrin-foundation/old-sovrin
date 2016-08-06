@@ -3,10 +3,9 @@ import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.test.plugin.helper import getPluginPath
 
-from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, USER
-from sovrin.common.txn import getGenesisTxns, STEWARD, NYM, \
-    SPONSOR
-from sovrin.test.helper import clientFromSigner, TestNodeSet,\
+from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
+from sovrin.common.txn import STEWARD, NYM, SPONSOR
+from sovrin.test.helper import TestNodeSet,\
     genTestClient, createNym, addUser
 
 from plenum.test.conftest import getValueFromModule

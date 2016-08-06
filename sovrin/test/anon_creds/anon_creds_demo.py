@@ -13,8 +13,8 @@ logging.root.handlers = []
 #              Console.Wordage.mute)
 logger = getlogger("anon_creds_demo")
 
-from anoncreds.protocol.attribute_repo import AttributeRepo, \
-    InMemoryAttributeRepo
+from anoncreds.protocol.attribute_repo import AttrRepo, \
+    InMemoryAttrRepo
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.verifier import verify_proof
 
@@ -126,7 +126,7 @@ def runAnonCredFlow():
         verifierSigner.verstr))
 
     # Issuer's attribute repository
-    attrRepo = InMemoryAttributeRepo()
+    attrRepo = InMemoryAttrRepo()
     attrRepo.attributes = {proverSigner.identifier: attributes}
     issuer.attributeRepo = attrRepo
     name1 = "Qualifications"

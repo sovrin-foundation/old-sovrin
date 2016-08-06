@@ -5,7 +5,7 @@ from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
 from ioflo.aid.consoling import Console
 
-from anoncreds.protocol.types import AttribsDef, AttribType
+from anoncreds.protocol.types import AttribDef, AttribType
 from anoncreds.protocol.verifier import verify_proof
 from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
 
@@ -27,7 +27,7 @@ setupLogging(DISPLAY_LOG_LEVEL,
              Console.Wordage.mute)
 logger = getlogger("test_anon_creds")
 
-from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
+from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
 from anoncreds.protocol.proof_builder import ProofBuilder
 
 from plenum.common.txn import DATA
@@ -37,14 +37,14 @@ from sovrin.common.txn import CRED_DEF
 from sovrin.common.util import getCredDefTxnData
 from sovrin.test.helper import genTestClient, submitAndCheck
 
-BYU = AttribsDef('BYU',
-                 [AttribType("first_name", encode=True),
+BYU = AttribDef('BYU',
+                [AttribType("first_name", encode=True),
                   AttribType("last_name", encode=True),
                   AttribType("birth_date", encode=True),
                   AttribType("expire_date", encode=True),
                   AttribType("undergrad", encode=True),
                   AttribType("postgrad", encode=True)]
-                 )
+                )
 
 attributes = BYU.attribs(
     first_name="John",
@@ -96,7 +96,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     issuerId = BYU.name
     proverId = proverSigner.identifier
     # Issuer's attribute repository
-    attrRepo = InMemoryAttributeRepo()
+    attrRepo = InMemoryAttrRepo()
     attrRepo.attributes = {proverId: attributes}
     issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
@@ -130,11 +130,11 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     pk = {
         issuerId: prover.getPk(credDef)
     }
-    proof = ProofBuilder(pk)
-    proofId = proof.id
-    prover.proofs[proofId] = proof
+    proofBuilder = ProofBuilder(pk)
+    proofId = proofBuilder.id
+    prover.proofBuilders[proofId] = proofBuilder
     cred = issuer.createCred(proverId, name1, version1,
-                             proof.U[issuerId])
+                             proofBuilder.U[issuerId])
     logger.display("Prover: Received credential from "
                    "{}".format(issuerSigner.verstr))
 
@@ -150,14 +150,14 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     presentationToken = {
         issuerId: (
             cred[0], cred[1],
-            proof.vprime[issuerId] + cred[2])
+            proofBuilder.vprime[issuerId] + cred[2])
     }
     # Prover discovers Issuer's credential definition
     logger.display("Prover: Preparing proof for attributes: "
                    "{}".format(revealedAttrs))
-    proof.setParams(encodedAttributes, presentationToken,
+    proofBuilder.setParams(encodedAttributes, presentationToken,
                     revealedAttrs, nonce)
-    prf = ProofBuilder.prepareProof(pk_i=proof.credDefPks, masterSecret=proof.masterSecret,
+    prf = ProofBuilder.prepareProof(credDefPks=proofBuilder.credDefPks, masterSecret=proofBuilder.masterSecret,
                                     credential=presentationToken,
                                     attrs=attributes.encoded(),
                                     revealedAttrs=revealedAttrs,

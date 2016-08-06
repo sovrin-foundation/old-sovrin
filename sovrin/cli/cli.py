@@ -4,13 +4,16 @@ from typing import Dict
 
 from charm.core.math.integer import integer
 from hashlib import sha256
+
+from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE, REVEALED_ATTRS, CRED_A, CRED_E, \
+    CRED_V, ISSUER, PROOF, CRED_C
 from sovrin.common.util import strToCharmInteger
 
-from anoncreds.protocol.attribute_repo import InMemoryAttributeRepo
+from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition, \
-    base58decode
+    base58decode, getDeserializedSK, getPPrime, getQPrime, generateCredential
 from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.types import AttribsDef, AttribType, SerFmt, \
+from anoncreds.protocol.types import AttribDef, AttribType, SerFmt, \
     CredDefPublicKey, Credential, Proof as ProofTuple
 
 from anoncreds.protocol.verifier import verify_proof
@@ -349,7 +352,7 @@ class SovrinCli(PlenumCli):
         attribTypes = []
         for nm in attributes.keys():
             attribTypes.append(AttribType(nm, encode=True))
-        attribsDef = AttribsDef(self.name, attribTypes)
+        attribsDef = AttribDef(self.name, attribTypes)
         attribs = attribsDef.attribs(**attributes).encoded()
         encodedAttrs = {
             issuerId: next(iter(attribs.values()))
@@ -359,7 +362,7 @@ class SovrinCli(PlenumCli):
             self.activeClient.wallet.addMasterSecret(str(proof.masterSecret))
 
         #TODO: Should probably be persisting proof objects
-        self.activeClient.proofs[proof.id] = (proof, credName, credVersion,
+        self.activeClient.proofBuilders[proof.id] = (proof, credName, credVersion,
                                               issuerId)
         u = proof.U[issuerId]
         tokens = []
@@ -384,7 +387,7 @@ class SovrinCli(PlenumCli):
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
-            self.activeClient.attributeRepo = InMemoryAttributeRepo()
+            self.activeClient.attributeRepo = InMemoryAttrRepo()
             self.print("attribute repo initialized", Token.BoldBlue)
             return True
 
@@ -410,12 +413,12 @@ class SovrinCli(PlenumCli):
                 name, value = val.split('=', 1)
                 name, value = name.strip(), value.strip()
                 credential[name] = value
-            proof, credName, credVersion, issuerId = self.activeClient.proofs[proofId]
+            proof, credName, credVersion, issuerId = self.activeClient.proofBuilders[proofId]
             credential["issuer"] = issuerId
             credential[NAME] = credName
             credential[VERSION] = credVersion
             # TODO: refactor to use issuerId
-            credential["v"] = str(next(iter(proof.vprime.values())) +
+            credential[CRED_V] = str(next(iter(proof.vprime.values())) +
                                   int(credential["vprimeprime"]))
             credential["encodedAttrs"] = {
                 k: str(v) for k, v in next(iter(proof.attrs.values())).items()
@@ -444,7 +447,7 @@ class SovrinCli(PlenumCli):
             attributes = self.parseAttributeString(attrs)
             for name in attributes:
                 attribTypes.append(AttribType(name, encode=True))
-            attribsDef = AttribsDef(self.name, attribTypes)
+            attribsDef = AttribDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes)
             self.activeClient.attributeRepo.addAttributes(proverId, attribs)
             self.print("attribute added successfully for prover id {}".format(proverId), Token.BoldBlue)
@@ -523,18 +526,18 @@ class SovrinCli(PlenumCli):
             nonce = strToCharmInteger(matchedVars.get('nonce'))
             revealedAttrs = (matchedVars.get('revealed_attrs'), )
             credAlias = matchedVars.get('cred_alias')
-            credential = json.loads(self.activeClient.wallet.getCred(credAlias))
+            credential = json.loads(self.activeClient.wallet.getCredential(credAlias))
             name = credential.get(NAME)
             version = credential.get(VERSION)
-            issuer = credential.get("issuer")
-            A = credential.get("A")
-            e = credential.get("e")
-            v = credential.get("v")
+            issuer = credential.get(ISSUER)
+            A = credential.get(CRED_A)
+            e = credential.get(CRED_E)
+            v = credential.get(CRED_V)
             cred = Credential(strToCharmInteger(A), strToCharmInteger(e),
                               strToCharmInteger(v))
             credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
             keys = credDef[KEYS]
-            pk = {
+            credDefPks = {
                 issuer: self.pKFromCredDef(keys)
             }
             masterSecret = strToCharmInteger(self.activeClient.wallet.
@@ -543,31 +546,31 @@ class SovrinCli(PlenumCli):
             attribTypes = []
             for nm in attributes.keys():
                 attribTypes.append(AttribType(nm, encode=True))
-            attribsDef = AttribsDef(self.name, attribTypes)
+            attribsDef = AttribDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes).encoded()
             encodedAttrs = {
                 issuer: next(iter(attribs.values()))
             }
-            prf = ProofBuilder.prepareProof(pk_i=pk, masterSecret=masterSecret,
+            prf = ProofBuilder.prepareProof(credDefPks=credDefPks, masterSecret=masterSecret,
                                             credential={issuer: cred},
                                             revealedAttrs=revealedAttrs,
                                             nonce=nonce, attrs=encodedAttrs)
             out = {}
             proof = {}
-            proof["Aprime"] = {issuer: str(prf.Aprime[issuer])}
-            proof["c"] = str(prf.c)
-            proof["evect"] = {issuer: str(prf.evect[issuer])}
-            proof["mvect"] = {k: str(v) for k, v in prf.mvect.items()}
-            proof["vvect"] = {issuer: str(prf.vvect[issuer])}
-            out["proof"] = proof
+            proof[APRIME] = {issuer: str(prf.Aprime[issuer])}
+            proof[CRED_C] = str(prf.c)
+            proof[EVECT] = {issuer: str(prf.evect[issuer])}
+            proof[MVECT] = {k: str(v) for k, v in prf.mvect.items()}
+            proof[VVECT] = {issuer: str(prf.vvect[issuer])}
+            out[PROOF] = proof
             out[NAME] = name
             out[VERSION] = version
-            out["issuer"] = issuer
-            out["nonce"] = str(nonce)
-            out["attrs"] = {
+            out[ISSUER] = issuer
+            out[NONCE] = str(nonce)
+            out[ATTRS] = {
                 issuer: {k: str(v) for k,v in next(iter(attribs.values())).items()}
             }
-            out["revealedAttrs"] = revealedAttrs
+            out[REVEALED_ATTRS] = revealedAttrs
             self.print("Proof is: ", newline=False)
             self.print("{}".format(json.dumps(out)), Token.BoldBlue)
             return True
@@ -584,27 +587,27 @@ class SovrinCli(PlenumCli):
                                            self.doVerification, status, proof)
 
     def doVerification(self, reply, err, status, proof):
-        issuer = proof["issuer"]
+        issuer = proof[ISSUER]
         credDef = self.activeClient.wallet.getCredDef(proof[NAME], proof[VERSION],
                                             issuer)
         keys = credDef[KEYS]
         pk = {
             issuer: self.pKFromCredDef(keys)
         }
-        prf = proof["proof"]
+        prf = proof[PROOF]
         prfArgs = {}
-        prfArgs["Aprime"] = {issuer: strToCharmInteger(prf["Aprime"][issuer])}
-        prfArgs["c"] = strToCharmInteger(prf["c"])
-        prfArgs["evect"] = {issuer: strToCharmInteger(prf["evect"][issuer])}
-        prfArgs["mvect"] = {k: strToCharmInteger(v) for k, v in prf["mvect"].items()}
-        prfArgs["vvect"] = {issuer: strToCharmInteger(prf["vvect"][issuer])}
+        prfArgs[APRIME] = {issuer: strToCharmInteger(prf[APRIME][issuer])}
+        prfArgs[CRED_C] = strToCharmInteger(prf[CRED_C])
+        prfArgs[EVECT] = {issuer: strToCharmInteger(prf[EVECT][issuer])}
+        prfArgs[MVECT] = {k: strToCharmInteger(v) for k, v in prf[MVECT].items()}
+        prfArgs[VVECT] = {issuer: strToCharmInteger(prf[VVECT][issuer])}
         prf = ProofTuple(**prfArgs)
         attrs = {
             issuer: {k: strToCharmInteger(v) for k, v in
-                     next(iter(proof["attrs"].values())).items()}
+                     next(iter(proof[ATTRS].values())).items()}
         }
-        result = verify_proof(pk, prf, strToCharmInteger(proof["nonce"]), attrs,
-                              proof["revealedAttrs"])
+        result = verify_proof(pk, prf, strToCharmInteger(proof[NONCE]), attrs,
+                              proof[REVEALED_ATTRS])
         if not result:
             self.print("Proof verification failed", Token.BoldOrange)
         elif result and status in proof["revealedAttrs"]:
@@ -629,10 +632,10 @@ class SovrinCli(PlenumCli):
             if attributes:
                 attributes = list(attributes.values())[0]
             sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
-            sk = CredentialDefinition.getDeserializedSK(sk)
-            p_prime, q_prime = CredentialDefinition.getPPrime(sk), \
-                               CredentialDefinition.getQPrime(sk)
-            cred = CredentialDefinition.generateCredential(uValue, attributes, pk,
+            sk = getDeserializedSK(sk)
+            p_prime, q_prime = getPPrime(sk), \
+                               getQPrime(sk)
+            cred = generateCredential(uValue, attributes, pk,
                                                     p_prime, q_prime)
 
             # TODO: For real scenario, do we need to send this credential back

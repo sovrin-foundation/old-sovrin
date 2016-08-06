@@ -10,14 +10,12 @@ from plenum.client.signer import SimpleSigner
 from plenum.test.helper import genHa
 from anoncreds.protocol.credential_definition import CredentialDefinition
 from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
-from anoncreds.test.conftest import credDef1, attrNames1, primes1
-from sovrin.test.helper import submitAndCheck, addNym
+from sovrin.test.helper import addNym
 
-from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, TYPE, IP,\
-    PORT, KEYS, DATA
+from plenum.common.txn import TXN_TYPE, DATA
 
 from sovrin.common.txn import CRED_DEF
-from sovrin.test.helper import addUser, submitAndCheck, genTestClient
+from sovrin.test.helper import submitAndCheck
 
 
 # TODO Make a fixture for creating a client with a anon-creds features
@@ -84,22 +82,6 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
 
     for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
         addNym(ha, looper, nym, sponsNym, sponsor)
-
-
-# @pytest.fixture(scope="module")
-# def issuerAddedPK_I(addedIPV, looper, nodeSet, issuerAdded,
-#                     proverAttributeNames):
-#     req, = addedIssuer.addPkiToLedger(proverAttributeNames)
-#     looper.run(eventually(checkSufficientRepliesRecvd,
-#                           issuerAdded.inBox,
-#                           req.reqId,
-#                           nodeSet.f,
-#                           retryWait=1,
-#                           timeout=5))
-#     reply, = addedIssuer.getReply(req.reqId)
-#     r = adict()
-#     r[TXN_ID] = reply.result[TXN_ID]
-#     return r
 
 
 @pytest.fixture(scope="module")
