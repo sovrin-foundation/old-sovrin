@@ -6,7 +6,7 @@ from charm.core.math.integer import integer
 from hashlib import sha256
 
 from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE, REVEALED_ATTRS, CRED_A, CRED_E, \
-    CRED_V, ISSUER, PROOF, CRED_C
+    CRED_V, ISSUER, PROOF, C_VALUE
 from sovrin.common.util import strToCharmInteger
 
 from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
@@ -552,13 +552,13 @@ class SovrinCli(PlenumCli):
                 issuer: next(iter(attribs.values()))
             }
             prf = ProofBuilder.prepareProof(credDefPks=credDefPks, masterSecret=masterSecret,
-                                            credential={issuer: cred},
+                                            creds={issuer: cred},
                                             revealedAttrs=revealedAttrs,
                                             nonce=nonce, encodedAttrs=encodedAttrs)
             out = {}
             proof = {}
             proof[APRIME] = {issuer: str(prf.Aprime[issuer])}
-            proof[CRED_C] = str(prf.c)
+            proof[C_VALUE] = str(prf.c)
             proof[EVECT] = {issuer: str(prf.evect[issuer])}
             proof[MVECT] = {k: str(v) for k, v in prf.mvect.items()}
             proof[VVECT] = {issuer: str(prf.vvect[issuer])}
@@ -597,7 +597,7 @@ class SovrinCli(PlenumCli):
         prf = proof[PROOF]
         prfArgs = {}
         prfArgs[APRIME] = {issuer: strToCharmInteger(prf[APRIME][issuer])}
-        prfArgs[CRED_C] = strToCharmInteger(prf[CRED_C])
+        prfArgs[C_VALUE] = strToCharmInteger(prf[C_VALUE])
         prfArgs[EVECT] = {issuer: strToCharmInteger(prf[EVECT][issuer])}
         prfArgs[MVECT] = {k: strToCharmInteger(v) for k, v in prf[MVECT].items()}
         prfArgs[VVECT] = {issuer: strToCharmInteger(prf[VVECT][issuer])}
