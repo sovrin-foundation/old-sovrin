@@ -94,12 +94,6 @@ def bookStoreCLI(nodeRegsForCLI, tdir):
         yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="bookStore")
 
 
-@pytest.yield_fixture(scope="module")
-def johnCLI(nodeRegsForCLI, tdir):
-    with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="john")
-
-
 @pytest.fixture(scope="module")
 def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
     poolCLI.enterCmd("new node all")
@@ -133,16 +127,6 @@ def bookStorePubKey(bookStoreCLI):
 
 
 @pytest.fixture(scope="module")
-def johnPubKey(johnCLI):
-    return newKeyPair(johnCLI, alias='John')
-
-
-@pytest.fixture(scope="module")
-def johnPubKey(bookStoreCLI):
-    return newKeyPair(bookStoreCLI, alias='John')
-
-
-@pytest.fixture(scope="module")
 def philCreated(poolCLI, philPubKey):
     checkCmdValid(poolCLI, "add genesis transaction NYM dest={} role=STEWARD".
                   format(philPubKey))
@@ -162,13 +146,6 @@ def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
     philCLI.looper.run(eventually(checkClientConnected, philCLI, nodeNames,
                                   philCLI.activeClient.name, retryWait=1,
                                   timeout=5))
-
-
-@pytest.fixture(scope="module")
-def trusteeConnected(trusteeCreated, trusteeCLI, poolNodesCreated, nodeNames):
-    trusteeCLI.looper.run(eventually(checkClientConnected, trusteeCLI, nodeNames,
-                                     trusteeCLI.activeClient.name, retryWait=1,
-                                     timeout=5))
 
 
 @pytest.fixture(scope="module")
@@ -193,33 +170,8 @@ def byuCreated(byuPubKey, philCreated, philCLI, poolNodesCreated, nodeNames):
 
 
 @pytest.fixture(scope="module")
-def byuConnected(byuCreated, byuCLI, poolNodesCreated, nodeNames):
-    byuCLI.looper.run(eventually(checkClientConnected, byuCLI, nodeNames,
-                                 byuCLI.activeClient.name, retryWait=1,
-                                  timeout=5))
-    byuCLI.logger.debug("BYU connected")
-
-
-@pytest.fixture(scope="module")
 def tylerCreated(tylerPubKey, byuCreated, byuCLI, poolNodesCreated, nodeNames):
     ensureNymAdded(byuCLI, tylerPubKey, USER)
-
-
-@pytest.fixture(scope="module")
-def tylerConnected(tylerCreated, tylerCLI, poolNodesCreated, nodeNames, byuCLI):
-    tylerCLI.looper.run(eventually(checkClientConnected, tylerCLI, nodeNames,
-                                   tylerCLI.activeClient.name, retryWait=1,
-                                   timeout=5))
-    tylerCLI.activeClient.attributes = {}
-    tylerCLI.activeClient.attributes[byuCLI.activeSigner.verstr] = {
-        "first_name": "Tyler",
-        "last_name": "Ruff",
-        "birth_date": "12/17/1991",
-        "expiry_date": "12/31/2101",
-        "undergrad": "True",
-        "postgrad": "False",
-    }
-    tylerCLI.logger.debug("Tyler connected")
 
 
 @pytest.fixture(scope="module")
@@ -265,7 +217,7 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 
 @pytest.fixture(scope="module")
 def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
-                attrAddedToRepo, byuAddsCredDef, tylerConnected,
+                attrAddedToRepo, byuAddsCredDef,
                    credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     issuerIdentifier = byuAddsCredDef
@@ -507,12 +459,3 @@ def testStrTointeger():
         "865483244806147104667605098138613899840626729916612169723470228930801507396158440259774040553984850335586645194467365045176677506537296253654429662975816874630847874003647935529333964941855401786336352853043803498640759072173609203160413437402970023625421911392981092263211748047448929085861379410272047860536995972453496075851660446485058108906037436369067625674495155937598646143535510599911729010586276679305856525112130907097314388354485920043436412137797426978774012573863335500074359101826932761239032674620096110906293228090163"
     i = strToCharmInteger(s)
     assert str(i) == s
-
-
-@pytest.fixture(scope="module")
-def johnCreated(johnPubKey, trusteeCLI, trusteeCreated, poolNodesCreated):
-    ensureNymAdded(trusteeCLI, johnPubKey, SPONSOR)
-
-
-def testJohnCreated(johnCreated):
-    pass

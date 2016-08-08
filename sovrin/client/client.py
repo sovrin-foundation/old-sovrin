@@ -19,7 +19,7 @@ from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME, ENC, \
     HASH, RAW, NAME, VERSION, KEYS, TYPE, IP, PORT
-from plenum.common.types import OP_FIELD_NAME, Request, f, HA
+from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
@@ -29,7 +29,7 @@ from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
-from sovrin.persistence.identity_graph import getEdgeFromType
+from sovrin.persistence.identity_graph import getEdgeFromTxnType
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.verifier import Verifier
@@ -107,11 +107,11 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         return self.peerMsgRouter.handle(msg)
 
     def sign(self, msg: Dict, signer: Signer) -> Dict:
-        if msg["operation"].get(TXN_TYPE) == ATTRIB:
+        if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
             msgCopy = deepcopy(msg)
             keyName = {RAW, ENC, HASH}.intersection(
-                set(msgCopy["operation"].keys())).pop()
-            msgCopy["operation"][keyName] = sha256(msgCopy["operation"][keyName]
+                set(msgCopy[OPERATION].keys())).pop()
+            msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
                                                    .encode()).hexdigest()
             msg[f.SIG.nm] = signer.sign(msgCopy)
             return msg
@@ -162,6 +162,12 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     self.wallet.addAttribute(name=anm, val=aval,
                                              origin=origin,
                                              dest=op.get(TARGET_NYM))
+            # TODO: When an issuer is submitting a cred def transaction, he
+            # should add it to his wallet too
+            # if op[TXN_TYPE] == CRED_DEF:
+            #     self.wallet.addCredDef(data[NAME], data[VERSION],
+            #                            result[TARGET_NYM], data[TYPE],
+            #                            data[IP], data[PORT], keys)
         requests = super().submit(*operations, identifier=identifier)
         for r in requests:
             self.storage.addRequest(r)
@@ -203,14 +209,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                 if result[TXN_TYPE] == NYM:
                     self.addNymToGraph(result)
                 elif result[TXN_TYPE] == ATTRIB:
-                    self.storage.addAttribute(frm=result[f.IDENTIFIER.nm],
-                                              txnId=result[TXN_ID],
-                                              txnTime=result[TXN_TIME],
-                                              raw=result.get(RAW),
-                                              enc=result.get(ENC),
-                                              hash=result.get(HASH),
-                                              to=result.get(TARGET_NYM)
-                                              )
+                    self.storage.addAttribTxnToGraph(result)
+                    # self.storage.addAttribute(frm=result[f.IDENTIFIER.nm],
+                    #                           txnId=result[TXN_ID],
+                    #                           txnTime=result[TXN_TIME],
+                    #                           raw=result.get(RAW),
+                    #                           enc=result.get(ENC),
+                    #                           hash=result.get(HASH),
+                    #                           to=result.get(TARGET_NYM)
+                    #                           )
                 elif result[TXN_TYPE] == GET_NYM:
                     if DATA in result and result[DATA]:
                         self.addNymToGraph(json.loads(result[DATA]))
@@ -224,31 +231,33 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                 self.addNymToGraph(txn)
                             elif txn[TXN_TYPE] == ATTRIB:
                                 try:
-                                    self.storage.addAttribute(
-                                        frm=txn[f.IDENTIFIER.nm],
-                                        txnId=txn[TXN_ID],
-                                        txnTime=txn[TXN_TIME],
-                                        raw=txn.get(RAW),
-                                        enc=txn.get(ENC),
-                                        hash=txn.get(HASH),
-                                        to=txn.get(TARGET_NYM)
-                                    )
+                                    self.storage.addAttribTxnToGraph(txn)
+                                    # self.storage.addAttribute(
+                                    #     frm=txn[f.IDENTIFIER.nm],
+                                    #     txnId=txn[TXN_ID],
+                                    #     txnTime=txn[TXN_TIME],
+                                    #     raw=txn.get(RAW),
+                                    #     enc=txn.get(ENC),
+                                    #     hash=txn.get(HASH),
+                                    #     to=txn.get(TARGET_NYM)
+                                    # )
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
 
                 elif result[TXN_TYPE] == CRED_DEF:
-                    data = result.get(DATA)
-                    self.storage.addCredDef(frm=result[f.IDENTIFIER.nm],
-                                            txnId=result[TXN_ID],
-                                            txnTime=result[TXN_TIME],
-                                            name=data.get(NAME),
-                                            version=data.get(VERSION),
-                                            keys=data.get(KEYS),
-                                            typ=data.get(TYPE),
-                                            ip=data.get(IP),
-                                            port=data.get(PORT))
+                    self.storage.addCredDefTxnToGraph(result)
+                    # data = result.get(DATA)
+                    # self.storage.addCredDef(frm=result[f.IDENTIFIER.nm],
+                    #                         txnId=result[TXN_ID],
+                    #                         txnTime=result[TXN_TIME],
+                    #                         name=data.get(NAME),
+                    #                         version=data.get(VERSION),
+                    #                         keys=data.get(KEYS),
+                    #                         typ=data.get(TYPE),
+                    #                         ip=data.get(IP),
+                    #                         port=data.get(PORT))
                 elif result[TXN_TYPE] == GET_CRED_DEF:
                     data = result.get(DATA)
                     try:
@@ -275,51 +284,56 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
 
     def addNymToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
-        # TODO: Refactor this try-catch handling, duplicate code there
-        if ROLE not in txn or txn[ROLE] == USER:
-            if origin and not self.storage.hasNym(origin):
-                logger.warn("While adding user, origin not found in the graph")
-            try:
-                self.storage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
-                                     origin, reference=txn.get(REFERENCE))
-            except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The user {} was already added to graph".format(
-                    txn.get(TARGET_NYM)))
-            except pyorient.PyOrientCommandException as ex:
-                logger.error("An exception was raised while adding "
-                             "user {}".format(ex))
-        elif txn[ROLE] == SPONSOR:
-            # Since only a steward can add a sponsor, check if the steward
-            # is present. If not then add the steward
-            if origin and not self.storage.hasSteward(origin):
-                # A better way is to do a GET_NYM for the steward.
-                self.storage.addSteward(None, nym=origin)
-            try:
-                self.storage.addSponsor(txn.get(TXN_ID), txn.get(TARGET_NYM),
-                                        origin)
-            except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The sponsor {} was already added to graph".format(
-                    txn.get(TARGET_NYM)))
-            except pyorient.PyOrientCommandException as ex:
-                logger.error(
-                    "An exception was raised while adding "
-                    "sponsor {}".format(ex))
-        elif txn[ROLE] == STEWARD:
-            try:
-                self.storage.addSteward(txn.get(TXN_ID),
-                                        nym=txn.get(TARGET_NYM), frm=origin)
-            except pyorient.PyOrientCommandException as ex:
-                logger.error(
-                    "An exception was raised while adding "
-                    "steward {}".format(ex))
-            except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The steward {} was already added to graph".format(
-                    txn.get(TARGET_NYM)))
-        else:
-            raise ValueError("Unknown role for nym, cannot add nym to graph")
+        if txn.get(ROLE) == SPONSOR:
+            if not self.storage.hasSteward(origin):
+                self.storage.addNym(None, nym=origin, role=STEWARD)
+        self.storage.addNymTxnToGraph(txn)
+
+        # # TODO: Refactor this try-catch handling, duplicate code there
+        # if ROLE not in txn or txn[ROLE] == USER:
+        #     if origin and not self.storage.hasNym(origin):
+        #         logger.warn("While adding user, origin not found in the graph")
+        #     try:
+        #         self.storage.addUser(txn.get(TXN_ID), txn.get(TARGET_NYM),
+        #                              origin, reference=txn.get(REFERENCE))
+        #     except pyorient.PyOrientORecordDuplicatedException:
+        #         logger.debug("The user {} was already added to graph".format(
+        #             txn.get(TARGET_NYM)))
+        #     except pyorient.PyOrientCommandException as ex:
+        #         logger.error("An exception was raised while adding "
+        #                      "user {}".format(ex))
+        # elif txn[ROLE] == SPONSOR:
+        #     # Since only a steward can add a sponsor, check if the steward
+        #     # is present. If not then add the steward
+        #     if origin and not self.storage.hasSteward(origin):
+        #         # A better way is to do a GET_NYM for the steward.
+        #         self.storage.addSteward(None, nym=origin)
+        #     try:
+        #         self.storage.addSponsor(txn.get(TXN_ID), txn.get(TARGET_NYM),
+        #                                 origin)
+        #     except pyorient.PyOrientORecordDuplicatedException:
+        #         logger.debug("The sponsor {} was already added to graph".format(
+        #             txn.get(TARGET_NYM)))
+        #     except pyorient.PyOrientCommandException as ex:
+        #         logger.error(
+        #             "An exception was raised while adding "
+        #             "sponsor {}".format(ex))
+        # elif txn[ROLE] == STEWARD:
+        #     try:
+        #         self.storage.addSteward(txn.get(TXN_ID),
+        #                                 nym=txn.get(TARGET_NYM), frm=origin)
+        #     except pyorient.PyOrientCommandException as ex:
+        #         logger.error(
+        #             "An exception was raised while adding "
+        #             "steward {}".format(ex))
+        #     except pyorient.PyOrientORecordDuplicatedException:
+        #         logger.debug("The steward {} was already added to graph".format(
+        #             txn.get(TARGET_NYM)))
+        # else:
+        #     raise ValueError("Unknown role for nym, cannot add nym to graph")
 
     def getTxnById(self, txnId: str):
-        serTxn = list(self.storage.getRepliesForTxnIds(txnId).values())[0]
+        serTxn = list(self.storage.getResultForTxnIds(txnId).values())[0]
         # TODO Add merkleInfo as well
         return deserializeTxn(serTxn)
 
@@ -328,7 +342,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         pass
 
     def getTxnsByType(self, txnType):
-        edgeClass = getEdgeFromType(txnType)
+        edgeClass = getEdgeFromTxnType(txnType)
         if edgeClass:
             cmd = "select from {}".format(edgeClass)
             result = self.storage.client.command(cmd)
@@ -394,6 +408,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                         return {walletAttribute[NAME]: walletAttribute[HASH]}
 
     def getAllAttributesForNym(self, nym, identifier=None):
+        # TODO: Does this need to get attributes from the nodes?
         walletAttributes = self.wallet.attributes
         attributes = []
         for attr in walletAttributes:

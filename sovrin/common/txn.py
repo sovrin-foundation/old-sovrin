@@ -147,3 +147,7 @@ def getTxnOrderedFields():
         (ROLE, (str, str)),
         (REFERENCE, (str, str))
     ])
+
+
+def isValidRole(role):
+    return role in (STEWARD, SPONSOR, USER)

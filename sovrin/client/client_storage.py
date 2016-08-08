@@ -67,14 +67,14 @@ class SecondaryStorage(IdentityGraph):
     def classesNeeded(self):
         return [
             (Vertices.Nym, self.createNymClass),
-            (Vertices.Steward, self.createStewardClass),
-            (Vertices.Sponsor, self.createSponsorClass),
-            (Vertices.User, self.createUserClass),
+            # (Vertices.Steward, self.createStewardClass),
+            # (Vertices.Sponsor, self.createSponsorClass),
+            # (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
             (Vertices.CredDef, self.createCredDefClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
-            (Edges.Sponsors, self.createSponsorsClass),
+            # (Edges.Sponsors, self.createSponsorsClass),
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
             (LAST_TXN_DATA, self.createLastTxnClass),
