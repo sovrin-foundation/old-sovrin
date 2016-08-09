@@ -27,7 +27,7 @@ class TxnBasedAuthNr(NaclAuthNr):
         else:
             return super().serializeForSig(msg)
 
-    def addClient(self, identifier, verkey, pubkey=None, role=None):
+    def addClient(self, identifier, verkey, role=None):
         raise RuntimeError('Add verification keys through the ADDNYM txn')
 
     def getVerkey(self, identifier):
