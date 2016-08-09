@@ -224,15 +224,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                             elif txn[TXN_TYPE] == ATTRIB:
                                 try:
                                     self.storage.addAttribTxnToGraph(txn)
-                                    # self.storage.addAttribute(
-                                    #     frm=txn[f.IDENTIFIER.nm],
-                                    #     txnId=txn[TXN_ID],
-                                    #     txnTime=txn[TXN_TIME],
-                                    #     raw=txn.get(RAW),
-                                    #     enc=txn.get(ENC),
-                                    #     hash=txn.get(HASH),
-                                    #     to=txn.get(TARGET_NYM)
-                                    # )
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
