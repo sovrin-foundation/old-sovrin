@@ -21,7 +21,7 @@ class SecondaryStorage(PlenumSS):
     async def getReply(self, identifier, reqId, **kwargs):
         txn = self._txnStore.getTxn(identifier, reqId, **kwargs)
         if txn:
-            txn.update(self._merkleInfo(txn.seqNo))
+            txn.update(self._merkleInfo(txn.get(F.seqNo.name)))
             return Reply(txn)
 
     def getReplies(self, *txnIds, seqNo=None):
