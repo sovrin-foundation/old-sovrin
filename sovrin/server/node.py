@@ -224,8 +224,9 @@ class Node(PlenumNode):
                     sponsorNymTxn = self.graphStorage.getAddNymTxn(
                         addNymTxn.get(f.IDENTIFIER.nm))
                     txnIds = [sponsorNymTxn[TXN_ID], ] + txnIds
-                result = self.secondaryStorage.getReplies(
-                    *txnIds, seqNo=data)
+                # TODO: Remove this log statement
+                logger.debug("{} getting replies for {}".format(self, txnIds))
+                result = self.secondaryStorage.getReplies(*txnIds, seqNo=data)
                 txns = sorted(list(result.values()), key=itemgetter(F.seqNo.name))
                 lastTxn = str(txns[-1][F.seqNo.name]) if len(txns) > 0 else data
                 result = {

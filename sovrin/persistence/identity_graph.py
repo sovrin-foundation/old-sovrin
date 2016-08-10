@@ -396,9 +396,10 @@ class IdentityGraph(OrientDbGraphStore):
             else:
                 out = {}
                 for r in result:
-                    oRecordData = self.cleanKeyNames(r.oRecordData)
-                    out[oRecordData[F.seqNo.name]] = self.makeResult(NYM,
-                                                                       oRecordData)
+                    if r.oRecordData:
+                        oRecordData = self.cleanKeyNames(r.oRecordData)
+                        out[oRecordData[F.seqNo.name]] = self.makeResult(NYM,
+                                                                         oRecordData)
                 return out
 
         result = reduce(lambda d1, d2: {**d1, **d2},
@@ -420,6 +421,8 @@ class IdentityGraph(OrientDbGraphStore):
 
     @staticmethod
     def makeResult(txnType, oRecordData):
+        # TODO: Remove this log statement
+        logger.debug("Creating result for {} from {}".format(txnType, oRecordData))
         result = {
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
@@ -462,8 +465,10 @@ class IdentityGraph(OrientDbGraphStore):
         else:
             out = {}
             for r in result:
-                r.oRecordData[TARGET_NYM] = r.oRecordData.pop(NYM)
-                out[r.oRecordData[F.seqNo.name]] = self.makeResult(NYM, r.oRecordData)
+                if r.oRecordData:
+                    r.oRecordData[TARGET_NYM] = r.oRecordData.pop(NYM)
+                    out[r.oRecordData[F.seqNo.name]] = self.makeResult(
+                        NYM, r.oRecordData)
             return out
 
     def _updateTxnIdEdgeWithTxn(self, txnId, edgeClass, txn, properties=None):
