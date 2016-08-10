@@ -471,9 +471,11 @@ class IdentityGraph(OrientDbGraphStore):
         updates = ', '.join(["{}={}".format(prop, txn[prop])
                              if isinstance(txn[prop], (int, float)) else
                              "{}='{}'".format(prop, txn[prop])
-                             for prop in properties if prop in txn])
+                             for prop in properties if (prop in txn and txn[prop] is not None)])
         updateCmd = "update {} set {} where {}='{}'". \
             format(edgeClass, updates, TXN_ID, txnId)
+        logger.debug("updating edge {} with command {}".format(edgeClass,
+                                                               updateCmd))
         self.client.command(updateCmd)
 
     def addNymTxnToGraph(self, txn):
