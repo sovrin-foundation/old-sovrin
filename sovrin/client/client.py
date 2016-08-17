@@ -8,7 +8,6 @@ from typing import Mapping, List, Dict, Union, Tuple
 
 import base58
 import pyorient
-from pyorient import PyOrientCommandException
 
 from raet.raeting import AutoMode
 from sovrin.client import roles
@@ -17,7 +16,7 @@ from plenum.server.router import Router
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
-from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, TXN_TIME, ENC, \
+from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, ENC, \
     HASH, RAW, NAME, VERSION, KEYS, TYPE, IP, PORT
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
 from plenum.common.util import getlogger, getMaxFailures, \
@@ -26,7 +25,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
-    DISCLO, NONCE, GET_ATTR, GET_NYM, REFERENCE, USER, ROLE, \
+    DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import getEdgeFromTxnType

@@ -7,7 +7,7 @@ from hashlib import sha256
 
 from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE, REVEALED_ATTRS, CRED_A, CRED_E, \
     CRED_V, ISSUER, PROOF, C_VALUE
-from sovrin.common.util import strToCharmInteger
+from anoncreds.protocol.utils import strToCharmInteger
 
 from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
 from anoncreds.protocol.credential_definition import CredentialDefinition, \

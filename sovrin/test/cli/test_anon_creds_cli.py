@@ -8,7 +8,7 @@ from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated, checkAllNodesStarted, checkClientConnected
 from plenum.test.eventually import eventually
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
-from sovrin.common.util import strToCharmInteger
+from anoncreds.protocol.utils import strToCharmInteger
 from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 
 """
@@ -274,9 +274,11 @@ def attrAddedToRepo(attrRepoInitialized):
     proverId = "Tyler"
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
     checkCmdValid(byuCLI, "add attribute first_name=Tyler, last_name=Ruff, "
-                    "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
-                    "postgrad=False for {}".format(proverId))
-    assert byuCLI.lastCmdOutput == "attribute added successfully for prover id {}".format(proverId)
+                          "birth_date=12/17/1991, expiry_date=12/31/2101, "
+                          "undergrad=True, "
+                          "postgrad=False for {}".format(proverId))
+    assert byuCLI.lastCmdOutput == \
+           "attribute added successfully for prover id {}".format(proverId)
     assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
 
 
