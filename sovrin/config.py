@@ -46,3 +46,5 @@ OrientDB = {
 
 
 RAETLogLevel = "concise"
+
+PluginsToLoad = ["anoncreds"]

@@ -1,5 +1,4 @@
 import json
-import os
 from _sha256 import sha256
 from base64 import b64decode
 from collections import deque
@@ -10,6 +9,8 @@ import base58
 import pyorient
 
 from raet.raeting import AutoMode
+
+import sovrin.anon_creds.issuer
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
@@ -29,7 +30,7 @@ from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import getEdgeFromTxnType
-from anoncreds.protocol.issuer import Issuer
+
 from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.verifier import Verifier
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
@@ -37,7 +38,7 @@ from sovrin.persistence.wallet_storage_file import WalletStorageFile
 logger = getlogger()
 
 
-class Client(PlenumClient, Issuer, Prover, Verifier):
+class Client(PlenumClient, sovrin.anon_creds.issuer.Issuer, Prover, Verifier):
     def __init__(self,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
@@ -66,7 +67,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
-        Issuer.__init__(self, self.defaultIdentifier)
+        sovrin.anon_creds.issuer.Issuer.__init__(self, self.defaultIdentifier)
         # TODO nym should be not used as id of Prover and Verifier
         Prover.__init__(self, self.defaultIdentifier)
         Verifier.__init__(self, self.defaultIdentifier)
