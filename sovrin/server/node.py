@@ -317,7 +317,7 @@ class Node(PlenumNode):
                                                           TXN_TYPE])
         return Reply(result) if result else None
 
-    async def doCustomAction(self, ppTime: float, req: Request) -> None:
+    def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
 
