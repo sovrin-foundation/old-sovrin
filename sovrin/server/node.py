@@ -75,13 +75,13 @@ class Node(PlenumNode):
         if self.config.primaryStorage is None:
             fields = getTxnOrderedFields()
             return Ledger(CompactMerkleTree(hashStore=self.hashStore),
-                          dataDir=self.getDataLocation(),
+                          dataDir=self.dataLocation,
                           serializer=CompactSerializer(fields=fields),
                           fileName=self.config.domainTransactionsFile)
         else:
             return initStorage(self.config.primaryStorage,
                                name=self.name + NODE_PRIMARY_STORAGE_SUFFIX,
-                               dataDir=self.getDataLocation(),
+                               dataDir=self.dataLocation,
                                config=self.config)
 
     # TODO: Should adding of genesis transactions be part of start method
@@ -101,9 +101,8 @@ class Node(PlenumNode):
                 })
                 reply = Reply(txn)
                 # Add genesis transactions from code to the ledger and graph
-                asyncio.ensure_future(
-                    self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
-                                                 reply, txn[TXN_ID]))
+                self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
+                                                 reply, txn[TXN_ID])
                 genTxnsCount += 1
         logger.debug("{} genesis transactions added.".format(genTxnsCount))
         return genTxnsCount
@@ -262,7 +261,7 @@ class Node(PlenumNode):
         else:
             await super().processRequest(request, frm)
 
-    async def storeTxnAndSendToClient(self, identifier, reply, txnId):
+    def storeTxnAndSendToClient(self, identifier, reply, txnId):
         """
         Does 4 things in following order
          1. Add reply to ledger.
@@ -284,9 +283,9 @@ class Node(PlenumNode):
                 result[HASH] = result[HASH]
             else:
                 error("Transaction missing required field")
-            merkleInfo = await self.addToLedger(identifier, Reply(result), txnId)
+            merkleInfo = self.addToLedger(result)
         else:
-            merkleInfo = await self.addToLedger(identifier, reply, txnId)
+            merkleInfo = self.addToLedger(reply.result)
 
         # Creating copy of result which does not contain merkle info (seq no,
         # audit path and root hash). We do not insert merkle info in the database
@@ -307,9 +306,8 @@ class Node(PlenumNode):
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStorage.addCredDefTxnToGraph(result)
 
-    async def addToLedger(self, identifier, reply, txnId):
-        merkleInfo = await self.primaryStorage.append(
-            identifier=identifier, reply=reply, txnId=txnId)
+    def addToLedger(self, txn):
+        merkleInfo = self.primaryStorage.append(txn)
         return merkleInfo
 
     async def getReplyFor(self, request):
@@ -333,7 +331,7 @@ class Node(PlenumNode):
         else:
             reply = self.generateReply(int(ppTime), req)
             txnId = reply.result[TXN_ID]
-            await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
+            self.storeTxnAndSendToClient(req.identifier, reply, txnId)
 
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation

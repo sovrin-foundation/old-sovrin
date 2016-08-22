@@ -246,7 +246,7 @@ class Organization:
 class TempStorage:
 
     def cleanupDataLocation(self):
-        loc = self.getDataLocation()
+        loc = self.dataLocation
         try:
             shutil.rmtree(loc)
         except Exception as ex:
@@ -333,7 +333,7 @@ class TestClient(Client, StackedTester):
         self.storage.cleanupDataLocation()
         # # TODO: find a better way to clear wallet
         # try:
-        #     shutil.rmtree(self.wallet.storage.getDataLocation())
+        #     shutil.rmtree(self.wallet.storage.dataLocation)
         # except Exception as ex:
         #     logger.debug("Exception while deleting {}'s wallet {}"
         #                  .format(self, ex))
