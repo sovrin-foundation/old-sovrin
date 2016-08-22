@@ -1,5 +1,5 @@
 
 
 def testAnonCredPluginInstallation(anonCredPluginFileCreated, steward):
-    steward.getId()
-    pass
+    assert steward.id is not None
+    assert steward.attributeRepo is None

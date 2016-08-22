@@ -11,7 +11,7 @@ import pyorient
 from raet.raeting import AutoMode
 
 import sovrin.anon_creds.issuer
-# import anoncreds.protocol.issuer
+
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
