@@ -28,7 +28,8 @@ from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
-from sovrin.client.client import Client
+import sovrin
+# from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
@@ -320,8 +321,8 @@ class TestClientStorage(TempStorage, ClientStorage):
         TempStorage.__init__(self)
 
 
-@Spyable(methods=[Client.handleOneNodeMsg])
-class TestClient(Client, StackedTester):
+@Spyable(methods=[sovrin.client.client.Client.handleOneNodeMsg])
+class TestClient(sovrin.client.client.Client, StackedTester):
     @staticmethod
     def stackType():
         return TestStack
@@ -363,7 +364,9 @@ def genTestClient(nodes: TestNodeSet=None,
                   tmpdir=None,
                   signer=None,
                   peerHA: Union[HA, Tuple[str, int]]=None,
-                  testClientClass=TestClient) -> TestClient:
+                  testClientClass=None) -> TestClient:
+    if not testClientClass:
+        testClientClass = TestClient
     testClient = genPlenumTestClient(nodes,
                                nodeReg,
                                tmpdir,

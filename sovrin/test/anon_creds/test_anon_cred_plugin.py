@@ -1,5 +1,5 @@
 
 
-def testAnonCredPluginInstallation(anonCredPluginFileCreated, nodeSet, sponsor, client1):
-    client1.getId()
+def testAnonCredPluginInstallation(anonCredPluginFileCreated, steward):
+    steward.getId()
     pass
