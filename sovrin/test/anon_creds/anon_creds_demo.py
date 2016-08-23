@@ -139,7 +139,7 @@ def runAnonCredFlow():
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
-    credDef = issuer.newCredDef(attrNames, name1, version1, ip=ip, port=port)
+    credDef = issuer.addNewCredDef(attrNames, name1, version1, ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
     input()
     logger.display("Issuer: Creating version {} of credential definition"

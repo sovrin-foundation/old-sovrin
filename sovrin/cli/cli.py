@@ -2,8 +2,9 @@ import ast
 import json
 from typing import Dict
 
-from charm.core.math.integer import integer
 from hashlib import sha256
+
+from sovrin.anon_creds.cred_def import CredDef
 
 from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE, REVEALED_ATTRS, CRED_A, CRED_E, \
     CRED_V, ISSUER, PROOF, C_VALUE
@@ -309,11 +310,8 @@ class SovrinCli(PlenumCli):
         port = matchedVars.get('port')
         keys = matchedVars.get('keys')
         attributes = [s.strip() for s in keys.split(",")]
-        return CredentialDefinition(attrNames=attributes, name=name,
-                                    version=version, ip=ip, port=port,
-                                    # TODO: Just for testing, Remove once done
-                                    p_prime=integer(157329491389375793912190594961134932804032426403110797476730107804356484516061051345332763141806005838436304922612495876180233509449197495032194146432047460167589034147716097417880503952139805241591622353828629383332869425029086898452227895418829799945650973848983901459733426212735979668835984691928193677469),
-                                    q_prime=integer(151323892648373196579515752826519683836764873607632072057591837216698622729557534035138587276594156320800768525825023728398410073692081011811496168877166664537052088207068061172594879398773872352920912390983199416927388688319207946493810449203702100559271439586753256728900713990097168484829574000438573295723))
+        return CredDef(attrNames=attributes, name=name,
+                                    version=version, ip=ip, port=port)
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):

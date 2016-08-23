@@ -17,18 +17,23 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
     anonPluginFilePath = pluginsPath + "/anoncreds.py"
     anonPluginContent = "" \
                         "import importlib\n" \
+                        "\n" \
                         "import anoncreds.protocol.issuer\n" \
                         "import sovrin.anon_creds.issuer\n" \
-                        "from sovrin.client.client import Client\n" \
+                        "import sovrin.cli.cli\n" \
                         "\n" \
                         "Name = \"Anon creds\"\n" \
                         "Version = 1.1\n" \
-                        "SovrinVersion = 2.1\n" \
+                        "SovrinVersion = 1.1\n" \
                         "\n" \
-                        "sovrin.anon_creds.issuer.Issuer = " \
-                        "anoncreds.protocol.issuer.Issuer\n" \
+                        "sovrin.anon_creds.issuer.Issuer = anoncreds.protocol.issuer.Issuer\n" \
+                        "sovrin.anon_creds.prover.Prover = anoncreds.protocol.prover.Prover\n" \
+                        "sovrin.anon_creds.verifier.Verifier = anoncreds.protocol.verifier.Verifier\n" \
+                        "sovrin.anon_creds.proof_builder.ProofBuilder = anoncreds.protocol.proof_builder.ProofBuilder\n" \
+                        "\n" \
                         "importlib.reload(sovrin.client.client)\n" \
-                        "importlib.reload(sovrin.test.helper)\n"
+                        "importlib.reload(sovrin.cli.cli)\n"
+
 
     if reloadTestClasses:
         anonPluginContent = "" \

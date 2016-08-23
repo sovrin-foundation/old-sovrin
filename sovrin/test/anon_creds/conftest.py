@@ -2,7 +2,6 @@ import json
 import os
 
 import pytest
-from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 from anoncreds.protocol.types import SerFmt
 from anoncreds.protocol.utils import encodeAttrs
@@ -118,11 +117,5 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
                           identifier=sponsorSigner.verstr)
 
 
-@pytest.fixture(scope="module")
-def anonCredPluginFilePath(tdir):
-    return os.path.expanduser(os.path.join(tdir, config.PluginsDir))
 
 
-@pytest.fixture(scope="module", autouse=True)
-def anonCredPluginFileCreated(tdir):
-    writeAnonCredPlugin(tdir, reloadTestClasses = True)

@@ -106,7 +106,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
-    credDef = issuer.newCredDef(attrNames, name1, version1,
+    credDef = issuer.addNewCredDef(attrNames, name1, version1,
                                 p_prime=P_PRIME1, q_prime=Q_PRIME1,
                                 ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}

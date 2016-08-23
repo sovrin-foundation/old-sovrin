@@ -1,9 +1,9 @@
-import os
 import pytest
 
 
 from plenum.client.signer import SimpleSigner
 from plenum.test.plugin.helper import getPluginPath
+from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
@@ -14,6 +14,12 @@ from plenum.test.conftest import getValueFromModule
 
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
     nodeReg, up, ready, keySharedNodes, whitelist, logcapture
+
+
+
+@pytest.fixture(scope="module", autouse=True)
+def anonCredPluginFileCreated(tdir):
+    writeAnonCredPlugin(tdir, reloadTestClasses = True)
 
 
 @pytest.fixture(scope="module")
