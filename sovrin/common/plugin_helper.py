@@ -47,7 +47,7 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
         "for m in reload_modules:\n" \
         "   print(\"Module to be loaded: {}\".format(m))\n" \
         "   try:\n" \
-        "       module_obj = __import__(m)\n" \
+        "       module_obj = importlib.import_module(m)\n" \
         "       importlib.reload(module_obj)\n" \
         "       print(\"Plugin loaded successfully: module {}\".format(m))\n" \
         "   except AttributeError as ae:\n" \
