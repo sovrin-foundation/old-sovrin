@@ -27,11 +27,5 @@ class Verifier:
     def fetchCredDef(self, issuer, name, version) -> CredDef:
         pass
 
-    def verifyPredicateProof(self, proof: PredicateProof, credDefPks, nonce,
-                             attrs: Dict[str, Dict[str, T]],
-                             revealedAttrs: Sequence[str],
-                             predicate: Dict[str, Sequence[str]])-> bool:
+    def verifyPredicateProof(self, **kwargs)-> bool:
         pass
-
-
-

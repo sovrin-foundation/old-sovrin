@@ -1,10 +1,15 @@
 from abc import abstractmethod, abstractproperty
-from enum import IntEnum
+from enum import IntEnum, Enum
 
+
+class SerFmt(Enum):
+    default = 1
+    py3Int = 2
+    base58 = 3
 
 class CredDefPublicKey:
     @abstractmethod
-    def __init__(self, **args):
+    def __init__(self, *args):
         pass
 
 
@@ -30,5 +35,5 @@ class CredDef:
         pass
 
     @abstractmethod
-    def get(self, serFmt: IntEnum):
+    def get(self, serFmt: SerFmt):
         pass

@@ -26,7 +26,7 @@ T = TypeVar('T')
 class ProofBuilder:
 
     @abstractmethod
-    def __init__(self, credDefPks: Dict[str, CredDefPublicKey], masterSecret=None):
+    def __init__(self, *args):
         pass
 
     @abstractproperty

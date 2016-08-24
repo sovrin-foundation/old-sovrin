@@ -264,7 +264,7 @@ def attrRepoInitialized(byuCLI, byuCreated):
     assert byuCLI.activeClient.attributeRepo is None
     byuCLI.enterCmd("initialize mock attribute repo")
     assert byuCLI.lastCmdOutput == "attribute repo initialized"
-    assert byuCLI.activeClient.attributeRepo is not None
+    assert byuCLI.activeClient.getAttributes('unknown') is not None
     return byuCLI
 
 

@@ -165,10 +165,9 @@ def runAnonCredFlow():
     pk = {
         issuerId: prover.getPk(credDef)
     }
-    proof = ProofBuilder(pk)
-    proofId = proof.id
-    prover.proofs[proofId] = proof
-    cred = issuer.createCred(proverId, name1, version1, proof.U[issuerId])
+    proofBuilder = ProofBuilder(pk)
+    prover.proofBuilders[proofBuilder.id] = proofBuilder
+    cred = issuer.createCred(proverId, name1, version1, proofBuilder.U[issuerId])
     input()
     logger.display("Prover: Received credential from "
                 "{}".format(issuerSigner.verstr))
@@ -184,22 +183,16 @@ def runAnonCredFlow():
     logger.display("Verifier: Nonce sent.")
     input()
     logger.display("Prover: Nonce received")
-    prover.proofs[proofId]['nonce'] = nonce
+    prover.proofBuilders[proofBuilder.id]['nonce'] = nonce
 
-    presentationToken = {
-        issuerId: (
-            cred[0], cred[1],
-            proof.vprime[issuerId] + cred[2])
-    }
     # Prover discovers Issuer's credential definition
     prover.credentialDefinitions = {(issuerId, attrNames): credDef}
     revealedAttrs = ["undergrad"]
     input()
     logger.display("Prover: Preparing proof for attributes: "
                 "{}".format(revealedAttrs))
-    proof.setParams(encodedAttributes, presentationToken,
-                    revealedAttrs, nonce)
-    prf = proof.prepare_proof()
+    proofBuilder.setParams(encodedAttributes, revealedAttrs, nonce)
+    prf = proofBuilder.prepare_proof()
     logger.display("Prover: Proof prepared.")
     logger.display("Prover: Proof submitted")
     input()
@@ -207,7 +200,7 @@ def runAnonCredFlow():
     input()
     logger.display("Verifier: Looking up Credential Definition"
                 " on Sovrin Ledger...")
-    prover.proofs[proofId] = proof
+    prover.proofs[proofBuilder.id] = proofBuilder
 
     # Verifier fetches the credential definition from ledger
     verifier.credentialDefinitions = {

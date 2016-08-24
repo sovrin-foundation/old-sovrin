@@ -1,4 +1,5 @@
 import pytest
+from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 import plenum
 from plenum.test.eventually import eventually
@@ -14,7 +15,6 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI
 
 config = getConfig()
-
 
 @pytest.yield_fixture(scope="module")
 def looper():

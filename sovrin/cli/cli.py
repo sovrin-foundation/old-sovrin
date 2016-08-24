@@ -10,12 +10,13 @@ from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE
     CRED_V, ISSUER, PROOF, C_VALUE
 from anoncreds.protocol.utils import strToCharmInteger
 
-from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
-from anoncreds.protocol.credential_definition import CredentialDefinition, \
-    base58decode, getDeserializedSK, getPPrime, getQPrime, generateCredential
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.types import AttribDef, AttribType, SerFmt, \
-    CredDefPublicKey, Credential, Proof as ProofTuple
+from sovrin.anon_creds.issuer import InMemoryAttrRepo
+from anoncreds.protocol.credential_definition import base58decode, \
+    getDeserializedSK, getPPrime, getQPrime, generateCredential
+from sovrin.anon_creds.proof_builder import ProofBuilder
+from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
+from sovrin.anon_creds.cred_def import SerFmt, CredDefPublicKey
+from sovrin.anon_creds.proof_builder import Proof as ProofTuple
 
 from anoncreds.protocol.verifier import verify_proof
 
@@ -311,7 +312,8 @@ class SovrinCli(PlenumCli):
         keys = matchedVars.get('keys')
         attributes = [s.strip() for s in keys.split(",")]
         return CredDef(attrNames=attributes, name=name,
-                                    version=version, ip=ip, port=port)
+                       version=version, ip=ip, port=port,
+                       p_prime="static", q_prime="static")
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):
@@ -346,7 +348,7 @@ class SovrinCli(PlenumCli):
         if masterSecret:
             masterSecret = strToCharmInteger(masterSecret)
         proofBuilder = ProofBuilder(pk, masterSecret)
-        attributes = self.activeClient.attributes[issuerId]
+        attributes = self.activeClient.getAttributes(issuerId)
         attribTypes = []
         for nm in attributes.keys():
             attribTypes.append(AttribType(nm, encode=True))
@@ -385,7 +387,7 @@ class SovrinCli(PlenumCli):
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
-            self.activeClient.attributeRepo = InMemoryAttrRepo()
+            self.activeClient.initAttrRepo(InMemoryAttrRepo())
             self.print("attribute repo initialized", Token.BoldBlue)
             return True
 
@@ -447,7 +449,7 @@ class SovrinCli(PlenumCli):
                 attribTypes.append(AttribType(name, encode=True))
             attribsDef = AttribDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes)
-            self.activeClient.attributeRepo.addAttributes(proverId, attribs)
+            self.activeClient.addAttributes(proverId, attribs)
             self.print("attribute added successfully for prover id {}".format(proverId), Token.BoldBlue)
             return True
 
@@ -458,8 +460,8 @@ class SovrinCli(PlenumCli):
             attributes = self.parseAttributeString(attrs)
             # TODO: Refactor ASAP
             if not hasattr(self.activeClient, "attributes"):
-                self.activeClient.attributes = {}
-            self.activeClient.attributes[issuerId] = attributes
+                self.activeClient.initAttrRepo(InMemoryAttrRepo())
+            self.activeClient.addAttributes(issuerId, attributes)
             self.print("attribute added successfully for issuer id {}".format(issuerId), Token.BoldBlue)
             return True
 
@@ -540,7 +542,7 @@ class SovrinCli(PlenumCli):
             }
             masterSecret = strToCharmInteger(self.activeClient.wallet.
                                              masterSecret)
-            attributes = self.activeClient.attributes[issuer]
+            attributes = self.activeClient.getAttributes(issuer)
             attribTypes = []
             for nm in attributes.keys():
                 attribTypes.append(AttribType(nm, encode=True))
@@ -626,7 +628,7 @@ class SovrinCli(PlenumCli):
                 self.activeSigner.identifier, credName, credVersion)
             keys = json.loads(credDef[KEYS])
             pk = self.pKFromCredDef(keys)
-            attributes = self.activeClient.attributeRepo.getAttributes(proverId).encoded()
+            attributes = self.activeClient.getAttributes(proverId).encoded()
             if attributes:
                 attributes = list(attributes.values())[0]
             sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)

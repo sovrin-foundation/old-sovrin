@@ -20,25 +20,40 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
                         "\n" \
                         "import anoncreds.protocol.issuer\n" \
                         "import sovrin.anon_creds.issuer\n" \
-                        "import sovrin.cli.cli\n" \
                         "\n" \
                         "Name = \"Anon creds\"\n" \
                         "Version = 1.1\n" \
                         "SovrinVersion = 1.1\n" \
                         "\n" \
+                        "sovrin.anon_creds.issuer.Credential = anoncreds.protocol.types.Credential\n" \
+                        "sovrin.anon_creds.issuer.AttribDef = anoncreds.protocol.types.AttribDef\n" \
+                        "sovrin.anon_creds.issuer.Attribs = anoncreds.protocol.types.Attribs\n" \
+                        "sovrin.anon_creds.issuer.AttrRepo = anoncreds.protocol.attribute_repo.AttrRepo\n" \
+                        "sovrin.anon_creds.issuer.InMemoryAttrRepo = anoncreds.protocol.attribute_repo.InMemoryAttrRepo\n" \
                         "sovrin.anon_creds.issuer.Issuer = anoncreds.protocol.issuer.Issuer\n" \
                         "sovrin.anon_creds.prover.Prover = anoncreds.protocol.prover.Prover\n" \
                         "sovrin.anon_creds.verifier.Verifier = anoncreds.protocol.verifier.Verifier\n" \
                         "sovrin.anon_creds.proof_builder.ProofBuilder = anoncreds.protocol.proof_builder.ProofBuilder\n" \
+                        "sovrin.anon_creds.cred_def.CredDef = anoncreds.protocol.credential_definition.CredentialDefinition\n" \
                         "\n" \
-                        "importlib.reload(sovrin.client.client)\n" \
-                        "importlib.reload(sovrin.cli.cli)\n"
 
+    modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
 
     if reloadTestClasses:
-        anonPluginContent = "" \
-            "" + anonPluginContent + "" \
-            "importlib.reload(sovrin.test.helper)\n"
+        modules_to_reload.append("sovrin.test.helper")
 
+    reload_module_code = \
+        "reload_modules = " + str(modules_to_reload) + "\n" \
+        "for m in reload_modules:\n" \
+        "   print(\"Module to be loaded: {}\".format(m))\n" \
+        "   try:\n" \
+        "       module_obj = __import__(m)\n" \
+        "       importlib.reload(module_obj)\n" \
+        "       print(\"Plugin loaded successfully: module {}\".format(m))\n" \
+        "   except AttributeError as ae:\n" \
+        "       print(\"Plugin loading failed: module {}, detail: {}\".format(m, str(ae)))\n" \
+        "\n"
+
+    anonPluginContent = anonPluginContent + reload_module_code
     with open(anonPluginFilePath, "a") as myfile:
         myfile.write(anonPluginContent)

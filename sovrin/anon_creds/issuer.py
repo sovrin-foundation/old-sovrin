@@ -4,22 +4,77 @@ from typing import Sequence
 from sovrin.anon_creds.cred_def import CredDef
 
 
+class Credential:
+    @abstractmethod
+    def __init__(self, *args):
+        pass
+
+
+class AttribType:
+    @abstractmethod
+    def __init__(self, name: str, encode: bool):
+        pass
+
+
+class AttribDef:
+    @abstractmethod
+    def __init__(self, name, attrTypes):
+        pass
+
+
+class Attribs:
+    @abstractmethod
+    def __init__(self, credType: AttribDef, **vals):
+        pass
+
+
+class AttrRepo:
+    @abstractmethod
+    def getAttributes(self, proverId):
+        pass
+
+    @abstractmethod
+    def addAttributes(self, proverId, attributes:Attribs):
+        pass
+
+
+class InMemoryAttrRepo(AttrRepo):
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def getAttributes(self, proverId):
+        pass
+
+    @abstractmethod
+    def addAttributes(self, proverId, attributes:Attribs):
+        pass
+
+
 class Issuer:
 
     @abstractmethod
-    def __init__(self, id):
+    def __init__(self, id, attributeRepo: AttrRepo=None):
         pass
 
     @abstractmethod
-    def addNewCredDef(self, attrNames, name, version,
-                   p_prime=None, q_prime=None, ip=None, port=None) -> CredDef:
+    def addNewCredDef(self, **kwargs) -> CredDef:
         pass
 
     @abstractmethod
-    def getCredDef(self, name=None, version=None, attributes: Sequence[str] = None)-> CredDef:
+    def getCredDef(self, *args)-> CredDef:
         pass
 
     @abstractmethod
     def createCred(self, proverId, name, version, U):
         pass
 
+    def initAttrRepo(self, attributeRepo: AttrRepo):
+        pass
+
+    def getAttributes(self, proverId) -> str:
+        pass
+
+    def addAttributes(self, proverId, attributes):
+        pass
