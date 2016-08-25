@@ -156,7 +156,7 @@ class Node(PlenumNode):
                                            format(TARGET_NYM))
 
         if msg[TXN_TYPE] == NYM:
-            role = msg.get(ROLE, USER)
+            role = msg.get(ROLE) or USER
             if not isValidRole(role):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} not a valid role".
@@ -181,7 +181,7 @@ class Node(PlenumNode):
         originRole = s.getRole(origin)
 
         if typ == NYM:
-            role = op.get(ROLE, USER)
+            role = op.get(ROLE) or USER
             authorizedAdder = self.authorizedAdders[role]
             if originRole not in authorizedAdder:
                 raise UnauthorizedClientRequest(
@@ -307,6 +307,7 @@ class Node(PlenumNode):
         return result
 
     def storeTxnInGraph(self, result):
+        print(result)
         result = deepcopy(result)
         # Remove root hash and audit path from result if present since they can
         # be generated on the fly from the ledger so no need to store it

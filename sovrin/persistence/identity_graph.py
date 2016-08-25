@@ -344,7 +344,7 @@ class IdentityGraph(OrientDbGraphStore):
         else:
             result = {
                 TXN_ID: nymEdge.oRecordData.get(TXN_ID),
-                ROLE: nymEdge.oRecordData.get(ROLE, USER)
+                ROLE: nymEdge.oRecordData.get(ROLE) or USER
             }
             frm, to = self.store.getByRecordIds(nymEdge.oRecordData['out'].get(),
                                           nymEdge.oRecordData['in'].get())
@@ -487,7 +487,7 @@ class IdentityGraph(OrientDbGraphStore):
 
     def addNymTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
-        role = txn.get(ROLE, USER)
+        role = txn.get(ROLE) or USER
         if not isValidRole(role):
             raise ValueError("Unknown role {} for nym, cannot add nym to graph"
                              .format(role))
