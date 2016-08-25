@@ -363,13 +363,15 @@ def genTestClient(nodes: TestNodeSet=None,
                   tmpdir=None,
                   signer=None,
                   peerHA: Union[HA, Tuple[str, int]]=None,
-                  testClientClass=TestClient) -> TestClient:
+                  testClientClass=TestClient,
+                  usePoolLedger=False) -> TestClient:
     testClient = genPlenumTestClient(nodes,
                                nodeReg,
                                tmpdir,
                                signer,
                                testClientClass,
-                               bootstrapKeys=False)
+                               bootstrapKeys=False,
+                               usePoolLedger=usePoolLedger)
     testClient.peerHA = peerHA
     return testClient
 

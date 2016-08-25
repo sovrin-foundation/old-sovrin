@@ -103,7 +103,7 @@ def anotherSponsor(genned, steward, stewardSigner, tdir, looper, nodeSet):
     return c
 
 
-def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
+def testNonStewardCannotCreateASponsor(genned, client1, client1Signer, looper):
     seed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner(seed)
 
@@ -115,8 +115,8 @@ def testNonStewardCannotCreateASponsor(steward, stewardSigner, looper, nodeSet):
         ROLE: SPONSOR
     }
 
-    submitAndCheckNacks(looper=looper, client=steward, op=op,
-                        identifier=stewardSigner.identifier,
+    submitAndCheckNacks(looper=looper, client=client1, op=op,
+                        identifier=client1Signer.identifier,
                         contains="InvalidIdentifier")
 
 

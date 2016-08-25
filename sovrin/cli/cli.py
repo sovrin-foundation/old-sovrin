@@ -4,6 +4,8 @@ from typing import Dict
 
 from charm.core.math.integer import integer
 from hashlib import sha256
+from plenum.common.txn_util import createGenesisTxnFile
+from sovrin.common.util import getConfig
 
 from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE, REVEALED_ATTRS, CRED_A, CRED_E, \
     CRED_V, ISSUER, PROOF, C_VALUE
@@ -32,7 +34,8 @@ from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
-    SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF
+    SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF, \
+    getTxnOrderedFields
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 from sovrin.server.node import Node
 
@@ -151,19 +154,23 @@ class SovrinCli(PlenumCli):
         self._genesisTransactions = []
 
     def newNode(self, nodeName: str):
+        config = getConfig()
+        createGenesisTxnFile(self.genesisTransactions, self.basedirpath,
+                             config.domainTransactionsFile,
+                             getTxnOrderedFields())
         nodesAdded = super().newNode(nodeName)
-        if nodesAdded is not None:
-            genTxns = self.genesisTransactions
-            for node in nodesAdded:
-                txnCount = node.addGenesisTxns(genTxns)
-                if txnCount == len(genTxns):
-                    tokens = [(Token.BoldBlue, "{} adding genesis transactions {}".
-                               format(node.name, t)) for t in genTxns]
-                    self.printTokens(tokens=tokens, end='\n')
-                else:
-                    self.logger.warn("{} genesis transactions added whereas"
-                                         " {} should have been added.".
-                                         format(txnCount, len(genTxns)))
+        # if nodesAdded is not None:
+        #     genTxns = self.genesisTransactions
+        #     for node in nodesAdded:
+        #         txnCount = node.addGenesisTxns(genTxns)
+        #         if txnCount == len(genTxns):
+        #             tokens = [(Token.BoldBlue, "{} adding genesis transactions {}".
+        #                        format(node.name, t)) for t in genTxns]
+        #             self.printTokens(tokens=tokens, end='\n')
+        #         else:
+        #             self.logger.warn("{} genesis transactions added whereas"
+        #                                  " {} should have been added.".
+        #                                  format(txnCount, len(genTxns)))
 
         return nodesAdded
 

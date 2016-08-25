@@ -60,6 +60,7 @@ class Node(PlenumNode):
                          pluginPaths=pluginPaths,
                          storage=storage,
                          config=self.config)
+        self._addTxnsToGraphIfNeeded()
 
     def getSecondaryStorage(self):
         return SecondaryStorage(self.graphStorage, self.primaryStorage)
@@ -85,27 +86,38 @@ class Node(PlenumNode):
                                config=self.config)
 
     # TODO: Should adding of genesis transactions be part of start method
-    def addGenesisTxns(self, genTxns=None):
-        genTxnsCount = 0
-        if self.primaryStorage.size == 0:
-            gt = genTxns or getGenesisTxns()
-            reqIds = {}
-            for idx, txn in enumerate(gt):
-                identifier = txn.get(f.IDENTIFIER.nm, "")
-                if identifier not in reqIds:
-                    reqIds[identifier] = 0
-                reqIds[identifier] += 1
-                txn.update({
-                    f.REQ_ID.nm: reqIds[identifier],
-                    f.IDENTIFIER.nm: identifier
-                })
-                reply = Reply(txn)
-                # Add genesis transactions from code to the ledger and graph
-                replyWithMerkleInfo = self.storeReplyInLedger(reply)
-                self.storeReplyInGraph(replyWithMerkleInfo)
-                genTxnsCount += 1
-        logger.debug("{} genesis transactions added.".format(genTxnsCount))
-        return genTxnsCount
+    # def addGenesisTxns(self, genTxns=None):
+    #     genTxnsCount = 0
+    #     if self.primaryStorage.size == 0:
+    #         gt = genTxns or getGenesisTxns()
+    #         reqIds = {}
+    #         for idx, txn in enumerate(gt):
+    #             identifier = txn.get(f.IDENTIFIER.nm, "")
+    #             if identifier not in reqIds:
+    #                 reqIds[identifier] = 0
+    #             reqIds[identifier] += 1
+    #             txn.update({
+    #                 f.REQ_ID.nm: reqIds[identifier],
+    #                 f.IDENTIFIER.nm: identifier
+    #             })
+    #             # Add genesis transactions from code to the ledger and graph
+    #             txnWithMerkleInfo = self.storeTxnInLedger(txn)
+    #             self.storeTxnInGraph(txnWithMerkleInfo)
+    #             genTxnsCount += 1
+    #     logger.debug("{} genesis transactions added.".format(genTxnsCount))
+    #     return genTxnsCount
+
+    def _addTxnsToGraphIfNeeded(self):
+        i = 0
+        txnCountInGraph = self.graphStorage.countTxns()
+        for seqNo, txn in self.domainLedger.getAllTxn().items():
+            if seqNo > txnCountInGraph:
+                txn[F.seqNo.name] = seqNo
+                self.storeTxnInGraph(txn)
+                i += 1
+        logger.debug("{} adding {} transactions to graph from ledger".
+                     format(self, i))
+        return i
 
     def checkValidOperation(self, identifier, reqId, msg):
         self.checkValidSovrinOperation(identifier, reqId, msg)
@@ -270,16 +282,16 @@ class Node(PlenumNode):
          4. Add the reply to storage so it can be served later if the
          client requests it.
         """
-        replyWithMerkleInfo = self.storeReplyInLedger(reply)
-        self.sendReplyToClient(replyWithMerkleInfo)
-        self.storeReplyInGraph(replyWithMerkleInfo)
+        txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
+        self.sendReplyToClient(Reply(txnWithMerkleInfo))
+        self.storeTxnInGraph(txnWithMerkleInfo)
 
-    def storeReplyInLedger(self, reply):
-        if reply.result[TXN_TYPE] == ATTRIB:
+    def storeTxnInLedger(self, result):
+        if result[TXN_TYPE] == ATTRIB:
             # Creating copy of result so that `RAW`, `ENC` or `HASH` can be
             # replaced by their hashes. We do not insert actual attribute data
             # in the ledger but only the hash of it.
-            result = deepcopy(reply.result)
+            result = deepcopy(result)
             if RAW in result:
                 result[RAW] = sha256(result[RAW].encode()).hexdigest()
             elif ENC in result:
@@ -290,12 +302,12 @@ class Node(PlenumNode):
                 error("Transaction missing required field")
             merkleInfo = self.addToLedger(result)
         else:
-            merkleInfo = self.addToLedger(reply.result)
-        reply.result.update(merkleInfo)
-        return reply
+            merkleInfo = self.addToLedger(result)
+        result.update(merkleInfo)
+        return result
 
-    def storeReplyInGraph(self, reply):
-        result = deepcopy(reply.result)
+    def storeTxnInGraph(self, result):
+        result = deepcopy(result)
         # Remove root hash and audit path from result if present since they can
         # be generated on the fly from the ledger so no need to store it
         result.pop(F.rootHash.name, None)

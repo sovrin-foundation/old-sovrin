@@ -50,7 +50,8 @@ txnEdges = {
     }
 
 
-txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm, TARGET_NYM, NAME, VERSION]
+txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm,
+                TARGET_NYM, NAME, VERSION]
 
 
 def getEdgeFromTxnType(txnType: str): return txnEdges.get(txnType)
@@ -67,14 +68,10 @@ class IdentityGraph(OrientDbGraphStore):
     def classesNeeded(self):
         return [
             (Vertices.Nym, self.createNymClass),
-            # (Vertices.Steward, self.createStewardClass),
-            # (Vertices.Sponsor, self.createSponsorClass),
-            # (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
             (Vertices.CredDef, self.createCredDefClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
-            # (Edges.Sponsors, self.createSponsorsClass),
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
             (Edges.AddsCredDef, self.createAddsCredDefClass)
@@ -180,7 +177,7 @@ class IdentityGraph(OrientDbGraphStore):
         }
 
         if not frm:
-            # In case of geneseis transaction
+            # In case of genesis transaction
             kwargs[F.seqNo.name] = seqNo
 
         self.createVertex(Vertices.Nym, **kwargs)
@@ -292,15 +289,12 @@ class IdentityGraph(OrientDbGraphStore):
             })
 
     def getSteward(self, nym):
-        # return self.getEntityByUniqueAttr(Vertices.Steward, NYM, nym)
         return self.getNym(nym, STEWARD)
 
     def getSponsor(self, nym):
-        # return self.getEntityByUniqueAttr(Vertices.Sponsor, NYM, nym)
         return self.getNym(nym, SPONSOR)
 
     def getUser(self, nym):
-        # return self.getEntityByUniqueAttr(Vertices.User, NYM, nym)
         return self.getNym(nym, USER)
 
     def hasSteward(self, nym):
@@ -428,7 +422,8 @@ class IdentityGraph(OrientDbGraphStore):
     @staticmethod
     def makeResult(txnType, oRecordData):
         # TODO: Remove this log statement
-        logger.debug("Creating result for {} from {}".format(txnType, oRecordData))
+        logger.debug("Creating result for {} from {}".format(txnType,
+                                                             oRecordData))
         result = {
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
@@ -542,3 +537,17 @@ class IdentityGraph(OrientDbGraphStore):
         except pyorient.PyOrientCommandException as ex:
             logger.error(
                 "An exception was raised while adding cred def: {}".format(ex))
+
+    def countTxns(self):
+        seqNos = set()
+        # Getting sequence numbers fo genesis nyms
+        # cmd = "select distinct({}) as seqNo from {}".\
+        #     format(F.seqNo.name, Vertices.Nym)
+        # result = self.client.command(cmd)
+        # seqNos.update({r.oRecordData.get('seqNo') for r in result})
+        for txnEdgeClass in (list(txnEdges.values())+[Vertices.Nym]):
+            cmd = "select distinct({}) as seqNo from {}". \
+                format(F.seqNo.name, txnEdgeClass)
+            result = self.client.command(cmd)
+            seqNos.update({r.oRecordData.get('seqNo') for r in result})
+        return len(seqNos)
