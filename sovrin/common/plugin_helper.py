@@ -26,6 +26,7 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
                         "SovrinVersion = 1.1\n" \
                         "\n" \
                         "sovrin.anon_creds.issuer.Credential = anoncreds.protocol.types.Credential\n" \
+                        "sovrin.anon_creds.issuer.AttribType = anoncreds.protocol.types.AttribType\n" \
                         "sovrin.anon_creds.issuer.AttribDef = anoncreds.protocol.types.AttribDef\n" \
                         "sovrin.anon_creds.issuer.Attribs = anoncreds.protocol.types.Attribs\n" \
                         "sovrin.anon_creds.issuer.AttrRepo = anoncreds.protocol.attribute_repo.AttrRepo\n" \

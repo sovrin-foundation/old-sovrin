@@ -180,7 +180,7 @@ def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, 
     checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False".format(issuerId))
-    assert issuerId in tylerCLI.activeClient.attributes
+    assert issuerId in tylerCLI.activeClient.attributeRepo.attributes
 
 
 @pytest.fixture(scope="module")
@@ -243,7 +243,7 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
 
 
 @pytest.fixture(scope="module")
-def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
+def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerStoresAttributesAsKnownToBYU, tylerPreparedU,
                 credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     proofId, U = tylerPreparedU
@@ -264,7 +264,7 @@ def attrRepoInitialized(byuCLI, byuCreated):
     assert byuCLI.activeClient.attributeRepo is None
     byuCLI.enterCmd("initialize mock attribute repo")
     assert byuCLI.lastCmdOutput == "attribute repo initialized"
-    assert byuCLI.activeClient.getAttributes('unknown') is not None
+    assert byuCLI.activeClient.attributeRepo is not None
     return byuCLI
 
 

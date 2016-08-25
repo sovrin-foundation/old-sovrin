@@ -1,40 +1,55 @@
 from abc import abstractmethod
-from typing import Sequence
 
 from sovrin.anon_creds.cred_def import CredDef
+
+ISSUER = "issuer"
+CRED_V = "v"
+V_PRIME_PRIME = "vprimeprime"
 
 
 class Credential:
     @abstractmethod
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
 
 
 class AttribType:
     @abstractmethod
-    def __init__(self, name: str, encode: bool):
-        pass
-
-
-class AttribDef:
-    @abstractmethod
-    def __init__(self, name, attrTypes):
+    def __init__(self, *args, **kwargs):
         pass
 
 
 class Attribs:
     @abstractmethod
-    def __init__(self, credType: AttribDef, **vals):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def encoded(self):
+        pass
+
+
+class AttribDef:
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def attribs(self, *args, **kwargs) -> Attribs:
+        pass
+
+    @abstractmethod
+    def attribNames(self):
         pass
 
 
 class AttrRepo:
     @abstractmethod
-    def getAttributes(self, proverId):
+    def getAttributes(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def addAttributes(self, proverId, attributes:Attribs):
+    def addAttributes(self, *args, **kwargs):
         pass
 
 
@@ -44,37 +59,32 @@ class InMemoryAttrRepo(AttrRepo):
         pass
 
     @abstractmethod
-    def getAttributes(self, proverId):
+    def getAttributes(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def addAttributes(self, proverId, attributes:Attribs):
+    def addAttributes(self, *args, **kwargs):
         pass
 
 
 class Issuer:
 
     @abstractmethod
-    def __init__(self, id, attributeRepo: AttrRepo=None):
+    def __init__(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def addNewCredDef(self, **kwargs) -> CredDef:
+    def addNewCredDef(self, *args, **kwargs) -> CredDef:
         pass
 
     @abstractmethod
-    def getCredDef(self, *args)-> CredDef:
+    def getCredDef(self, *args, **kwargs)-> CredDef:
         pass
 
     @abstractmethod
-    def createCred(self, proverId, name, version, U):
+    def createCred(self, *args, **kwargs):
         pass
 
-    def initAttrRepo(self, attributeRepo: AttrRepo):
-        pass
-
-    def getAttributes(self, proverId) -> str:
-        pass
-
-    def addAttributes(self, proverId, attributes):
+    @abstractmethod
+    def generateCredential(cls, *args, **kwargs):
         pass

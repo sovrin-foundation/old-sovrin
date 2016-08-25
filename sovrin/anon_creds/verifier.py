@@ -1,15 +1,13 @@
 from abc import abstractmethod
-from typing import Dict, Sequence
+from typing import Any
 
 from sovrin.anon_creds.cred_def import CredDef
-
-from anoncreds.protocol.types import PredicateProof, T
 
 
 class Verifier:
 
     @abstractmethod
-    def __init__(self, id):
+    def __init__(self, *args, **kwargs):
         pass
 
     # TODO: mention return type
@@ -18,14 +16,17 @@ class Verifier:
         pass
 
     @abstractmethod
-    def getCredDef(self, issuerId, name, version) -> CredDef:
+    def getCredDef(self, *args, **kwargs) -> CredDef:
         pass
 
-    def verify(self, issuer, name, version, proof, nonce, attrs, revealedAttrs) -> bool:
+    @abstractmethod
+    def verify(self, *args, **kwargs) -> bool:
         pass
 
-    def fetchCredDef(self, issuer, name, version) -> CredDef:
+    @abstractmethod
+    def fetchCredDef(self, *args, **kwargs) -> CredDef:
         pass
 
-    def verifyPredicateProof(self, **kwargs)-> bool:
+    @abstractmethod
+    def verifyPredicateProof(self, *args, **kwargs)-> bool:
         pass

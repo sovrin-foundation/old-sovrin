@@ -9,17 +9,13 @@ class SerFmt(Enum):
 
 class CredDefPublicKey:
     @abstractmethod
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
 
 
 class CredDef:
     @abstractmethod
-    def __init__(self,
-                 attrNames,
-                 name=None, version=None,
-                 p_prime=None, q_prime=None,
-                 ip=None, port=None):
+    def __init__(self, *args, **kwargs):
         pass
 
     @abstractproperty
@@ -35,5 +31,13 @@ class CredDef:
         pass
 
     @abstractmethod
-    def get(self, serFmt: SerFmt):
+    def get(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def getPk(*args, **kwargs):
+        pass
+
+    @abstractmethod
+    def getCryptoInteger(cls, val):
         pass

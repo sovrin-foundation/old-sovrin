@@ -1,35 +1,32 @@
 from abc import abstractmethod
 
 from sovrin.anon_creds.cred_def import CredDefPublicKey, CredDef
-from sovrin.anon_creds.issuer import Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
-from sovrin.anon_creds.verifier import Verifier
 
 
 class Prover:
 
     @abstractmethod
-    def __init__(self, id):
+    def __init__(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def getPk(credDef: CredDef) -> CredDefPublicKey:
+    def getPk(*args, **kwargs) -> CredDefPublicKey:
         pass
 
     @abstractmethod
-    def createProofBuilder(self, issuer, attrNames, interactionId, verifier,
-                           encodedAttrs, revealedAttrs) -> ProofBuilder:
+    def createProofBuilder(self, *args, **kwargs) -> ProofBuilder:
         pass
 
     # TODO: mention return type
     @abstractmethod
-    def fetchNonce(self, interactionId, verifier: Verifier):
+    def fetchNonce(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def fetchCredentialDefinition(self, issuer: Issuer, attributes) -> CredDef:
+    def fetchCredentialDefinition(self, *args, **kwargs) -> CredDef:
         pass
 
     @abstractmethod
-    def fetchCredential(self, issuer: Issuer, credName, credVersion, U):
+    def fetchCredential(self, *args, **kwargs):
         pass

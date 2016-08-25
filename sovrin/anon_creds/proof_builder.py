@@ -6,27 +6,37 @@ from sovrin.anon_creds.cred_def import CredDefPublicKey
 
 class Proof:
     @abstractmethod
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
 
 
 class PredicateProof:
     @abstractmethod
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
+
 
 class Credential:
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
-
-
-T = TypeVar('T')
 
 
 class ProofBuilder:
 
     @abstractmethod
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def setParams(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def prepareProof(*args, **kwargs) -> Proof:
+        pass
+
+    @abstractmethod
+    def preparePredicateProof(self, *args, **kwargs) -> PredicateProof:
         pass
 
     @abstractproperty
@@ -41,22 +51,7 @@ class ProofBuilder:
     def vprime(self):
         pass
 
-    @abstractmethod
-    def setParams(self, credential, revealedAttrs, nonce):
-        pass
 
-    @abstractmethod
-    def prepareProof(credDefPks, masterSecret, creds: Dict[str, Credential],
-                     encodedAttrs: Dict[str, Dict[str, T]], revealedAttrs: Sequence[str],
-                     nonce) -> Proof:
-        pass
-
-    @abstractmethod
-    def preparePredicateProof(self, creds: Dict[str, Credential],
-                              attrs: Dict[str, Dict[str, T]],
-                              revealedAttrs: Sequence[str],
-                              nonce, predicate: Dict[str, Dict]) -> PredicateProof:
-        pass
 
 
 
