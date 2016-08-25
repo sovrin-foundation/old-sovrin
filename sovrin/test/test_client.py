@@ -155,7 +155,8 @@ def testSponsorCreatesAUser(updatedSteward, userSignerA):
 
 
 @pytest.fixture(scope="module")
-def nymsAddedInQuickSuccession(genned, addedSponsor, sponsorSigner, looper, sponsor):
+def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
+                               sponsor):
     usigner = SimpleSigner()
     opA = {
         TARGET_NYM: usigner.verstr,

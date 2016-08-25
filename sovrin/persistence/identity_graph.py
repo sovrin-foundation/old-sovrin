@@ -328,6 +328,11 @@ class IdentityGraph(OrientDbGraphStore):
                                                       NYM, nym))
         return None if not sponsor else sponsor[0].oRecordData.get(NYM)
 
+    def countStewards(self):
+        return self.countEntitiesByAttrs(Vertices.Nym, {
+            ROLE: STEWARD
+        })
+
     def getAddNymTxn(self, nym):
         nymEdge = self.getAddsNymEdge(nym)
         if not nymEdge:
@@ -382,10 +387,11 @@ class IdentityGraph(OrientDbGraphStore):
         def delegate(edgeClass):
             # TODO: Need to do this to get around a bug in pyorient,
             # https://github.com/mogui/pyorient/issues/207
-            edgeProps = ", ".join("@this.{} as __e_{}".format(name, name) for name in
-                                  txnEdgeProps)
+            edgeProps = ", ".join("@this.{} as __e_{}".format(name, name)
+                                  for name in txnEdgeProps)
             vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
-                                    chain.from_iterable(Vertices._Properties.values()))
+                                    chain.from_iterable(
+                                        Vertices._Properties.values()))
             cmd = "select {}, {} from {} where {} in [{}]".\
                 format(edgeProps, vertexProps, edgeClass, TXN_ID, txnIdsStr)
             if seqNo:
@@ -476,7 +482,8 @@ class IdentityGraph(OrientDbGraphStore):
         updates = ', '.join(["{}={}".format(prop, txn[prop])
                              if isinstance(txn[prop], (int, float)) else
                              "{}='{}'".format(prop, txn[prop])
-                             for prop in properties if (prop in txn and txn[prop] is not None)])
+                             for prop in properties if (prop in txn and
+                                                        txn[prop] is not None)])
         updateCmd = "update {} set {} where {}='{}'". \
             format(edgeClass, updates, TXN_ID, txnId)
         logger.debug("updating edge {} with command {}".format(edgeClass,
