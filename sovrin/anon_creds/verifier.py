@@ -12,7 +12,7 @@ class Verifier:
 
     # TODO: mention return type
     @abstractmethod
-    def generateNonce(self, interactionId):
+    def generateNonce(self, *args, **kwargs):
         pass
 
     @abstractmethod
