@@ -7,6 +7,7 @@ class SerFmt(Enum):
     py3Int = 2
     base58 = 3
 
+
 class CredDefPublicKey:
     @abstractmethod
     def __init__(self, *args, **kwargs):
@@ -39,5 +40,13 @@ class CredDef:
         pass
 
     @abstractmethod
-    def getCryptoInteger(cls, val):
+    def getCryptoInteger(cls, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def getStaticPPrime(cls, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def getStaticQPrime(cls, *args, **kwargs):
         pass

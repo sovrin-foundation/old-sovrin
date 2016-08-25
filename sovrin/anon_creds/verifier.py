@@ -20,13 +20,13 @@ class Verifier:
         pass
 
     @abstractmethod
-    def verify(self, *args, **kwargs) -> bool:
-        pass
-
-    @abstractmethod
     def fetchCredDef(self, *args, **kwargs) -> CredDef:
         pass
 
     @abstractmethod
     def verifyPredicateProof(self, *args, **kwargs)-> bool:
+        pass
+
+    @abstractmethod
+    def verifyProof(cls, *args, **kwargs) -> bool:
         pass

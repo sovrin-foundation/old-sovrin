@@ -1,6 +1,3 @@
-import json
-import os
-
 import pytest
 
 from anoncreds.protocol.types import SerFmt
@@ -9,8 +6,7 @@ from anoncreds.protocol.utils import encodeAttrs
 from plenum.client.signer import SimpleSigner
 
 from plenum.test.helper import genHa
-from anoncreds.protocol.credential_definition import CredentialDefinition
-from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
+from sovrin.anon_creds.cred_def import CredDef
 from sovrin.common.util import getConfig
 from sovrin.test.helper import addNym
 
@@ -99,9 +95,9 @@ def attrNames():
 @pytest.fixture(scope="module")
 def credDef(attrNames):
     ip, port = genHa()
-    return CredentialDefinition(attrNames, 'name1', 'version1',
-                                p_prime=P_PRIME1, q_prime=Q_PRIME1,
-                                ip=ip, port=port)
+    return CredDef(attrNames, 'name1', 'version1',
+                   p_prime="static", q_prime="static",
+                   ip=ip, port=port)
 
 
 @pytest.fixture(scope="module")

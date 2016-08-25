@@ -4,6 +4,7 @@ from typing import Dict, Sequence, TypeVar
 
 from sovrin.anon_creds.cred_def import CredDefPublicKey
 
+
 class Proof:
     @abstractmethod
     def __init__(self, *args, **kwargs):

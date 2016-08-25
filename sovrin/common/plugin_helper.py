@@ -35,14 +35,15 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
                         "sovrin.anon_creds.prover.Prover = anoncreds.protocol.prover.Prover\n" \
                         "sovrin.anon_creds.verifier.Verifier = anoncreds.protocol.verifier.Verifier\n" \
                         "sovrin.anon_creds.proof_builder.ProofBuilder = anoncreds.protocol.proof_builder.ProofBuilder\n" \
+                        "sovrin.anon_creds.proof_builder.Proof = anoncreds.protocol.types.Proof\n" \
                         "sovrin.anon_creds.cred_def.CredDef = anoncreds.protocol.credential_definition.CredentialDefinition\n" \
                         "\n" \
 
     modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
 
     if reloadTestClasses:
-        modules_to_reload.append("sovrin.test.helper")
-        modules_to_reload.append("sovrin.test.cli.helper")
+        test_modules_to_reload = ["sovrin.test.helper", "sovrin.test.cli.helper"]
+        modules_to_reload.extend(test_modules_to_reload)
 
     reload_module_code = \
         "reload_modules = " + str(modules_to_reload) + "\n" \

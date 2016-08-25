@@ -537,7 +537,7 @@ class SovrinCli(PlenumCli):
             }
             masterSecret = CredDef.getCryptoInteger(self.activeClient.wallet.
                                              masterSecret)
-            attributes = self.activeClient.getAttributes(issuer)
+            attributes = self.activeClient.attributeRepo.getAttributes(issuer)
             attribTypes = []
             for nm in attributes.keys():
                 attribTypes.append(AttribType(nm, encode=True))
@@ -590,20 +590,20 @@ class SovrinCli(PlenumCli):
         pk = {
             issuer: self.pKFromCredDef(keys)
         }
-        prf = proof[PROOF]
+        prf = proof["proof"]
         prfArgs = {}
-        prfArgs[APRIME] = {issuer: strToCharmInteger(prf[APRIME][issuer])}
-        prfArgs[C_VALUE] = strToCharmInteger(prf[C_VALUE])
-        prfArgs[EVECT] = {issuer: strToCharmInteger(prf[EVECT][issuer])}
-        prfArgs[MVECT] = {k: strToCharmInteger(v) for k, v in prf[MVECT].items()}
-        prfArgs[VVECT] = {issuer: strToCharmInteger(prf[VVECT][issuer])}
+        prfArgs["Aprime"] = {issuer: CredDef.getCryptoInteger(prf["Aprime"][issuer])}
+        prfArgs["c"] = CredDef.getCryptoInteger(prf["c"])
+        prfArgs["evect"] = {issuer: CredDef.getCryptoInteger(prf["evect"][issuer])}
+        prfArgs["mvect"] = {k: CredDef.getCryptoInteger(v) for k, v in prf["mvect"].items()}
+        prfArgs["vvect"] = {issuer: CredDef.getCryptoInteger(prf["vvect"][issuer])}
         prf = ProofTuple(**prfArgs)
         attrs = {
-            issuer: {k: strToCharmInteger(v) for k, v in
-                     next(iter(proof[ATTRS].values())).items()}
+            issuer: {k: CredDef.getCryptoInteger(v) for k, v in
+                     next(iter(proof["attrs"].values())).items()}
         }
-        result = verify_proof(pk, prf, strToCharmInteger(proof[NONCE]), attrs,
-                              proof[REVEALED_ATTRS])
+        result = self.activeClient.verifyProof(pk, prf, CredDef.getCryptoInteger(proof["nonce"]), attrs,
+                              proof["revealedAttrs"])
         if not result:
             self.print("Proof verification failed", Token.BoldOrange)
         elif result and status in proof["revealedAttrs"]:
@@ -628,7 +628,7 @@ class SovrinCli(PlenumCli):
             if attributes:
                 attributes = list(attributes.values())[0]
             sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
-            cred = Issuer.generateCredential(uValue, attributes, pk, sk)
+            cred = self.activeClient.generateCredential(uValue, attributes, pk, sk)
 
             # TODO: For real scenario, do we need to send this credential back
             # or it will be out of band?
