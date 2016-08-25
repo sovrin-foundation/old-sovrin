@@ -88,3 +88,4 @@ class Issuer:
     @abstractmethod
     def generateCredential(cls, *args, **kwargs):
         pass
+

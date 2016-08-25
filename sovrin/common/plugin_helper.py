@@ -19,7 +19,12 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
                         "import importlib\n" \
                         "\n" \
                         "import anoncreds.protocol.issuer\n" \
+                        "import anoncreds.protocol.verifier\n" \
+                        "import anoncreds.protocol.prover\n" \
+                        "\n" \
                         "import sovrin.anon_creds.issuer\n" \
+                        "import sovrin.anon_creds.verifier\n"\
+                        "import sovrin.anon_creds.prover\n" \
                         "\n" \
                         "Name = \"Anon creds\"\n" \
                         "Version = 1.1\n" \
@@ -42,7 +47,7 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
     modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
 
     if reloadTestClasses:
-        test_modules_to_reload = ["sovrin.test.helper", "sovrin.test.cli.helper"]
+        test_modules_to_reload = ["sovrin.test.helper", "sovrin.test.cli.helper", "sovrin.test.anon_creds.conftest"]
         modules_to_reload.extend(test_modules_to_reload)
 
     reload_module_code = \

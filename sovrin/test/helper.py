@@ -1,16 +1,15 @@
 import inspect
 import json
-import os
 import shutil
-import tempfile
 from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
 
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.verifier import Verifier
+from sovrin.anon_creds.issuer import Issuer
+from sovrin.anon_creds.prover import Prover
+from sovrin.anon_creds.verifier import Verifier
+
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK, DATA
@@ -29,7 +28,7 @@ from plenum.test.helper import genTestClientProvider as \
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 import sovrin
-# from sovrin.client.client import Client
+
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
