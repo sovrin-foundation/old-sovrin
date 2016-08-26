@@ -366,8 +366,8 @@ class SovrinCli(PlenumCli):
         masterSecret = self.activeClient.wallet.masterSecret
 
         proofBuilder = ProofBuilder(pk, masterSecret)
+        proofBuilder.setParams(encodedAttrs=getEncodedAttrs(issuerId))
 
-        proofBuilder.setEncodedAttrs(getEncodedAttrs(issuerId))
         if not masterSecret:
             self.activeClient.wallet.addMasterSecret(str(proofBuilder.masterSecret))
 

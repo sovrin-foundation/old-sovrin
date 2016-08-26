@@ -24,16 +24,8 @@ class ProofBuilder:
     def __init__(self, *args, **kwargs):
         pass
 
-    @abstractmethod
-    def setParams(self, *args, **kwargs):
-        pass
-
-    @abstractmethod
-    def prepareProof(*args, **kwargs) -> Proof:
-        pass
-
-    @abstractmethod
-    def preparePredicateProof(self, *args, **kwargs) -> PredicateProof:
+    @abstractproperty
+    def id(self):
         pass
 
     @abstractproperty
@@ -46,6 +38,18 @@ class ProofBuilder:
 
     @abstractproperty
     def vprime(self):
+        pass
+
+    @abstractmethod
+    def setParams(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def prepareProof(*args, **kwargs) -> Proof:
+        pass
+
+    @abstractmethod
+    def preparePredicateProof(self, *args, **kwargs) -> PredicateProof:
         pass
 
 
