@@ -58,7 +58,7 @@ attributes = BYU.attribs(
 attrNames = tuple(attributes.keys())
 
 
-def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
+def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                      verifierSigner, addedIPV):
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
     issuer = genTestClient(nodeSet, tmpdir=tdir, signer=issuerSigner,
