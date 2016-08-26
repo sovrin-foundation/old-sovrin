@@ -107,9 +107,9 @@ def userSignerB(genned, addedSponsor, sponsorSigner, looper, sponsor):
 
 
 @pytest.fixture(scope="module")
-def steward(genned, looper, nodeSet, tdir, up, stewardSigner):
-    s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
-    for node in nodeSet:
+def steward(genned, looper, tdir, up, stewardSigner):
+    s = genTestClient(genned, signer=stewardSigner, tmpdir=tdir)
+    for node in genned:
         node.whitelistClient(s.name)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
@@ -122,9 +122,9 @@ def updatedSteward(steward):
 
 
 @pytest.fixture(scope="module")
-def sponsor(looper, nodeSet, tdir, up, steward, sponsorSigner):
-    s = genTestClient(nodeSet, signer=sponsorSigner, tmpdir=tdir)
-    for node in nodeSet:
+def sponsor(genned, looper, tdir, up, steward, sponsorSigner):
+    s = genTestClient(genned, signer=sponsorSigner, tmpdir=tdir)
+    for node in genned:
         node.whitelistClient(s.name)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())

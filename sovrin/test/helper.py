@@ -320,7 +320,7 @@ class TestClientStorage(TempStorage, ClientStorage):
         TempStorage.__init__(self)
 
 
-@Spyable(methods=[Client.handleOneNodeMsg])
+@Spyable(methods=[Client.handleOneNodeMsg, Client.requestPendingTxns])
 class TestClient(Client, StackedTester):
     @staticmethod
     def stackType():

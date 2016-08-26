@@ -126,7 +126,7 @@ def testStewardCreatesASponsor(updatedSteward, addedSponsor):
 
 @pytest.mark.skipif(True, reason="Cannot create another sponsor with same nym")
 def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
-                                     nodeSet, tdir, sponsorSigner):
+                                     sponsorSigner):
     createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
     return sponsorSigner
 
@@ -209,7 +209,7 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
 
 
 def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper,
-                                            nodeSet, tdir, attributeData):
+                                            genned, attributeData):
 
     nym = nonSponsor.getSigner().verstr
 
@@ -223,8 +223,8 @@ def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper,
                         contains="InvalidIdentifier")
 
 
-def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, nodeSet, tdir,
-                                        steward, stewardSigner, genned,
+def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, genned,
+                                        steward, stewardSigner,
                                         attributeData, anotherSponsor):
     op = {
         TARGET_NYM: userSignerA.verstr,
@@ -315,9 +315,15 @@ def testGetTxnsNoSeqNo():
     pass
 
 
-@pytest.mark.skipif(True, reason="Test not implemented")
-def testGetTxnsSeqNo():
+def testGetTxnsSeqNo(genned, addedSponsor, tdir, sponsorSigner, looper):
     """
     Test GET_TXNS from client and provide seqNo to fetch from
     """
-    pass
+    sponsor = genTestClient(genned, signer=sponsorSigner, tmpdir=tdir)
+    looper.add(sponsor)
+    looper.run(sponsor.ensureConnectedToNodes())
+
+    def chk():
+        assert sponsor.spylog.count(sponsor.requestPendingTxns.__name__) > 0
+
+    looper.run(eventually(chk, retryWait=1, timeout=3))

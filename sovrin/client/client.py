@@ -386,6 +386,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             return None
 
     def requestPendingTxns(self):
+        requests = []
         for identifier in self.signers:
             lastTxn = self.storage.getLastTxnForIdentifier(identifier)
             op = {
@@ -394,7 +395,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             }
             if lastTxn:
                 op[DATA] = lastTxn
-            self.submit(op, identifier=identifier)
+            requests.append(self.submit(op, identifier=identifier))
+        return requests
 
     def _statusChanged(self, old, new):
         super()._statusChanged(old, new)
