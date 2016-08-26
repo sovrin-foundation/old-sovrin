@@ -27,8 +27,7 @@ from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
-import sovrin
-
+from sovrin.client.client import Client
 from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
@@ -246,7 +245,7 @@ class Organization:
 class TempStorage:
 
     def cleanupDataLocation(self):
-        loc = self.getDataLocation()
+        loc = self.dataLocation
         try:
             shutil.rmtree(loc)
         except Exception as ex:
@@ -320,8 +319,8 @@ class TestClientStorage(TempStorage, ClientStorage):
         TempStorage.__init__(self)
 
 
-@Spyable(methods=[sovrin.client.client.Client.handleOneNodeMsg])
-class TestClient(sovrin.client.client.Client, StackedTester):
+@Spyable(methods=[Client.handleOneNodeMsg])
+class TestClient(Client, StackedTester):
     @staticmethod
     def stackType():
         return TestStack
@@ -333,7 +332,7 @@ class TestClient(sovrin.client.client.Client, StackedTester):
         self.storage.cleanupDataLocation()
         # # TODO: find a better way to clear wallet
         # try:
-        #     shutil.rmtree(self.wallet.storage.getDataLocation())
+        #     shutil.rmtree(self.wallet.storage.dataLocation)
         # except Exception as ex:
         #     logger.debug("Exception while deleting {}'s wallet {}"
         #                  .format(self, ex))
@@ -363,15 +362,15 @@ def genTestClient(nodes: TestNodeSet=None,
                   tmpdir=None,
                   signer=None,
                   peerHA: Union[HA, Tuple[str, int]]=None,
-                  testClientClass=None) -> TestClient:
-    if not testClientClass:
-        testClientClass = TestClient
+                  testClientClass=TestClient,
+                  usePoolLedger=False) -> TestClient:
     testClient = genPlenumTestClient(nodes,
                                nodeReg,
                                tmpdir,
                                signer,
                                testClientClass,
-                               bootstrapKeys=False)
+                               bootstrapKeys=False,
+                               usePoolLedger=usePoolLedger)
     testClient.peerHA = peerHA
     return testClient
 

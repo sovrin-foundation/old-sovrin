@@ -18,7 +18,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         credFileName = "credentials"
         credDefKeys = "credential_definition_keys"
         masterSecret = "master_secret"
-        dataDir = self.getDataLocation()
+        dataDir = self.dataLocation
 
         self.attrStore = AttributeStoreFile(dataDir, attrsDirName)
         # type: AttributeStoreFile

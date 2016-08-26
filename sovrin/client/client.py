@@ -216,8 +216,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                 elif result[TXN_TYPE] == GET_TXNS:
                     if DATA in result and result[DATA]:
                         data = json.loads(result[DATA])
-                        self.storage.setLastTxnForIdentifier(result[f.IDENTIFIER.nm],
-                                                             data[LAST_TXN])
+                        self.storage.setLastTxnForIdentifier(
+                            result[f.IDENTIFIER.nm], data[LAST_TXN])
                         for txn in data[TXNS]:
                             if txn[TXN_TYPE] == NYM:
                                 self.addNymToGraph(txn)
@@ -242,9 +242,11 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                         # TODO: Check fails if data was a dictionary.
                         if isinstance(data, dict):
                             logger.error(
-                                "Keys {} cannot be converted to JSON".format(data[KEYS]))
+                                "Keys {} cannot be converted to JSON"
+                                    .format(data[KEYS]))
                         else:
-                            logger.error("{} cannot be converted to JSON".format(data))
+                            logger.error("{} cannot be converted to JSON"
+                                         .format(data))
                     else:
                         self.wallet.addCredDef(data[NAME], data[VERSION],
                                                result[TARGET_NYM], data[TYPE],
@@ -346,7 +348,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                 if RAW in attr:
                     attributes.append({attr[NAME]: attr[RAW]})
                 elif ENC in attr:
-                    attributes.append(self._getDecryptedData(attr[ENC], attr[SKEY]))
+                    attributes.append(self._getDecryptedData(attr[ENC],
+                                                             attr[SKEY]))
                 elif HASH in attr:
                     attributes.append({attr[NAME]: attr[HASH]})
         return attributes

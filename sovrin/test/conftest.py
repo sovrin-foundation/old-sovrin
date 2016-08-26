@@ -1,14 +1,16 @@
 import pytest
 
-
 from plenum.client.signer import SimpleSigner
+from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.plugin.helper import getPluginPath
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 
-from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
+from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
+    getTxnOrderedFields
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.test.helper import TestNodeSet,\
     genTestClient, createNym, addUser
+from sovrin.common.util import getConfig
 
 from plenum.test.conftest import getValueFromModule
 
@@ -29,9 +31,9 @@ def allPluginsPath():
 
 @pytest.fixture(scope="module")
 def stewardSigner():
-    seed = b'is a pit a seed, or somepin else'
+    seed = b'is a pit   seed, or somepin else'
     signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='
+    assert signer.verstr == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
     return signer
 
 
@@ -53,18 +55,26 @@ def genesisTxns(stewardSigner):
     },]
 
 
+@pytest.fixture(scope="module")
+def gennedTdir(genesisTxns, tdir):
+    config = getConfig()
+    createGenesisTxnFile(genesisTxns, tdir, config.domainTransactionsFile,
+                         getTxnOrderedFields())
+    return tdir
+
+
 @pytest.yield_fixture(scope="module")
 def nodeSet(request, tdir, nodeReg, allPluginsPath):
+
     primaryDecider = getValueFromModule(request, "PrimaryDecider", None)
     with TestNodeSet(nodeReg=nodeReg, tmpdir=tdir,
-                     primaryDecider=primaryDecider,pluginPaths=allPluginsPath) as ns:
+                     primaryDecider=primaryDecider,
+                     pluginPaths=allPluginsPath) as ns:
         yield ns
 
 
 @pytest.fixture(scope="module")
-def genned(nodeSet, genesisTxns):
-    for n in nodeSet:
-        n.addGenesisTxns(genesisTxns)
+def genned(gennedTdir, nodeSet):
     return nodeSet
 
 
@@ -86,6 +96,8 @@ def client1Signer():
 @pytest.fixture(scope="module")
 def client1(client1Signer, looper, nodeSet, tdir, up):
     client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
+    for node in nodeSet:
+        node.whitelistClient(client.name)
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
     return client
@@ -102,7 +114,7 @@ def userSignerB(genned, addedSponsor, sponsorSigner, looper, sponsor):
 
 
 @pytest.fixture(scope="module")
-def steward(looper, nodeSet, tdir, up, stewardSigner):
+def steward(genned, looper, nodeSet, tdir, up, stewardSigner):
     s = genTestClient(nodeSet, signer=stewardSigner, tmpdir=tdir)
     for node in nodeSet:
         node.whitelistClient(s.name)

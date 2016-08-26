@@ -38,6 +38,8 @@ BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
 CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
 POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
 POOL_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "pool_transactions_local")
+IDENTITY_TXN_FILE = os.path.join(BASE_DIR, "transactions")
+IDENTITY_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "transactions_local")
 
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR)
@@ -77,3 +79,5 @@ if not os.path.exists(CONFIG_FILE):
 DATA_DIR = os.path.dirname(data.__file__)
 copyfile(os.path.join(DATA_DIR, "pool_transactions"), POOL_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
+copyfile(os.path.join(DATA_DIR, "transactions"), IDENTITY_TXN_FILE)
+copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)

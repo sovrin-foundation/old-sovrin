@@ -5,6 +5,7 @@ import tempfile
 import logging
 
 # The following setup of logging needs to happen before everything else
+from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
 from ioflo.aid.consoling import Console
 
@@ -27,9 +28,12 @@ from plenum.test.helper import genHa, ensureElectionsDone, \
     checkNodesConnected, genNodeReg
 
 from sovrin.test.helper import genTestClient, submitAndCheck, createNym, addNym, TestNodeSet
-from sovrin.common.txn import CRED_DEF, SPONSOR
+from sovrin.common.txn import CRED_DEF, SPONSOR, getTxnOrderedFields
 from sovrin.test.conftest import genesisTxns
-from sovrin.common.util import getCredDefTxnData
+from sovrin.common.util import getCredDefTxnData, getConfig
+
+config = getConfig()
+
 
 attributes = {
     "first_name": "John",
@@ -52,6 +56,11 @@ sponsorSigner = SimpleSigner()
 issuerSigner = SimpleSigner()
 proverSigner = SimpleSigner()
 verifierSigner = SimpleSigner()
+
+createGenesisTxnFile(genesisTxns(stewardSigner), tdir,
+                             config.domainTransactionsFile,
+                             getTxnOrderedFields())
+
 nodes = TestNodeSet(nodeReg=genNodeReg(count=4), tmpdir=tdir,
         primaryDecider=None)
 
@@ -65,7 +74,7 @@ looper = Looper(nodes, autoStart=True)
 for node in nodes:
     node.startKeySharing()
     node.start(looper)
-    node.addGenesisTxns(genesisTxns(stewardSigner))
+    # node.addGenesisTxns(genesisTxns(stewardSigner))
 
 looper.run(checkNodesConnected(nodes))
 ensureElectionsDone(looper=looper, nodes=nodes, retryWait=1, timeout=30)

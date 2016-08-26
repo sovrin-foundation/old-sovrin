@@ -27,7 +27,7 @@ from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
     TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole
 from sovrin.common.util import getConfig, dateTimeEncoding
-from sovrin.persistence.identity_graph import IdentityGraph
+from sovrin.persistence.identity_graph import IdentityGraph, Vertices
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
 
@@ -60,6 +60,7 @@ class Node(PlenumNode):
                          pluginPaths=pluginPaths,
                          storage=storage,
                          config=self.config)
+        self._addTxnsToGraphIfNeeded()
 
     def getSecondaryStorage(self):
         return SecondaryStorage(self.graphStorage, self.primaryStorage)
@@ -75,38 +76,48 @@ class Node(PlenumNode):
         if self.config.primaryStorage is None:
             fields = getTxnOrderedFields()
             return Ledger(CompactMerkleTree(hashStore=self.hashStore),
-                          dataDir=self.getDataLocation(),
+                          dataDir=self.dataLocation,
                           serializer=CompactSerializer(fields=fields),
                           fileName=self.config.domainTransactionsFile)
         else:
             return initStorage(self.config.primaryStorage,
                                name=self.name + NODE_PRIMARY_STORAGE_SUFFIX,
-                               dataDir=self.getDataLocation(),
+                               dataDir=self.dataLocation,
                                config=self.config)
 
     # TODO: Should adding of genesis transactions be part of start method
-    def addGenesisTxns(self, genTxns=None):
-        genTxnsCount = 0
-        if self.primaryStorage.size == 0:
-            gt = genTxns or getGenesisTxns()
-            reqIds = {}
-            for idx, txn in enumerate(gt):
-                identifier = txn.get(f.IDENTIFIER.nm, "")
-                if identifier not in reqIds:
-                    reqIds[identifier] = 0
-                reqIds[identifier] += 1
-                txn.update({
-                    f.REQ_ID.nm: reqIds[identifier],
-                    f.IDENTIFIER.nm: identifier
-                })
-                reply = Reply(txn)
-                # Add genesis transactions from code to the ledger and graph
-                asyncio.ensure_future(
-                    self.storeTxnAndSendToClient(txn.get(f.IDENTIFIER.nm),
-                                                 reply, txn[TXN_ID]))
-                genTxnsCount += 1
-        logger.debug("{} genesis transactions added.".format(genTxnsCount))
-        return genTxnsCount
+    # def addGenesisTxns(self, genTxns=None):
+    #     genTxnsCount = 0
+    #     if self.primaryStorage.size == 0:
+    #         gt = genTxns or getGenesisTxns()
+    #         reqIds = {}
+    #         for idx, txn in enumerate(gt):
+    #             identifier = txn.get(f.IDENTIFIER.nm, "")
+    #             if identifier not in reqIds:
+    #                 reqIds[identifier] = 0
+    #             reqIds[identifier] += 1
+    #             txn.update({
+    #                 f.REQ_ID.nm: reqIds[identifier],
+    #                 f.IDENTIFIER.nm: identifier
+    #             })
+    #             # Add genesis transactions from code to the ledger and graph
+    #             txnWithMerkleInfo = self.storeTxnInLedger(txn)
+    #             self.storeTxnInGraph(txnWithMerkleInfo)
+    #             genTxnsCount += 1
+    #     logger.debug("{} genesis transactions added.".format(genTxnsCount))
+    #     return genTxnsCount
+
+    def _addTxnsToGraphIfNeeded(self):
+        i = 0
+        txnCountInGraph = self.graphStorage.countTxns()
+        for seqNo, txn in self.domainLedger.getAllTxn().items():
+            if seqNo > txnCountInGraph:
+                txn[F.seqNo.name] = seqNo
+                self.storeTxnInGraph(txn)
+                i += 1
+        logger.debug("{} adding {} transactions to graph from ledger".
+                     format(self, i))
+        return i
 
     def checkValidOperation(self, identifier, reqId, msg):
         self.checkValidSovrinOperation(identifier, reqId, msg)
@@ -145,7 +156,7 @@ class Node(PlenumNode):
                                            format(TARGET_NYM))
 
         if msg[TXN_TYPE] == NYM:
-            role = msg.get(ROLE, USER)
+            role = msg.get(ROLE) or USER
             if not isValidRole(role):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} not a valid role".
@@ -170,7 +181,7 @@ class Node(PlenumNode):
         originRole = s.getRole(origin)
 
         if typ == NYM:
-            role = op.get(ROLE, USER)
+            role = op.get(ROLE) or USER
             authorizedAdder = self.authorizedAdders[role]
             if originRole not in authorizedAdder:
                 raise UnauthorizedClientRequest(
@@ -218,8 +229,8 @@ class Node(PlenumNode):
                 addNymTxn = self.graphStorage.getAddNymTxn(origin)
                 txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
                     getAddAttributeTxnIds(origin)
-                # If sending transactions to a user then should send sponsor
-                # creation transaction also
+                # If sending transactions to a user then should send user's
+                # sponsor creation transaction also
                 if addNymTxn.get(ROLE) == USER:
                     sponsorNymTxn = self.graphStorage.getAddNymTxn(
                         addNymTxn.get(f.IDENTIFIER.nm))
@@ -262,20 +273,25 @@ class Node(PlenumNode):
         else:
             await super().processRequest(request, frm)
 
-    async def storeTxnAndSendToClient(self, identifier, reply, txnId):
+    def storeTxnAndSendToClient(self, reply):
         """
         Does 4 things in following order
          1. Add reply to ledger.
          2. Send the reply to client.
-         3. Add the reply to identity if needed.
+         3. Add the reply to identity graph if needed.
          4. Add the reply to storage so it can be served later if the
          client requests it.
         """
-        if reply.result[TXN_TYPE] == ATTRIB:
+        txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
+        self.sendReplyToClient(Reply(txnWithMerkleInfo))
+        self.storeTxnInGraph(txnWithMerkleInfo)
+
+    def storeTxnInLedger(self, result):
+        if result[TXN_TYPE] == ATTRIB:
             # Creating copy of result so that `RAW`, `ENC` or `HASH` can be
             # replaced by their hashes. We do not insert actual attribute data
             # in the ledger but only the hash of it.
-            result = deepcopy(reply.result)
+            result = deepcopy(result)
             if RAW in result:
                 result[RAW] = sha256(result[RAW].encode()).hexdigest()
             elif ENC in result:
@@ -284,22 +300,20 @@ class Node(PlenumNode):
                 result[HASH] = result[HASH]
             else:
                 error("Transaction missing required field")
-            merkleInfo = await self.addToLedger(identifier, Reply(result), txnId)
+            merkleInfo = self.addToLedger(result)
         else:
-            merkleInfo = await self.addToLedger(identifier, reply, txnId)
+            merkleInfo = self.addToLedger(result)
+        result.update(merkleInfo)
+        return result
 
-        # Creating copy of result which does not contain merkle info (seq no,
-        # audit path and root hash). We do not insert merkle info in the database
-        result = deepcopy(reply.result)
-        result[F.seqNo.name] = merkleInfo[F.seqNo.name]
+    def storeTxnInGraph(self, result):
+        print(result)
+        result = deepcopy(result)
+        # Remove root hash and audit path from result if present since they can
+        # be generated on the fly from the ledger so no need to store it
+        result.pop(F.rootHash.name, None)
+        result.pop(F.auditPath.name, None)
 
-        reply.result.update(merkleInfo)
-
-        # In case of genesis transactions when no identifier is present
-        if identifier in self.clientIdentifiers:
-            self.transmitToClient(reply, self.clientIdentifiers[identifier])
-        else:
-            logger.debug("Adding genesis transaction")
         if result[TXN_TYPE] == NYM:
             self.graphStorage.addNymTxnToGraph(result)
         elif result[TXN_TYPE] == ATTRIB:
@@ -307,9 +321,17 @@ class Node(PlenumNode):
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStorage.addCredDefTxnToGraph(result)
 
-    async def addToLedger(self, identifier, reply, txnId):
-        merkleInfo = await self.primaryStorage.append(
-            identifier=identifier, reply=reply, txnId=txnId)
+    def sendReplyToClient(self, reply):
+        identifier = reply.result.get(f.IDENTIFIER.nm)
+        # In case of genesis transactions when no identifier is present
+        if identifier in self.clientIdentifiers:
+            self.transmitToClient(reply, self.clientIdentifiers[identifier])
+        else:
+            logger.debug("Could not find identifier {} to send reply".
+                         format(identifier))
+
+    def addToLedger(self, txn):
+        merkleInfo = self.primaryStorage.append(txn)
         return merkleInfo
 
     async def getReplyFor(self, request):
@@ -319,21 +341,22 @@ class Node(PlenumNode):
                                                           TXN_TYPE])
         return Reply(result) if result else None
 
-    async def doCustomAction(self, ppTime: float, req: Request) -> None:
+    def doCustomAction(self, ppTime: float, req: Request) -> None:
         """
         Execute the REQUEST sent to this Node
 
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        if req.operation[TXN_TYPE] == NYM and self.graphStorage.hasNym(req.operation[TARGET_NYM]):
+        if req.operation[TXN_TYPE] == NYM and \
+                self.graphStorage.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
             if req.identifier in self.clientIdentifiers:
-                self.transmitToClient(RequestNack(req.reqId, reason), self.clientIdentifiers[req.identifier])
+                self.transmitToClient(RequestNack(req.reqId, reason),
+                                      self.clientIdentifiers[req.identifier])
         else:
             reply = self.generateReply(int(ppTime), req)
-            txnId = reply.result[TXN_ID]
-            await self.storeTxnAndSendToClient(req.identifier, reply, txnId)
+            self.storeTxnAndSendToClient(reply)
 
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation
@@ -359,3 +382,9 @@ class Node(PlenumNode):
         })
 
         return Reply(result)
+
+    def countStewards(self) -> int:
+        return self.graphStorage.countStewards()
+
+    def isSteward(self, nym):
+        return self.graphStorage.hasSteward(nym)

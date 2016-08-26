@@ -50,7 +50,8 @@ txnEdges = {
     }
 
 
-txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm, TARGET_NYM, NAME, VERSION]
+txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm,
+                TARGET_NYM, NAME, VERSION]
 
 
 def getEdgeFromTxnType(txnType: str): return txnEdges.get(txnType)
@@ -67,14 +68,10 @@ class IdentityGraph(OrientDbGraphStore):
     def classesNeeded(self):
         return [
             (Vertices.Nym, self.createNymClass),
-            # (Vertices.Steward, self.createStewardClass),
-            # (Vertices.Sponsor, self.createSponsorClass),
-            # (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
             (Vertices.CredDef, self.createCredDefClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
-            # (Edges.Sponsors, self.createSponsorsClass),
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
             (Edges.AddsCredDef, self.createAddsCredDefClass)
@@ -180,7 +177,7 @@ class IdentityGraph(OrientDbGraphStore):
         }
 
         if not frm:
-            # In case of geneseis transaction
+            # In case of genesis transaction
             kwargs[F.seqNo.name] = seqNo
 
         self.createVertex(Vertices.Nym, **kwargs)
@@ -292,15 +289,12 @@ class IdentityGraph(OrientDbGraphStore):
             })
 
     def getSteward(self, nym):
-        # return self.getEntityByUniqueAttr(Vertices.Steward, NYM, nym)
         return self.getNym(nym, STEWARD)
 
     def getSponsor(self, nym):
-        # return self.getEntityByUniqueAttr(Vertices.Sponsor, NYM, nym)
         return self.getNym(nym, SPONSOR)
 
     def getUser(self, nym):
-        # return self.getEntityByUniqueAttr(Vertices.User, NYM, nym)
         return self.getNym(nym, USER)
 
     def hasSteward(self, nym):
@@ -328,6 +322,11 @@ class IdentityGraph(OrientDbGraphStore):
                                                       NYM, nym))
         return None if not sponsor else sponsor[0].oRecordData.get(NYM)
 
+    def countStewards(self):
+        return self.countEntitiesByAttrs(Vertices.Nym, {
+            ROLE: STEWARD
+        })
+
     def getAddNymTxn(self, nym):
         nymEdge = self.getAddsNymEdge(nym)
         if not nymEdge:
@@ -345,7 +344,7 @@ class IdentityGraph(OrientDbGraphStore):
         else:
             result = {
                 TXN_ID: nymEdge.oRecordData.get(TXN_ID),
-                ROLE: nymEdge.oRecordData.get(ROLE, USER)
+                ROLE: nymEdge.oRecordData.get(ROLE) or USER
             }
             frm, to = self.store.getByRecordIds(nymEdge.oRecordData['out'].get(),
                                           nymEdge.oRecordData['in'].get())
@@ -382,10 +381,11 @@ class IdentityGraph(OrientDbGraphStore):
         def delegate(edgeClass):
             # TODO: Need to do this to get around a bug in pyorient,
             # https://github.com/mogui/pyorient/issues/207
-            edgeProps = ", ".join("@this.{} as __e_{}".format(name, name) for name in
-                                  txnEdgeProps)
+            edgeProps = ", ".join("@this.{} as __e_{}".format(name, name)
+                                  for name in txnEdgeProps)
             vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
-                                    chain.from_iterable(Vertices._Properties.values()))
+                                    chain.from_iterable(
+                                        Vertices._Properties.values()))
             cmd = "select {}, {} from {} where {} in [{}]".\
                 format(edgeProps, vertexProps, edgeClass, TXN_ID, txnIdsStr)
             if seqNo:
@@ -422,7 +422,8 @@ class IdentityGraph(OrientDbGraphStore):
     @staticmethod
     def makeResult(txnType, oRecordData):
         # TODO: Remove this log statement
-        logger.debug("Creating result for {} from {}".format(txnType, oRecordData))
+        logger.debug("Creating result for {} from {}".format(txnType,
+                                                             oRecordData))
         result = {
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
@@ -476,7 +477,8 @@ class IdentityGraph(OrientDbGraphStore):
         updates = ', '.join(["{}={}".format(prop, txn[prop])
                              if isinstance(txn[prop], (int, float)) else
                              "{}='{}'".format(prop, txn[prop])
-                             for prop in properties if (prop in txn and txn[prop] is not None)])
+                             for prop in properties if (prop in txn and
+                                                        txn[prop] is not None)])
         updateCmd = "update {} set {} where {}='{}'". \
             format(edgeClass, updates, TXN_ID, txnId)
         logger.debug("updating edge {} with command {}".format(edgeClass,
@@ -485,7 +487,7 @@ class IdentityGraph(OrientDbGraphStore):
 
     def addNymTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
-        role = txn.get(ROLE, USER)
+        role = txn.get(ROLE) or USER
         if not isValidRole(role):
             raise ValueError("Unknown role {} for nym, cannot add nym to graph"
                              .format(role))
@@ -535,3 +537,17 @@ class IdentityGraph(OrientDbGraphStore):
         except pyorient.PyOrientCommandException as ex:
             logger.error(
                 "An exception was raised while adding cred def: {}".format(ex))
+
+    def countTxns(self):
+        seqNos = set()
+        # Getting sequence numbers fo genesis nyms
+        # cmd = "select distinct({}) as seqNo from {}".\
+        #     format(F.seqNo.name, Vertices.Nym)
+        # result = self.client.command(cmd)
+        # seqNos.update({r.oRecordData.get('seqNo') for r in result})
+        for txnEdgeClass in (list(txnEdges.values())+[Vertices.Nym]):
+            cmd = "select distinct({}) as seqNo from {}". \
+                format(F.seqNo.name, txnEdgeClass)
+            result = self.client.command(cmd)
+            seqNos.update({r.oRecordData.get('seqNo') for r in result})
+        return len(seqNos)

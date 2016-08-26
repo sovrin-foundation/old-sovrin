@@ -48,7 +48,7 @@ class PrimaryStorage(HasFileStorage):
         HasFileStorage.__init__(self, clientName,
                                 baseDir=baseDir,
                                 dataDir=self.dataDir)
-        self.clientDataLocation = self.getDataLocation()
+        self.clientDataLocation = self.dataLocation
         if not os.path.exists(self.clientDataLocation):
             os.makedirs(self.clientDataLocation)
         self.transactionLog = TextFileStore(self.clientDataLocation,

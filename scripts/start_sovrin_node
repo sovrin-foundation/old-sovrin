@@ -26,6 +26,6 @@ if __name__ == "__main__":
         with Looper(debug=True) as looper:
             node = Node(selfName, nodeRegistry=None, basedirpath=keepDir, ha=ha,
                         cliha=cliha)
-            node.addGenesisTxns()
+            # node.addGenesisTxns()
             looper.add(node)
             looper.run()
