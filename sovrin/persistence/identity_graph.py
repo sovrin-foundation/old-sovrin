@@ -378,7 +378,7 @@ class IdentityGraph(OrientDbGraphStore):
         txnIds = set(txnIds)
         txnIdsStr = ",".join(["'{}'".format(tid) for tid in txnIds])
 
-        def delegate(edgeClass):
+        def getTxnsFromEdge(edgeClass):
             # TODO: Need to do this to get around a bug in pyorient,
             # https://github.com/mogui/pyorient/issues/207
             edgeProps = ", ".join("@this.{} as __e_{}".format(name, name)
@@ -403,7 +403,7 @@ class IdentityGraph(OrientDbGraphStore):
                 return out
 
         result = reduce(lambda d1, d2: {**d1, **d2},
-                      map(delegate, list(txnEdges.values())))
+                      map(getTxnsFromEdge, list(txnEdges.values())))
 
         if len(txnIds) > len(result):
             # Some transactions missing so look for transactions without edges
@@ -424,6 +424,15 @@ class IdentityGraph(OrientDbGraphStore):
         # TODO: Remove this log statement
         logger.debug("Creating result for {} from {}".format(txnType,
                                                              oRecordData))
+        try:
+            int(oRecordData.get(F.seqNo.name))
+        except TypeError as ex:
+            logger.debug(
+                "Cannot convert {} to integer. Provided oRecordData {} for type"
+                " {}".format(oRecordData.get(F.seqNo.name), oRecordData,
+                             txnType))
+            return {}
+
         result = {
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
