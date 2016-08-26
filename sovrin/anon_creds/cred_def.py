@@ -1,5 +1,5 @@
 from abc import abstractmethod, abstractproperty
-from enum import IntEnum, Enum
+from enum import Enum
 
 
 class SerFmt(Enum):

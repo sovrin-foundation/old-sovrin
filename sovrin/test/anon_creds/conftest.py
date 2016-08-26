@@ -96,7 +96,7 @@ def attrNames():
 def credDef(attrNames):
     ip, port = genHa()
     return CredDef(attrNames, 'name1', 'version1',
-                   p_prime="static", q_prime="static",
+                   p_prime="prime1", q_prime="prime1",
                    ip=ip, port=port)
 
 

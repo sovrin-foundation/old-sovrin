@@ -1,9 +1,5 @@
 from abc import abstractmethod, abstractproperty
 
-from typing import Dict, Sequence, TypeVar
-
-from sovrin.anon_creds.cred_def import CredDefPublicKey
-
 
 class Proof:
     @abstractmethod

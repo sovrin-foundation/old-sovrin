@@ -2,10 +2,6 @@ from abc import abstractmethod
 
 from sovrin.anon_creds.cred_def import CredDef
 
-ISSUER = "issuer"
-CRED_V = "v"
-V_PRIME_PRIME = "vprimeprime"
-
 
 class Credential:
     @abstractmethod

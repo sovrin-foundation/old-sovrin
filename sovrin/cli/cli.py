@@ -12,9 +12,9 @@ from hashlib import sha256
 # from anoncreds.protocol.credential_definition import base58decode, \
 #     getDeserializedSK, getPPrime, getQPrime, generateCredential
 # from anoncreds.protocol.verifier import verify_proof
-
+from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, ENCODED_ATTRS
 from sovrin.anon_creds.cred_def import CredDef
-from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer, ISSUER, CRED_V, V_PRIME_PRIME
+from sovrin.anon_creds.issuer import InMemoryAttrRepo
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.cred_def import SerFmt, CredDefPublicKey
@@ -313,7 +313,7 @@ class SovrinCli(PlenumCli):
         attributes = [s.strip() for s in keys.split(",")]
         return CredDef(attrNames=attributes, name=name,
                        version=version, ip=ip, port=port,
-                       p_prime="static", q_prime="static")
+                       p_prime="prime1", q_prime="prime1")
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):
@@ -358,7 +358,7 @@ class SovrinCli(PlenumCli):
         encodedAttrs = {
             issuerId: next(iter(attribs.values()))
         }
-        proofBuilder.setEncodedAttrs(encodedAttrs)
+        # proofBuilder.setEncodedAttrs(encodedAttrs)
         if not masterSecret:
             self.activeClient.wallet.addMasterSecret(str(proofBuilder.masterSecret))
 
@@ -408,6 +408,7 @@ class SovrinCli(PlenumCli):
                 name, value = val.split('=', 1)
                 name, value = name.strip(), value.strip()
                 credential[name] = value
+
             proofBuilder, credName, credVersion, issuerId = self.activeClient.proofBuilders[proofId]
             credential[ISSUER] = issuerId
             credential[NAME] = credName
@@ -415,7 +416,7 @@ class SovrinCli(PlenumCli):
             # TODO: refactor to use issuerId
             credential[CRED_V] = str(next(iter(proofBuilder.vprime.values())) +
                                   int(credential[V_PRIME_PRIME]))
-            credential["encodedAttrs"] = {
+            credential[ENCODED_ATTRS] = {
                 k: str(v) for k, v in next(iter(proofBuilder.encodedAttrs.values())).items()
             }
             # TODO: What if alias is not given (we don't have issuer id and
