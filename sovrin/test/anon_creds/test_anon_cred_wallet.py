@@ -3,11 +3,13 @@ from sovrin.anon_creds.issuer import AttribDef, AttribType
 from sovrin.client.wallet import Wallet
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 
+
 GVT = AttribDef('gvt',
                 [AttribType('name', encode=True),
                   AttribType('age', encode=False),
                   AttribType('sex', encode=True)])
 
+X = CredDef
 
 def testCredDefSecretKey(tdir):
     P_PRIME1, Q_PRIME1 = CredDef.getStaticPPrime("prime1"), CredDef.getStaticQPrime("prime1")
