@@ -1,12 +1,9 @@
 import pytest
 
-from anoncreds.protocol.types import SerFmt
-from anoncreds.protocol.utils import encodeAttrs
-
 from plenum.client.signer import SimpleSigner
 
 from plenum.test.helper import genHa
-from sovrin.anon_creds.cred_def import CredDef
+from sovrin.anon_creds.cred_def import CredDef, SerFmt
 from sovrin.common.util import getConfig
 from sovrin.test.helper import addNym
 
@@ -63,11 +60,6 @@ def proverAttributeNames():
 @pytest.fixture(scope="module")
 def proverAttributes():
     return {'name': 'Mario', 'age': '25', 'sex': 'Male', 'country': 'Italy'}
-
-
-@pytest.fixture(scope="module")
-def encodedProverAttributes(proverAttributes):
-    return encodeAttrs(proverAttributes)
 
 
 @pytest.fixture(scope="module")

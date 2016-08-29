@@ -50,3 +50,7 @@ class CredDef:
     @abstractmethod
     def getStaticQPrime(cls, *args, **kwargs):
         pass
+
+    @abstractmethod
+    def getEncodedAttrs(cls, *args, **kwargs):
+        pass

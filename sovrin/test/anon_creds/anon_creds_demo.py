@@ -5,6 +5,11 @@ import tempfile
 import logging
 
 # The following setup of logging needs to happen before everything else
+from sovrin.anon_creds.cred_def import CredDef
+from sovrin.anon_creds.issuer import InMemoryAttrRepo
+from sovrin.anon_creds.proof_builder import ProofBuilder
+from sovrin.anon_creds.verifier import Verifier
+
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
 from ioflo.aid.consoling import Console
@@ -14,12 +19,7 @@ logging.root.handlers = []
 #              Console.Wordage.mute)
 logger = getlogger("anon_creds_demo")
 
-from anoncreds.protocol.attribute_repo import AttrRepo, \
-    InMemoryAttrRepo
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.verifier import verify_proof
 
-from anoncreds.protocol.utils import encodeAttrs
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import DATA, ORIGIN
@@ -170,7 +170,7 @@ def runAnonCredFlow():
     logger.display("Issuer: Creating credential for "
                 "{}".format(proverSigner.verstr))
 
-    encodedAttributes = {issuerId: encodeAttrs(attributes)}
+    encodedAttributes = {issuerId: CredDef.getEncodedAttrs(attributes)}
     pk = {
         issuerId: prover.getPk(credDef)
     }
@@ -201,7 +201,7 @@ def runAnonCredFlow():
     logger.display("Prover: Preparing proof for attributes: "
                 "{}".format(revealedAttrs))
     proofBuilder.setParams(encodedAttributes, revealedAttrs, nonce)
-    prf = proofBuilder.prepare_proof()
+    prf = proofBuilder.prepareProof()
     logger.display("Prover: Proof prepared.")
     logger.display("Prover: Proof submitted")
     input()
@@ -217,7 +217,7 @@ def runAnonCredFlow():
     }
     # Verifier verifies proof
     logger.display("Verifier: Verifying proof...")
-    verified = verify_proof(pk, prf, nonce,
+    verified = Verifier.verifyProof(pk, prf, nonce,
                                      encodedAttributes,
                                      revealedAttrs)
     input()

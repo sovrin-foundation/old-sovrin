@@ -3,7 +3,7 @@ import os
 from sovrin.common.util import getConfig
 
 
-def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
+def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
     config = getConfig()
     pluginsPath = os.path.expanduser(os.path.join(baseDir, config.PluginsDir))
 
@@ -45,9 +45,12 @@ def writeAnonCredPlugin(baseDir, reloadTestClasses:bool = False):
                         "\n" \
 
     modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
+    test_modules_to_reload = [
+        "sovrin.test.helper", "sovrin.test.cli.helper",
+        "sovrin.test.anon_creds.conftest", "sovrin.test.anon_creds.test_anon_cred_wallet"
+    ]
 
-    if reloadTestClasses:
-        test_modules_to_reload = ["sovrin.test.helper", "sovrin.test.cli.helper", "sovrin.test.anon_creds.conftest"]
+    if reloadTestModules:
         modules_to_reload.extend(test_modules_to_reload)
 
     reload_module_code = \

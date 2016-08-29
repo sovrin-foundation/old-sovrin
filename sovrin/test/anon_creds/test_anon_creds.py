@@ -1,13 +1,13 @@
 import logging
 import pprint
 # The following setup of logging needs to happen before everything else
+from sovrin.anon_creds.issuer import AttribDef, AttribType, InMemoryAttrRepo
+from sovrin.anon_creds.proof_builder import ProofBuilder
+from sovrin.anon_creds.verifier import Verifier
+
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
 from ioflo.aid.consoling import Console
-
-from anoncreds.protocol.types import AttribDef, AttribType
-from anoncreds.protocol.verifier import verify_proof
-from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
 
 
 def out(record, extra_cli_value=None):
@@ -27,8 +27,6 @@ setupLogging(DISPLAY_LOG_LEVEL,
              Console.Wordage.mute)
 logger = getlogger("test_anon_creds")
 
-from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
-from anoncreds.protocol.proof_builder import ProofBuilder
 
 from plenum.common.txn import DATA
 from plenum.common.txn import TXN_TYPE
@@ -107,7 +105,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
 
     # Issuer publishes credential definition to Sovrin ledger
     credDef = issuer.addNewCredDef(attrNames, name1, version1,
-                                p_prime=P_PRIME1, q_prime=Q_PRIME1,
+                                p_prime="prime1", q_prime="prime1",
                                 ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
     logger.display("Issuer: Creating version {} of credential definition"
@@ -173,7 +171,7 @@ def testAnonCredFlow(looper, tdir, nodeSet, issuerSigner, proverSigner,
     verifier.credentialDefinitions = {
         (issuerId, name1, version1): credDef
     }
-    verified = verify_proof(pk, prf, nonce,
+    verified = Verifier.verifyProof(pk, prf, nonce,
                             attributes.encoded(),
                             revealedAttrs)
     # Verifier verifies proof

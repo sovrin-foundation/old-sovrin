@@ -14,7 +14,8 @@ from sovrin.common.util import getConfig
 # from anoncreds.protocol.credential_definition import base58decode, \
 #     getDeserializedSK, getPPrime, getQPrime, generateCredential
 # from anoncreds.protocol.verifier import verify_proof
-from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, ENCODED_ATTRS
+from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, \
+    C_VALUE, A_PRIME, EVECT, MVECT, VVECT, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.issuer import InMemoryAttrRepo
 from sovrin.anon_creds.proof_builder import ProofBuilder
@@ -398,8 +399,7 @@ class SovrinCli(PlenumCli):
     def _genVerifNonceAction(self, matchedVars):
         if matchedVars.get('gen_verif_nonce') == 'generate verification nonce':
             # TODO: For now I am generating random interaction id, but we need
-            # to come back to us,
-            # assuming it will work, test cases will confirm it
+            # to come back to this
             interactionId = randomString(7)
             nonce = self.activeClient.generateNonce(interactionId)
             self.print("Verification nonce is {}".format(nonce), Token.BoldBlue)
@@ -535,9 +535,9 @@ class SovrinCli(PlenumCli):
             name = credential.get(NAME)
             version = credential.get(VERSION)
             issuer = credential.get(ISSUER)
-            A = credential.get("A")
-            e = credential.get("e")
-            v = credential.get("v")
+            A = credential.get(CRED_A)
+            e = credential.get(CRED_E)
+            v = credential.get(CRED_V)
             cred = Credential(CredDef.getCryptoInteger(A), CredDef.getCryptoInteger(e),
                               CredDef.getCryptoInteger(v))
             credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
@@ -562,21 +562,21 @@ class SovrinCli(PlenumCli):
                                             nonce=nonce, encodedAttrs=encodedAttrs)
             out = {}
             proof = {}
-            proof["Aprime"] = {issuer: str(prf.Aprime[issuer])}
-            proof["c"] = str(prf.c)
-            proof["evect"] = {issuer: str(prf.evect[issuer])}
-            proof["mvect"] = {k: str(v) for k, v in prf.mvect.items()}
-            proof["vvect"] = {issuer: str(prf.vvect[issuer])}
+            proof[A_PRIME] = {issuer: str(prf.Aprime[issuer])}
+            proof[C_VALUE] = str(prf.c)
+            proof[EVECT] = {issuer: str(prf.evect[issuer])}
+            proof[MVECT] = {k: str(v) for k, v in prf.mvect.items()}
+            proof[VVECT] = {issuer: str(prf.vvect[issuer])}
 
-            out["proof"] = proof
+            out[PROOF] = proof
             out[NAME] = name
             out[VERSION] = version
             out[ISSUER] = issuer
-            out["nonce"] = str(nonce)
-            out["attrs"] = {
+            out[NONCE] = str(nonce)
+            out[ATTRS] = {
                 issuer: {k: str(v) for k,v in next(iter(attribs.values())).items()}
             }
-            out["revealedAttrs"] = revealedAttrs
+            out[REVEALED_ATTRS] = revealedAttrs
             self.print("Proof is: ", newline=False)
             self.print("{}".format(json.dumps(out)), Token.BoldBlue)
             return True
