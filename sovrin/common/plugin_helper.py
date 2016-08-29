@@ -44,7 +44,7 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
                         "sovrin.anon_creds.cred_def.CredDef = anoncreds.protocol.credential_definition.CredentialDefinition\n" \
                         "\n" \
 
-    modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
+    modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli", "sovrin.anon_creds.cred_def"]
     test_modules_to_reload = [
         "sovrin.test.helper", "sovrin.test.cli.helper",
         "sovrin.test.anon_creds.conftest", "sovrin.test.anon_creds.test_anon_cred_wallet"

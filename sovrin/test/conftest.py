@@ -1,6 +1,7 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
+from plenum.common.plugin_helper import loadPlugins
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.plugin.helper import getPluginPath
 from sovrin.common.plugin_helper import writeAnonCredPlugin
@@ -18,11 +19,10 @@ from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
     nodeReg, up, ready, keySharedNodes, whitelist, logcapture
 
 
-
 @pytest.fixture(scope="module", autouse=True)
 def anonCredPluginFileCreated(tdir):
     writeAnonCredPlugin(tdir, reloadTestModules= True)
-
+    loadPlugins(tdir)
 
 @pytest.fixture(scope="module")
 def allPluginsPath():
