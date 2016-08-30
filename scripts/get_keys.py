@@ -18,7 +18,7 @@ if(len(sys.argv) < 2):
     raise Exception('provide the parameter which specifies node or client name')
 
 NODE_OR_CLIENT_NAME = sys.argv.pop(1)
-CURRENT_LOGGED_IN_USER = "sovrin"
+CURRENT_LOGGED_IN_USER = "neelkanth"
 
 path = '/home/'+ CURRENT_LOGGED_IN_USER +'/.sovrin/'  + NODE_OR_CLIENT_NAME +'/role/local/role.json'
 
@@ -32,13 +32,12 @@ if(os.path.exists(path)):
         raise Exception("non json content exception message here")
 
     if 'prihex' not in d:
-        raise ValueError("No target in given data")
+        raise ValueError("key not defined in given data")
     if 'sighex' not in d:
-        raise ValueError("No target in given data")
+        raise ValueError("key not defined in given data")
 
     prihex = d['prihex']
     sighex = d['sighex']
-    f.close()
     privateer = Privateer(prihex)
     pubkey = privateer.pubhex.decode()
     signer = Signer(sighex)
