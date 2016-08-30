@@ -11,7 +11,6 @@ from sovrin.common.txn import getTxnOrderedFields, SKEY
 from sovrin.persistence.identity_graph import IdentityGraph, Edges, Vertices
 
 REQ_DATA = "ReqData"
-ATTR_DATA = "AttrData"
 """
 The attribute data stored by the client differs from that of the node in
 that the client stored the attribute key and value in a non-encrypted form
@@ -191,8 +190,7 @@ class SecondaryStorage(IdentityGraph):
             "acks": "embeddedset string",
             "nacks": "embeddedmap string",
             "replies": "embeddedmap string",
-            "hasConsensus": "boolean",
-            "attribute": "embedded {}".format(ATTR_DATA),
+            "hasConsensus": "boolean"
         })
         self.store.createIndexOnClass(REQ_DATA, "hasConsensus")
 
