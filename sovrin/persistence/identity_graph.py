@@ -421,9 +421,6 @@ class IdentityGraph(OrientDbGraphStore):
 
     @staticmethod
     def makeResult(txnType, oRecordData):
-        # TODO: Remove this log statement
-        logger.debug("Creating result for {} from {}".format(txnType,
-                                                             oRecordData))
         try:
             int(oRecordData.get(F.seqNo.name))
         except TypeError as ex:
@@ -549,11 +546,6 @@ class IdentityGraph(OrientDbGraphStore):
 
     def countTxns(self):
         seqNos = set()
-        # Getting sequence numbers fo genesis nyms
-        # cmd = "select distinct({}) as seqNo from {}".\
-        #     format(F.seqNo.name, Vertices.Nym)
-        # result = self.client.command(cmd)
-        # seqNos.update({r.oRecordData.get('seqNo') for r in result})
         for txnEdgeClass in (list(txnEdges.values())+[Vertices.Nym]):
             cmd = "select distinct({}) as seqNo from {}". \
                 format(F.seqNo.name, txnEdgeClass)
