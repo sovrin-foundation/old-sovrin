@@ -5,7 +5,6 @@ print("\n=======================================================================
 print("\nThis is a script to get the public key and verification key &")
 print("Takes either node name or client name to get the keys\n")
 
-import glob
 import json
 import os
 import sys
@@ -25,14 +24,12 @@ path = '/home/'+ CURRENT_LOGGED_IN_USER +'/.sovrin/'  + NODE_OR_CLIENT_NAME +'/r
 
 if(os.path.exists(path)):
 
-    files=glob.glob(path)
-    f = open(files.pop(0), 'r')
-    keyString = EMPTY_STRING.join(f.readlines())
-
+    with open(path, "r") as f:
+        keyString = f.read().strip()
     try:
-     d = json.loads(keyString)
-    except Exception:
-     print("invalid file content from file that contains keys")
+        d = json.loads(keyString)
+    except json.decoder.JSONDecodeError:
+        raise Exception("non json content exception message here")
 
     if 'prihex' not in d:
         raise ValueError("No target in given data")
@@ -49,7 +46,7 @@ if(os.path.exists(path)):
 
     print("\nPublic key is : " + pubkey)
     print("\nVerification key is : " + verifkey)
-   
+
 else:
     print("Sorry, please check the client or node name you've entered")
 
