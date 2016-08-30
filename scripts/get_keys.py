@@ -18,7 +18,7 @@ if(len(sys.argv) < 2):
     raise Exception('provide the parameter which specifies node or client name')
 
 NODE_OR_CLIENT_NAME = sys.argv.pop(1)
-CURRENT_LOGGED_IN_USER = "neelkanth"
+CURRENT_LOGGED_IN_USER = "sovrin"
 
 path = '/home/'+ CURRENT_LOGGED_IN_USER +'/.sovrin/'  + NODE_OR_CLIENT_NAME +'/role/local/role.json'
 
