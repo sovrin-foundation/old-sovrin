@@ -11,7 +11,6 @@ from sovrin.common.txn import getTxnOrderedFields, SKEY
 from sovrin.persistence.identity_graph import IdentityGraph, Edges, Vertices
 
 REQ_DATA = "ReqData"
-ATTR_DATA = "AttrData"
 """
 The attribute data stored by the client differs from that of the node in
 that the client stored the attribute key and value in a non-encrypted form
@@ -67,18 +66,13 @@ class SecondaryStorage(IdentityGraph):
     def classesNeeded(self):
         return [
             (Vertices.Nym, self.createNymClass),
-            # (Vertices.Steward, self.createStewardClass),
-            # (Vertices.Sponsor, self.createSponsorClass),
-            # (Vertices.User, self.createUserClass),
             (Vertices.Attribute, self.createAttributeClass),
             (Vertices.CredDef, self.createCredDefClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
-            # (Edges.Sponsors, self.createSponsorsClass),
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
             (LAST_TXN_DATA, self.createLastTxnClass),
-            (ATTR_DATA, self.createClientAttributeClass),
             (REQ_DATA, self.createReqDataClass),
             (Edges.AddsCredDef, self.createAddsCredDefClass)
         ]
@@ -92,13 +86,11 @@ class SecondaryStorage(IdentityGraph):
         self.store.createUniqueIndexOnClass(LAST_TXN_DATA, f.IDENTIFIER.nm)
 
     def getLastReqId(self):
-        result = self.client.command("select max({}) as lastId from {}".
-                                     format(f.REQ_ID.nm, REQ_DATA))
+        result = self.client.command("select max({}) as lastId from {}".format(f.REQ_ID.nm, REQ_DATA))
         return 0 if not result else result[0].oRecordData['lastId']
 
     def addRequest(self, req: Request):
-        self.client.command("insert into {} set {} = {}, {} = '{}',"
-                            "{} = '{}', nacks = {{}}, replies = {{}}".
+        self.client.command("insert into {} set {} = {}, {} = '{}',{} = '{}', nacks = {{}}, replies = {{}}".
                             format(REQ_DATA, f.REQ_ID.nm, req.reqId,
                                    f.IDENTIFIER.nm, req.identifier,
                                    TXN_TYPE, req.operation[TXN_TYPE]))
@@ -198,22 +190,9 @@ class SecondaryStorage(IdentityGraph):
             "acks": "embeddedset string",
             "nacks": "embeddedmap string",
             "replies": "embeddedmap string",
-            "hasConsensus": "boolean",
-            "attribute": "embedded {}".format(ATTR_DATA),
+            "hasConsensus": "boolean"
         })
         self.store.createIndexOnClass(REQ_DATA, "hasConsensus")
-
-    # TODO Remove this class once wallet is implemented
-    def createClientAttributeClass(self):
-        self.client.command("create class {}".format(ATTR_DATA))
-        self.store.createClassProperties(ATTR_DATA, {
-            TARGET_NYM: "string",
-            NAME: "string",
-            "value": "string",
-            SKEY: "string",
-            HASH: "string"
-        })
-        self.store.createIndexOnClass(ATTR_DATA, TARGET_NYM)
 
 
 class ClientStorage(PrimaryStorage, SecondaryStorage):
