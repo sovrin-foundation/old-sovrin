@@ -49,8 +49,7 @@ if(os.path.exists(path)):
 
     print("\nPublic key is : " + pubkey)
     print("\nVerification key is : " + verifkey)
-    # except Exception:
-    #  print("invalid file content from file that contains keys")
+   
 else:
     print("Sorry, please check the client or node name you've entered")
 
