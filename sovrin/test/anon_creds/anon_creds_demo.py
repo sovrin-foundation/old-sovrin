@@ -14,8 +14,7 @@ logging.root.handlers = []
 #              Console.Wordage.mute)
 logger = getlogger("anon_creds_demo")
 
-from anoncreds.protocol.attribute_repo import AttrRepo, \
-    InMemoryAttrRepo
+from anoncreds.protocol.attribute_repo import AttrRepo, InMemoryAttrRepo
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.verifier import verify_proof
 
@@ -27,7 +26,8 @@ from plenum.common.txn import TXN_TYPE
 from plenum.test.helper import genHa, ensureElectionsDone, \
     checkNodesConnected, genNodeReg
 
-from sovrin.test.helper import genTestClient, submitAndCheck, createNym, addNym, TestNodeSet
+from sovrin.test.helper import genTestClient, submitAndCheck, createNym, \
+    addNym, TestNodeSet
 from sovrin.common.txn import CRED_DEF, SPONSOR, getTxnOrderedFields
 from sovrin.test.conftest import genesisTxns
 from sovrin.common.util import getCredDefTxnData, getConfig
