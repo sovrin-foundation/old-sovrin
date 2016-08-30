@@ -49,6 +49,14 @@ class ProofBuilder:
         pass
 
     @abstractmethod
+    def prepareProofAsDict(*args, **kwargs) -> dict:
+        pass
+
+    @abstractmethod
+    def prepareProofFromDict(*args, **kwargs) -> Proof:
+        pass
+
+    @abstractmethod
     def preparePredicateProof(self, *args, **kwargs) -> PredicateProof:
         pass
 

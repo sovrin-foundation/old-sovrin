@@ -3,24 +3,18 @@ import json
 from typing import Dict
 
 from hashlib import sha256
+
 from plenum.common.txn_util import createGenesisTxnFile
 from sovrin.common.util import getConfig
 
 
-
-# from anoncreds.protocol.globals import APRIME, EVECT, MVECT, VVECT, ATTRS, NONCE, REVEALED_ATTRS, CRED_A, CRED_E, \
-#     CRED_V, ISSUER, PROOF, C_VALUE
-# from anoncreds.protocol.utils import strToCharmInteger
-# from anoncreds.protocol.credential_definition import base58decode, \
-#     getDeserializedSK, getPPrime, getQPrime, generateCredential
-# from anoncreds.protocol.verifier import verify_proof
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, \
-    C_VALUE, A_PRIME, EVECT, MVECT, VVECT, PROOF, REVEALED_ATTRS
+    PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.issuer import InMemoryAttrRepo
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
-from sovrin.anon_creds.cred_def import SerFmt, CredDefPublicKey
+from sovrin.anon_creds.cred_def import SerFmt
 from sovrin.anon_creds.proof_builder import Proof as ProofTuple
 
 from plenum.cli.cli import Cli as PlenumCli
@@ -162,41 +156,12 @@ class SovrinCli(PlenumCli):
                              config.domainTransactionsFile,
                              getTxnOrderedFields())
         nodesAdded = super().newNode(nodeName)
-        # if nodesAdded is not None:
-        #     genTxns = self.genesisTransactions
-        #     for node in nodesAdded:
-        #         txnCount = node.addGenesisTxns(genTxns)
-        #         if txnCount == len(genTxns):
-        #             tokens = [(Token.BoldBlue, "{} adding genesis transactions {}".
-        #                        format(node.name, t)) for t in genTxns]
-        #             self.printTokens(tokens=tokens, end='\n')
-        #         else:
-        #             self.logger.warn("{} genesis transactions added whereas"
-        #                                  " {} should have been added.".
-        #                                  format(txnCount, len(genTxns)))
-
         return nodesAdded
 
     def newClient(self, clientName, seed=None, identifier=None, signer=None,
                   wallet=None):
         return super().newClient(clientName, seed=seed, identifier=identifier,
                           signer=signer, wallet=wallet)
-        # if clientName == "steward":
-        #     for txn in self._genesisTransactions:
-        #         if txn[TARGET_NYM] == identifier and txn[ROLE] == STEWARD:
-        #             self.print("Steward activated", Token.BoldBlue)
-        #             # Only one steward is supported for now
-        #             return super().newClient(clientName,
-        #                                      seed=STEWARD_SEED,
-        #                                      signer=signer)
-        #     else:
-        #         self.print("No steward found with identifier {}".
-        #                    format(identifier), Token.Error)
-        # elif clientName in self.aliases:
-        #     return super().newClient(clientName, signer=self.aliases[clientName])
-        # else:
-        #     self.print("{} must be first be added by a sponsor or steward".
-        #                format(clientName), Token.Error)
 
     def _clientCommand(self, matchedVars):
         if matchedVars.get('client') == 'client':
@@ -531,6 +496,7 @@ class SovrinCli(PlenumCli):
             nonce = CredDef.getCryptoInteger(matchedVars.get('nonce'))
             revealedAttrs = (matchedVars.get('revealed_attrs'), )
             credAlias = matchedVars.get('cred_alias')
+
             credential = json.loads(self.activeClient.wallet.getCredential(credAlias))
             name = credential.get(NAME)
             version = credential.get(VERSION)
@@ -556,18 +522,11 @@ class SovrinCli(PlenumCli):
             encodedAttrs = {
                 issuer: next(iter(attribs.values()))
             }
-            prf = ProofBuilder.prepareProof(credDefPks=credDefPks, masterSecret=masterSecret,
+            proof = ProofBuilder.prepareProofAsDict(issuer=issuer, credDefPks=credDefPks, masterSecret=masterSecret,
                                             creds={issuer: cred},
                                             revealedAttrs=revealedAttrs,
                                             nonce=nonce, encodedAttrs=encodedAttrs)
             out = {}
-            proof = {}
-            proof[A_PRIME] = {issuer: str(prf.Aprime[issuer])}
-            proof[C_VALUE] = str(prf.c)
-            proof[EVECT] = {issuer: str(prf.evect[issuer])}
-            proof[MVECT] = {k: str(v) for k, v in prf.mvect.items()}
-            proof[VVECT] = {issuer: str(prf.vvect[issuer])}
-
             out[PROOF] = proof
             out[NAME] = name
             out[VERSION] = version
@@ -600,20 +559,13 @@ class SovrinCli(PlenumCli):
         pk = {
             issuer: self.pKFromCredDef(keys)
         }
-        prf = proof["proof"]
-        prfArgs = {}
-        prfArgs["Aprime"] = {issuer: CredDef.getCryptoInteger(prf["Aprime"][issuer])}
-        prfArgs["c"] = CredDef.getCryptoInteger(prf["c"])
-        prfArgs["evect"] = {issuer: CredDef.getCryptoInteger(prf["evect"][issuer])}
-        prfArgs["mvect"] = {k: CredDef.getCryptoInteger(v) for k, v in prf["mvect"].items()}
-        prfArgs["vvect"] = {issuer: CredDef.getCryptoInteger(prf["vvect"][issuer])}
-        prf = ProofTuple(**prfArgs)
+        prf = ProofBuilder.prepareProofFromDict(proof)
         attrs = {
             issuer: {k: CredDef.getCryptoInteger(v) for k, v in
-                     next(iter(proof["attrs"].values())).items()}
+                     next(iter(proof[ATTRS].values())).items()}
         }
         result = self.activeClient.verifyProof(pk, prf, CredDef.getCryptoInteger(proof["nonce"]), attrs,
-                              proof["revealedAttrs"])
+                              proof[REVEALED_ATTRS])
         if not result:
             self.print("Proof verification failed", Token.BoldOrange)
         elif result and status in proof["revealedAttrs"]:

@@ -21,7 +21,7 @@ from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
 
 @pytest.fixture(scope="module", autouse=True)
 def anonCredPluginFileCreated(tdir):
-    writeAnonCredPlugin(tdir, reloadTestModules= True)
+    writeAnonCredPlugin(tdir, reloadTestModules=True)
     loadPlugins(tdir)
 
 @pytest.fixture(scope="module")
