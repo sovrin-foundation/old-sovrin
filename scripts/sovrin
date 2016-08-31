@@ -14,6 +14,11 @@ $ sovrin "new nodes all"
 """
 import os
 import sys
+import logging
+logging.root.handlers = []
+logger = logging.getLogger()
+logger.propagate = False
+logger.disabled = True
 
 # NOTE: Loading of plugin should happen as early as possible
 # So put all other required imports after loadPlugins function call below
