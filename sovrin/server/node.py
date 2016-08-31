@@ -1,6 +1,4 @@
-import asyncio
 import json
-import time
 from _sha256 import sha256
 from copy import deepcopy
 from operator import itemgetter
@@ -14,20 +12,19 @@ from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, KEYS, TYPE, IP, \
-    PORT
+from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
     NODE_PRIMARY_STORAGE_SUFFIX
 from plenum.common.util import getlogger, error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
-from sovrin.common.txn import getGenesisTxns, TXN_TYPE, \
+from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
-    TXN_ID, TXN_TIME, REFERENCE, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
+    TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole
 from sovrin.common.util import getConfig, dateTimeEncoding
-from sovrin.persistence.identity_graph import IdentityGraph, Vertices
+from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
 

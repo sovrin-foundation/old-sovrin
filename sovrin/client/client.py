@@ -1,5 +1,4 @@
 import json
-import os
 from _sha256 import sha256
 from base64 import b64decode
 from collections import deque

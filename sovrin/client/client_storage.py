@@ -1,13 +1,12 @@
-import json
 import os
 from typing import Any, Sequence
 
 from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.stores.text_file_store import TextFileStore
 from plenum.common.has_file_storage import HasFileStorage
-from plenum.common.txn import TXN_TYPE, TARGET_NYM, TXN_TIME, TXN_ID, NAME, HASH
+from plenum.common.txn import TXN_TYPE, TXN_TIME, TXN_ID
 from plenum.common.types import Request, f
-from sovrin.common.txn import getTxnOrderedFields, SKEY
+from sovrin.common.txn import getTxnOrderedFields
 from sovrin.persistence.identity_graph import IdentityGraph, Edges, Vertices
 
 REQ_DATA = "ReqData"
