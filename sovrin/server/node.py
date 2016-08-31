@@ -164,8 +164,9 @@ class Node(PlenumNode):
                                            format(msg[TARGET_NYM]))
 
     authorizedAdders = {
+        STEWARD: (STEWARD,),
+        SPONSOR: (STEWARD,),
         USER: (STEWARD, SPONSOR),
-        SPONSOR: (STEWARD,)
     }
 
     async def checkRequestAuthorized(self, request: Request):
