@@ -27,7 +27,8 @@ from plenum.common.txn import TXN_TYPE
 from plenum.test.helper import genHa, ensureElectionsDone, \
     checkNodesConnected, genNodeReg
 
-from sovrin.test.helper import genTestClient, submitAndCheck, createNym, addNym, TestNodeSet
+from sovrin.test.helper import genTestClient, submitAndCheck, createNym, \
+    addNym, TestNodeSet
 from sovrin.common.txn import CRED_DEF, SPONSOR, getTxnOrderedFields
 from sovrin.test.conftest import genesisTxns
 from sovrin.common.util import getCredDefTxnData, getConfig
