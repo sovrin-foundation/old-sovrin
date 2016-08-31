@@ -12,6 +12,10 @@ or supply a command to be executed first
 $ sovrin "new nodes all"
 
 """
+
+# Do not remove this import
+import plenum.cli.ensure_logging_not_setup
+
 import os
 import sys
 import logging
