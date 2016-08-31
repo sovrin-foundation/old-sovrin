@@ -11,7 +11,7 @@ from sovrin.common.util import getConfig
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, \
     PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import CredDef
-from sovrin.anon_creds.issuer import InMemoryAttrRepo
+from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.cred_def import SerFmt
@@ -590,8 +590,7 @@ class SovrinCli(PlenumCli):
             if attributes:
                 attributes = list(attributes.values())[0]
             sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
-            cred = self.activeClient.generateCredential(uValue, attributes, pk, sk)
-
+            cred = Issuer.generateCredential(uValue, attributes, pk, sk)
             # TODO: For real scenario, do we need to send this credential back
             # or it will be out of band?
             self.print("Credential: ", newline=False)
