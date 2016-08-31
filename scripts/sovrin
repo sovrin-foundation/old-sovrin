@@ -15,11 +15,19 @@ $ sovrin "new nodes all"
 import os
 import sys
 
-from sovrin.cli.cli import SovrinCli
-
-from plenum.common.looper import Looper
-
+# NOTE: Loading of plugin should happen as early as possible
+# So put all other required imports after loadPlugins function call below
+from plenum.common.plugin_helper import loadPlugins
 from sovrin.common.util import getConfig
+config = getConfig()
+baseDir = os.path.join(os.path.expanduser(config.baseDir))
+if not os.path.exists(baseDir):
+    os.makedirs(baseDir)
+loadPlugins(baseDir)
+
+# NOTE: Put all regular imports below (not related to loadplugin)
+from sovrin.cli.cli import SovrinCli
+from plenum.common.looper import Looper
 
 
 def run_cli():
@@ -27,10 +35,6 @@ def run_cli():
     commands = sys.argv[1:]
 
     with Looper(debug=False) as looper:
-        config = getConfig()
-        baseDir = os.path.join(os.path.expanduser(config.baseDir))
-        if not os.path.exists(baseDir):
-            os.makedirs(baseDir)
         curDir = os.getcwd()
         logFilePath = os.path.join(curDir, config.logFilePath)
         cli = SovrinCli(looper=looper,
