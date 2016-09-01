@@ -1,14 +1,14 @@
 import pytest
 import re
 
+import sovrin.anon_creds.cred_def as cred_def
+
 from plenum.common.looper import Looper
 from plenum.common.txn import TARGET_NYM, NAME, VERSION
-from plenum.test.cli.conftest import createAllNodes
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated, checkAllNodesStarted, checkClientConnected
 from plenum.test.eventually import eventually
 from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
-from anoncreds.protocol.utils import strToCharmInteger
 from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 
 """
@@ -180,7 +180,7 @@ def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, 
     checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
                     "postgrad=False".format(issuerId))
-    assert issuerId in tylerCLI.activeClient.attributes
+    assert issuerId in tylerCLI.activeClient.attributeRepo.attributes
 
 
 @pytest.fixture(scope="module")
@@ -243,7 +243,7 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
 
 
 @pytest.fixture(scope="module")
-def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerPreparedU,
+def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerStoresAttributesAsKnownToBYU, tylerPreparedU,
                 credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     proofId, U = tylerPreparedU
@@ -459,5 +459,5 @@ def testStrTointeger():
         "41915506224275376177925859647928995537185609046742534998874286371343" \
         "66703575716284805303334603968057185045321034098727958620904195146881" \
         "865483244806147104667605098138613899840626729916612169723470228930801507396158440259774040553984850335586645194467365045176677506537296253654429662975816874630847874003647935529333964941855401786336352853043803498640759072173609203160413437402970023625421911392981092263211748047448929085861379410272047860536995972453496075851660446485058108906037436369067625674495155937598646143535510599911729010586276679305856525112130907097314388354485920043436412137797426978774012573863335500074359101826932761239032674620096110906293228090163"
-    i = strToCharmInteger(s)
+    i = cred_def.CredDef.getCryptoInteger(s)
     assert str(i) == s

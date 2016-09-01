@@ -5,6 +5,11 @@ import tempfile
 import logging
 
 # The following setup of logging needs to happen before everything else
+from sovrin.anon_creds.cred_def import CredDef
+from sovrin.anon_creds.issuer import InMemoryAttrRepo
+from sovrin.anon_creds.proof_builder import ProofBuilder
+from sovrin.anon_creds.verifier import Verifier
+
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
 from ioflo.aid.consoling import Console
@@ -14,11 +19,7 @@ logging.root.handlers = []
 #              Console.Wordage.mute)
 logger = getlogger("anon_creds_demo")
 
-from anoncreds.protocol.attribute_repo import AttrRepo, InMemoryAttrRepo
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.verifier import verify_proof
 
-from anoncreds.protocol.utils import encodeAttrs
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import DATA, ORIGIN
@@ -148,7 +149,7 @@ def runAnonCredFlow():
     interactionId = 'LOGIN-1'
 
     # Issuer publishes credential definition to Sovrin ledger
-    credDef = issuer.newCredDef(attrNames, name1, version1, ip=ip, port=port)
+    credDef = issuer.addNewCredDef(attrNames, name1, version1, ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
     input()
     logger.display("Issuer: Creating version {} of credential definition"
@@ -170,14 +171,13 @@ def runAnonCredFlow():
     logger.display("Issuer: Creating credential for "
                 "{}".format(proverSigner.verstr))
 
-    encodedAttributes = {issuerId: encodeAttrs(attributes)}
+    encodedAttributes = {issuerId: CredDef.getEncodedAttrs(attributes)}
     pk = {
         issuerId: prover.getPk(credDef)
     }
-    proof = ProofBuilder(pk)
-    proofId = proof.id
-    prover.proofs[proofId] = proof
-    cred = issuer.createCred(proverId, name1, version1, proof.U[issuerId])
+    proofBuilder = ProofBuilder(pk)
+    prover.proofBuilders[proofBuilder.id] = proofBuilder
+    cred = issuer.createCred(proverId, name1, version1, proofBuilder.U[issuerId])
     input()
     logger.display("Prover: Received credential from "
                 "{}".format(issuerSigner.verstr))
@@ -193,22 +193,16 @@ def runAnonCredFlow():
     logger.display("Verifier: Nonce sent.")
     input()
     logger.display("Prover: Nonce received")
-    prover.proofs[proofId]['nonce'] = nonce
+    prover.proofBuilders[proofBuilder.id]['nonce'] = nonce
 
-    presentationToken = {
-        issuerId: (
-            cred[0], cred[1],
-            proof.vprime[issuerId] + cred[2])
-    }
     # Prover discovers Issuer's credential definition
     prover.credentialDefinitions = {(issuerId, attrNames): credDef}
     revealedAttrs = ["undergrad"]
     input()
     logger.display("Prover: Preparing proof for attributes: "
                 "{}".format(revealedAttrs))
-    proof.setParams(encodedAttributes, presentationToken,
-                    revealedAttrs, nonce)
-    prf = proof.prepare_proof()
+    proofBuilder.setParams(encodedAttributes, revealedAttrs, nonce)
+    prf = proofBuilder.prepareProof()
     logger.display("Prover: Proof prepared.")
     logger.display("Prover: Proof submitted")
     input()
@@ -216,7 +210,7 @@ def runAnonCredFlow():
     input()
     logger.display("Verifier: Looking up Credential Definition"
                 " on Sovrin Ledger...")
-    prover.proofs[proofId] = proof
+    prover.proofs[proofBuilder.id] = proofBuilder
 
     # Verifier fetches the credential definition from ledger
     verifier.credentialDefinitions = {
@@ -224,7 +218,7 @@ def runAnonCredFlow():
     }
     # Verifier verifies proof
     logger.display("Verifier: Verifying proof...")
-    verified = verify_proof(pk, prf, nonce,
+    verified = Verifier.verifyProof(pk, prf, nonce,
                                      encodedAttributes,
                                      revealedAttrs)
     input()

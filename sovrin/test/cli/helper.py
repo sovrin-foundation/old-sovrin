@@ -1,5 +1,6 @@
 import os
 
+from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.test.helper import TestNode, TestClient
 
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI
@@ -15,6 +16,7 @@ class TestCLI(SovrinCli, TestCliCore):
 
 def newCLI(nodeRegsForCLI, looper, tdir, subDirectory=None):
     tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
+    writeAnonCredPlugin(tempDir, reloadTestModules=True)
     return newPlenumCLI(nodeRegsForCLI, looper, tempDir, cliClass=TestCLI,
                         nodeClass=TestNode, clientClass=TestClient)
 

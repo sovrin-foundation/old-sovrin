@@ -1,7 +1,8 @@
 import json
 
-from anoncreds.protocol.types import SerFmt
-from plenum.common.txn import ORIGIN, TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
+from sovrin.anon_creds.cred_def import SerFmt
+
+from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
     KEYS
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd

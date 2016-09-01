@@ -1,15 +1,10 @@
-import json
-
 import pytest
-
-from anoncreds.protocol.types import SerFmt
-from anoncreds.protocol.utils import encodeAttrs
 
 from plenum.client.signer import SimpleSigner
 
 from plenum.test.helper import genHa
-from anoncreds.protocol.credential_definition import CredentialDefinition
-from anoncreds.temp_primes import P_PRIME1, Q_PRIME1
+from sovrin.anon_creds.cred_def import CredDef, SerFmt
+from sovrin.common.util import getConfig
 from sovrin.test.helper import addNym
 
 from plenum.common.txn import TXN_TYPE, DATA
@@ -20,6 +15,10 @@ from sovrin.test.helper import submitAndCheck
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
+
+config = getConfig()
+
+
 @pytest.fixture(scope="module")
 def issuerSigner():
     signer = SimpleSigner()
@@ -64,11 +63,6 @@ def proverAttributes():
 
 
 @pytest.fixture(scope="module")
-def encodedProverAttributes(proverAttributes):
-    return encodeAttrs(proverAttributes)
-
-
-@pytest.fixture(scope="module")
 def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
              issuerSigner, proverSigner, verifierSigner, issuerHA, proverHA,
              verifierHA):
@@ -93,9 +87,9 @@ def attrNames():
 @pytest.fixture(scope="module")
 def credDef(attrNames):
     ip, port = genHa()
-    return CredentialDefinition(attrNames, 'name1', 'version1',
-                                p_prime=P_PRIME1, q_prime=Q_PRIME1,
-                                ip=ip, port=port)
+    return CredDef(attrNames, 'name1', 'version1',
+                   p_prime="prime1", q_prime="prime1",
+                   ip=ip, port=port)
 
 
 @pytest.fixture(scope="module")
@@ -109,3 +103,7 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     }
     return submitAndCheck(looper, sponsor, op,
                           identifier=sponsorSigner.verstr)
+
+
+
+

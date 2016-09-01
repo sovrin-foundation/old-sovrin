@@ -9,6 +9,7 @@ import base58
 import pyorient
 
 from raet.raeting import AutoMode
+
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
@@ -28,9 +29,10 @@ from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
 from sovrin.persistence.identity_graph import getEdgeFromTxnType
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.verifier import Verifier
+
+from sovrin.anon_creds.issuer import Issuer
+from sovrin.anon_creds.prover import Prover
+from sovrin.anon_creds.verifier import Verifier
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 
 logger = getlogger()
