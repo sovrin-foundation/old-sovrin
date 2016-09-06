@@ -11,7 +11,7 @@ from plenum.common.txn import TXN_TYPE, DATA
 
 from sovrin.common.txn import CRED_DEF
 from sovrin.test.helper import submitAndCheck
-
+from sovrin.test.conftest import tdir, anonCredPluginFileCreated
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.

@@ -18,7 +18,7 @@ class SecondaryStorage(PlenumSS):
             F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
         }
 
-    async def getReply(self, identifier, reqId, **kwargs):
+    def getReply(self, identifier, reqId, **kwargs):
         txn = self._txnStore.getTxn(identifier, reqId, **kwargs)
         if txn:
             txn.update(self._merkleInfo(txn.get(F.seqNo.name)))

@@ -82,28 +82,6 @@ class Node(PlenumNode):
                                dataDir=self.dataLocation,
                                config=self.config)
 
-    # TODO: Should adding of genesis transactions be part of start method
-    # def addGenesisTxns(self, genTxns=None):
-    #     genTxnsCount = 0
-    #     if self.primaryStorage.size == 0:
-    #         gt = genTxns or getGenesisTxns()
-    #         reqIds = {}
-    #         for idx, txn in enumerate(gt):
-    #             identifier = txn.get(f.IDENTIFIER.nm, "")
-    #             if identifier not in reqIds:
-    #                 reqIds[identifier] = 0
-    #             reqIds[identifier] += 1
-    #             txn.update({
-    #                 f.REQ_ID.nm: reqIds[identifier],
-    #                 f.IDENTIFIER.nm: identifier
-    #             })
-    #             # Add genesis transactions from code to the ledger and graph
-    #             txnWithMerkleInfo = self.storeTxnInLedger(txn)
-    #             self.storeTxnInGraph(txnWithMerkleInfo)
-    #             genTxnsCount += 1
-    #     logger.debug("{} genesis transactions added.".format(genTxnsCount))
-    #     return genTxnsCount
-
     def _addTxnsToGraphIfNeeded(self):
         i = 0
         txnCountInGraph = self.graphStorage.countTxns()
@@ -305,7 +283,6 @@ class Node(PlenumNode):
         return result
 
     def storeTxnInGraph(self, result):
-        print(result)
         result = deepcopy(result)
         # Remove root hash and audit path from result if present since they can
         # be generated on the fly from the ledger so no need to store it
@@ -332,8 +309,8 @@ class Node(PlenumNode):
         merkleInfo = self.primaryStorage.append(txn)
         return merkleInfo
 
-    async def getReplyFor(self, request):
-        result = await self.secondaryStorage.getReply(request.identifier,
+    def getReplyFor(self, request):
+        result = self.secondaryStorage.getReply(request.identifier,
                                                       request.reqId,
                                                       type=request.operation[
                                                           TXN_TYPE])

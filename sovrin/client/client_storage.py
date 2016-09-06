@@ -85,11 +85,13 @@ class SecondaryStorage(IdentityGraph):
         self.store.createUniqueIndexOnClass(LAST_TXN_DATA, f.IDENTIFIER.nm)
 
     def getLastReqId(self):
-        result = self.client.command("select max({}) as lastId from {}".format(f.REQ_ID.nm, REQ_DATA))
+        result = self.client.command("select max({}) as lastId from {}".
+                                     format(f.REQ_ID.nm, REQ_DATA))
         return 0 if not result else result[0].oRecordData['lastId']
 
     def addRequest(self, req: Request):
-        self.client.command("insert into {} set {} = {}, {} = '{}',{} = '{}', nacks = {{}}, replies = {{}}".
+        self.client.command("insert into {} set {} = {}, {} = '{}',{} = '{}', "
+                            "nacks = {{}}, replies = {{}}".
                             format(REQ_DATA, f.REQ_ID.nm, req.reqId,
                                    f.IDENTIFIER.nm, req.identifier,
                                    TXN_TYPE, req.operation[TXN_TYPE]))

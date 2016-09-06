@@ -32,9 +32,9 @@ class AttributeStoreFile(AttributeStore):
         return attr
 
     # TODO: May be need to provide hash type also, assuming sha256 for now
-    def addAttribute(self, name: str, val: Any, origin: str, dest: Optional[str] = None,
-                     encKey: Optional[str] = None, encType: Optional[str] = None,
-                     hashed: bool = False):
+    def addAttribute(self, name: str, val: Any, origin: str,
+                     dest: Optional[str]=None, encKey: Optional[str]=None,
+                     encType: Optional[str]=None, hashed: bool=False):
         key = self.attrKey(name, dest)
 
         if hashed:

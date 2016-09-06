@@ -1,9 +1,12 @@
 import logging
 import pprint
 # The following setup of logging needs to happen before everything else
-from sovrin.anon_creds.issuer import AttribDef, AttribType, InMemoryAttrRepo
-from sovrin.anon_creds.proof_builder import ProofBuilder
-from sovrin.anon_creds.verifier import Verifier
+# from sovrin.anon_creds.issuer import AttribDef, AttribType, InMemoryAttrRepo
+import sovrin.anon_creds.issuer as Issuer
+# from sovrin.anon_creds.proof_builder import ProofBuilder
+import sovrin.anon_creds.proof_builder as proof_builder
+# from sovrin.anon_creds.verifier import Verifier
+import sovrin.anon_creds.verifier as Verifier
 
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
@@ -28,36 +31,55 @@ setupLogging(DISPLAY_LOG_LEVEL,
 logger = getlogger("test_anon_creds")
 
 
-from plenum.common.txn import DATA
-from plenum.common.txn import TXN_TYPE
+from plenum.common.txn import DATA, TXN_TYPE
 from plenum.test.helper import genHa
 from sovrin.common.txn import CRED_DEF
 from sovrin.common.util import getCredDefTxnData
 from sovrin.test.helper import genTestClient, submitAndCheck
 
-BYU = AttribDef('BYU',
-                [AttribType("first_name", encode=True),
-                  AttribType("last_name", encode=True),
-                  AttribType("birth_date", encode=True),
-                  AttribType("expire_date", encode=True),
-                  AttribType("undergrad", encode=True),
-                  AttribType("postgrad", encode=True)]
-                )
 
-attributes = BYU.attribs(
-    first_name="John",
-    last_name="Doe",
-    birth_date="1970-01-01",
-    expire_date="2300-01-01",
-    undergrad="True",
-    postgrad="False"
-)
-
-attrNames = tuple(attributes.keys())
+# BYU = AttribDef('BYU',
+#         [AttribType("first_name", encode=True),
+#          AttribType("last_name", encode=True),
+#          AttribType("birth_date", encode=True),
+#          AttribType("expire_date", encode=True),
+#          AttribType("undergrad", encode=True),
+#          AttribType("postgrad", encode=True)]
+#         )
+#
+# attributes = BYU.attribs(
+#     first_name="John",
+#     last_name="Doe",
+#     birth_date="1970-01-01",
+#     expire_date="2300-01-01",
+#     undergrad="True",
+#     postgrad="False"
+# )
+#
+# attrNames = tuple(attributes.keys())
 
 
 def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                      verifierSigner, addedIPV):
+    BYU = Issuer.AttribDef('BYU',
+                    [Issuer.AttribType("first_name", encode=True),
+                     Issuer.AttribType("last_name", encode=True),
+                     Issuer.AttribType("birth_date", encode=True),
+                     Issuer.AttribType("expire_date", encode=True),
+                     Issuer.AttribType("undergrad", encode=True),
+                     Issuer.AttribType("postgrad", encode=True)]
+                    )
+
+    attributes = BYU.attribs(
+        first_name="John",
+        last_name="Doe",
+        birth_date="1970-01-01",
+        expire_date="2300-01-01",
+        undergrad="True",
+        postgrad="False"
+    )
+
+    attrNames = tuple(attributes.keys())
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
     issuer = genTestClient(nodeSet, tmpdir=tdir, signer=issuerSigner,
                            peerHA=genHa())
@@ -76,25 +98,25 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     issuer.signers[issuerSigner.identifier] = issuerSigner
     logger.display("Key pair for Issuer created \n"
                    "Public key is {} \n"
-                   "Private key is stored on disk\n".format(
-        issuerSigner.verstr))
+                   "Private key is stored on disk\n".
+                   format(issuerSigner.verstr))
     prover.signers[proverSigner.identifier] = proverSigner
     logger.display("Key pair for Prover created \n"
                    "Public key is {} \n"
-                   "Private key is stored on disk\n".format(
-        proverSigner.verstr))
+                   "Private key is stored on disk\n".
+                   format(proverSigner.verstr))
     verifier.signers[verifierSigner.identifier] = verifierSigner
     logger.display("Key pair for Verifier created \n"
                    "Public key is {} \n"
-                   "Private key is stored on disk\n".format(
-        verifierSigner.verstr))
+                   "Private key is stored on disk\n".
+                   format(verifierSigner.verstr))
 
     # TODO BYU.name is used here instead of issuerSigner.identifier due to
     #  tight coupling in Attribs.encoded()
     issuerId = BYU.name
     proverId = proverSigner.identifier
     # Issuer's attribute repository
-    attrRepo = InMemoryAttrRepo()
+    attrRepo = Issuer.InMemoryAttrRepo()
     attrRepo.attributes = {proverId: attributes}
     issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
@@ -128,7 +150,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     pk = {
         issuerId: prover.getPk(credDef)
     }
-    proofBuilder = ProofBuilder(pk)
+    proofBuilder = proof_builder.ProofBuilder(pk)
     proofId = proofBuilder.id
     prover.proofBuilders[proofId] = proofBuilder
     cred = issuer.createCred(proverId, name1, version1,
@@ -155,12 +177,13 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                    "{}".format(revealedAttrs))
     proofBuilder.setParams(presentationToken,
                     revealedAttrs, nonce)
-    prf = ProofBuilder.prepareProof(credDefPks=proofBuilder.credDefPks,
-                                    masterSecret=proofBuilder.masterSecret,
-                                    creds=presentationToken,
-                                    encodedAttrs=encodedAttributes,
-                                    revealedAttrs=revealedAttrs,
-                                    nonce=nonce)
+    prf = proof_builder.ProofBuilder.prepareProof(
+        credDefPks=proofBuilder.credDefPks,
+        masterSecret=proofBuilder.masterSecret,
+        creds=presentationToken,
+        encodedAttrs=encodedAttributes,
+        revealedAttrs=revealedAttrs,
+        nonce=nonce)
     logger.display("Prover: Proof prepared.")
     logger.display("Prover: Proof submitted")
     logger.display("Verifier: Proof received.")
@@ -171,7 +194,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     verifier.credentialDefinitions = {
         (issuerId, name1, version1): credDef
     }
-    verified = Verifier.verifyProof(pk, prf, nonce,
+    verified = Verifier.Verifier.verifyProof(pk, prf, nonce,
                             attributes.encoded(),
                             revealedAttrs)
     # Verifier verifies proof

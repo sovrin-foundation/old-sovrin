@@ -24,6 +24,7 @@ def anonCredPluginFileCreated(tdir):
     writeAnonCredPlugin(tdir, reloadTestModules=True)
     loadPlugins(tdir)
 
+
 @pytest.fixture(scope="module")
 def allPluginsPath():
     return [getPluginPath('stats_consumer')]

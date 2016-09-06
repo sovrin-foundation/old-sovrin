@@ -173,7 +173,7 @@ class IdentityGraph(OrientDbGraphStore):
             NYM: nym,
             TXN_ID: txnId,
             ROLE: role,    # Need to have role as a property of the vertex it
-            # makes faster to query roles by vertex. TODO: move ROLE to edge
+            # makes faster to query roles by vertex.
         }
 
         if not frm:
@@ -383,8 +383,8 @@ class IdentityGraph(OrientDbGraphStore):
             # https://github.com/mogui/pyorient/issues/207
             edgeProps = ", ".join("@this.{} as __e_{}".format(name, name)
                                   for name in txnEdgeProps)
-            vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
-                                    chain.from_iterable(
+            vertexProps = ", ".join("in.{} as __v_{}".format(name, name)
+                                    for name in chain.from_iterable(
                                         Vertices._Properties.values()))
             cmd = "select {}, {} from {} where {} in [{}]".\
                 format(edgeProps, vertexProps, edgeClass, TXN_ID, txnIdsStr)
@@ -398,8 +398,8 @@ class IdentityGraph(OrientDbGraphStore):
                 for r in result:
                     if r.oRecordData:
                         oRecordData = self.cleanKeyNames(r.oRecordData)
-                        out[oRecordData[F.seqNo.name]] = self.makeResult(NYM,
-                                                                         oRecordData)
+                        out[oRecordData[F.seqNo.name]] = self.makeResult(
+                            NYM, oRecordData)
                 return out
 
         result = reduce(lambda d1, d2: {**d1, **d2},

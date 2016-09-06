@@ -46,7 +46,8 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
     modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
     test_modules_to_reload = [
         "sovrin.test.helper", "sovrin.test.cli.helper",
-        "sovrin.test.anon_creds.conftest"
+        "sovrin.test.anon_creds.conftest",
+        "sovrin.test.anon_creds.test_anon_creds"
     ]
 
     if reloadTestModules:
@@ -64,6 +65,6 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
         "       print(\"Plugin loading failed: module {}, detail: {}\".format(m, str(ae)))\n" \
         "\n"
 
-    anonPluginContent = anonPluginContent + reload_module_code
-    with open(anonPluginFilePath, "a") as myfile:
-        myfile.write(anonPluginContent)
+    anonPluginContent += reload_module_code
+    with open(anonPluginFilePath, "a") as f:
+        f.write(anonPluginContent)
