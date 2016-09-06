@@ -147,7 +147,7 @@ class Node(PlenumNode):
         USER: (STEWARD, SPONSOR),
     }
 
-    async def checkRequestAuthorized(self, request: Request):
+    def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
 
@@ -175,12 +175,12 @@ class Node(PlenumNode):
         elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF]:
             pass
         else:
-            await super().checkRequestAuthorized(request)
+            return super().checkRequestAuthorized(request)
 
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStorage)
 
-    async def processRequest(self, request: Request, frm: str):
+    def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
             nym = request.operation[TARGET_NYM]
@@ -247,7 +247,7 @@ class Node(PlenumNode):
             })
             self.transmitToClient(Reply(result), frm)
         else:
-            await super().processRequest(request, frm)
+            super().processRequest(request, frm)
 
     def storeTxnAndSendToClient(self, reply):
         """
