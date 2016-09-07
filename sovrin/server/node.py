@@ -311,9 +311,8 @@ class Node(PlenumNode):
 
     def getReplyFor(self, request):
         result = self.secondaryStorage.getReply(request.identifier,
-                                                      request.reqId,
-                                                      type=request.operation[
-                                                          TXN_TYPE])
+                                                request.reqId,
+                                                type=request.operation[TXN_TYPE])
         return Reply(result) if result else None
 
     def doCustomAction(self, ppTime: float, req: Request) -> None:
@@ -357,9 +356,3 @@ class Node(PlenumNode):
         })
 
         return Reply(result)
-
-    def countStewards(self) -> int:
-        return self.graphStorage.countStewards()
-
-    def isSteward(self, nym):
-        return self.graphStorage.hasSteward(nym)
