@@ -32,6 +32,8 @@ logger = getlogger()
 
 
 class Node(PlenumNode):
+    keygenScript = "init_sovrin_raet_keep"
+
     def __init__(self,
                  name,
                  nodeRegistry,
