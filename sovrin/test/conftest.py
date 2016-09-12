@@ -34,7 +34,7 @@ def allPluginsPath():
 def stewardSigner():
     seed = b'is a pit   seed, or somepin else'
     signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
+    assert signer.verstr == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
     return signer
 
 
@@ -90,7 +90,7 @@ def startedNodes(nodeSet, looper):
 def client1Signer():
     seed = b'client1Signer secret key........'
     signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'TuIpuBcx6P4S0Ez5LUr3HVpWERVHK56XONixonwcAf4='
+    assert signer.verstr == '6JvpZp2haQgisbXEXE9NE6n3Tuv77MZb5HdF9jS5qY8m'
     return signer
 
 

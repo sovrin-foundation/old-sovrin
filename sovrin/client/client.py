@@ -1,11 +1,10 @@
 import json
 from _sha256 import sha256
-from base64 import b64decode
 from collections import deque
 from copy import deepcopy
 from typing import Mapping, List, Dict, Union, Tuple, Optional
 
-import base58
+from base58 import b58decode, b58encode
 import pyorient
 
 from raet.raeting import AutoMode
@@ -310,7 +309,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
 
     # TODO: Just for now. Remove it later
     def doAttrDisclose(self, origin, target, txnId, key):
-        box = libnacl.public.Box(b64decode(origin), b64decode(target))
+        box = libnacl.public.Box(b58decode(origin), b58decode(target))
 
         data = json.dumps({TXN_ID: txnId, SKEY: key})
         nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
@@ -318,8 +317,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         op = {
             TARGET_NYM: target,
             TXN_TYPE: DISCLO,
-            NONCE: base58.b58encode(nonce),
-            DATA: base58.b58encode(boxedMsg)
+            NONCE: b58encode(nonce),
+            DATA: b58encode(boxedMsg)
         }
         self.submit(op, identifier=origin)
 
