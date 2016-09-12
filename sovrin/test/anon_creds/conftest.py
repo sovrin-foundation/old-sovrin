@@ -1,17 +1,15 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
-
 from plenum.test.helper import genHa
-from sovrin.anon_creds.cred_def import CredDef, SerFmt
-from sovrin.common.util import getConfig
-from sovrin.test.helper import addNym
-
 from plenum.common.txn import TXN_TYPE, DATA
 
+from sovrin.common.util import getConfig
+from sovrin.test.helper import addNym
 from sovrin.common.txn import CRED_DEF
 from sovrin.test.helper import submitAndCheck
-from sovrin.test.conftest import tdir, anonCredPluginFileCreated
+
+import sovrin.anon_creds.cred_def as CredDefModule
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
@@ -87,7 +85,7 @@ def attrNames():
 @pytest.fixture(scope="module")
 def credDef(attrNames):
     ip, port = genHa()
-    return CredDef(attrNames, 'name1', 'version1',
+    return CredDefModule.CredDef(attrNames, 'name1', 'version1',
                    p_prime="prime1", q_prime="prime1",
                    ip=ip, port=port)
 
@@ -95,7 +93,7 @@ def credDef(attrNames):
 @pytest.fixture(scope="module")
 def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorSigner, looper, tdir, nodeSet, credDef):
-    data = credDef.get(serFmt=SerFmt.base58)
+    data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
 
     op = {
         TXN_TYPE: CRED_DEF,

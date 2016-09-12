@@ -7,7 +7,6 @@ from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
 from sovrin.common.txn import GET_CRED_DEF
-from sovrin.test.helper import genTestClient
 
 
 def testIssuerWritesCredDef(credentialDefinitionAdded):
@@ -22,6 +21,13 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     """
     A credential definition is received
     """
+
+    # Don't move below import outside of this method
+    # else that client class doesn't gets reloaded
+    # and hence it doesn't get updated with correct plugin class/methods
+    # and it gives error (for permanent solution bug is created: #130181205).
+    from sovrin.test.helper import genTestClient
+
     user = genTestClient(nodeSet, signer=userSignerA, tmpdir=tdir)
     looper.add(user)
     looper.run(user.ensureConnectedToNodes())

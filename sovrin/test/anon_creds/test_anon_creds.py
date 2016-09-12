@@ -1,16 +1,21 @@
 import logging
 import pprint
-# The following setup of logging needs to happen before everything else
-# from sovrin.anon_creds.issuer import AttribDef, AttribType, InMemoryAttrRepo
-import sovrin.anon_creds.issuer as Issuer
-# from sovrin.anon_creds.proof_builder import ProofBuilder
-import sovrin.anon_creds.proof_builder as proof_builder
-# from sovrin.anon_creds.verifier import Verifier
-import sovrin.anon_creds.verifier as Verifier
+
+from ioflo.aid.consoling import Console
 
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
-from ioflo.aid.consoling import Console
+from plenum.common.txn import DATA, TXN_TYPE
+from plenum.test.helper import genHa
+
+
+import sovrin.anon_creds.issuer as IssuerModule
+import sovrin.anon_creds.proof_builder as ProofBuilderModuler
+import sovrin.anon_creds.verifier as VerifierModule
+
+from sovrin.common.txn import CRED_DEF
+from sovrin.common.util import getCredDefTxnData
+from sovrin.test.helper import submitAndCheck
 
 
 def out(record, extra_cli_value=None):
@@ -31,44 +36,22 @@ setupLogging(DISPLAY_LOG_LEVEL,
 logger = getlogger("test_anon_creds")
 
 
-from plenum.common.txn import DATA, TXN_TYPE
-from plenum.test.helper import genHa
-from sovrin.common.txn import CRED_DEF
-from sovrin.common.util import getCredDefTxnData
-from sovrin.test.helper import genTestClient, submitAndCheck
-
-
-# BYU = AttribDef('BYU',
-#         [AttribType("first_name", encode=True),
-#          AttribType("last_name", encode=True),
-#          AttribType("birth_date", encode=True),
-#          AttribType("expire_date", encode=True),
-#          AttribType("undergrad", encode=True),
-#          AttribType("postgrad", encode=True)]
-#         )
-#
-# attributes = BYU.attribs(
-#     first_name="John",
-#     last_name="Doe",
-#     birth_date="1970-01-01",
-#     expire_date="2300-01-01",
-#     undergrad="True",
-#     postgrad="False"
-# )
-#
-# attrNames = tuple(attributes.keys())
-
-
 def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                      verifierSigner, addedIPV):
-    BYU = Issuer.AttribDef('BYU',
-                    [Issuer.AttribType("first_name", encode=True),
-                     Issuer.AttribType("last_name", encode=True),
-                     Issuer.AttribType("birth_date", encode=True),
-                     Issuer.AttribType("expire_date", encode=True),
-                     Issuer.AttribType("undergrad", encode=True),
-                     Issuer.AttribType("postgrad", encode=True)]
-                    )
+    # Don't move below import outside of this method
+    # else that client class doesn't gets reloaded
+    # and hence it doesn't get updated with correct plugin class/methods
+    # and it gives error (for permanent solution bug is created: #130181205)
+    from sovrin.test.helper import genTestClient
+
+    BYU = IssuerModule.AttribDef('BYU',
+                                 [IssuerModule.AttribType("first_name", encode=True),
+                                  IssuerModule.AttribType("last_name", encode=True),
+                                  IssuerModule.AttribType("birth_date", encode=True),
+                                  IssuerModule.AttribType("expire_date", encode=True),
+                                  IssuerModule.AttribType("undergrad", encode=True),
+                                  IssuerModule.AttribType("postgrad", encode=True)]
+                                 )
 
     attributes = BYU.attribs(
         first_name="John",
@@ -116,7 +99,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     issuerId = BYU.name
     proverId = proverSigner.identifier
     # Issuer's attribute repository
-    attrRepo = Issuer.InMemoryAttrRepo()
+    attrRepo = IssuerModule.InMemoryAttrRepo()
     attrRepo.attributes = {proverId: attributes}
     issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
@@ -150,7 +133,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     pk = {
         issuerId: prover.getPk(credDef)
     }
-    proofBuilder = proof_builder.ProofBuilder(pk)
+    proofBuilder = ProofBuilderModuler.ProofBuilder(pk)
     proofId = proofBuilder.id
     prover.proofBuilders[proofId] = proofBuilder
     cred = issuer.createCred(proverId, name1, version1,
@@ -177,7 +160,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                    "{}".format(revealedAttrs))
     proofBuilder.setParams(presentationToken,
                     revealedAttrs, nonce)
-    prf = proof_builder.ProofBuilder.prepareProof(
+    prf = ProofBuilderModuler.ProofBuilder.prepareProof(
         credDefPks=proofBuilder.credDefPks,
         masterSecret=proofBuilder.masterSecret,
         creds=presentationToken,
@@ -194,9 +177,9 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     verifier.credentialDefinitions = {
         (issuerId, name1, version1): credDef
     }
-    verified = Verifier.Verifier.verifyProof(pk, prf, nonce,
-                            attributes.encoded(),
-                            revealedAttrs)
+    verified = VerifierModule.Verifier.verifyProof(pk, prf, nonce,
+                                                   attributes.encoded(),
+                                                   revealedAttrs)
     # Verifier verifies proof
     logger.display("Verifier: Verifying proof...")
     logger.display("Verifier: Proof verified.")
