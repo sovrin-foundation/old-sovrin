@@ -131,7 +131,6 @@ class ClientReqRepStoreOrientDB(ClientReqRepStore):
             }
 
     def getAcks(self, reqId: int) -> List[str]:
-        # Returning a dictionary here just for consistency
         result = self.store.client.command("select acks from {} where {} = {}".
                                      format(REQ_DATA, f.REQ_ID.nm, reqId))
         if not result:
@@ -143,11 +142,6 @@ class ClientReqRepStoreOrientDB(ClientReqRepStore):
         result = self.store.client.command("select nacks from {} where {} = {}".
                                      format(REQ_DATA, f.REQ_ID.nm, reqId))
         return {} if not result else result[0].oRecordData.get('nacks', {})
-
-    # def getAllReplies(self, reqId: int):
-    #     replies = self.getReplies(reqId)
-    #     errors = self.getNacks(reqId)
-    #     return replies, errors
 
     def setConsensus(self, reqId: int, value='true'):
         self.store.client.command("update {} set hasConsensus = {} where {} = {}".

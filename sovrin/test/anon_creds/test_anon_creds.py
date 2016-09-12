@@ -41,27 +41,6 @@ from sovrin.common.util import getCredDefTxnData
 from sovrin.test.helper import submitAndCheck
 
 
-# BYU = AttribDef('BYU',
-#         [AttribType("first_name", encode=True),
-#          AttribType("last_name", encode=True),
-#          AttribType("birth_date", encode=True),
-#          AttribType("expire_date", encode=True),
-#          AttribType("undergrad", encode=True),
-#          AttribType("postgrad", encode=True)]
-#         )
-#
-# attributes = BYU.attribs(
-#     first_name="John",
-#     last_name="Doe",
-#     birth_date="1970-01-01",
-#     expire_date="2300-01-01",
-#     undergrad="True",
-#     postgrad="False"
-# )
-#
-# attrNames = tuple(attributes.keys())
-
-
 def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                      verifierSigner, addedIPV):
     # Don't move below import outside of this method

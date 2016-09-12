@@ -30,7 +30,6 @@ from plenum.test.helper import genTestClientProvider as \
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
-from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
     TXN_ID, USER
@@ -221,12 +220,6 @@ class Organization:
         else:
             raise ValueError("No wallet exists for this user id")
 
-    # def getUserWallet(self, userId: str) -> UserWallet:
-    #     if userId in self.userWallets:
-    #         return self.userWallets[userId]
-    #     else:
-    #         raise ValueError("No wallet exists for this user id")
-
     def addTxnsForCompletedRequestsInWallet(self, reqs: Iterable, wallet:
                                             Wallet):
         for req in reqs:
@@ -290,8 +283,6 @@ class TestNode(TempStorage, TestNodeCore, Node):
         except Exception as ex:
             logger.debug("Error while dropping db {}: {}".format(self.name,
                                                                  ex))
-        # config = getConfig()
-        # os.system(config.OrientDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
 
 
@@ -344,9 +335,6 @@ class TestClient(Client, StackedTester, TestClientStorage):
     def stackType():
         return TestStack
 
-    # def getStorage(self, baseDirPath=None):
-    #     return TestClientStorage(self.name, baseDirPath)
-
     def _getOrientDbStore(self):
         config = getConfig()
         return OrientDbStore(user=config.OrientDB["user"],
@@ -356,12 +344,6 @@ class TestClient(Client, StackedTester, TestClientStorage):
 
     def onStopping(self, *args, **kwargs):
         self.cleanupDataLocation()
-        # # TODO: find a better way to clear wallet
-        # try:
-        #     shutil.rmtree(self.wallet.storage.dataLocation)
-        # except Exception as ex:
-        #     logger.debug("Exception while deleting {}'s wallet {}"
-        #                  .format(self, ex))
         super().onStopping(*args, **kwargs)
 
 

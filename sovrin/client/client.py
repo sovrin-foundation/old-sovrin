@@ -22,7 +22,6 @@ from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
@@ -126,17 +125,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         else:
             return super().sign(msg, signer)
 
-    # def getStorage(self, baseDirPath=None):
-    #     config = getConfig()
-    #     if config.ClientIdentityGraph or config.ReqReplyStore == "orientdb":
-    #         store = OrientDbStore(user=config.OrientDB["user"],
-    #                               password=config.OrientDB["password"],
-    #                               dbName=self.name,
-    #                               storageType=pyorient.STORAGE_TYPE_PLOCAL)
-    #     else:
-    #         store = None
-    #     return ClientStorage(self.name, baseDirPath, store)
-
     def _getOrientDbStore(self):
         return OrientDbStore(user=config.OrientDB["user"],
                                   password=config.OrientDB["password"],
@@ -205,7 +193,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
 
     def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
-        # Do not print result of transaction type `GET_TXNS` on the CLI
         excludeFromCli = excludeFromCli or (msg.get(OP_FIELD_NAME) == REPLY and
                                             msg[f.RESULT.nm][TXN_TYPE] == GET_TXNS)
         super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
@@ -267,9 +254,6 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     self.wallet.addCredDef(data[NAME], data[VERSION],
                                            result[TARGET_NYM], data[TYPE],
                                            data[IP], data[PORT], keys)
-
-            # if result[TXN_TYPE] in (NYM, ATTRIB, CRED_DEF):
-            #     self.txnLog.append(reqId, result)
 
     def requestConfirmed(self, reqId: int) -> bool:
         # TODO: Check for f+1 replies being same in both cases below
