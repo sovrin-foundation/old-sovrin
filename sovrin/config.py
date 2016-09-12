@@ -44,7 +44,9 @@ OrientDB = {
     "shutdownScript": "/opt/orientdb/bin/shutdown.sh"
 }
 
-ClientIdentityGraph = None
+ClientIdentityGraph = True
+
+ReqReplyStore = "orientdb"
 
 RAETLogLevel = "concise"
 

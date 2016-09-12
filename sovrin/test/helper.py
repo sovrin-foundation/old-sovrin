@@ -1,5 +1,7 @@
 import inspect
 import json
+import os
+
 import shutil
 from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
@@ -14,7 +16,7 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK, DATA
 from plenum.common.types import HA
-from plenum.common.util import getMaxFailures, runall, getlogger, getConfig
+from plenum.common.util import getMaxFailures, runall, getlogger
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
@@ -28,10 +30,10 @@ from plenum.test.helper import genTestClientProvider as \
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
-from sovrin.client.client_storage import ClientStorage
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
     TXN_ID, USER
+from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
 logger = getlogger()
@@ -218,12 +220,6 @@ class Organization:
         else:
             raise ValueError("No wallet exists for this user id")
 
-    # def getUserWallet(self, userId: str) -> UserWallet:
-    #     if userId in self.userWallets:
-    #         return self.userWallets[userId]
-    #     else:
-    #         raise ValueError("No wallet exists for this user id")
-
     def addTxnsForCompletedRequestsInWallet(self, reqs: Iterable, wallet:
                                             Wallet):
         for req in reqs:
@@ -252,7 +248,7 @@ class TempStorage:
             logger.debug("Error while removing temporary directory {}".format(
                 ex))
         try:
-            self.store.client.db_drop(self.name)
+            self.graphStore.client.db_drop(self.name)
             logger.debug("Dropped db {}".format(self.name))
         except Exception as ex:
             logger.debug("Error while dropping db {}: {}".format(self.name,
@@ -282,13 +278,11 @@ class TestNode(TempStorage, TestNodeCore, Node):
     def onStopping(self, *args, **kwargs):
         self.cleanupDataLocation()
         try:
-            self.graphStorage.client.db_drop(self.name)
+            self.graphStore.client.db_drop(self.name)
             logger.debug("Dropped db {}".format(self.name))
         except Exception as ex:
             logger.debug("Error while dropping db {}: {}".format(self.name,
                                                                  ex))
-        # config = getConfig()
-        # os.system(config.OrientDB['shutdownScript'])
         super().onStopping(*args, **kwargs)
 
 
@@ -308,34 +302,48 @@ class TestNodeSet(PlenumTestNodeSet):
                          testNodeClass=testNodeClass)
 
 
-class TestClientStorage(TempStorage, ClientStorage):
+# class TestClientStorage(TempStorage, ClientStorage):
+class TestClientStorage:
     def __init__(self, name, baseDir):
+        self.name = name
+        self.baseDir = baseDir
+
+    def cleanupDataLocation(self):
+        loc = os.path.join(self.baseDir, "data/clients")
+        try:
+            shutil.rmtree(loc)
+        except Exception as ex:
+            logger.debug("Error while removing temporary directory {}".format(
+                ex))
         config = getConfig()
-        store = OrientDbStore(user=config.OrientDB["user"],
-                              password=config.OrientDB["password"],
-                              dbName=name,
-                              storageType=pyorient.STORAGE_TYPE_MEMORY)
-        ClientStorage.__init__(self, name, baseDir, store)
-        TempStorage.__init__(self)
+        if config.ReqReplyStore == "orientdb" or config.ClientIdentityGraph:
+            try:
+                self._getOrientDbStore().client.db_drop(self.name)
+                logger.debug("Dropped db {}".format(self.name))
+            except Exception as ex:
+                logger.debug("Error while dropping db {}: {}".format(self.name,
+                                                                 ex))
 
 
 @Spyable(methods=[Client.handleOneNodeMsg, Client.requestPendingTxns])
-class TestClient(Client, StackedTester):
+class TestClient(Client, StackedTester, TestClientStorage):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        TestClientStorage.__init__(self, self.name, self.basedirpath)
+
     @staticmethod
     def stackType():
         return TestStack
 
-    def getStorage(self, baseDirPath=None):
-        return TestClientStorage(self.name, baseDirPath)
+    def _getOrientDbStore(self):
+        config = getConfig()
+        return OrientDbStore(user=config.OrientDB["user"],
+                              password=config.OrientDB["password"],
+                              dbName=self.name,
+                              storageType=pyorient.STORAGE_TYPE_MEMORY)
 
     def onStopping(self, *args, **kwargs):
-        self.storage.cleanupDataLocation()
-        # # TODO: find a better way to clear wallet
-        # try:
-        #     shutil.rmtree(self.wallet.storage.dataLocation)
-        # except Exception as ex:
-        #     logger.debug("Exception while deleting {}'s wallet {}"
-        #                  .format(self, ex))
+        self.cleanupDataLocation()
         super().onStopping(*args, **kwargs)
 
 

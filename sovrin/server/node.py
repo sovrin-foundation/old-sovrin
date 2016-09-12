@@ -47,7 +47,7 @@ class Node(PlenumNode):
                  storage=None,
                  config=None):
         self.config = config or getConfig()
-        self.graphStorage = self.getGraphStorage(name)
+        self.graphStore = self.getGraphStorage(name)
         super().__init__(name=name,
                          nodeRegistry=nodeRegistry,
                          clientAuthNr=clientAuthNr,
@@ -62,7 +62,7 @@ class Node(PlenumNode):
         self._addTxnsToGraphIfNeeded()
 
     def getSecondaryStorage(self):
-        return SecondaryStorage(self.graphStorage, self.primaryStorage)
+        return SecondaryStorage(self.graphStore, self.primaryStorage)
 
     def getGraphStorage(self, name):
         return IdentityGraph(self._getOrientDbStore(name,
@@ -86,7 +86,7 @@ class Node(PlenumNode):
 
     def _addTxnsToGraphIfNeeded(self):
         i = 0
-        txnCountInGraph = self.graphStorage.countTxns()
+        txnCountInGraph = self.graphStore.countTxns()
         for seqNo, txn in self.domainLedger.getAllTxn().items():
             if seqNo > txnCountInGraph:
                 txn[F.seqNo.name] = seqNo
@@ -126,7 +126,7 @@ class Node(PlenumNode):
                                            .format(ATTRIB, RAW, ENC, HASH))
 
             if not (not msg.get(TARGET_NYM) or
-                        self.graphStorage.hasNym(msg[TARGET_NYM])):
+                        self.graphStore.hasNym(msg[TARGET_NYM])):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} should be added before adding '
                                            'attribute for it'.
@@ -138,7 +138,7 @@ class Node(PlenumNode):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} not a valid role".
                                            format(role))
-            if self.graphStorage.hasNym(msg[TARGET_NYM]):
+            if self.graphStore.hasNym(msg[TARGET_NYM]):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} is already present".
                                            format(msg[TARGET_NYM]))
@@ -153,7 +153,7 @@ class Node(PlenumNode):
         op = request.operation
         typ = op[TXN_TYPE]
 
-        s = self.graphStorage  # type: IdentityGraph
+        s = self.graphStore  # type: IdentityGraph
 
         origin = request.identifier
         originRole = s.getRole(origin)
@@ -180,13 +180,13 @@ class Node(PlenumNode):
             return super().checkRequestAuthorized(request)
 
     def defaultAuthNr(self):
-        return TxnBasedAuthNr(self.graphStorage)
+        return TxnBasedAuthNr(self.graphStore)
 
     def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.transmitToClient(RequestAck(request.reqId), frm)
             nym = request.operation[TARGET_NYM]
-            txn = self.graphStorage.getAddNymTxn(nym)
+            txn = self.graphStore.getAddNymTxn(nym)
             txnId = self.genTxnId(request.identifier, request.reqId)
             result = {f.IDENTIFIER.nm: request.identifier,
                       f.REQ_ID.nm: request.reqId,
@@ -204,13 +204,13 @@ class Node(PlenumNode):
             else:
                 self.transmitToClient(RequestAck(request.reqId), frm)
                 data = request.operation.get(DATA)
-                addNymTxn = self.graphStorage.getAddNymTxn(origin)
-                txnIds = [addNymTxn[TXN_ID], ] + self.graphStorage.\
+                addNymTxn = self.graphStore.getAddNymTxn(origin)
+                txnIds = [addNymTxn[TXN_ID], ] + self.graphStore.\
                     getAddAttributeTxnIds(origin)
                 # If sending transactions to a user then should send user's
                 # sponsor creation transaction also
                 if addNymTxn.get(ROLE) == USER:
-                    sponsorNymTxn = self.graphStorage.getAddNymTxn(
+                    sponsorNymTxn = self.graphStore.getAddNymTxn(
                         addNymTxn.get(f.IDENTIFIER.nm))
                     txnIds = [sponsorNymTxn[TXN_ID], ] + txnIds
                 # TODO: Remove this log statement
@@ -236,7 +236,7 @@ class Node(PlenumNode):
             issuerNym = request.operation[TARGET_NYM]
             name = request.operation[DATA][NAME]
             version = request.operation[DATA][VERSION]
-            credDef = self.graphStorage.getCredDef(issuerNym, name, version)
+            credDef = self.graphStore.getCredDef(issuerNym, name, version)
             result = {
                 TXN_ID: self.genTxnId(
                     request.identifier, request.reqId)
@@ -292,11 +292,11 @@ class Node(PlenumNode):
         result.pop(F.auditPath.name, None)
 
         if result[TXN_TYPE] == NYM:
-            self.graphStorage.addNymTxnToGraph(result)
+            self.graphStore.addNymTxnToGraph(result)
         elif result[TXN_TYPE] == ATTRIB:
-            self.graphStorage.addAttribTxnToGraph(result)
+            self.graphStore.addAttribTxnToGraph(result)
         elif result[TXN_TYPE] == CRED_DEF:
-            self.graphStorage.addCredDefTxnToGraph(result)
+            self.graphStore.addCredDefTxnToGraph(result)
 
     def sendReplyToClient(self, reply):
         identifier = reply.result.get(f.IDENTIFIER.nm)
@@ -325,7 +325,7 @@ class Node(PlenumNode):
         :param req: the client REQUEST
         """
         if req.operation[TXN_TYPE] == NYM and \
-                self.graphStorage.hasNym(req.operation[TARGET_NYM]):
+                self.graphStore.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
             if req.identifier in self.clientIdentifiers:
                 self.transmitToClient(RequestNack(req.reqId, reason),

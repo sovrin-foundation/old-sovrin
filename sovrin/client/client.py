@@ -3,7 +3,7 @@ from _sha256 import sha256
 from base64 import b64decode
 from collections import deque
 from copy import deepcopy
-from typing import Mapping, List, Dict, Union, Tuple
+from typing import Mapping, List, Dict, Union, Tuple, Optional
 
 import base58
 import pyorient
@@ -22,13 +22,16 @@ from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
 from plenum.common.util import getlogger, getMaxFailures, \
     getSymmetricallyEncryptedVal, libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.client.client_storage import ClientStorage, deserializeTxn
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
 from sovrin.common.util import getConfig
-from sovrin.persistence.identity_graph import getEdgeFromTxnType
+from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
+from sovrin.persistence.client_req_rep_store_orientdb import \
+    ClientReqRepStoreOrientDB
+from sovrin.persistence.client_txn_log import ClientTxnLog
+from sovrin.persistence.identity_graph import getEdgeByTxnType, IdentityGraph
 
 from sovrin.anon_creds.issuer import Issuer
 from sovrin.anon_creds.prover import Prover
@@ -36,6 +39,9 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 
 logger = getlogger()
+
+
+config = getConfig()
 
 
 class Client(PlenumClient, Issuer, Prover, Verifier):
@@ -57,14 +63,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                          signers,
                          basedirpath,
                          wallet)
-        self.storage = self.getStorage(basedirpath)
-        self.lastReqId = self.storage.getLastReqId()
+        # self.storage = self.getStorage(basedirpath)
+        # self.lastReqId = self.storage.lastReqId
         # TODO: Should I store values of attributes as non encrypted
         # Dictionary of attribute requests
         # Key is request id and values are stored as tuple of 5 elements
         # identifier, toNym, secretKey, attribute name, txnId
         # self.attributeReqs = self.storage.loadAttributes()
         # type: Dict[int, List[Tuple[str, str, str, str, str]]]
+        self.graphStore = self.getGraphStore()
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
         Issuer.__init__(self, self.defaultIdentifier)
@@ -118,13 +125,24 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         else:
             return super().sign(msg, signer)
 
-    def getStorage(self, baseDirPath=None):
-        config = getConfig()
-        store = OrientDbStore(user=config.OrientDB["user"],
-                              password=config.OrientDB["password"],
-                              dbName=self.name,
-                              storageType=pyorient.STORAGE_TYPE_PLOCAL)
-        return ClientStorage(self.name, baseDirPath, store)
+    def _getOrientDbStore(self):
+        return OrientDbStore(user=config.OrientDB["user"],
+                                  password=config.OrientDB["password"],
+                                  dbName=self.name,
+                                  storageType=pyorient.STORAGE_TYPE_PLOCAL)
+
+    def getReqRepStore(self):
+        if config.ReqReplyStore == "orientdb":
+            return ClientReqRepStoreOrientDB(self._getOrientDbStore())
+        else:
+            return ClientReqRepStoreFile(self.name, self.basedirpath)
+
+    def getGraphStore(self):
+        return IdentityGraph(self._getOrientDbStore()) if \
+            config.ClientIdentityGraph else None
+
+    def getTxnLogStore(self):
+        return ClientTxnLog(self.name, self.basedirpath)
 
     def submit(self, *operations: Mapping, identifier: str=None) -> \
             List[Request]:
@@ -162,134 +180,133 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     self.wallet.addAttribute(name=anm, val=aval,
                                              origin=origin,
                                              dest=op.get(TARGET_NYM))
-            # TODO: When an issuer is submitting a cred def transaction, he
-            # should add it to his wallet too
-            # if op[TXN_TYPE] == CRED_DEF:
-            #     self.wallet.addCredDef(data[NAME], data[VERSION],
-            #                            result[TARGET_NYM], data[TYPE],
-            #                            data[IP], data[PORT], keys)
+            if op[TXN_TYPE] == CRED_DEF:
+                data = op.get(DATA)
+                keys = data[KEYS]
+                self.wallet.addCredDef(data[NAME], data[VERSION],
+                                       origin, data[TYPE],
+                                       data[IP], data[PORT], keys)
         requests = super().submit(*operations, identifier=identifier)
-        for r in requests:
-            self.storage.addRequest(r)
+        # for r in requests:
+        #     self.storage.addRequest(r)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
-        # Do not print result of transaction type `GET_TXNS` on the CLI
         excludeFromCli = excludeFromCli or (msg.get(OP_FIELD_NAME) == REPLY and
                                             msg[f.RESULT.nm][TXN_TYPE] == GET_TXNS)
         super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
-        elif msg[OP_FIELD_NAME] == REQACK:
-            self.storage.addAck(msg, sender)
-        elif msg[OP_FIELD_NAME] == REQNACK:
-            self.storage.addNack(msg, sender)
-        elif msg[OP_FIELD_NAME] == REPLY:
-            result = msg[f.RESULT.nm]
-            reqId = msg[f.RESULT.nm][f.REQ_ID.nm]
-            if self.autoDiscloseAttributes:
-                # TODO: This is just for now. As soon as the client finds out
-                # that the attribute is added it discloses it
-                # reqId = msg["reqId"]
-                # if reqId in self.attributeReqs and not self.attributeReqs[
-                #     reqId][-1]:
-                #     origin = self.attributeReqs[reqId][0]
-                #     key = self.atxnStorettributeReqs[reqId][2]
-                #     txnId = result[TXN_ID]
-                #     self.attributeReqs[reqId] += (txnId, )
-                #     self.doAttrDisclose(origin, result[TARGET_NYM], txnId, key)
-                pass
-            replies = self.storage.addReply(reqId, sender, result)
-            # TODO Should request be marked as hasConsensus in the storage?
-            # Might be inefficient to compute f on every reply
-            fVal = getMaxFailures(len(self.nodeReg))
-            if len(replies) == fVal + 1:
-                self.storage.setConsensus(reqId)
-                if result[TXN_TYPE] == NYM:
+
+    def postReplyRecvd(self, reqId, frm, result, numReplies):
+        reply = super().postReplyRecvd(reqId, frm, result, numReplies)
+        if reply:
+            if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
+                self.reqRepStore.setConsensus(reqId)
+            if result[TXN_TYPE] == NYM:
+                if self.graphStore:
                     self.addNymToGraph(result)
-                elif result[TXN_TYPE] == ATTRIB:
-                    self.storage.addAttribTxnToGraph(result)
-                elif result[TXN_TYPE] == GET_NYM:
+            elif result[TXN_TYPE] == ATTRIB:
+                if self.graphStore:
+                    self.graphStore.addAttribTxnToGraph(result)
+            elif result[TXN_TYPE] == GET_NYM:
+                if self.graphStore:
                     if DATA in result and result[DATA]:
                         self.addNymToGraph(json.loads(result[DATA]))
-                elif result[TXN_TYPE] == GET_TXNS:
-                    if DATA in result and result[DATA]:
-                        data = json.loads(result[DATA])
-                        self.storage.setLastTxnForIdentifier(
-                            result[f.IDENTIFIER.nm], data[LAST_TXN])
+            elif result[TXN_TYPE] == GET_TXNS:
+                if DATA in result and result[DATA]:
+                    data = json.loads(result[DATA])
+                    self.reqRepStore.setLastTxnForIdentifier(
+                        result[f.IDENTIFIER.nm], data[LAST_TXN])
+                    if self.graphStore:
                         for txn in data[TXNS]:
                             if txn[TXN_TYPE] == NYM:
                                 self.addNymToGraph(txn)
                             elif txn[TXN_TYPE] == ATTRIB:
                                 try:
-                                    self.storage.addAttribTxnToGraph(txn)
+                                    self.graphStore.addAttribTxnToGraph(txn)
                                 except pyorient.PyOrientCommandException as ex:
                                     logger.error(
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
 
-                elif result[TXN_TYPE] == CRED_DEF:
-                    self.storage.addCredDefTxnToGraph(result)
-                elif result[TXN_TYPE] == GET_CRED_DEF:
-                    data = result.get(DATA)
-                    try:
-                        data = json.loads(data)
-                        keys = json.loads(data[KEYS])
-                    except Exception as ex:
-                        # Checking if data was converted to JSON, if it was then
-                        #  exception was raised while converting KEYS
-                        # TODO: Check fails if data was a dictionary.
-                        if isinstance(data, dict):
-                            logger.error(
-                                "Keys {} cannot be converted to JSON"
-                                    .format(data[KEYS]))
-                        else:
-                            logger.error("{} cannot be converted to JSON"
-                                         .format(data))
+            elif result[TXN_TYPE] == CRED_DEF:
+                if self.graphStore:
+                    self.graphStore.addCredDefTxnToGraph(result)
+            elif result[TXN_TYPE] == GET_CRED_DEF:
+                data = result.get(DATA)
+                try:
+                    data = json.loads(data)
+                    keys = json.loads(data[KEYS])
+                except Exception as ex:
+                    # Checking if data was converted to JSON, if it was then
+                    #  exception was raised while converting KEYS
+                    # TODO: Check fails if data was a dictionary.
+                    if isinstance(data, dict):
+                        logger.error(
+                            "Keys {} cannot be converted to JSON"
+                                .format(data[KEYS]))
                     else:
-                        self.wallet.addCredDef(data[NAME], data[VERSION],
-                                               result[TARGET_NYM], data[TYPE],
-                                               data[IP], data[PORT], keys)
+                        logger.error("{} cannot be converted to JSON"
+                                     .format(data))
+                else:
+                    self.wallet.addCredDef(data[NAME], data[VERSION],
+                                           result[TARGET_NYM], data[TYPE],
+                                           data[IP], data[PORT], keys)
 
-                if result[TXN_TYPE] in (NYM, ATTRIB, CRED_DEF):
-                    self.storage.addToTransactionLog(reqId, result)
+    def requestConfirmed(self, reqId: int) -> bool:
+        # TODO: Check for f+1 replies being same in both cases below
+        if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
+            return self.reqRepStore.requestConfirmed(reqId)
         else:
-            logger.debug("Invalid op message {}".format(msg))
+            return self.txnLog.hasTxnWithReqId(reqId)
+
+    def hasConsensus(self, reqId: int) -> Optional[str]:
+        if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
+            return self.reqRepStore.hasConsensus(reqId)
+        else:
+            return super().hasConsensus(reqId)
 
     def addNymToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
         if txn.get(ROLE) == SPONSOR:
-            if not self.storage.hasSteward(origin):
-                self.storage.addNym(None, nym=origin, role=STEWARD)
-        self.storage.addNymTxnToGraph(txn)
+            if not self.graphStore.hasSteward(origin):
+                self.graphStore.addNym(None, nym=origin, role=STEWARD)
+        self.graphStore.addNymTxnToGraph(txn)
 
     def getTxnById(self, txnId: str):
-        serTxn = list(self.storage.getResultForTxnIds(txnId).values())[0]
+        if self.graphStore:
+            txns = list(self.graphStore.getResultForTxnIds(txnId).values())
+            return txns[0] if txns else {}
+        else:
+            # TODO: Add support for fetching reply by transaction id
+            # serTxn = self.reqRepStore.getResultForTxnId(txnId)
+            pass
         # TODO Add merkleInfo as well
-        return deserializeTxn(serTxn)
 
     def getTxnsByNym(self, nym: str):
         # TODO Implement this
         pass
 
     def getTxnsByType(self, txnType):
-        edgeClass = getEdgeFromTxnType(txnType)
-        if edgeClass:
-            cmd = "select from {}".format(edgeClass)
-            result = self.storage.client.command(cmd)
-            return result and [r.oRecordData for r in result]
-        return []
-
-    def hasMadeRequest(self, reqId: int):
-        return self.storage.hasRequest(reqId)
-
-    def replyIfConsensus(self, reqId: int):
-        f = getMaxFailures(len(self.nodeReg))
-        replies, errors = self.storage.getAllReplies(reqId)
-        r = list(replies.values())[0] if len(replies) > f else None
-        e = list(errors.values())[0] if len(errors) > f else None
-        return r, e
+        if self.graphStore:
+            edgeClass = getEdgeByTxnType(txnType)
+            if edgeClass:
+                cmd = "select from {}".format(edgeClass)
+                result = self.graphStore.client.command(cmd)
+                if result:
+                    return [r.oRecordData for r in result]
+            return []
+        else:
+            txns = self.txnLog.getTxnsByType(txnType)
+            # TODO: Fix ASAP
+            if txnType == CRED_DEF:
+                for txn in txns:
+                    txn[DATA] = json.loads(txn[DATA].replace("\'", '"').replace('"{', '{').replace('}"', '}'))
+                    txn[NAME] = txn[DATA][NAME]
+                    txn[VERSION] = txn[DATA][VERSION]
+            return txns
 
     # TODO: Just for now. Remove it later
     def doAttrDisclose(self, origin, target, txnId, key):
@@ -372,24 +389,12 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         self.submit(op, identifier=identifier)
 
     def hasNym(self, nym):
-        return self.storage.hasNym(nym)
-
-    def isRequestSuccessful(self, reqId):
-        acks = self.storage.getAcks(reqId)
-        nacks = self.storage.getNacks(reqId)
-        f = getMaxFailures(len(self.nodeReg))
-        if len(acks) > f:
-            return True, "Done"
-        elif len(nacks) > f:
-            # TODO: What if the the nacks were different from each node?
-            return False, list(nacks.values())[0]
-        else:
-            return None
+        return self.graphStore.hasNym(nym)
 
     def requestPendingTxns(self):
         requests = []
         for identifier in self.signers:
-            lastTxn = self.storage.getLastTxnForIdentifier(identifier)
+            lastTxn = self.reqRepStore.getLastTxnForIdentifier(identifier)
             op = {
                 TARGET_NYM: identifier,
                 TXN_TYPE: GET_TXNS,
