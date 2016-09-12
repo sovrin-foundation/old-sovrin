@@ -15,17 +15,21 @@ from sovrin.client.client import Client
 from sovrin.common.util import getConfig
 
 
-# Default configs
-oneDaySeconds = 120
-perDayCount = 5
+# general configs
+secondsInOneCycle = 86400
+
+
+# Usage with default configs: gen_load_ratcheting
+# Default script argument values given below
+perDayCount = 5000
 dailyIncreasePer = 50
-name = "Steward1"
-signerSeed = ('0' * (32 - len(name)) + name).encode()  # b"FCU11111111111111111111111111111"
+signerSeed = b'FCU11111111111111111111111111111'
 
 
-# First argument = How many request needs to be submitted in certain duration (default 1 day)
-# Second argument = By what percent, daily request count should be increased (default is 50%)
-# Third argument = Signer seed for client (default is FCU's signer seed)
+# Usage with passing arguments: gen_load_ratcheting 3000 30 EvernymV111111111111111111111111
+# First argument = How many request needs to be submitted in secondsInOneCycle
+# Second argument = By what percent, daily request count should be increased
+# Third argument = Signer seed for client from which requests will be sent
 
 if len(sys.argv) == 2:
     perDayCount = int(sys.argv[1])
@@ -34,8 +38,7 @@ if len(sys.argv) == 3:
     dailyIncreasePer = int(sys.argv[2])
 
 if len(sys.argv) == 4:
-    signerSeed = sys.argv[3]
-
+    signerSeed = bytes(sys.argv[3])
 
 print("signer seed: {}".format(signerSeed))
 print("per day count: {}".format(perDayCount))
@@ -78,7 +81,7 @@ with Looper(debug=True) as looper:
             ROLE: USER
         }
         client.submit(op, identifier=client.defaultIdentifier)
-        sleepTime = oneDaySeconds / perDayCount
+        sleepTime = secondsInOneCycle / perDayCount
         print("\nDay:{}, Iteration: {}".format(dayCount, i))
         print("  Will sleep for {} seconds".format(sleepTime))
         looper.runFor(sleepTime)
