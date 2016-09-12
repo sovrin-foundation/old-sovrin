@@ -408,7 +408,7 @@ class IdentityGraph(OrientDbGraphStore):
         if len(txnIds) > len(result):
             # Some transactions missing so look for transactions without edges
             result.update(self.getTxnsWithoutEdge(*(txnIds.difference(
-                {r.get(TXN_ID) for r in result.values()}))))
+                {r.get(TXN_ID) for r in result.values()})), seqNo=seqNo))
         return result
 
     @staticmethod
@@ -459,13 +459,15 @@ class IdentityGraph(OrientDbGraphStore):
 
         return result
 
-    def getTxnsWithoutEdge(self, *txnIds):
+    def getTxnsWithoutEdge(self, *txnIds, seqNo=None):
         # For getting transactions for which have no edges in the graph as in
         # case of genesis transactions, currently looking for only `NYM`
         # transactions
         txnIdsStr = ",".join(["'{}'".format(tid) for tid in txnIds])
         cmd = "select from {} where {} in [{}]".format(Vertices.Nym, TXN_ID,
                                                        txnIdsStr)
+        if seqNo:
+            cmd += " and {} > {}".format(F.seqNo.name, seqNo)
         result = self.client.command(cmd)
         if not result:
             return {}

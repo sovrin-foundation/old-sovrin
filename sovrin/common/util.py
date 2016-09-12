@@ -10,7 +10,8 @@ from plenum.common.txn import KEYS
 from plenum.common.util import isHex, error, getConfig as PlenumConfig
 
 
-def getSymmetricallyEncryptedVal(val, secretKey: Union[str, bytes]=None) -> Tuple[str, str]:
+def getSymmetricallyEncryptedVal(val, secretKey: Union[str, bytes]=None) -> \
+        Tuple[str, str]:
     """
     Encrypt the provided value with symmetric encryption
 
@@ -49,13 +50,13 @@ def getSymmetricallyDecryptedVal(val, secretKey: Union[str, bytes]) -> str:
 def getInstalledConfig(installDir, configFile):
     configPath = os.path.join(installDir, configFile)
     if os.path.exists(configPath):
-        spec = importlib.util.spec_from_file_location(configFile,
-                                                      configPath)
+        spec = importlib.util.spec_from_file_location(configFile, configPath)
         config = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config)
         return config
     else:
-        raise FileNotFoundError("No file found at location {}".format(configPath))
+        raise FileNotFoundError("No file found at location {}".
+                                format(configPath))
 
 
 def getConfig():

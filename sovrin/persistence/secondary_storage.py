@@ -48,3 +48,9 @@ class SecondaryStorage(PlenumSS):
 
     def hasNym(self, nym) -> bool:
         return self._txnStore.hasNym(nym)
+
+    def countStewards(self) -> int:
+        return self._txnStore.countStewards()
+
+    def isSteward(self, nym):
+        return self._txnStore.hasSteward(nym)
