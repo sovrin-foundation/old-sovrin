@@ -11,4 +11,5 @@ portsStart = 9700
 
 if __name__ == "__main__":
     TestNetworkSetup.bootstrapTestNodes(portsStart, keepDir,
-                                        config.poolTransactionsFile)
+                                        config.poolTransactionsFile,
+                                        config.domainTransactionsFile)
