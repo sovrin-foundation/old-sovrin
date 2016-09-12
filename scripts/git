@@ -3,7 +3,7 @@ set -e
 
 GACTION=$1
 
-dirs=( "sovrin-priv" "plenum-priv" "anoncreds-priv" )
+dirs=( "sovrin-priv" "plenum-priv" "anoncreds-priv" "ledger-priv" )
 
 # quiet pushd
 pushd() {

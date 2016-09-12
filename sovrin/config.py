@@ -44,8 +44,16 @@ OrientDB = {
     "shutdownScript": "/opt/orientdb/bin/shutdown.sh"
 }
 
+'''
+Possible values: True|False
+
+If True, then OrientDB is required.
+'''
 ClientIdentityGraph = True
 
+'''
+Possible values: "orientdb"|"file"
+'''
 ReqReplyStore = "orientdb"
 
 RAETLogLevel = "concise"
