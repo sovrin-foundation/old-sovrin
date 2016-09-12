@@ -2,6 +2,15 @@ import logging
 import pprint
 
 from ioflo.aid.consoling import Console
+# The following setup of logging needs to happen before everything else
+# from sovrin.anon_creds.issuer import AttribDef, AttribType, InMemoryAttrRepo
+from functools import partial
+
+import sovrin.anon_creds.issuer as Issuer
+# from sovrin.anon_creds.proof_builder import ProofBuilder
+import sovrin.anon_creds.proof_builder as proof_builder
+# from sovrin.anon_creds.verifier import Verifier
+import sovrin.anon_creds.verifier as Verifier
 
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
@@ -13,12 +22,8 @@ import sovrin.anon_creds.issuer as IssuerModule
 import sovrin.anon_creds.proof_builder as ProofBuilderModuler
 import sovrin.anon_creds.verifier as VerifierModule
 
-from sovrin.common.txn import CRED_DEF
-from sovrin.common.util import getCredDefTxnData
-from sovrin.test.helper import submitAndCheck
 
-
-def out(record, extra_cli_value=None):
+def out(logger, record, extra_cli_value=None):
     """
     Callback so that this cli can manage colors
 
@@ -29,11 +34,32 @@ def out(record, extra_cli_value=None):
     logger.display(record.msg)
 
 
-logging.root.addHandler(DemoHandler(out))
-logging.root.handlers = []
-setupLogging(DISPLAY_LOG_LEVEL,
-             Console.Wordage.mute)
-logger = getlogger("test_anon_creds")
+from plenum.common.txn import DATA, TXN_TYPE
+from plenum.test.helper import genHa
+from sovrin.common.txn import CRED_DEF
+from sovrin.common.util import getCredDefTxnData
+from sovrin.test.helper import submitAndCheck
+
+
+# BYU = AttribDef('BYU',
+#         [AttribType("first_name", encode=True),
+#          AttribType("last_name", encode=True),
+#          AttribType("birth_date", encode=True),
+#          AttribType("expire_date", encode=True),
+#          AttribType("undergrad", encode=True),
+#          AttribType("postgrad", encode=True)]
+#         )
+#
+# attributes = BYU.attribs(
+#     first_name="John",
+#     last_name="Doe",
+#     birth_date="1970-01-01",
+#     expire_date="2300-01-01",
+#     undergrad="True",
+#     postgrad="False"
+# )
+#
+# attrNames = tuple(attributes.keys())
 
 
 def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
@@ -52,6 +78,12 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
                                   IssuerModule.AttribType("undergrad", encode=True),
                                   IssuerModule.AttribType("postgrad", encode=True)]
                                  )
+
+    setupLogging(DISPLAY_LOG_LEVEL,
+                 Console.Wordage.mute)
+    logger = getlogger("test_anon_creds")
+    logging.root.addHandler(DemoHandler(partial(out, logger)))
+    logging.root.handlers = []
 
     attributes = BYU.attribs(
         first_name="John",

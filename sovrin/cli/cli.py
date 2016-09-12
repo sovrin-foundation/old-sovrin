@@ -582,9 +582,9 @@ class SovrinCli(PlenumCli):
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
             uValue = matchedVars.get('u_value')
-            credDef = self.activeClient.storage.getCredDef(
-                self.activeSigner.identifier, credName, credVersion)
-            keys = json.loads(credDef[KEYS])
+            credDef = self.activeClient.wallet.getCredDef(
+                credName, credVersion, self.activeSigner.identifier)
+            keys = credDef[KEYS]
             pk = self.pKFromCredDef(keys)
             attributes = self.activeClient.attributeRepo.getAttributes(proverId).encoded()
             if attributes:

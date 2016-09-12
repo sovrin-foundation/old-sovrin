@@ -208,8 +208,8 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
-def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, looper,
-                                            genned, attributeData):
+def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, genned,
+                                            looper, attributeData):
 
     nym = nonSponsor.getSigner().verstr
 
