@@ -2,7 +2,6 @@
 
 
 import sys
-from time import sleep
 
 from jsonpickle import json
 from ledger.stores.text_file_store import TextFileStore
@@ -15,34 +14,34 @@ from sovrin.client.client import Client
 
 from sovrin.common.util import getConfig
 
+
+# Default configs
+oneDaySeconds = 120
+perDayCount = 5
+dailyIncreasePer = 50
+name = "Steward1"
+signerSeed = ('0' * (32 - len(name)) + name).encode()  # b"FCU11111111111111111111111111111"
+
+
 # First argument = How many request needs to be submitted in certain duration (default 1 day)
 # Second argument = By what percent, daily request count should be increased (default is 50%)
 # Third argument = Signer seed for client (default is FCU's signer seed)
 
-
 if len(sys.argv) == 2:
     perDayCount = int(sys.argv[1])
-else:
-    perDayCount = 16
 
 if len(sys.argv) == 3:
     dailyIncreasePer = int(sys.argv[2])
-else:
-    dailyIncreasePer = 50
 
 if len(sys.argv) == 4:
     signerSeed = sys.argv[3]
-else:
-    signerSeed = "Alpha111111111111111111111111111"  # "FCU11111111111111111111111111111"
 
 
-oneDaySeconds = 120
-
-print("perDayCount: {}".format(perDayCount))
-print("dailyIncreasePercentage: {}".format(dailyIncreasePer))
+print("signer seed: {}".format(signerSeed))
+print("per day count: {}".format(perDayCount))
+print("daily increase percentage: {}".format(dailyIncreasePer))
 
 config = getConfig()
-
 
 ledger = TextFileStore(dbDir=config.baseDir, dbName=config.poolTransactionsFile, isLineNoKey=True)
 stewardIdentifier = None
@@ -57,33 +56,36 @@ for seqNo, txn in ledger.iterator():
 print(cliNodeReg)
 
 with Looper(debug=True) as looper:
-    # clientName = "load-generator-client"
-    # sponsorSigner = SimpleSigner(seed=signerSeed)
-    # # create client with sponsor signer
-    # clientAddress = HA(host='0.0.0.0', port=5678)
-    # client = Client(clientName,
-    #                 nodeReg=cliNodeReg,
-    #                 ha=clientAddress,
-    #                 signer=sponsorSigner,
-    #                 basedirpath=config.baseDir)
-    # looper.add(client)
+    clientName = "load-generator-client"
+    sponsorSigner = SimpleSigner(seed=signerSeed)
+    # create client with sponsor signer
+    clientAddress = HA(host='0.0.0.0', port=5678)
+    client = Client(clientName,
+                    nodeReg=cliNodeReg,
+                    ha=clientAddress,
+                    signer=sponsorSigner,
+                    basedirpath=config.baseDir)
+    looper.add(client)
+    looper.runFor(3)
 
     i = 0
+    dayCount = 0
     while i < perDayCount:
-        # nym = SimpleSigner().verstr
-        # op = {
-        #     TARGET_NYM: nym,
-        #     TXN_TYPE: NYM,
-        #     ROLE: USER
-        # }
-        # client.submit(op, identifier=client.defaultIdentifier)
+        nym = SimpleSigner().verstr
+        op = {
+            TARGET_NYM: nym,
+            TXN_TYPE: NYM,
+            ROLE: USER
+        }
+        client.submit(op, identifier=client.defaultIdentifier)
         sleepTime = oneDaySeconds / perDayCount
-        print("\nIteration {}".format(i))
-        print("  Will stop for {} seconds".format(sleepTime))
-        sleep(sleepTime)
+        print("\nDay:{}, Iteration: {}".format(dayCount, i))
+        print("  Will sleep for {} seconds".format(sleepTime))
+        looper.runFor(sleepTime)
         i += 1
         if i == perDayCount:
-            print("  request for one day is finished, now resetting".format(i))
+            print("  request for current day is finished, now resetting variables...".format(i))
             i = 0
+            dayCount += 1
             perDayCount = int(perDayCount + (perDayCount*dailyIncreasePer/100))
-            print("  new I = {}, perDayCount = {}".format(i, perDayCount))
+
