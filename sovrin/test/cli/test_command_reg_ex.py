@@ -1,4 +1,5 @@
 import pytest
+from plenum.test.cli.helper import assertCliTokens
 from prompt_toolkit.contrib.regular_languages.compiler import compile
 from plenum.cli.helper import getUtilGrams, getNodeGrams, getClientGrams, getAllGrams
 from plenum.test.cli.test_command_reg_ex import getMatchedVariables
@@ -56,3 +57,11 @@ def test_prep_proof_reg_ex(grammar):
 
 def test_verify_proof_reg_ex(grammar):
     getMatchedVariables(grammar, "verify status is undergrad in proof degreeproof")
+
+
+def testShowFileCommandRegEx(grammar):
+    matchedVars = getMatchedVariables(grammar, "show sample/faber-invitation.sovrin")
+    assertCliTokens(matchedVars, {"show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
+
+    matchedVars = getMatchedVariables(grammar, "show sample/faber-invitation.sovrin ")
+    assertCliTokens(matchedVars, {"show_file": "show", "file_path": "sample/faber-invitation.sovrin"})

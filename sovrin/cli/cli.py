@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 from typing import Dict
 
 from hashlib import sha256
@@ -81,7 +82,8 @@ class SovrinCli(PlenumCli):
             'store_cred',
             'gen_verif_nonce',
             'init_attr_repo',
-            'add_attrs'
+            'add_attrs',
+            'show_file'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -110,7 +112,8 @@ class SovrinCli(PlenumCli):
             ["add", "genesis", "transaction"])
         completers["init_attr_repo"] = WordCompleter(
             ["initialize", "mock", "attribute", "repo"])
-        completers["add_attrs"] = WordCompleter(["add", "attribute"])
+        completers["add_attrs"] = WordCompleter(["add", "attribute"]),
+        completers["show_file"] = WordCompleter(["show"])
         return {**super().completers, **completers}
 
     def initializeGrammar(self):
@@ -135,7 +138,8 @@ class SovrinCli(PlenumCli):
                         self._storeCredAction,
                         self._genVerifNonceAction,
                         self._prepProofAction,
-                        self._genCredAction
+                        self._genCredAction,
+                        self._showFile
                         ])
         return actions
 
@@ -572,6 +576,24 @@ class SovrinCli(PlenumCli):
             self.print("Proof verified successfully", Token.BoldBlue)
         else:
             self.print("Status not in proof", Token.BoldOrange)
+
+    def _showFile(self, matchedVars):
+        if matchedVars.get('show_file') == 'show':
+            curDirPath = os.path.dirname(os.path.abspath(__file__))
+            givenFilePath = matchedVars.get('file_path')
+            sampleFilePath = curDirPath + "/../../" + givenFilePath
+            finalPathToCheck = None
+            if os.path.exists(sampleFilePath):
+                finalPathToCheck = sampleFilePath
+            elif os.path.exists(givenFilePath):
+                finalPathToCheck = givenFilePath
+            else:
+                self.print("Given file does not exists")
+                return True
+
+            with open(finalPathToCheck, 'r') as fin:
+                self.print(fin.read())
+            return True
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED
     # command received from prover. This is required for demo for sure, we'll
