@@ -62,7 +62,7 @@ setup(
     data_files=[(
         (BASE_DIR, ['data/pool_transactions', ])
     )],
-    install_requires=['base58', 'sh', 'pyorient', 'plenum', 'ledger'],
+    install_requires=['base58', 'sh', 'pyorient', 'plenum', 'ledger', 'semver'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
