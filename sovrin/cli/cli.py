@@ -6,6 +6,7 @@ from typing import Dict
 from hashlib import sha256
 
 from plenum.common.txn_util import createGenesisTxnFile
+from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.util import getConfig
 
 
@@ -26,7 +27,7 @@ from pygments.token import Token
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS
-from plenum.common.util import randomString
+from plenum.common.util import randomString, cleanSeed
 
 from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
@@ -83,7 +84,9 @@ class SovrinCli(PlenumCli):
             'gen_verif_nonce',
             'init_attr_repo',
             'add_attrs',
-            'show_file'
+            'show_file',
+            'load_file',
+            'show_link'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -112,8 +115,10 @@ class SovrinCli(PlenumCli):
             ["add", "genesis", "transaction"])
         completers["init_attr_repo"] = WordCompleter(
             ["initialize", "mock", "attribute", "repo"])
-        completers["add_attrs"] = WordCompleter(["add", "attribute"]),
+        completers["add_attrs"] = WordCompleter(["add", "attribute"])
         completers["show_file"] = WordCompleter(["show"])
+        completers["load_file"] = WordCompleter(["load"])
+        completers["show_link"] = WordCompleter(["show", "link"])
         return {**super().completers, **completers}
 
     def initializeGrammar(self):
@@ -139,7 +144,9 @@ class SovrinCli(PlenumCli):
                         self._genVerifNonceAction,
                         self._prepProofAction,
                         self._genCredAction,
-                        self._showFile
+                        self._showFile,
+                        self._loadFile,
+                        self._showLink
                         ])
         return actions
 
@@ -577,21 +584,114 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
+    def printUsage(self, msgs):
+        self.print("\nUsage:")
+        for m in msgs:
+            self.print('  {}'.format(m))
+
+    def _loadFile(self, matchedVars):
+        if matchedVars.get('load_file') == 'load':
+            givenFilePath = matchedVars.get('file_path')
+            filePath = SovrinCli._getFilePath(givenFilePath)
+            if not filePath:
+                self.print("Given file does not exists")
+                return True
+            with open(filePath) as data_file:
+                data = json.load(data_file)
+            try:
+                linkInviation = data["link-invitation"]
+                if isinstance(linkInviation, dict):
+                    linkInvitationName = linkInviation["name"]
+
+                    existingLinkInvites = self.activeWallet.getLinkInvitations(linkInvitationName)
+                    if len(existingLinkInvites) >= 1:
+                        self.print("Link is already loaded")
+                    else:
+                        targetIdentifier = linkInviation["identifier"]
+                        targetEndPoint = linkInviation.get("endpoint", None)
+                        linkNonce = linkInviation["nonce"]
+
+                        self.print("1 link invitation found for {}.".format(linkInvitationName))
+                        cseed = cleanSeed(None)
+                        alias = "cid-" + str(len(self.activeWallet.signers) + 1)
+                        signer = SimpleSigner(identifier=None, seed=cseed, alias=alias)
+                        self._addSignerToGivenWallet(signer, self.activeWallet)
+
+                        self.print("Creating Link for {}.".format(linkInvitationName))
+                        self.print("Generating Identifier and Signing key.")
+
+                        li = LinkInvitation(linkInvitationName, signer.alias + ":" + signer.identifier, None, linkInvitationName,
+                                       targetIdentifier, targetEndPoint, linkNonce)
+                        self.activeWallet.addLinkInvitation(li)
+                    msgs = ['accept invitation {}'.format(linkInvitationName), 'show link{}'.format(linkInvitationName)]
+                    self.printUsage(msgs)
+            except Exception as e:
+                self.print('Error occurred during processing link invitation: {}'.format(e))
+
+            return True
+
+    @staticmethod
+    def _getFilePath(givenPath):
+        curDirPath = os.path.dirname(os.path.abspath(__file__))
+        sampleFilePath = curDirPath + "/../../" + givenPath
+        finalPathToCheck = None
+        if os.path.exists(sampleFilePath):
+            finalPathToCheck = sampleFilePath
+        elif os.path.exists(givenPath):
+            finalPathToCheck = givenPath
+        return finalPathToCheck
+
+    def _getInvitationLinks(self, linkName):
+        exactMatches = {}
+        similarMatches = {}
+        walletsToBeSearched = [self.activeWallet]
+        for w in walletsToBeSearched:
+            invitations = w.getLinkInvitations(linkName)
+            for i in invitations:
+                if i.name == linkName:
+                    if w.name in exactMatches:
+                        exactMatches[w.name].append(i)
+                    else:
+                        exactMatches[w.name] = [i]
+                else:
+                    if w.name in similarMatches:
+                        similarMatches[w.name].append(i)
+                    else:
+                        similarMatches[w.name] = [i]
+
+        exactMatches.update(similarMatches)
+        return exactMatches
+
+    def _showLink(self, matchedVars):
+        if matchedVars.get('show_link') == 'show link':
+            linkName = matchedVars.get('link_name')
+            linkInvitations = self._getInvitationLinks(linkName)
+            if len(linkInvitations) == 0:
+                self.print("No matching link invitations found in current keyring")
+            elif len(linkInvitations) == 1 and len(list(linkInvitations.values())[0]) == 1:
+                li = list(linkInvitations.values())[0][0]
+                self.print("{}".format(li.getLinkInfo()))
+                msgs = ['accept invitation {}'.format(li.name), 'sync {}'.format(li.name)]
+                self.printUsage(msgs)
+            else:
+                self.print("More than one matching link invitations found: {}")
+                self.print("Link name")
+                for k, v in linkInvitations.items():
+                    for li in v:
+                        self.print("{}".format(li.name))
+                self.print("Re enter the command with more specific link invitation name")
+
+            return True
+
     def _showFile(self, matchedVars):
         if matchedVars.get('show_file') == 'show':
-            curDirPath = os.path.dirname(os.path.abspath(__file__))
             givenFilePath = matchedVars.get('file_path')
-            sampleFilePath = curDirPath + "/../../" + givenFilePath
-            finalPathToCheck = None
-            if os.path.exists(sampleFilePath):
-                finalPathToCheck = sampleFilePath
-            elif os.path.exists(givenFilePath):
-                finalPathToCheck = givenFilePath
-            else:
+            filePath = SovrinCli._getFilePath(givenFilePath)
+            if not filePath:
                 self.print("Given file does not exists")
                 return True
 
-            with open(finalPathToCheck, 'r') as fin:
+            with open(filePath, 'r') as fin:
                 self.print(fin.read())
             return True
 

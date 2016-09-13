@@ -4,6 +4,7 @@ from typing import Any, Dict
 from ledger.stores.text_file_store import TextFileStore
 from plenum.persistence.wallet_storage_file import WalletStorageFile \
     as PWalletStorageFile
+from sovrin.client.link_invitation import LinkInvitation
 
 from sovrin.persistence.attribute_store_file import AttributeStoreFile
 from sovrin.persistence.credential_def_store_file import CredDefStoreFile
@@ -18,6 +19,8 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         credFileName = "credentials"
         credDefKeys = "credential_definition_keys"
         masterSecret = "master_secret"
+        linkInvitations = "link_invitations"
+
         dataDir = self.dataLocation
 
         self.attrStore = AttributeStoreFile(dataDir, attrsDirName)
@@ -33,6 +36,11 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         self.masterSecretStore = TextFileStore(dataDir, masterSecret,
                                         isLineNoKey = True,
                                         storeContentHash=False)
+
+        self.linkInvitationStore = TextFileStore(dataDir, linkInvitations,
+                                        isLineNoKey = False,
+                                        storeContentHash=False)
+
 
     def addAttribute(self, name: str, val: Any, origin: str, dest: str = None,
                      encKey: str = None, encType: str = None,
@@ -81,6 +89,18 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
 
     def addMasterSecret(self, masterSecret):
         self.masterSecretStore.put(value=masterSecret)
+
+    def addLinkInvitation(self, linkInvitation):
+        self.linkInvitationStore.put(key=linkInvitation.name, value=json.dumps(linkInvitation.getDictToBeStored()))
+
+    def getLinkInvitations(self, name: str):
+        allMatched = []
+        for k, v in self.linkInvitationStore.iterator():
+            if name == k or name.lower() in k.lower():
+                liValues = json.loads(v)
+                li = LinkInvitation.getFromDict(k, liValues)
+                allMatched.append(li)
+        return allMatched
 
     @property
     def masterSecret(self):
