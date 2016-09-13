@@ -93,7 +93,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
     def addLinkInvitation(self, linkInvitation):
         self.linkInvitationStore.put(key=linkInvitation.name, value=json.dumps(linkInvitation.getDictToBeStored()))
 
-    def getLinkInvitations(self, name: str):
+    def getMatchingLinkInvitations(self, name: str):
         allMatched = []
         for k, v in self.linkInvitationStore.iterator():
             if name == k or name.lower() in k.lower():

@@ -588,6 +588,29 @@ class SovrinCli(PlenumCli):
         self.print("\nUsage:")
         for m in msgs:
             self.print('  {}'.format(m))
+        self.print("\n")
+
+    def _loadInvitation(self, invitationData):
+        linkInviation = invitationData["link-invitation"]
+        linkInvitationName = linkInviation["name"]
+        targetIdentifier = linkInviation["identifier"]
+        targetEndPoint = linkInviation.get("endpoint", None)
+        linkNonce = linkInviation["nonce"]
+        claimRequests = invitationData.get("claim-requests", None)
+        signature = invitationData["sig"]
+
+        self.print("1 link invitation found for {}.".format(linkInvitationName))
+        cseed = cleanSeed(None)
+        alias = "cid-" + str(len(self.activeWallet.signers) + 1)
+        signer = SimpleSigner(identifier=None, seed=cseed, alias=alias)
+        self._addSignerToGivenWallet(signer, self.activeWallet)
+
+        self.print("Creating Link for {}.".format(linkInvitationName))
+        self.print("Generating Identifier and Signing key.")
+
+        li = LinkInvitation(linkInvitationName, signer.alias + ":" + signer.identifier, None, linkInvitationName,
+                            targetIdentifier, targetEndPoint, linkNonce, claimRequests, signature)
+        self.activeWallet.addLinkInvitation(li)
 
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
@@ -596,34 +619,21 @@ class SovrinCli(PlenumCli):
             if not filePath:
                 self.print("Given file does not exists")
                 return True
-            with open(filePath) as data_file:
-                data = json.load(data_file)
-            try:
-                linkInviation = data["link-invitation"]
-                if isinstance(linkInviation, dict):
-                    linkInvitationName = linkInviation["name"]
 
-                    existingLinkInvites = self.activeWallet.getLinkInvitations(linkInvitationName)
+            with open(filePath) as data_file:
+                invitationData = json.load(data_file)
+
+            try:
+                linkInvitation = invitationData["link-invitation"]
+                if isinstance(linkInvitation, dict):
+                    linkInvitationName = linkInvitation["name"]
+
+                    existingLinkInvites = self.activeWallet.getMatchingLinkInvitations(linkInvitationName)
                     if len(existingLinkInvites) >= 1:
                         self.print("Link is already loaded")
                     else:
-                        targetIdentifier = linkInviation["identifier"]
-                        targetEndPoint = linkInviation.get("endpoint", None)
-                        linkNonce = linkInviation["nonce"]
-
-                        self.print("1 link invitation found for {}.".format(linkInvitationName))
-                        cseed = cleanSeed(None)
-                        alias = "cid-" + str(len(self.activeWallet.signers) + 1)
-                        signer = SimpleSigner(identifier=None, seed=cseed, alias=alias)
-                        self._addSignerToGivenWallet(signer, self.activeWallet)
-
-                        self.print("Creating Link for {}.".format(linkInvitationName))
-                        self.print("Generating Identifier and Signing key.")
-
-                        li = LinkInvitation(linkInvitationName, signer.alias + ":" + signer.identifier, None, linkInvitationName,
-                                       targetIdentifier, targetEndPoint, linkNonce)
-                        self.activeWallet.addLinkInvitation(li)
-                    msgs = ['accept invitation {}'.format(linkInvitationName), 'show link{}'.format(linkInvitationName)]
+                        self._loadInvitation(invitationData)
+                    msgs = ['accept invitation {}'.format(linkInvitationName), 'show link {}'.format(linkInvitationName)]
                     self.printUsage(msgs)
             except Exception as e:
                 self.print('Error occurred during processing link invitation: {}'.format(e))
@@ -641,12 +651,14 @@ class SovrinCli(PlenumCli):
             finalPathToCheck = givenPath
         return finalPathToCheck
 
-    def _getInvitationLinks(self, linkName):
+    def _getInvitationMatchingLinks(self, linkName):
         exactMatches = {}
-        similarMatches = {}
-        walletsToBeSearched = [self.activeWallet]
+        likelyMatched = {}
+        #  if we want to search in all wallets, then,
+        # change [self.activeWallet] to self.wallets.values()
+        walletsToBeSearched = [self.activeWallet]  # self.wallets.values()
         for w in walletsToBeSearched:
-            invitations = w.getLinkInvitations(linkName)
+            invitations = w.getMatchingLinkInvitations(linkName)
             for i in invitations:
                 if i.name == linkName:
                     if w.name in exactMatches:
@@ -654,32 +666,67 @@ class SovrinCli(PlenumCli):
                     else:
                         exactMatches[w.name] = [i]
                 else:
-                    if w.name in similarMatches:
-                        similarMatches[w.name].append(i)
+                    if w.name in likelyMatched:
+                        likelyMatched[w.name].append(i)
                     else:
-                        similarMatches[w.name] = [i]
+                        likelyMatched[w.name] = [i]
 
-        exactMatches.update(similarMatches)
-        return exactMatches
+        # Here is how the return dictionary should look like:
+        # {
+        #    "exactlyMatched": {
+        #           "Default": [linkWithExactName],
+        #           "WalletOne" : [linkWithExactName],
+        #     }, "likelyMatched": {
+        #           "Default": [similatMatches1, similarMatches2],
+        #           "WalletOne": [similatMatches2, similarMatches3]
+        #     }
+        # }
+        return {
+            "exactlyMatched": exactMatches,
+            "likelyMatched": likelyMatched
+        }
 
     def _showLink(self, matchedVars):
         if matchedVars.get('show_link') == 'show link':
             linkName = matchedVars.get('link_name')
-            linkInvitations = self._getInvitationLinks(linkName)
-            if len(linkInvitations) == 0:
-                self.print("No matching link invitations found in current keyring")
-            elif len(linkInvitations) == 1 and len(list(linkInvitations.values())[0]) == 1:
-                li = list(linkInvitations.values())[0][0]
+            linkInvitations = self._getInvitationMatchingLinks(linkName)
+
+            exactlyMatchedLinks = linkInvitations["exactlyMatched"]
+            likelyMatchedLinks = linkInvitations["likelyMatched"]
+
+            totalFound = 0
+            # TODO: need better way to get total count
+            for k, v in exactlyMatchedLinks.items():
+                totalFound += len(v)
+            for k, v in likelyMatchedLinks.items():
+                totalFound += len(v)
+
+            if totalFound == 0:
+                self.print("No matching link invitation(s) found in current keyring")
+                return True
+
+            if totalFound == 1:
+                li = None
+                if len(exactlyMatchedLinks) == 1:
+                    li = list(exactlyMatchedLinks.values())[0][0]
+                else:
+                    li = list(likelyMatchedLinks.values())[0][0]
+
+                if li.name != linkName:
+                    self.print('Expanding {} to "{}"'.format(linkName, li.name))
                 self.print("{}".format(li.getLinkInfo()))
                 msgs = ['accept invitation {}'.format(li.name), 'sync {}'.format(li.name)]
                 self.printUsage(msgs)
             else:
-                self.print("More than one matching link invitations found: {}")
-                self.print("Link name")
-                for k, v in linkInvitations.items():
+                self.print("More than one matching link invitations found\n")
+                heading = "Keyring Name                 Link name"
+                self.print(heading)
+                self.print("-"*(len(heading)))
+                exactlyMatchedLinks.update(likelyMatchedLinks)
+                for k, v in exactlyMatchedLinks.items():
                     for li in v:
-                        self.print("{}".format(li.name))
-                self.print("Re enter the command with more specific link invitation name")
+                        self.print("{}                      {}".format(k, li.name))
+                self.print("\nRe enter the command with more specific link invitation name")
 
             return True
 

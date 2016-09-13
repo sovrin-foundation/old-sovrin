@@ -5,16 +5,27 @@ SIGNER_VER_KEY = "Verification Key"
 TARGET_IDENTIFIER = "Target"
 TARGET_VER_KEY = "Target Verification Key"
 TARGET_END_POINT = "Target endpoint"
+SIGNATURE = "Signature"
+CLAIM_REQUESTS = "Claim Requests"
 
 LINK_NONCE = "Nonce"
 LINK_STATUS = "Invitation status"
 LINK_LAST_SYNCED = "Last Synced"
 LINK_STATUS_ACCEPTED = "Accepted"
 
+
+class ClaimRequest:
+
+    def __init__(self, name, version):
+        self.name = name
+        self.version = version
+
+
 class LinkInvitation:
 
     def __init__(self, name, signerIdentifier, signerVerKey, trustAnchor,
-                 targetIdentifier, targetEndPoint, linkNonce):
+                 targetIdentifier, targetEndPoint, linkNonce, claimRequests,
+                 signature):
         self.name = name
         self.signerIdentifier = signerIdentifier
 
@@ -22,6 +33,9 @@ class LinkInvitation:
         self.targetIdentifier = targetIdentifier
         self.targetEndPoint = targetEndPoint
         self.linkNonce = linkNonce
+        self.signature = signature
+        self.claimRequests = claimRequests
+
 
         self.signerVerKey = signerVerKey
         self.updateState(None, None, None)
@@ -37,6 +51,12 @@ class LinkInvitation:
         trustAnchor = values[TRUST_ANCHOR]
         targetIdentifier = values[TARGET_IDENTIFIER]
         linkNonce = values[LINK_NONCE]
+        signature = values[SIGNATURE]
+        claimRequestJson = values.get(CLAIM_REQUESTS, None)
+        claimRequests = []
+        if claimRequestJson:
+            for cr in claimRequestJson:
+                claimRequests.append(ClaimRequest(cr.get("name"), cr.get("version")))
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
         targetEndPoint = values.get(TARGET_END_POINT, None)
@@ -46,7 +66,8 @@ class LinkInvitation:
         linkLastSynced = values.get(LINK_LAST_SYNCED, None)
 
         li = LinkInvitation(name, signerIdentifier, signerVerKey, trustAnchor,
-                              targetIdentifier, targetEndPoint, linkNonce)
+                            targetIdentifier, targetEndPoint, linkNonce, claimRequests,
+                            signature)
         li.updateState(targetVerKey, linkStatus, linkLastSynced)
         return li
 
@@ -55,8 +76,8 @@ class LinkInvitation:
             SIGNER_IDENTIFIER: self.signerIdentifier,
             TRUST_ANCHOR: self.trustAnchor,
             TARGET_IDENTIFIER: self.targetIdentifier,
-            LINK_NONCE: self.linkNonce
-
+            LINK_NONCE: self.linkNonce,
+            SIGNATURE: self.signature
         }
         optional = {}
         if self.signerVerKey:
@@ -69,6 +90,12 @@ class LinkInvitation:
             optional[LINK_STATUS] = self.linkStatus
         if self.linkLastSynced:
             optional[LINK_LAST_SYNCED] = self.linkLastSynced
+        if self.claimRequests:
+            claimRequests = []
+            for cr in self.claimRequests:
+                claimRequests.append(dict(cr))
+            optional[CLAIM_REQUESTS] = claimRequests
+
 
         fixed.update(optional)
         return fixed
@@ -78,6 +105,7 @@ class LinkInvitation:
         targetVerKey = '<unknown, waiting for sync>'
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = '<this link has not yet been synchronized>'
+        targetEndPoint = self.targetEndPoint or "Not available"
 
         if not self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED:
             trustAnchorStatus = '(confirmed)'
@@ -98,9 +126,15 @@ class LinkInvitation:
             'Signing key: <hidden>' '\n' \
             'Target: ' + self.targetIdentifier + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
-            'Target endpoint: ' + self.targetEndPoint + '\n' \
+            'Target endpoint: ' + targetEndPoint + '\n' \
             'Invitation nonce: ' + self.linkNonce + '\n' \
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
-        return info
+        claimReqs = ""
+        if self.claimRequests:
+            claimReqs = 'Claim Requests: '
+            for cr in self.claimRequests:
+                claimReqs += '\n    ' + cr.name
+
+        return info + claimReqs

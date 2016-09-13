@@ -56,5 +56,5 @@ class WalletStorage(PWalletStorage):
         pass
 
     @abstractmethod
-    def getLinkInvitations(self, name: str):
+    def getMatchingLinkInvitations(self, name: str):
         pass
