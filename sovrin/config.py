@@ -45,6 +45,9 @@ OrientDB = {
 }
 
 '''
+Client has the identity graph or not. True will make the client have
+identity graph and False will make client not have it
+
 Possible values: True|False
 
 If True, then OrientDB is required.
@@ -52,6 +55,9 @@ If True, then OrientDB is required.
 ClientIdentityGraph = True
 
 '''
+The storage type clients use to store requests and replies. Possible values
+are file and OrientDB.
+
 Possible values: "orientdb"|"file"
 '''
 ReqReplyStore = "orientdb"
