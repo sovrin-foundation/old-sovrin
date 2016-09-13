@@ -54,7 +54,7 @@ txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm,
                 TARGET_NYM, NAME, VERSION]
 
 
-def getEdgeFromTxnType(txnType: str): return txnEdges.get(txnType)
+def getEdgeByTxnType(txnType: str): return txnEdges.get(txnType)
 
 
 def getTxnTypeFromEdge(edgeClass: str):
@@ -65,6 +65,7 @@ def getTxnTypeFromEdge(edgeClass: str):
 
 class IdentityGraph(OrientDbGraphStore):
 
+    @property
     def classesNeeded(self):
         return [
             (Vertices.Nym, self.createNymClass),
@@ -323,9 +324,7 @@ class IdentityGraph(OrientDbGraphStore):
         return None if not sponsor else sponsor[0].oRecordData.get(NYM)
 
     def countStewards(self):
-        return self.countEntitiesByAttrs(Vertices.Nym, {
-            ROLE: STEWARD
-        })
+        return self.countEntitiesByAttrs(Vertices.Nym, {ROLE: STEWARD})
 
     def getAddNymTxn(self, nym):
         nymEdge = self.getAddsNymEdge(nym)
@@ -360,7 +359,7 @@ class IdentityGraph(OrientDbGraphStore):
 
     def getTxn(self, identifier, reqId, **kwargs):
         typ = kwargs[TXN_TYPE]
-        edgeClass = getEdgeFromTxnType(typ)
+        edgeClass = getEdgeByTxnType(typ)
         edgeProps = ", ".join("@this.{} as __e_{}".format(name, name) for name in
                               txnEdgeProps)
         vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
@@ -409,54 +408,6 @@ class IdentityGraph(OrientDbGraphStore):
             # Some transactions missing so look for transactions without edges
             result.update(self.getTxnsWithoutEdge(*(txnIds.difference(
                 {r.get(TXN_ID) for r in result.values()})), seqNo=seqNo))
-        return result
-
-    @staticmethod
-    def cleanKeyNames(oRecordData):
-        # Removing `__e_` and `__v_` from key names of oRecordData.
-        # They are added to make select queries work which can contain
-        # duplicate key names
-        return {k[4:] if (k.startswith("__e_") or k.startswith("__v_")) else k:
-                    v for k, v in oRecordData.items()}
-
-    @staticmethod
-    def makeResult(txnType, oRecordData):
-        try:
-            int(oRecordData.get(F.seqNo.name))
-        except TypeError as ex:
-            logger.debug(
-                "Cannot convert {} to integer. Provided oRecordData {} for type"
-                " {}".format(oRecordData.get(F.seqNo.name), oRecordData,
-                             txnType))
-            return {}
-
-        result = {
-            F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
-            TXN_TYPE: txnType,
-            TXN_ID: oRecordData.get(TXN_ID),
-            TXN_TIME: oRecordData.get(TXN_TIME),
-            f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
-            f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
-        }
-
-        if TARGET_NYM in oRecordData:
-            result[TARGET_NYM] = oRecordData[TARGET_NYM]
-
-        if txnType == NYM:
-            result[ROLE] = oRecordData.get(ROLE)
-
-        if txnType == ATTRIB:
-            for n in [RAW, ENC, HASH]:
-                if n in oRecordData:
-                    result[n] = oRecordData[n]
-                    break
-
-        if txnType == CRED_DEF:
-            result[DATA] = {}
-            for n in [IP, PORT, KEYS, TYPE, NAME, VERSION]:
-                if n in oRecordData:
-                    result[DATA][n] = oRecordData[n]
-
         return result
 
     def getTxnsWithoutEdge(self, *txnIds, seqNo=None):
@@ -554,3 +505,51 @@ class IdentityGraph(OrientDbGraphStore):
             result = self.client.command(cmd)
             seqNos.update({r.oRecordData.get('seqNo') for r in result})
         return len(seqNos)
+
+    @staticmethod
+    def cleanKeyNames(oRecordData):
+        # Removing `__e_` and `__v_` from key names of oRecordData.
+        # They are added to make select queries work which can contain
+        # duplicate key names
+        return {k[4:] if (k.startswith("__e_") or k.startswith("__v_")) else k:
+                    v for k, v in oRecordData.items()}
+
+    @staticmethod
+    def makeResult(txnType, oRecordData):
+        try:
+            int(oRecordData.get(F.seqNo.name))
+        except TypeError as ex:
+            logger.debug(
+                "Cannot convert {} to integer. Provided oRecordData {} for type"
+                " {}".format(oRecordData.get(F.seqNo.name), oRecordData,
+                             txnType))
+            return {}
+
+        result = {
+            F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
+            TXN_TYPE: txnType,
+            TXN_ID: oRecordData.get(TXN_ID),
+            TXN_TIME: oRecordData.get(TXN_TIME),
+            f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
+            f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
+        }
+
+        if TARGET_NYM in oRecordData:
+            result[TARGET_NYM] = oRecordData[TARGET_NYM]
+
+        if txnType == NYM:
+            result[ROLE] = oRecordData.get(ROLE)
+
+        if txnType == ATTRIB:
+            for n in [RAW, ENC, HASH]:
+                if n in oRecordData:
+                    result[n] = oRecordData[n]
+                    break
+
+        if txnType == CRED_DEF:
+            result[DATA] = {}
+            for n in [IP, PORT, KEYS, TYPE, NAME, VERSION]:
+                if n in oRecordData:
+                    result[DATA][n] = oRecordData[n]
+
+        return result
