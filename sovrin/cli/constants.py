@@ -80,7 +80,7 @@ SHOW_FILE_REG_EX = "(\s*(?P<show_file>show) \s+ (?P<file_path>[A-Za-z0-9+-.=/]+)
 
 LOAD_FILE_REG_EX = "(\s*(?P<load_file>load) \s+ (?P<file_path>[A-Za-z0-9+-.=/]+)\s*)"
 
-SHOW_LINK_REG_EX = "(\s*(?P<show_link>show \s+ link) \s+ (?P<link_name>[A-Za-z0-9- ]+) \s*)"
+SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) \s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)

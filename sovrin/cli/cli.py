@@ -630,10 +630,10 @@ class SovrinCli(PlenumCli):
 
                     existingLinkInvites = self.activeWallet.getMatchingLinkInvitations(linkInvitationName)
                     if len(existingLinkInvites) >= 1:
-                        self.print("Link is already loaded")
+                        self.print("Link already exists")
                     else:
                         self._loadInvitation(invitationData)
-                    msgs = ['accept invitation {}'.format(linkInvitationName), 'show link {}'.format(linkInvitationName)]
+                    msgs = ['accept invitation "{}"'.format(linkInvitationName), 'show link "{}"'.format(linkInvitationName)]
                     self.printUsage(msgs)
             except Exception as e:
                 self.print('Error occurred during processing link invitation: {}'.format(e))
@@ -688,7 +688,7 @@ class SovrinCli(PlenumCli):
 
     def _showLink(self, matchedVars):
         if matchedVars.get('show_link') == 'show link':
-            linkName = matchedVars.get('link_name')
+            linkName = matchedVars.get('link_name').replace('"','')
             linkInvitations = self._getInvitationMatchingLinks(linkName)
 
             exactlyMatchedLinks = linkInvitations["exactlyMatched"]
@@ -715,17 +715,14 @@ class SovrinCli(PlenumCli):
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
                 self.print("{}".format(li.getLinkInfoStr()))
-                msgs = ['accept invitation {}'.format(li.name), 'sync {}'.format(li.name)]
+                msgs = ['accept invitation "{}"'.format(li.name), 'sync "{}"'.format(li.name)]
                 self.printUsage(msgs)
             else:
-                self.print("More than one matching link invitations found\n")
-                heading = "Keyring Name                 Link name"
-                self.print(heading)
-                self.print("-"*(len(heading)))
+                self.print('More than one link matches "{}"'.format(linkName))
                 exactlyMatchedLinks.update(likelyMatchedLinks)
                 for k, v in exactlyMatchedLinks.items():
                     for li in v:
-                        self.print("{}                      {}".format(k, li.name))
+                        self.print("{}".format(li.name))
                 self.print("\nRe enter the command with more specific link invitation name")
 
             return True
@@ -736,10 +733,11 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exists")
-                return True
-
-            with open(filePath, 'r') as fin:
-                self.print(fin.read())
+            else:
+                with open(filePath, 'r') as fin:
+                    self.print(fin.read())
+            msgs = ['load {}'.format(givenFilePath)]
+            self.printUsage(msgs)
             return True
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED
