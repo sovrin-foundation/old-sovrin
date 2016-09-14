@@ -1,7 +1,7 @@
 {
   "link-invitation": {
     "name": "Bank of America",
-    "identifier": "3abcc53ae2b74e83c55076157c22f47040e5d666c6675d9a59e18d319bfe12dc",
+    "identifier": "1tVeTPHkJncT7Ub2IlE9hWefCec96zqEVjtbdQoMtf8=",
     "nonce": "67fbf9dc8c8e6acde33de98c6d747b28c",
     "endpoint": "124.34.56.188:7870"
   },
@@ -12,5 +12,5 @@
       "name": "Loan Application KYC",
       "version": 0.1
     }],
-  "sig": "d745d552027bb706d773c27a26eed5f67e453c429e7a23af171bba5e5ecf681e58cd7fa0bfb5bdabb062a38178f78897a0854609a4b9653d46f5adda86aba698"
+  "sig": "ycmQhvrulxcxmS9HydGBpJX8cHhTbZkwkDmNIylXJRbvwGVr1QMLZpjsrXtncEAC9a7PlmJ/IA3h9HThrty0AA=="
 }

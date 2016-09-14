@@ -1,7 +1,7 @@
 {
   "link-invitation": {
     "name": "Acme Corp",
-    "identifier": "2abcc53ae2b74e83c55076157c22f47040e5d666c6675d9a59e18d319bfe12dc",
+    "identifier": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
     "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
     "endpoint": "123.34.56.188:7870"
   },
@@ -9,5 +9,5 @@
     "name": "Job Application",
     "version": 0.2
   }],
-  "sig": "c745d552027bb706d773c27a26eed5f67e453c429e7a23af171bba5e5ecf681e58cd7fa0bfb5bdabb062a38178f78897a0854609a4b9653d46f5adda86aba698"
+  "sig": "KDkI4XUePwEu1K01u0DpDsbeEfBnnBfwuw8e4DEPK+MdYXvVsXdSmBJ7yEfQBm8bSJuj6/4CRNI39fFul6DcDA=="
 }

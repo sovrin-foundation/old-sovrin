@@ -1,8 +1,8 @@
 {
   "link-invitation": {
     "name": "Faber College",
-    "identifier": "d0ba0aaef20274c825eb824fd8d143ab80cdfef7aa8e3709282a7439cdc59352",
+    "identifier": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
     "nonce": "b1134a647eb818069c089e7694f63e6d"
   },
-  "sig": "6d773c27a26eed5f67e4c745d552027bb70171bba5e5ecf681e53c429e7a23af58cd7fa0bfb085dda86aba6984605bdabb062a38178f78897a9a4b9653d46f5a"
+  "sig": "qipa+tYKT324FELRbRYKM6ZhFFsQ/NgzB5BXSA6PX6Xv0O4BS8edpISRSKmyfwBBMaUnmV7BEP6278RhX3QKDg=="
 }

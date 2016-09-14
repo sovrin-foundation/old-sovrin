@@ -82,6 +82,8 @@ LOAD_FILE_REG_EX = "(\s*(?P<load_file>load) \s+ (?P<file_path>[A-Za-z0-9+-.=/]+)
 
 SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) \s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
+SYNC_LINK_REG_EX = '(\s*(?P<sync_link>sync) \s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -100,3 +102,4 @@ ADD_ATTRS_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRS_REG_EX)
 SHOW_FILE_FORMATTED_REG_EX = getPipedRegEx(SHOW_FILE_REG_EX)
 LOAD_FILE_FORMATTED_REG_EX = getPipedRegEx(LOAD_FILE_REG_EX)
 SHOW_LINK_FORMATTED_REG_EX = getPipedRegEx(SHOW_LINK_REG_EX)
+SYNC_LINK_FORMATTED_REG_EX = getPipedRegEx(SYNC_LINK_REG_EX)

@@ -27,7 +27,7 @@ from pygments.token import Token
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS
-from plenum.common.util import randomString, cleanSeed
+from plenum.common.util import randomString, cleanSeed, getCryptonym
 
 from sovrin.cli.helper import getNewClientGrams
 from sovrin.client.client import Client
@@ -86,7 +86,8 @@ class SovrinCli(PlenumCli):
             'add_attrs',
             'show_file',
             'load_file',
-            'show_link'
+            'show_link',
+            'sync_link'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -119,6 +120,7 @@ class SovrinCli(PlenumCli):
         completers["show_file"] = WordCompleter(["show"])
         completers["load_file"] = WordCompleter(["load"])
         completers["show_link"] = WordCompleter(["show", "link"])
+        completers["sync_link"] = WordCompleter(["sync"])
         return {**super().completers, **completers}
 
     def initializeGrammar(self):
@@ -686,31 +688,86 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
+    def _syncLinkInvitation(self, linkName):
+        totalFound, exactlyMatchedLinks, likelyMatchedLinks = self._getMatchingInvitations(linkName)
+        if totalFound == 0:
+            self._printNoLinkFoundMsg()
+            return
+
+        if totalFound == 1:
+            li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
+
+            if li.name != linkName:
+                self.print('Expanding {} to "{}"'.format(linkName, li.name))
+
+            if li.targetEndPoint:
+                self.print("TODO: Synchronizing...")
+                nym = getCryptonym(li.targetIdentifier)
+                endpoint = self.activeClient.getAttributeForNym(nym, "endpoint")
+                self.print("Received endpoint: {}".format(endpoint))
+            else:
+                self.print("TODO: Ping...")
+
+            msgs = ['show link "{}"'.format(li.name), 'accept invitation "{}"'.format(li.name)]
+            self.printUsage(msgs)
+        else:
+            self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks, likelyMatchedLinks)
+
+        return True
+
+
+    def _printNoLinkFoundMsg(self):
+        self.print("No matching link invitation(s) found in current keyring")
+
+    def _syncLink(self, matchedVars):
+        if matchedVars.get('sync_link') == 'sync':
+            linkName = matchedVars.get('link_name').replace('"', '')
+            self._syncLinkInvitation(linkName)
+            return True
+
+    def _getMatchingInvitations(self, linkName):
+        linkInvitations = self._getInvitationMatchingLinks(linkName.replace('"',''))
+
+        exactlyMatchedLinks = linkInvitations["exactlyMatched"]
+        likelyMatchedLinks = linkInvitations["likelyMatched"]
+
+        totalFound = 0
+        # TODO: need better way to get total count
+        for k, v in exactlyMatchedLinks.items():
+            totalFound += len(v)
+        for k, v in likelyMatchedLinks.items():
+            totalFound += len(v)
+        return totalFound, exactlyMatchedLinks, likelyMatchedLinks
+
+    @staticmethod
+    def _getOneLink(exactlyMatchedLinks, likelyMatchedLinks) -> LinkInvitation:
+        li = None
+        if len(exactlyMatchedLinks) == 1:
+            li = list(exactlyMatchedLinks.values())[0][0]
+        else:
+            li = list(likelyMatchedLinks.values())[0][0]
+        return li
+
+    def _printMoreThanOneLinkFoundMsg(self, linkName, exactlyMatchedLinks, likelyMatchedLinks):
+        self.print('More than one link matches "{}"'.format(linkName))
+        exactlyMatchedLinks.update(likelyMatchedLinks)
+        for k, v in exactlyMatchedLinks.items():
+            for li in v:
+                self.print("{}".format(li.name))
+        self.print("\nRe enter the command with more specific link invitation name")
+
     def _showLink(self, matchedVars):
         if matchedVars.get('show_link') == 'show link':
             linkName = matchedVars.get('link_name').replace('"','')
-            linkInvitations = self._getInvitationMatchingLinks(linkName)
 
-            exactlyMatchedLinks = linkInvitations["exactlyMatched"]
-            likelyMatchedLinks = linkInvitations["likelyMatched"]
-
-            totalFound = 0
-            # TODO: need better way to get total count
-            for k, v in exactlyMatchedLinks.items():
-                totalFound += len(v)
-            for k, v in likelyMatchedLinks.items():
-                totalFound += len(v)
+            totalFound, exactlyMatchedLinks, likelyMatchedLinks = self._getMatchingInvitations(linkName)
 
             if totalFound == 0:
-                self.print("No matching link invitation(s) found in current keyring")
+                self._printNoLinkFoundMsg()
                 return True
 
             if totalFound == 1:
-                li = None
-                if len(exactlyMatchedLinks) == 1:
-                    li = list(exactlyMatchedLinks.values())[0][0]
-                else:
-                    li = list(likelyMatchedLinks.values())[0][0]
+                li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
 
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
@@ -718,12 +775,7 @@ class SovrinCli(PlenumCli):
                 msgs = ['accept invitation "{}"'.format(li.name), 'sync "{}"'.format(li.name)]
                 self.printUsage(msgs)
             else:
-                self.print('More than one link matches "{}"'.format(linkName))
-                exactlyMatchedLinks.update(likelyMatchedLinks)
-                for k, v in exactlyMatchedLinks.items():
-                    for li in v:
-                        self.print("{}".format(li.name))
-                self.print("\nRe enter the command with more specific link invitation name")
+                self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks, likelyMatchedLinks)
 
             return True
 
