@@ -1,5 +1,4 @@
-from _pytest.python import yield_fixture
-from pytest import fixture
+from pytest import fixture, yield_fixture
 
 from plenum.common.looper import Looper
 from plenum.common.startable import Status
