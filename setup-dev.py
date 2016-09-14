@@ -34,9 +34,9 @@ exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
 BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
 CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
-POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions")
+POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions_sandbox")
 POOL_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "pool_transactions_local")
-IDENTITY_TXN_FILE = os.path.join(BASE_DIR, "transactions")
+IDENTITY_TXN_FILE = os.path.join(BASE_DIR, "transactions_sandbox")
 IDENTITY_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "transactions_local")
 
 if not os.path.exists(BASE_DIR):
@@ -59,7 +59,7 @@ setup(
              '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
     include_package_data=True,
     data_files=[(
-        (BASE_DIR, ['data/pool_transactions', ])
+        (BASE_DIR, ['data/pool_transactions_sandbox', ])
     )],
     install_requires=['base58', 'pyorient', 'plenum-dev', 'ledger-dev',
                       'semver'],
@@ -80,7 +80,7 @@ if not os.path.exists(CONFIG_FILE):
         f.write(msg)
 
 DATA_DIR = os.path.dirname(data.__file__)
-copyfile(os.path.join(DATA_DIR, "pool_transactions"), POOL_TXN_FILE)
+copyfile(os.path.join(DATA_DIR, "pool_transactions_sandbox"), POOL_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
-copyfile(os.path.join(DATA_DIR, "transactions"), IDENTITY_TXN_FILE)
+copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)

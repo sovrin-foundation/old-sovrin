@@ -86,6 +86,11 @@ def testShowLinkRegEx(grammar):
     assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber college "})
 
 
+def test_connect_reg_ex(grammar):
+    getMatchedVariables(grammar, "connect dummy")
+    getMatchedVariables(grammar, "connect test")
+    getMatchedVariables(grammar, "connect live")
+
 def testSyncLinkRegEx(grammar):
     matchedVars = getMatchedVariables(grammar, "sync faber")
     assertCliTokens(matchedVars, {"sync_link": "sync", "link_name": "faber"})
