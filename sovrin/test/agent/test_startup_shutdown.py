@@ -1,25 +1,32 @@
+from _pytest.python import yield_fixture
 from pytest import fixture
+
+from plenum.common.looper import Looper
 from plenum.common.startable import Status
 from sovrin.agent.agent import Agent
 
 
-@fixture()
+@yield_fixture(scope="module")
+def emptyLooper():
+    with Looper() as l:
+        yield l
+
+
+@fixture(scope="module")
 def agent():
     return Agent()
 
 
-@fixture()
-def startedAgent(looper, agent):
-    looper.add(agent)
+@fixture(scope="module")
+def startedAgent(emptyLooper, agent):
+    emptyLooper.add(agent)
     return agent
 
 
-def testStartup(startedAgent, looper):
-    # TODO: Why is OrientDB starting up???
-    # TODO: Why is a node set startup up???
+def testStartup(startedAgent, emptyLooper):
     assert startedAgent.isGoing() is True
     assert startedAgent.get_status() is Status.starting
-    looper.runFor(.1)
+    emptyLooper.runFor(.1)
     assert startedAgent.get_status() is Status.started
 
 
