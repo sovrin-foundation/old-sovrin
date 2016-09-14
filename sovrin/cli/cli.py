@@ -714,7 +714,7 @@ class SovrinCli(PlenumCli):
 
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
-                self.print("{}".format(li.getLinkInfo()))
+                self.print("{}".format(li.getLinkInfoStr()))
                 msgs = ['accept invitation {}'.format(li.name), 'sync {}'.format(li.name)]
                 self.printUsage(msgs)
             else:

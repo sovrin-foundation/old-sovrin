@@ -11,6 +11,7 @@ CLAIM_REQUESTS = "Claim Requests"
 LINK_NONCE = "Nonce"
 LINK_STATUS = "Invitation status"
 LINK_LAST_SYNCED = "Last Synced"
+LINK_LAST_SEQ_NO = "Last Sync no"
 LINK_STATUS_ACCEPTED = "Accepted"
 
 
@@ -36,14 +37,14 @@ class LinkInvitation:
         self.signature = signature
         self.claimRequests = claimRequests
 
-
         self.signerVerKey = signerVerKey
-        self.updateState(None, None, None)
+        self.updateState(None, None, None, None)
 
-    def updateState(self, targetVerKey, linkStatus, linkLastSynced):
+    def updateState(self, targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo):
         self.targetVerkey = targetVerKey
         self.linkStatus = linkStatus,
         self.linkLastSynced = linkLastSynced
+        self.linkLastSyncNo = linkLastSyncNo
 
     @staticmethod
     def getFromDict(name, values):
@@ -52,7 +53,9 @@ class LinkInvitation:
         targetIdentifier = values[TARGET_IDENTIFIER]
         linkNonce = values[LINK_NONCE]
         signature = values[SIGNATURE]
+
         claimRequestJson = values.get(CLAIM_REQUESTS, None)
+
         claimRequests = []
         if claimRequestJson:
             for cr in claimRequestJson:
@@ -64,11 +67,12 @@ class LinkInvitation:
         targetVerKey = values.get(TARGET_VER_KEY, None)
         linkStatus = values.get(LINK_STATUS, None)
         linkLastSynced = values.get(LINK_LAST_SYNCED, None)
+        linkLastSyncNo = values.get(LINK_LAST_SEQ_NO, None)
 
         li = LinkInvitation(name, signerIdentifier, signerVerKey, trustAnchor,
                             targetIdentifier, targetEndPoint, linkNonce, claimRequests,
                             signature)
-        li.updateState(targetVerKey, linkStatus, linkLastSynced)
+        li.updateState(targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
         return li
 
     def getDictToBeStored(self) -> dict:
@@ -90,6 +94,9 @@ class LinkInvitation:
             optional[LINK_STATUS] = self.linkStatus
         if self.linkLastSynced:
             optional[LINK_LAST_SYNCED] = self.linkLastSynced
+        if self.linkLastSyncNo:
+            optional[LINK_LAST_SEQ_NO] = self.linkLastSyncNo
+
         if self.claimRequests:
             claimRequests = []
             for cr in self.claimRequests:
@@ -100,12 +107,12 @@ class LinkInvitation:
         fixed.update(optional)
         return fixed
 
-    def getLinkInfo(self) -> str:
+    def getLinkInfoStr(self) -> str:
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = '<unknown, waiting for sync>'
+        targetEndPoint = self.targetEndPoint or "Not available"
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = '<this link has not yet been synchronized>'
-        targetEndPoint = self.targetEndPoint or "Not available"
 
         if not self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED:
             trustAnchorStatus = '(confirmed)'
@@ -117,7 +124,7 @@ class LinkInvitation:
         if self.signerVerKey:
             verKey = self.signerVerKey
 
-        info = \
+        fixed = \
             '\n' \
             'Name: ' + self.name + '\n' \
             'Identifier: ' + self.signerIdentifier + '\n' \
@@ -131,10 +138,13 @@ class LinkInvitation:
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
-        claimReqs = ""
+        optional = ""
         if self.claimRequests:
-            claimReqs = 'Claim Requests: '
+            optional = 'Claim Requests: '
             for cr in self.claimRequests:
-                claimReqs += '\n    ' + cr.name
+                optional += '\n    ' + cr.name
 
-        return info + claimReqs
+        if self.linkLastSyncNo:
+            optional += 'Last sync seq no: ' + self.linkLastSyncNo
+
+        return fixed + optional
