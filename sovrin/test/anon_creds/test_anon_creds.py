@@ -196,3 +196,5 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerSigner, proverSigner,
     logger.display("Verifier: Proof verified.")
     assert verified
     logger.display("Prover: Proof accepted.")
+
+    # TODO: Reset the log level back to original.
