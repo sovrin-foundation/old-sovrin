@@ -18,8 +18,9 @@ cliNodeReg = OrderedDict([
 
 baseDir = "~/.sovrin"
 
-domainTransactionsFile = "transactions"
-poolTransactionsFile = "pool_transactions"
+# TODO: Rename `transactions_sandbox` to `domain_transactions_sandbox`
+domainTransactionsFile = "transactions_sandbox"
+poolTransactionsFile = "pool_transactions_sandbox"
 
 logFilePath = "cli.log"
 

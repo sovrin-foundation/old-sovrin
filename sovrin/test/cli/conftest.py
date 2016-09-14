@@ -1,8 +1,8 @@
 import pytest
+from plenum.common.raet import initLocalKeep
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 import plenum
-from plenum.test.eventually import eventually
 
 plenum.common.util.loggingConfigured = False
 
@@ -16,6 +16,7 @@ from sovrin.test.cli.helper import newCLI
 
 config = getConfig()
 
+
 @pytest.yield_fixture(scope="module")
 def looper():
     with Looper(debug=False) as l:
@@ -24,16 +25,16 @@ def looper():
 
 # TODO: Probably need to remove
 @pytest.fixture("module")
-def nodesCli(nodeRegsForCLI, looper, tdir, nodeNames):
-    cli = newCLI(nodeRegsForCLI, looper, tdir)
+def nodesCli(looper, tdir, nodeNames):
+    cli = newCLI(looper, tdir)
     cli.enterCmd("new node all")
     checkAllNodesStarted(cli, *nodeNames)
     return cli
 
 
 @pytest.fixture("module")
-def cli(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+def cli(looper, tdir):
+    return newCLI(looper, tdir)
 
 
 @pytest.fixture(scope="module")
@@ -48,3 +49,15 @@ def stewardCreated(cli, createAllNodes, stewardSigner):
 @pytest.fixture(scope="module")
 def newKeyPairCreated(cli):
     return newKeyPair(cli)
+
+
+@pytest.yield_fixture(scope="module")
+def poolCLI(tdir, poolTxnData, poolTxnNodeNames, tdirWithPoolTxns,
+            tdirWithDomainTxns, tconf):
+    with Looper(debug=False) as looper:
+        cli = newCLI(looper, tdir, subDirectory="pool", conf=tconf,
+                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
+        seeds = poolTxnData["seeds"]
+        for nName in poolTxnNodeNames:
+            initLocalKeep(nName, cli.basedirpath, seeds[nName], override=True)
+        yield cli

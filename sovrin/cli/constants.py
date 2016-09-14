@@ -78,6 +78,8 @@ GEN_VERIF_NONCE_REG_EX = "(\s*(?P<gen_verif_nonce>generate \s+ verification \s+ 
 
 SHOW_FILE_REG_EX = "(\s*(?P<show_file>show) \s+ (?P<file_path>[A-Za-z0-9+-.=/]+)\s*)"
 
+CONNECT_REG_EX = "(\s*(?P<conn>connect) \s+ (?P<env_name>[A-Za-z0-9-]+)\s*)"
+
 LOAD_FILE_REG_EX = "(\s*(?P<load_file>load) \s+ (?P<file_path>[A-Za-z0-9+-.=/]+)\s*)"
 
 SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) \s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
@@ -100,3 +102,5 @@ ADD_ATTRS_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRS_REG_EX)
 SHOW_FILE_FORMATTED_REG_EX = getPipedRegEx(SHOW_FILE_REG_EX)
 LOAD_FILE_FORMATTED_REG_EX = getPipedRegEx(LOAD_FILE_REG_EX)
 SHOW_LINK_FORMATTED_REG_EX = getPipedRegEx(SHOW_LINK_REG_EX)
+ADD_ATTRS_PROVER_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRS_PROVER_REG_EX)
+CONNECT_FORMATTED_REG_EX = getPipedRegEx(CONNECT_REG_EX)
