@@ -15,6 +15,7 @@ from sovrin.common.util import getConfig
 
 from plenum.test.conftest import getValueFromModule
 
+# noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
     nodeReg, up, ready, keySharedNodes, whitelist, logcapture
 
