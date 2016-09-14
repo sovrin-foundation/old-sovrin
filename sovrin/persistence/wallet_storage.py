@@ -50,3 +50,11 @@ class WalletStorage(PWalletStorage):
     @abstractproperty
     def masterSecret(self):
         pass
+
+    @abstractmethod
+    def addLinkInvitation(self, linkInvitation):
+        pass
+
+    @abstractmethod
+    def getMatchingLinkInvitations(self, name: str):
+        pass

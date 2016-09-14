@@ -36,7 +36,7 @@ class Node(PlenumNode):
 
     def __init__(self,
                  name,
-                 nodeRegistry,
+                 nodeRegistry=None,
                  clientAuthNr=None,
                  ha=None,
                  cliname=None,

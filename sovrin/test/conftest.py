@@ -1,4 +1,7 @@
 import pytest
+from ledger.compact_merkle_tree import CompactMerkleTree
+from ledger.ledger import Ledger
+from ledger.serializers.compact_serializer import CompactSerializer
 
 from plenum.client.signer import SimpleSigner
 from plenum.common.plugin_helper import loadPlugins
@@ -10,14 +13,16 @@ from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.test.helper import TestNodeSet,\
-    genTestClient, createNym, addUser
+    genTestClient, createNym, addUser, TestNode
 from sovrin.common.util import getConfig
 
 from plenum.test.conftest import getValueFromModule
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
-    nodeReg, up, ready, keySharedNodes, whitelist, logcapture
+    nodeReg, up, ready, keySharedNodes, whitelist, logcapture, tconf, \
+    tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, poolTxnNodeNames,\
+    allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -52,16 +57,21 @@ def genesisTxns(stewardSigner):
     return [{
         TXN_TYPE: NYM,
         TARGET_NYM: nym,
-        TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+        TXN_ID: "9c86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
         ROLE: STEWARD
     },]
 
 
 @pytest.fixture(scope="module")
-def gennedTdir(genesisTxns, tdir):
+def domainTxnOrderedFields():
+    return getTxnOrderedFields()
+
+
+@pytest.fixture(scope="module")
+def gennedTdir(genesisTxns, tdir, domainTxnOrderedFields):
     config = getConfig()
     createGenesisTxnFile(genesisTxns, tdir, config.domainTransactionsFile,
-                         getTxnOrderedFields())
+                         domainTxnOrderedFields)
     return tdir
 
 
@@ -78,6 +88,32 @@ def nodeSet(request, tdir, nodeReg, allPluginsPath):
 @pytest.fixture(scope="module")
 def genned(gennedTdir, nodeSet):
     return nodeSet
+
+
+@pytest.fixture(scope="module")
+def conf():
+    return getConfig()
+
+
+@pytest.fixture(scope="module")
+def testNodeClass():
+    return TestNode
+
+
+@pytest.fixture(scope="module")
+def updatedDomainTxnFile(tdir, tdirWithDomainTxns, genesisTxns,
+                         domainTxnOrderedFields, tconf):
+    ledger = Ledger(CompactMerkleTree(),
+                    dataDir=tdir,
+                    serializer=CompactSerializer(fields=domainTxnOrderedFields),
+                    fileName=tconf.domainTransactionsFile)
+    for txn in genesisTxns:
+        ledger.add(txn)
+
+
+@pytest.fixture(scope="module")
+def gennedTxnPoolNodeSet(updatedDomainTxnFile, txnPoolNodeSet):
+    return txnPoolNodeSet
 
 
 @pytest.fixture(scope="module")

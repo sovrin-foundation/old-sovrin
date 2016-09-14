@@ -1,21 +1,22 @@
 import ast
 import json
+import os
 from typing import Dict
 
 from hashlib import sha256
 
 from plenum.common.txn_util import createGenesisTxnFile
+from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.util import getConfig
 
 
-from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, \
-    PROOF, REVEALED_ATTRS
+from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
+    ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.cred_def import SerFmt
-from sovrin.anon_creds.proof_builder import Proof as ProofTuple
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -25,9 +26,9 @@ from pygments.token import Token
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import Signer, SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS
-from plenum.common.util import randomString
+from plenum.common.util import randomString, cleanSeed
 
-from sovrin.cli.helper import getNewClientGrams
+from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
@@ -62,6 +63,15 @@ class SovrinCli(PlenumCli):
         self.aliases = {}         # type: Dict[str, Signer]
         self.sponsors = set()
         self.users = set()
+        # Available environments
+        self.envs = {
+            "test": Environment("pool_transactions_sandbox",
+                                "transactions_sandbox"),
+            "live": Environment("pool_transactions_live",
+                                "transactions_live")
+        }
+        # This specifies which environment the cli is connected to test or live
+        self.activeEnv = None
         super().__init__(*args, **kwargs)
 
     @property
@@ -81,7 +91,11 @@ class SovrinCli(PlenumCli):
             'store_cred',
             'gen_verif_nonce',
             'init_attr_repo',
-            'add_attrs'
+            'add_attrs',
+            'show_file',
+            'conn'
+            'load_file',
+            'show_link'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -111,6 +125,11 @@ class SovrinCli(PlenumCli):
         completers["init_attr_repo"] = WordCompleter(
             ["initialize", "mock", "attribute", "repo"])
         completers["add_attrs"] = WordCompleter(["add", "attribute"])
+        completers["show_file"] = WordCompleter(["show"])
+        completers["load_file"] = WordCompleter(["load"])
+        completers["show_link"] = WordCompleter(["show", "link"])
+        completers["conn"] = WordCompleter(["connect"])
+        completers["env_name"] = WordCompleter(list(self.envs.keys()))
         return {**super().completers, **completers}
 
     def initializeGrammar(self):
@@ -135,7 +154,11 @@ class SovrinCli(PlenumCli):
                         self._storeCredAction,
                         self._genVerifNonceAction,
                         self._prepProofAction,
-                        self._genCredAction
+                        self._genCredAction,
+                        self._showFile,
+                        self._loadFile,
+                        self._showLink,
+                        self._connectTo,
                         ])
         return actions
 
@@ -158,10 +181,17 @@ class SovrinCli(PlenumCli):
         nodesAdded = super().newNode(nodeName)
         return nodesAdded
 
+    def _printNotConnectedEnvMessage(self):
+        self.print("Not connected to any environment. Please connect first.")
+        self.print("\t\tUsage: connect ({})".format("|".join(self.envs.keys())))
+
     def newClient(self, clientName, seed=None, identifier=None, signer=None,
-                  wallet=None):
+                  wallet=None, config=None):
+        if not self.activeEnv:
+            self._printNotConnectedEnvMessage()
+            return
         return super().newClient(clientName, seed=seed, identifier=identifier,
-                          signer=signer, wallet=wallet)
+                                 signer=signer, wallet=wallet, config=config)
 
     def _clientCommand(self, matchedVars):
         if matchedVars.get('client') == 'client':
@@ -211,7 +241,8 @@ class SovrinCli(PlenumCli):
         role = matchedVars.get("role")
         validRoles = (USER, SPONSOR, STEWARD)
         if role and role not in validRoles:
-            self.print("Invalid role. Valid roles are: {}".format(", ".join(validRoles)), Token.Error)
+            self.print("Invalid role. Valid roles are: {}".
+                       format(", ".join(validRoles)), Token.Error)
             return False
         elif not role:
             role = USER
@@ -226,7 +257,8 @@ class SovrinCli(PlenumCli):
         self.print("Getting nym {}".format(nym))
 
         def getNymReply(reply, err):
-            self.print("Transaction id for NYM {} is {}".format(nym, reply[TXN_ID]), Token.BoldBlue)
+            self.print("Transaction id for NYM {} is {}".
+                       format(nym, reply[TXN_ID]), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient, getNymReply)
@@ -338,18 +370,21 @@ class SovrinCli(PlenumCli):
             self.activeClient.wallet.addMasterSecret(str(proofBuilder.masterSecret))
 
         #TODO: Should probably be persisting proof objects
-        self.activeClient.proofBuilders[proofBuilder.id] = (proofBuilder, credName, credVersion,
-                                              issuerId)
+        self.activeClient.proofBuilders[proofBuilder.id] = (proofBuilder,
+                                                            credName,
+                                                            credVersion,
+                                                            issuerId)
         u = proofBuilder.U[issuerId]
         tokens = []
-        tokens.append((Token.BolBlue, "Credential request for {} for {} {} is: ".format(proverId, credName, credVersion)))
+        tokens.append((Token.BoldBlue, "Credential request for {} for "
+                                       "{} {} is: ".
+                       format(proverId, credName, credVersion)))
         tokens.append((Token, "Credential id is "))
         tokens.append((Token.BoldBlue, "{} ".format(proofBuilder.id)))
         tokens.append((Token, "and U is "))
         tokens.append((Token.BoldBlue, "{}".format(u)))
         tokens.append((Token, "\n"))
         self.printTokens(tokens, separator='')
-
 
     @staticmethod
     def pKFromCredDef(keys):
@@ -420,7 +455,8 @@ class SovrinCli(PlenumCli):
             attribsDef = AttribDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes)
             self.activeClient.attributeRepo.addAttributes(proverId, attribs)
-            self.print("attribute added successfully for prover id {}".format(proverId), Token.BoldBlue)
+            self.print("attribute added successfully for prover id {}".
+                       format(proverId), Token.BoldBlue)
             return True
 
     def _addAttrsToProverAction(self, matchedVars):
@@ -432,7 +468,8 @@ class SovrinCli(PlenumCli):
             if not hasattr(self.activeClient, "attributes"):
                 self.activeClient.attributeRepo = InMemoryAttrRepo()
             self.activeClient.attributeRepo.addAttributes(issuerId, attributes)
-            self.print("attribute added successfully for issuer id {}".format(issuerId), Token.BoldBlue)
+            self.print("attribute added successfully for issuer id {}".
+                       format(issuerId), Token.BoldBlue)
             return True
 
     def _sendNymAction(self, matchedVars):
@@ -522,10 +559,13 @@ class SovrinCli(PlenumCli):
             encodedAttrs = {
                 issuer: next(iter(attribs.values()))
             }
-            proof = ProofBuilder.prepareProofAsDict(issuer=issuer, credDefPks=credDefPks, masterSecret=masterSecret,
-                                            creds={issuer: cred},
-                                            revealedAttrs=revealedAttrs,
-                                            nonce=nonce, encodedAttrs=encodedAttrs)
+            proof = ProofBuilder.prepareProofAsDict(issuer=issuer,
+                                                    credDefPks=credDefPks,
+                                                    masterSecret=masterSecret,
+                                                    creds={issuer: cred},
+                                                    revealedAttrs=revealedAttrs,
+                                                    nonce=nonce,
+                                                    encodedAttrs=encodedAttrs)
             out = {}
             out[PROOF] = proof
             out[NAME] = name
@@ -548,13 +588,14 @@ class SovrinCli(PlenumCli):
             return True
 
     def _verifyProof(self, status, proof):
-        self._getCredDefAndExecuteCallback(proof["issuer"], proof[NAME], proof[VERSION],
-                                           self.doVerification, status, proof)
+        self._getCredDefAndExecuteCallback(proof["issuer"], proof[NAME],
+                                           proof[VERSION], self.doVerification,
+                                           status, proof)
 
     def doVerification(self, reply, err, status, proof):
         issuer = proof[ISSUER]
-        credDef = self.activeClient.wallet.getCredDef(proof[NAME], proof[VERSION],
-                                            issuer)
+        credDef = self.activeClient.wallet.getCredDef(proof[NAME],
+                                                      proof[VERSION], issuer)
         keys = credDef[KEYS]
         pk = {
             issuer: self.pKFromCredDef(keys)
@@ -564,14 +605,229 @@ class SovrinCli(PlenumCli):
             issuer: {k: CredDef.getCryptoInteger(v) for k, v in
                      next(iter(proof[ATTRS].values())).items()}
         }
-        result = self.activeClient.verifyProof(pk, prf, CredDef.getCryptoInteger(proof["nonce"]), attrs,
-                              proof[REVEALED_ATTRS])
+        result = self.activeClient.verifyProof(pk, prf,
+                                               CredDef.getCryptoInteger(
+                                                   proof["nonce"]), attrs,
+                                               proof[REVEALED_ATTRS])
         if not result:
             self.print("Proof verification failed", Token.BoldOrange)
         elif result and status in proof["revealedAttrs"]:
             self.print("Proof verified successfully", Token.BoldBlue)
         else:
             self.print("Status not in proof", Token.BoldOrange)
+
+    def printUsage(self, msgs):
+        self.print("\nUsage:")
+        for m in msgs:
+            self.print('  {}'.format(m))
+        self.print("\n")
+
+    def _loadInvitation(self, invitationData):
+        # TODO: Lets not assume that the invitation file would contain these
+        # keys. Let have a link file validation method
+        linkInviation = invitationData["link-invitation"]
+        linkInvitationName = linkInviation["name"]
+        targetIdentifier = linkInviation["identifier"]
+        targetEndPoint = linkInviation.get("endpoint", None)
+        linkNonce = linkInviation["nonce"]
+        claimRequests = invitationData.get("claim-requests", None)
+        signature = invitationData["sig"]
+
+        self.print("1 link invitation found for {}.".format(linkInvitationName))
+        cseed = cleanSeed(None)
+        alias = "cid-" + str(len(self.activeWallet.signers) + 1)
+        signer = SimpleSigner(identifier=None, seed=cseed, alias=alias)
+        self._addSignerToGivenWallet(signer, self.activeWallet)
+
+        self.print("Creating Link for {}.".format(linkInvitationName))
+        self.print("Generating Identifier and Signing key.")
+
+        li = LinkInvitation(linkInvitationName,
+                            signer.alias + ":" + signer.identifier, None,
+                            linkInvitationName,
+                            targetIdentifier, targetEndPoint, linkNonce,
+                            claimRequests, signature)
+        self.activeWallet.addLinkInvitation(li)
+
+    def _loadFile(self, matchedVars):
+        if matchedVars.get('load_file') == 'load':
+            givenFilePath = matchedVars.get('file_path')
+            filePath = SovrinCli._getFilePath(givenFilePath)
+            if not filePath:
+                self.print("Given file does not exists")
+                return True
+
+            with open(filePath) as data_file:
+                # TODO: What if it not JSON? Try Catch?
+                invitationData = json.load(data_file)
+
+            try:
+                linkInvitation = invitationData["link-invitation"]
+                # TODO: This check is not needed if while loading the file
+                # its made sure that `linkInvitation` is JSON.
+                if isinstance(linkInvitation, dict):
+                    linkInvitationName = linkInvitation["name"]
+                    existingLinkInvites = self.activeWallet.\
+                        getMatchingLinkInvitations(linkInvitationName)
+                    if len(existingLinkInvites) >= 1:
+                        self.print("Link already exists")
+                    else:
+                        self._loadInvitation(invitationData)
+                    msgs = ['accept invitation "{}"'.format(linkInvitationName),
+                            'show link "{}"'.format(linkInvitationName)]
+                    self.printUsage(msgs)
+            except Exception as e:
+                self.print('Error occurred during processing link '
+                           'invitation: {}'.format(e))
+
+            return True
+
+    @staticmethod
+    def _getFilePath(givenPath):
+        curDirPath = os.path.dirname(os.path.abspath(__file__))
+        sampleFilePath = curDirPath + "/../../" + givenPath
+        finalPathToCheck = None
+        if os.path.exists(sampleFilePath):
+            finalPathToCheck = sampleFilePath
+        elif os.path.exists(givenPath):
+            finalPathToCheck = givenPath
+        return finalPathToCheck
+
+    def _getInvitationMatchingLinks(self, linkName):
+        exactMatches = {}
+        likelyMatched = {}
+        #  if we want to search in all wallets, then,
+        # change [self.activeWallet] to self.wallets.values()
+        walletsToBeSearched = [self.activeWallet]  # self.wallets.values()
+        for w in walletsToBeSearched:
+            invitations = w.getMatchingLinkInvitations(linkName)
+            for i in invitations:
+                if i.name == linkName:
+                    if w.name in exactMatches:
+                        exactMatches[w.name].append(i)
+                    else:
+                        exactMatches[w.name] = [i]
+                else:
+                    if w.name in likelyMatched:
+                        likelyMatched[w.name].append(i)
+                    else:
+                        likelyMatched[w.name] = [i]
+
+        # Here is how the return dictionary should look like:
+        # {
+        #    "exactlyMatched": {
+        #           "Default": [linkWithExactName],
+        #           "WalletOne" : [linkWithExactName],
+        #     }, "likelyMatched": {
+        #           "Default": [similatMatches1, similarMatches2],
+        #           "WalletOne": [similatMatches2, similarMatches3]
+        #     }
+        # }
+        return {
+            "exactlyMatched": exactMatches,
+            "likelyMatched": likelyMatched
+        }
+
+    def _showLink(self, matchedVars):
+        if matchedVars.get('show_link') == 'show link':
+            linkName = matchedVars.get('link_name').replace('"','')
+            linkInvitations = self._getInvitationMatchingLinks(linkName)
+
+            exactlyMatchedLinks = linkInvitations["exactlyMatched"]
+            likelyMatchedLinks = linkInvitations["likelyMatched"]
+
+            totalFound = sum([len(v) for v in {**exactlyMatchedLinks,
+                                               **likelyMatchedLinks}.values()])
+
+            if totalFound == 0:
+                self.print("No matching link invitation(s) found in "
+                           "current keyring")
+                return True
+
+            if totalFound == 1:
+                li = None
+                if len(exactlyMatchedLinks) == 1:
+                    li = list(exactlyMatchedLinks.values())[0][0]
+                else:
+                    li = list(likelyMatchedLinks.values())[0][0]
+
+                if li.name != linkName:
+                    self.print('Expanding {} to "{}"'.format(linkName, li.name))
+                self.print("{}".format(li.getLinkInfoStr()))
+                msgs = ['accept invitation "{}"'.format(li.name), 'sync "{}"'
+                    .format(li.name)]
+                self.printUsage(msgs)
+            else:
+                self.print('More than one link matches "{}"'.format(linkName))
+                exactlyMatchedLinks.update(likelyMatchedLinks)
+                for k, v in exactlyMatchedLinks.items():
+                    for li in v:
+                        self.print("{}".format(li.name))
+                self.print("\nRe enter the command with more specific link "
+                           "invitation name")
+
+            return True
+
+    def _showFile(self, matchedVars):
+        if matchedVars.get('show_file') == 'show':
+            givenFilePath = matchedVars.get('file_path')
+            filePath = SovrinCli._getFilePath(givenFilePath)
+            if not filePath:
+                self.print("Given file does not exists")
+            else:
+                with open(filePath, 'r') as fin:
+                    self.print(fin.read())
+            msgs = ['load {}'.format(givenFilePath)]
+            self.printUsage(msgs)
+            return True
+
+    def canConnectToEnv(self, envName: str):
+        if envName == self.activeEnv:
+            return "Already connected to {}".format(envName)
+        if envName not in self.envs:
+            return "Unknown environment {}".format(envName)
+        if not os.path.isfile(os.path.join(self.basedirpath,
+                                           self.envs[envName].poolLedger)):
+            return "Do not have information to connect to {}".format(envName)
+
+    def _connectTo(self, matchedVars):
+        if matchedVars.get('conn') == 'connect':
+            envName = matchedVars.get('env_name')
+            envError = self.canConnectToEnv(envName)
+            if envError:
+                self.print(envError, token=Token.Error)
+            else:
+                # TODO: Just for the time being that we cannot accidentally
+                # connect to live network even if we have a ledger for live
+                # nodes.Once we have `live` exposed to the world,
+                # this would be changed.
+                if envName == "live":
+                    self.print("Cannot connect to live environment. Contact"
+                               " Sovrin.org to find out more!")
+                    return True
+                # Using `_activeClient` instead of `activeClient` since using
+                # `_activeClient` will initialize a client if not done already
+                if self._activeClient:
+                    self.print("Disconnecting from {}".format(envName))
+                    self._activeClient = None
+                config = getConfig()
+                config.poolTransactionsFile = self.envs[envName].poolLedger
+                config.domainTransactionsFile = \
+                    self.envs[envName].domainLedger
+                self.activeEnv = envName
+                self._buildClientIfNotExists(config)
+                self.print("Connecting to {}".format(envName))
+                self._setPrompt("{}@{}".format(self.currPromptText, envName))
+            return True
+
+    def getStatus(self):
+        # TODO: This needs to show active keyring and active identifier
+        if not self.activeEnv:
+            msg = "Not connected to Sovrin network.\nType 'connect test' " \
+                  "or 'connect live' to connect to a network."
+        else:
+            msg = "Connected to {} Sovrin network".format(self.activeEnv)
+        self.print(msg)
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED
     # command received from prover. This is required for demo for sure, we'll
@@ -613,7 +869,7 @@ class SovrinCli(PlenumCli):
             return True
 
     @staticmethod
-    def bootstrapClientKey(client, node):
+    def bootstrapClientKey(client, node, identifier=None):
         pass
 
     def ensureReqCompleted(self, reqId, client, clbk=None, *args):

@@ -1,4 +1,5 @@
 import pytest
+from plenum.test.cli.helper import assertCliTokens
 from prompt_toolkit.contrib.regular_languages.compiler import compile
 from plenum.cli.helper import getUtilGrams, getNodeGrams, getClientGrams, getAllGrams
 from plenum.test.cli.test_command_reg_ex import getMatchedVariables
@@ -56,3 +57,36 @@ def test_prep_proof_reg_ex(grammar):
 
 def test_verify_proof_reg_ex(grammar):
     getMatchedVariables(grammar, "verify status is undergrad in proof degreeproof")
+
+
+def testShowFileCommandRegEx(grammar):
+    matchedVars = getMatchedVariables(grammar, "show sample/faber-invitation.sovrin")
+    assertCliTokens(matchedVars, {"show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
+
+    matchedVars = getMatchedVariables(grammar, "show sample/faber-invitation.sovrin ")
+    assertCliTokens(matchedVars, {"show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
+
+
+def testLoadFileCommandRegEx(grammar):
+    matchedVars = getMatchedVariables(grammar, "load sample/faber-invitation.sovrin")
+    assertCliTokens(matchedVars, {"load_file": "load", "file_path": "sample/faber-invitation.sovrin"})
+
+    matchedVars = getMatchedVariables(grammar, "load sample/faber-invitation.sovrin ")
+    assertCliTokens(matchedVars, {"load_file": "load", "file_path": "sample/faber-invitation.sovrin"})
+
+
+def testShowLinkRegEx(grammar):
+    matchedVars = getMatchedVariables(grammar, "show link faber")
+    assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber"})
+
+    matchedVars = getMatchedVariables(grammar, "show link faber college")
+    assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber college"})
+
+    matchedVars = getMatchedVariables(grammar, "show link faber college ")
+    assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber college "})
+
+
+def test_connect_reg_ex(grammar):
+    getMatchedVariables(grammar, "connect dummy")
+    getMatchedVariables(grammar, "connect test")
+    getMatchedVariables(grammar, "connect live")

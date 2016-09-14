@@ -64,6 +64,12 @@ class Wallet(PWallet):
     def addMasterSecret(self, masterSecret):
         self.storage.addMasterSecret(masterSecret)
 
+    def addLinkInvitation(self, linkInvitation):
+        self.storage.addLinkInvitation(linkInvitation)
+
+    def getMatchingLinkInvitations(self, name):
+        return self.storage.getMatchingLinkInvitations(name)
+
     @property
     def masterSecret(self):
         return self.storage.masterSecret

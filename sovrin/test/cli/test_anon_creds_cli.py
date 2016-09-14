@@ -4,12 +4,13 @@ import re
 import sovrin.anon_creds.cred_def as cred_def
 
 from plenum.common.looper import Looper
-from plenum.common.txn import TARGET_NYM, NAME, VERSION
+from plenum.common.txn import NAME, VERSION
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     assertAllNodesCreated, checkAllNodesStarted, checkClientConnected
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR, USER, ROLE, CRED_DEF
-from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
+from sovrin.common.txn import SPONSOR, USER, CRED_DEF
+from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
+    ensureNymAdded, ensureNodesCreated
 
 """
 Test Plan:
@@ -49,56 +50,44 @@ objects from one cli to another directly.
 """
 
 
-def ensureNymAdded(cli, nym, role=USER):
-    cli.enterCmd("send NYM {dest}={nym} {ROLE}={role}".format(
-        dest=TARGET_NYM, nym=nym, ROLE=ROLE, role=role))
-    cli.looper.run(
-        eventually(chkNymAddedOutput, cli, nym, retryWait=1, timeout=10))
-    cli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym))
-    cli.looper.run(eventually(checkGetNym, cli, nym, retryWait=1, timeout=10))
+@pytest.yield_fixture(scope="module")
+def byuCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
+    with Looper(debug=False) as looper:
+        yield newCLI(looper, tdir, subDirectory="byu", conf=tconf,
+                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
 
 
 @pytest.yield_fixture(scope="module")
-def poolCLI(nodeRegsForCLI, tdir):
+def philCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="pool")
+        yield newCLI(looper, tdir, subDirectory="phil", conf=tconf,
+                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
 
 
 @pytest.yield_fixture(scope="module")
-def byuCLI(nodeRegsForCLI, tdir):
+def trusteeCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="byu")
+        yield newCLI(looper, tdir, subDirectory="trustee", conf=tconf,
+                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
 
 
 @pytest.yield_fixture(scope="module")
-def philCLI(nodeRegsForCLI, tdir):
+def tylerCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="phil")
+        yield newCLI(looper, tdir, subDirectory="tyler", conf=tconf,
+                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
 
 
 @pytest.yield_fixture(scope="module")
-def trusteeCLI(nodeRegsForCLI, tdir):
+def bookStoreCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="trustee")
-
-
-@pytest.yield_fixture(scope="module")
-def tylerCLI(nodeRegsForCLI, tdir):
-    with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="tyler")
-
-
-@pytest.yield_fixture(scope="module")
-def bookStoreCLI(nodeRegsForCLI, tdir):
-    with Looper(debug=False) as looper:
-        yield newCLI(nodeRegsForCLI, looper, tdir, subDirectory="bookStore")
+        yield newCLI(looper, tdir, subDirectory="bookStore", conf=tconf,
+                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
 
 
 @pytest.fixture(scope="module")
 def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
-    poolCLI.enterCmd("new node all")
-    assertAllNodesCreated(poolCLI, nodeNames)
-    checkAllNodesStarted(poolCLI, *nodeNames)
+    ensureNodesCreated(poolCLI, nodeNames)
 
 
 @pytest.fixture(scope="module")
@@ -157,6 +146,7 @@ def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI,
 @pytest.fixture(scope="module")
 def bookStoreConnected(bookStoreCreated, bookStoreCLI, poolNodesCreated,
                        nodeNames):
+    ensureConnectedToTestEnv(bookStoreCLI)
     bookStoreCLI.looper.run(eventually(checkClientConnected, bookStoreCLI,
                                        nodeNames,
                                        bookStoreCLI.activeClient.name,
@@ -176,6 +166,7 @@ def tylerCreated(tylerPubKey, byuCreated, byuCLI, poolNodesCreated, nodeNames):
 
 @pytest.fixture(scope="module")
 def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, byuCLI):
+    ensureConnectedToTestEnv(tylerCLI)
     issuerId = byuCLI.activeSigner.verstr
     checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
                     "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
@@ -339,7 +330,6 @@ def verifNonce(bookStoreCLI, bookStoreConnected):
     return nonce
 
 
-# TODO This test seems to be failing intermittently.
 def testNodesCreatedOnPoolCLI(poolNodesCreated):
     pass
 

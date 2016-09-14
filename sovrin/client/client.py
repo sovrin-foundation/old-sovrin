@@ -16,11 +16,11 @@ from plenum.server.router import Router
 from plenum.client.signer import Signer
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
-from plenum.common.txn import REQACK, REPLY, REQNACK, STEWARD, ENC, \
-    HASH, RAW, NAME, VERSION, KEYS, TYPE, IP, PORT
+from plenum.common.txn import REPLY, STEWARD, ENC, HASH, RAW, NAME, VERSION,\
+    KEYS, TYPE, IP, PORT
 from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
-from plenum.common.util import getlogger, getMaxFailures, \
-    getSymmetricallyEncryptedVal, libnacl, error
+from plenum.common.util import getlogger, getSymmetricallyEncryptedVal, \
+    libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
@@ -41,9 +41,6 @@ from sovrin.persistence.wallet_storage_file import WalletStorageFile
 logger = getlogger()
 
 
-config = getConfig()
-
-
 class Client(PlenumClient, Issuer, Prover, Verifier):
     def __init__(self,
                  name: str,
@@ -54,7 +51,9 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                  signer: Signer=None,
                  signers: Dict[str, Signer]=None,
                  basedirpath: str=None,
-                 wallet: Wallet = None):
+                 wallet: Wallet = None,
+                 config=None):
+        config = config or getConfig()
         super().__init__(name,
                          nodeReg,
                          ha,
@@ -62,7 +61,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                          signer,
                          signers,
                          basedirpath,
-                         wallet)
+                         wallet,
+                         config)
         # self.storage = self.getStorage(basedirpath)
         # self.lastReqId = self.storage.lastReqId
         # TODO: Should I store values of attributes as non encrypted
@@ -126,20 +126,20 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             return super().sign(msg, signer)
 
     def _getOrientDbStore(self):
-        return OrientDbStore(user=config.OrientDB["user"],
-                                  password=config.OrientDB["password"],
-                                  dbName=self.name,
-                                  storageType=pyorient.STORAGE_TYPE_PLOCAL)
+        return OrientDbStore(user=self.config.OrientDB["user"],
+                             password=self.config.OrientDB["password"],
+                             dbName=self.name,
+                             storageType=pyorient.STORAGE_TYPE_PLOCAL)
 
     def getReqRepStore(self):
-        if config.ReqReplyStore == "orientdb":
+        if self.config.ReqReplyStore == "orientdb":
             return ClientReqRepStoreOrientDB(self._getOrientDbStore())
         else:
             return ClientReqRepStoreFile(self.name, self.basedirpath)
 
     def getGraphStore(self):
         return IdentityGraph(self._getOrientDbStore()) if \
-            config.ClientIdentityGraph else None
+            self.config.ClientIdentityGraph else None
 
     def getTxnLogStore(self):
         return ClientTxnLog(self.name, self.basedirpath)
@@ -303,7 +303,9 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             # TODO: Fix ASAP
             if txnType == CRED_DEF:
                 for txn in txns:
-                    txn[DATA] = json.loads(txn[DATA].replace("\'", '"').replace('"{', '{').replace('}"', '}'))
+                    txn[DATA] = json.loads(txn[DATA].replace("\'", '"')
+                                           .replace('"{', '{')
+                                           .replace('}"', '}'))
                     txn[NAME] = txn[DATA][NAME]
                     txn[VERSION] = txn[DATA][VERSION]
             return txns
