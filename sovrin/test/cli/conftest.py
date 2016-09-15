@@ -12,7 +12,7 @@ from plenum.test.cli.conftest import nodeRegsForCLI, nodeNames
 
 
 from sovrin.common.util import getConfig
-from sovrin.test.cli.helper import newCLI
+from sovrin.test.cli.helper import newCLI, ensureNodesCreated
 
 config = getConfig()
 
@@ -61,3 +61,9 @@ def poolCLI(tdir, poolTxnData, poolTxnNodeNames, tdirWithPoolTxns,
         for nName in poolTxnNodeNames:
             initLocalKeep(nName, cli.basedirpath, seeds[nName], override=True)
         yield cli
+
+
+@pytest.fixture(scope="module")
+def poolNodesCreated(poolCLI, poolTxnNodeNames):
+    ensureNodesCreated(poolCLI, poolTxnNodeNames)
+    return poolCLI
