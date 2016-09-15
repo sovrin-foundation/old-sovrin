@@ -4,9 +4,11 @@ from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM
 from plenum.common.util import getCryptonym
 from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.txn import USER
-from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated
+from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated, \
+    newCLI
 from sovrin.test.helper import genTestClient
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
+
 
 def getLinkInvitation(name, cli) -> LinkInvitation:
     existingLinkInvites = cli.activeWallet.getMatchingLinkInvitations(name)
@@ -38,9 +40,16 @@ def loadFaberLinkInvitation(cli, okIfAlreadyExists=False):
 
 
 @pytest.fixture(scope="module")
-def loadedFaberLinkInvitation(cli):
-    loadFaberLinkInvitation(cli)
+def aliceCli(looper, tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns):
+    cli = newCLI(looper, tdir, subDirectory="alice", conf=tconf,
+                 poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
     return cli
+
+
+@pytest.fixture(scope="module")
+def loadedFaberLinkInvitation(aliceCli):
+    loadFaberLinkInvitation(aliceCli)
+    return aliceCli
 
 
 def loadAcmeCorpLinkInvitation(cli):
@@ -84,10 +93,6 @@ def testLoadFile(loadedFaberLinkInvitation):
 def testLoadExistingLink(cli):
     loadFaberLinkInvitation(cli)
     loadFaberLinkInvitationAgain(cli)
-
-
-def testLoadFile(loadedAcmeCorpLinkInvitation):
-    pass
 
 
 def testShowLinkNotExists(cli):
@@ -141,8 +146,8 @@ def addFaber(stewardClient, nym):
     stewardClient.submit(op, identifier=nym)
 
 
-def testSyncLinkInvitation(loadedFaberLinkInvitation, poolNodesCreated,
-                           stewardClient):
+def testSyncLinkInvitation(poolNodesCreated, stewardClient,
+                           loadedFaberLinkInvitation):
     cli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(cli)
     li = getLinkInvitation("Faber", cli)

@@ -181,7 +181,7 @@ class SovrinCli(PlenumCli):
         config = getConfig()
         createGenesisTxnFile(self.genesisTransactions, self.basedirpath,
                              config.domainTransactionsFile,
-                             getTxnOrderedFields())
+                             getTxnOrderedFields(), reset=False)
         nodesAdded = super().newNode(nodeName)
         return nodesAdded
 
