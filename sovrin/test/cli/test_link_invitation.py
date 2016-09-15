@@ -115,9 +115,8 @@ def testShowAcmeCorpLink(loadedAcmeCorpLinkInvitation):
     assert "Job Application" in cli.lastCmdOutput
 
 
-def testSyncLinkInvitation(loadedFaberLinkInvitation, nodeNames):
+def testSyncLinkInvitation(loadedFaberLinkInvitation, poolNodesCreated):
     cli = loadedFaberLinkInvitation
-    ensureNodesCreated(cli, nodeNames)
     ensureConnectedToTestEnv(cli)
-    cli.enterCmd('sync Faber')
+    cli.enterCmd("sync Faber")
     pass

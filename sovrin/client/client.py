@@ -331,7 +331,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             TXN_TYPE: GET_ATTR,
             DATA: json.dumps({"name": attrName})
         }
-        self.submit(op, identifier=identifier)
+        return self.submit(op, identifier=identifier)
 
     @staticmethod
     def _getDecryptedData(encData, key):

@@ -732,8 +732,10 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
+
     def _syncLinkInvitation(self, linkName):
-        totalFound, exactlyMatchedLinks, likelyMatchedLinks = self._getMatchingInvitations(linkName)
+        totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
+            self._getMatchingInvitations(linkName)
         if totalFound == 0:
             self._printNoLinkFoundMsg()
             return
@@ -749,13 +751,21 @@ class SovrinCli(PlenumCli):
             else:
                 self.print("TODO: Synchronizing...")
                 nym = getCryptonym(li.targetIdentifier)
-                endpoint = self.activeClient.doGetAttributeTxn(nym, "endpoint")
-                self.print("Received endpoint: {}".format(endpoint))
+                req = self.activeClient.doGetAttributeTxn(nym, "endpoint")[0]
 
-            msgs = ['show link "{}"'.format(li.name), 'accept invitation "{}"'.format(li.name)]
+                def _syncLinkPostGetAttr(reply, err):
+                    print("### reply: {} err: {}".format(reply, err))
+
+                self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                            req.reqId, self.activeClient,
+                                            _syncLinkPostGetAttr)
+
+            msgs = ['show link "{}"'.format(li.name), 'accept invitation "{}"'
+                .format(li.name)]
             self.printUsage(msgs)
         else:
-            self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks, likelyMatchedLinks)
+            self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks,
+                                               likelyMatchedLinks)
 
         return True
 
@@ -788,7 +798,8 @@ class SovrinCli(PlenumCli):
             li = list(likelyMatchedLinks.values())[0][0]
         return li
 
-    def _printMoreThanOneLinkFoundMsg(self, linkName, exactlyMatchedLinks, likelyMatchedLinks):
+    def _printMoreThanOneLinkFoundMsg(self, linkName, exactlyMatchedLinks,
+                                      likelyMatchedLinks):
         self.print('More than one link matches "{}"'.format(linkName))
         exactlyMatchedLinks.update(likelyMatchedLinks)
         for k, v in exactlyMatchedLinks.items():
@@ -800,7 +811,8 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('show_link') == 'show link':
             linkName = matchedVars.get('link_name').replace('"','')
 
-            totalFound, exactlyMatchedLinks, likelyMatchedLinks = self._getMatchingInvitations(linkName)
+            totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
+                self._getMatchingInvitations(linkName)
 
             if totalFound == 0:
                 self._printNoLinkFoundMsg()
