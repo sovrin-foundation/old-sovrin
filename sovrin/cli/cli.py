@@ -17,7 +17,6 @@ from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.cred_def import SerFmt
-from sovrin.anon_creds.proof_builder import Proof as ProofTuple
 
 from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -627,6 +626,8 @@ class SovrinCli(PlenumCli):
         self.print("\n")
 
     def _loadInvitation(self, invitationData):
+        # TODO: Lets not assume that the invitation file would contain these
+        # keys. Let have a link file validation method
         linkInviation = invitationData["link-invitation"]
         linkInvitationName = linkInviation["name"]
         targetIdentifier = linkInviation["identifier"]
@@ -644,8 +645,11 @@ class SovrinCli(PlenumCli):
         self.print("Creating Link for {}.".format(linkInvitationName))
         self.print("Generating Identifier and Signing key.")
 
-        li = LinkInvitation(linkInvitationName, signer.alias + ":" + signer.identifier, None, linkInvitationName,
-                            targetIdentifier, targetEndPoint, linkNonce, claimRequests, signature)
+        li = LinkInvitation(linkInvitationName,
+                            signer.alias + ":" + signer.identifier, None,
+                            linkInvitationName,
+                            targetIdentifier, targetEndPoint, linkNonce,
+                            claimRequests, signature)
         self.activeWallet.addLinkInvitation(li)
 
     def _loadFile(self, matchedVars):
@@ -657,22 +661,27 @@ class SovrinCli(PlenumCli):
                 return True
 
             with open(filePath) as data_file:
+                # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
 
             try:
                 linkInvitation = invitationData["link-invitation"]
+                # TODO: This check is not needed if while loading the file
+                # its made sure that `linkInvitation` is JSON.
                 if isinstance(linkInvitation, dict):
                     linkInvitationName = linkInvitation["name"]
-
-                    existingLinkInvites = self.activeWallet.getMatchingLinkInvitations(linkInvitationName)
+                    existingLinkInvites = self.activeWallet.\
+                        getMatchingLinkInvitations(linkInvitationName)
                     if len(existingLinkInvites) >= 1:
                         self.print("Link already exists")
                     else:
                         self._loadInvitation(invitationData)
-                    msgs = ['accept invitation "{}"'.format(linkInvitationName), 'show link "{}"'.format(linkInvitationName)]
+                    msgs = ['accept invitation "{}"'.format(linkInvitationName),
+                            'show link "{}"'.format(linkInvitationName)]
                     self.printUsage(msgs)
             except Exception as e:
-                self.print('Error occurred during processing link invitation: {}'.format(e))
+                self.print('Error occurred during processing link '
+                           'invitation: {}'.format(e))
 
             return True
 
@@ -735,12 +744,12 @@ class SovrinCli(PlenumCli):
                 self.print('Expanding {} to "{}"'.format(linkName, li.name))
 
             if li.targetEndPoint:
+                self.print("TODO: Ping...")
+            else:
                 self.print("TODO: Synchronizing...")
                 nym = getCryptonym(li.targetIdentifier)
-                endpoint = self.activeClient.getAttributeForNym(nym, "endpoint")
+                endpoint = self.activeClient.doGetAttributeTxn(nym, "endpoint")
                 self.print("Received endpoint: {}".format(endpoint))
-            else:
-                self.print("TODO: Ping...")
 
             msgs = ['show link "{}"'.format(li.name), 'accept invitation "{}"'.format(li.name)]
             self.printUsage(msgs)
@@ -765,12 +774,8 @@ class SovrinCli(PlenumCli):
         exactlyMatchedLinks = linkInvitations["exactlyMatched"]
         likelyMatchedLinks = linkInvitations["likelyMatched"]
 
-        totalFound = 0
-        # TODO: need better way to get total count
-        for k, v in exactlyMatchedLinks.items():
-            totalFound += len(v)
-        for k, v in likelyMatchedLinks.items():
-            totalFound += len(v)
+        totalFound = sum([len(v) for v in {**exactlyMatchedLinks,
+                                           **likelyMatchedLinks}.values()])
         return totalFound, exactlyMatchedLinks, likelyMatchedLinks
 
     @staticmethod
@@ -806,7 +811,8 @@ class SovrinCli(PlenumCli):
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
                 self.print("{}".format(li.getLinkInfoStr()))
-                msgs = ['accept invitation "{}"'.format(li.name), 'sync "{}"'.format(li.name)]
+                msgs = ['accept invitation "{}"'.format(li.name), 'sync "{}"'
+                    .format(li.name)]
                 self.printUsage(msgs)
             else:
                 self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks, likelyMatchedLinks)

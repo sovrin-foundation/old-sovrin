@@ -25,7 +25,7 @@ def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
         initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
     writeAnonCredPlugin(tempDir, reloadTestModules=True)
     return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
-                        nodeClass=TestNode, clientClass=TestClient)
+                        nodeClass=TestNode, clientClass=TestClient, config=conf)
 
 
 def sendNym(cli, nym, role):
