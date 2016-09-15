@@ -161,7 +161,8 @@ class SovrinCli(PlenumCli):
                         self._loadFile,
                         self._showLink,
                         self._connectTo,
-                        self._showLink
+                        self._showLink,
+                        self._syncLink
                         ])
         return actions
 

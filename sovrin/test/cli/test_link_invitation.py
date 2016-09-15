@@ -1,4 +1,5 @@
 import pytest
+from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated
 
 
 def getLinkInvitation(name, cli):
@@ -20,7 +21,8 @@ def loadFaberLinkInvitation(cli, okIfAlreadyExists=False):
         checkNewLoadAsserts = False
 
     if checkNewLoadAsserts:
-        assert "1 link invitation found for {}.".format(inviterName) in cli.lastCmdOutput
+        assert "1 link invitation found for {}.".format(inviterName) \
+               in cli.lastCmdOutput
         assert "Creating Link for {}.".format(inviterName) in cli.lastCmdOutput
         assert "Generating Identifier and Signing key." in cli.lastCmdOutput
 
@@ -38,7 +40,8 @@ def loadedFaberLinkInvitation(cli):
 def loadAcmeCorpLinkInvitation(cli):
     employeeName = "Acme Corp"
     cli.enterCmd("load sample/acme-job-application.sovrin")
-    assert "1 link invitation found for {}.".format(employeeName) in cli.lastCmdOutput
+    assert "1 link invitation found for {}.".format(employeeName) \
+           in cli.lastCmdOutput
     assert "Creating Link for {}.".format(employeeName) in cli.lastCmdOutput
     assert "Generating Identifier and Signing key." in cli.lastCmdOutput
     assert "Usage" in cli.lastCmdOutput
@@ -83,12 +86,14 @@ def testLoadFile(loadedAcmeCorpLinkInvitation):
 
 def testShowLinkNotExists(cli):
     cli.enterCmd("show link Not Exists")
-    assert "No matching link invitation(s) found in current keyring" in cli.lastCmdOutput
+    assert "No matching link invitation(s) found in current keyring" \
+           in cli.lastCmdOutput
 
 
 def assertSowLinkOutput(cli, linkName):
     assert "Name: {}".format(linkName) in cli.lastCmdOutput
-    assert "Last synced: <this link has not yet been synchronized>" in cli.lastCmdOutput
+    assert "Last synced: <this link has not yet been synchronized>" \
+           in cli.lastCmdOutput
     assert "Usage" in cli.lastCmdOutput
     assert 'accept invitation "{}"'.format(linkName) in cli.lastCmdOutput
     assert 'sync "{}"'.format(linkName) in cli.lastCmdOutput
@@ -108,3 +113,11 @@ def testShowAcmeCorpLink(loadedAcmeCorpLinkInvitation):
     assertSowLinkOutput(cli, employeeName)
     assert "Claim Requests: " in cli.lastCmdOutput
     assert "Job Application" in cli.lastCmdOutput
+
+
+def testSyncLinkInvitation(loadedFaberLinkInvitation, nodeNames):
+    cli = loadedFaberLinkInvitation
+    ensureNodesCreated(cli, nodeNames)
+    ensureConnectedToTestEnv(cli)
+    cli.enterCmd('sync Faber')
+    pass
