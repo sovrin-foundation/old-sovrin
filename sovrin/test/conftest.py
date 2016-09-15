@@ -12,6 +12,7 @@ from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
+from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import TestNodeSet,\
     genTestClient, createNym, addUser, TestNode
 from sovrin.common.util import getConfig
@@ -129,6 +130,11 @@ def client1Signer():
     signer = SimpleSigner(seed=seed)
     assert signer.verstr == 'TuIpuBcx6P4S0Ez5LUr3HVpWERVHK56XONixonwcAf4='
     return signer
+
+
+@pytest.fixture("module")
+def sponsorCli(looper, tdir):
+    return newCLI(looper, tdir)
 
 
 @pytest.fixture(scope="module")

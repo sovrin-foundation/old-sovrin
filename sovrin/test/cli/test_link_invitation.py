@@ -1,8 +1,14 @@
 import pytest
+from plenum.client.signer import SimpleSigner
+from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM
+from plenum.common.util import getCryptonym
+from sovrin.client.link_invitation import LinkInvitation
+from sovrin.common.txn import USER
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated
+from sovrin.test.helper import genTestClient
+from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
-
-def getLinkInvitation(name, cli):
+def getLinkInvitation(name, cli) -> LinkInvitation:
     existingLinkInvites = cli.activeWallet.getMatchingLinkInvitations(name)
     li = existingLinkInvites[0]
     return li
@@ -115,8 +121,32 @@ def testShowAcmeCorpLink(loadedAcmeCorpLinkInvitation):
     assert "Job Application" in cli.lastCmdOutput
 
 
-def testSyncLinkInvitation(loadedFaberLinkInvitation, poolNodesCreated):
+@pytest.fixture(scope="module")
+def stewardClient(looper, tdirWithDomainTxns, poolTxnStewardData):
+    name, seed = poolTxnStewardData
+    signer = SimpleSigner(seed=seed)
+    stewardClient = genTestClient(signer=signer, tmpdir=tdirWithDomainTxns,
+                                  usePoolLedger=True)
+    looper.add(stewardClient)
+    looper.run(stewardClient.ensureConnectedToNodes())
+    return stewardClient
+
+
+def addFaber(stewardClient, nym):
+    op = {
+        TARGET_NYM: nym,
+        TXN_TYPE: NYM,
+        ROLE: USER
+    }
+    stewardClient.submit(op, identifier=nym)
+
+
+def testSyncLinkInvitation(loadedFaberLinkInvitation, poolNodesCreated,
+                           stewardClient):
     cli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(cli)
-    cli.enterCmd("sync Faber")
+    li = getLinkInvitation("Faber", cli)
+    addFaber(stewardClient, li.targetIdentifier)
+
+    #cli.enterCmd("sync Faber")
     pass
