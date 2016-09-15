@@ -4,9 +4,6 @@ from sovrin.test.cli.helper import checkConnectedToEnv, ensureNodesCreated
 
 def testConnectEnv(poolCLI, looper, nodeNames):
     ensureNodesCreated(poolCLI, nodeNames)
-    # TODO: Test need to be updated to use nodes and clients using pool
-    # transactions
-
     # Done to initialise a wallet.
     poolCLI.enterCmd("new key")
 
