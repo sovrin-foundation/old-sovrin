@@ -2,8 +2,8 @@ from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import checkConnectedToEnv, ensureNodesCreated
 
 
-def testConnectEnv(poolCLI, looper, nodeNames):
-    ensureNodesCreated(poolCLI, nodeNames)
+def testConnectEnv(poolNodesCreated, looper):
+    poolCLI = poolNodesCreated
     # Done to initialise a wallet.
     poolCLI.enterCmd("new key")
 

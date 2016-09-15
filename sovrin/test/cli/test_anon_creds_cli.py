@@ -6,11 +6,11 @@ import sovrin.anon_creds.cred_def as cred_def
 from plenum.common.looper import Looper
 from plenum.common.txn import NAME, VERSION
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
-    assertAllNodesCreated, checkAllNodesStarted, checkClientConnected
+    checkClientConnected
 from plenum.test.eventually import eventually
 from sovrin.common.txn import SPONSOR, USER, CRED_DEF
 from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
-    ensureNymAdded, ensureNodesCreated
+    ensureNymAdded
 
 """
 Test Plan:
@@ -86,8 +86,8 @@ def bookStoreCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
 
 
 @pytest.fixture(scope="module")
-def poolNodesCreated(poolCLI, nodeNames, philCreated, trusteeCreated):
-    ensureNodesCreated(poolCLI, nodeNames)
+def nodesSetup(philCreated, trusteeCreated, poolNodesCreated):
+    pass
 
 
 @pytest.fixture(scope="module")
@@ -107,7 +107,7 @@ def byuPubKey(byuCLI):
 
 @pytest.fixture(scope="module")
 def tylerPubKey(tylerCLI):
-    return newKeyPair(tylerCLI, alias='Tyler')   # or should it be "forBYU"?
+    return newKeyPair(tylerCLI, alias='Tyler')  # or should it be "forBYU"?
 
 
 @pytest.fixture(scope="module")
@@ -131,7 +131,7 @@ def trusteeCreated(poolCLI, trusteePubKey):
 
 
 @pytest.fixture(scope="module")
-def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
+def philConnected(philCreated, philCLI, nodesSetup, nodeNames):
     philCLI.looper.run(eventually(checkClientConnected, philCLI, nodeNames,
                                   philCLI.activeClient.name, retryWait=1,
                                   timeout=5))
@@ -139,12 +139,12 @@ def philConnected(philCreated, philCLI, poolNodesCreated, nodeNames):
 
 @pytest.fixture(scope="module")
 def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI,
-                     poolNodesCreated, nodeNames):
+                     nodesSetup, nodeNames):
     ensureNymAdded(trusteeCLI, bookStorePubKey, USER)
 
 
 @pytest.fixture(scope="module")
-def bookStoreConnected(bookStoreCreated, bookStoreCLI, poolNodesCreated,
+def bookStoreConnected(bookStoreCreated, bookStoreCLI, nodesSetup,
                        nodeNames):
     ensureConnectedToTestEnv(bookStoreCLI)
     bookStoreCLI.looper.run(eventually(checkClientConnected, bookStoreCLI,
@@ -155,22 +155,25 @@ def bookStoreConnected(bookStoreCreated, bookStoreCLI, poolNodesCreated,
 
 
 @pytest.fixture(scope="module")
-def byuCreated(byuPubKey, philCreated, philCLI, poolNodesCreated, nodeNames):
+def byuCreated(byuPubKey, philCreated, philCLI, nodesSetup, nodeNames):
     ensureNymAdded(philCLI, byuPubKey, SPONSOR)
 
 
 @pytest.fixture(scope="module")
-def tylerCreated(tylerPubKey, byuCreated, byuCLI, poolNodesCreated, nodeNames):
+def tylerCreated(tylerPubKey, byuCreated, byuCLI, nodesSetup, nodeNames):
     ensureNymAdded(byuCLI, tylerPubKey, USER)
 
 
 @pytest.fixture(scope="module")
-def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, poolNodesCreated, byuCLI):
+def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, nodesSetup,
+                                      byuCLI):
     ensureConnectedToTestEnv(tylerCLI)
     issuerId = byuCLI.activeSigner.verstr
-    checkCmdValid(tylerCLI, "attribute known to {} first_name=Tyler, last_name=Ruff, "
-                    "birth_date=12/17/1991, expiry_date=12/31/2101, undergrad=True, "
-                    "postgrad=False".format(issuerId))
+    checkCmdValid(tylerCLI,
+                  "attribute known to {} first_name=Tyler, last_name=Ruff, "
+                  "birth_date=12/17/1991, expiry_date=12/31/2101, "
+                  "undergrad=True, "
+                  "postgrad=False".format(issuerId))
     assert issuerId in tylerCLI.activeClient.attributeRepo.attributes
 
 
@@ -207,15 +210,15 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 
 
 @pytest.fixture(scope="module")
-def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
-                attrAddedToRepo, byuAddsCredDef,
+def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
+                   attrAddedToRepo, byuAddsCredDef,
                    credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     issuerIdentifier = byuAddsCredDef
     proverName = tylerCLI.activeSigner.alias
     checkCmdValid(tylerCLI, "request credential {} version {} from {} for {}"
-                      .format(credDefName, credDefVersion, issuerIdentifier,
-                              proverName))
+                  .format(credDefName, credDefVersion, issuerIdentifier,
+                          proverName))
 
     def chk():
         out = "Credential request for {} for {} {} is".format(proverName,
@@ -226,7 +229,8 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
     U = None
     proofId = None
-    pat = re.compile("Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
+    pat = re.compile(
+        "Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
     m = pat.search(tylerCLI.lastCmdOutput)
     if m:
         proofId, U = m.groups()
@@ -234,16 +238,18 @@ def tylerPreparedU(poolNodesCreated, tylerCreated, tylerCLI, byuCLI,
 
 
 @pytest.fixture(scope="module")
-def byuCreatedCredential(poolNodesCreated, byuCLI, tylerCLI, tylerStoresAttributesAsKnownToBYU, tylerPreparedU,
-                credDefNameVersion):
+def byuCreatedCredential(nodesSetup, byuCLI, tylerCLI,
+                         tylerStoresAttributesAsKnownToBYU, tylerPreparedU,
+                         credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     proofId, U = tylerPreparedU
     proverId = tylerCLI.activeSigner.alias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
-                    .format(proverId, credDefName, credDefVersion, U))
+                  .format(proverId, credDefName, credDefVersion, U))
     assert "Credential:" in byuCLI.lastCmdOutput
     pat = re.compile(
-        "A\s*=\s*([mod0-9\s]+), e\s*=\s*([mod0-9\s]+), vprimeprime\s*=\s*([mod0-9\s]+)")
+        "A\s*=\s*([mod0-9\s]+), e\s*=\s*([mod0-9\s]+), vprimeprime\s*=\s*(["
+        "mod0-9\s]+)")
     m = pat.search(byuCLI.lastCmdOutput)
     if m:
         A, e, vprimeprime = m.groups()
@@ -289,8 +295,9 @@ def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
     proofId, U = tylerPreparedU
     assert len(tylerCLI.activeWallet.credNames) == 0
     checkCmdValid(tylerCLI, "store credential A={}, e={}, vprimeprime={} for "
-                      "credential {} as {}".format(*byuCreatedCredential, proofId,
-                                              storedCredAlias))
+                            "credential {} as {}".format(*byuCreatedCredential,
+                                                         proofId,
+                                                         storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
 
@@ -306,10 +313,11 @@ def listedCred(tylerCLI, storedCred, storedCredAlias):
 def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
                   tylerPreparedU, revealedAtrr):
     """
-       prepare proof of <credential alias> using nonce <nonce> for <revealed attrs>
+       prepare proof of <credential alias> using nonce <nonce> for <revealed
+       attrs>
        """
     checkCmdValid(tylerCLI, "prepare proof of {} using nonce {} for {}".
-                      format(storedCredAlias, verifNonce, revealedAtrr))
+                  format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
     pat = re.compile("Proof is: (.+)$")
     m = pat.search(tylerCLI.lastCmdOutput)
@@ -330,7 +338,7 @@ def verifNonce(bookStoreCLI, bookStoreConnected):
     return nonce
 
 
-def testNodesCreatedOnPoolCLI(poolNodesCreated):
+def testNodesCreatedOnPoolCLI(nodesSetup):
     pass
 
 
@@ -400,7 +408,7 @@ def testPrepareProof(preparedProof):
 def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected,
                     revealedAtrr):
     checkCmdValid(bookStoreCLI, "verify status is {} in proof {}"
-                          .format(revealedAtrr, preparedProof))
+                  .format(revealedAtrr, preparedProof))
 
     def chk():
         out = "Proof verified successfully"
