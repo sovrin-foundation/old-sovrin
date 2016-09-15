@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
 import os
+from sovrin.common.txn import getTxnOrderedFields
+
 from plenum.common.test_network_setup import TestNetworkSetup
 from sovrin.common.util import getConfig
 
@@ -12,4 +14,5 @@ portsStart = 9700
 if __name__ == "__main__":
     TestNetworkSetup.bootstrapTestNodes(portsStart, keepDir,
                                         config.poolTransactionsFile,
-                                        config.domainTransactionsFile)
+                                        config.domainTransactionsFile,
+                                        getTxnOrderedFields())
