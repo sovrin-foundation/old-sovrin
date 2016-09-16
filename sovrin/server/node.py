@@ -2,7 +2,7 @@ import json
 from _sha256 import sha256
 from copy import deepcopy
 from operator import itemgetter
-from typing import Iterable
+from typing import Iterable, Any
 
 import pyorient
 from ledger.compact_merkle_tree import CompactMerkleTree
@@ -14,7 +14,7 @@ from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION
 from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
-    NODE_PRIMARY_STORAGE_SUFFIX
+    NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
 from plenum.common.util import getlogger, error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
@@ -22,7 +22,7 @@ from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
-    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole
+    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -95,6 +95,13 @@ class Node(PlenumNode):
         logger.debug("{} adding {} transactions to graph from ledger".
                      format(self, i))
         return i
+
+    def isSignatureVerificationNeeded(self, msg: Any):
+        op = msg.get(OPERATION)
+        if op:
+            if op.get(TXN_TYPE) in openTxns:
+                return False
+        return True
 
     def checkValidOperation(self, identifier, reqId, msg):
         self.checkValidSovrinOperation(identifier, reqId, msg)

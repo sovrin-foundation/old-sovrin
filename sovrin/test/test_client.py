@@ -12,7 +12,7 @@ from plenum.test.eventually import eventually
 
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
-    TXN_ID, NONCE, SKEY, REFERENCE
+    TXN_ID, NONCE, SKEY, REFERENCE, GET_NYM
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck
 
@@ -327,3 +327,14 @@ def testGetTxnsSeqNo(genned, addedSponsor, tdir, sponsorSigner, looper):
         assert sponsor.spylog.count(sponsor.requestPendingTxns.__name__) > 0
 
     looper.run(eventually(chk, retryWait=1, timeout=3))
+
+
+def testNonSponsoredNymCanDoGetNym(genned, addedSponsor,
+                                   sponsorSigner, tdir, looper):
+    signer = SimpleSigner()
+    someClient = genTestClient(genned, tmpdir=tdir, signer=signer)
+    looper.add(someClient)
+    looper.run(someClient.ensureConnectedToNodes())
+    needle = sponsorSigner.verstr
+    someClient.doGetNym(needle)
+    looper.run(eventually(someClient.hasNym, needle, retryWait=1, timeout=5))

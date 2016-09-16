@@ -1,4 +1,5 @@
 import json
+import traceback
 from _sha256 import sha256
 from base64 import b64decode
 from collections import deque
@@ -272,8 +273,12 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         origin = txn.get(f.IDENTIFIER.nm)
         if txn.get(ROLE) == SPONSOR:
             if not self.graphStore.hasSteward(origin):
-                self.graphStore.addNym(None, nym=origin, role=STEWARD)
-        self.graphStore.addNymTxnToGraph(txn)
+                try:
+                    self.graphStore.addNym(None, nym=origin, role=STEWARD)
+                except pyorient.PyOrientCommandException as ex:
+                    logger.trace("Error occurred adding nym to graph")
+                    logger.trace(traceback.format_exc())
+            self.graphStore.addNymTxnToGraph(txn)
 
     def getTxnById(self, txnId: str):
         if self.graphStore:
@@ -392,7 +397,13 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         self.submit(op, identifier=identifier)
 
     def hasNym(self, nym):
-        return self.graphStore.hasNym(nym)
+        if self.graphStore:
+            return self.graphStore.hasNym(nym)
+        else:
+            for txn in self.txnLog.getTxnsByType(NYM):
+                if txn.get(TXN_TYPE) == NYM:
+                    return True
+            return False
 
     def requestPendingTxns(self):
         requests = []
