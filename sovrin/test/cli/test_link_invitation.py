@@ -146,11 +146,12 @@ def addFaber(stewardClient, nym):
     stewardClient.submit(op, identifier=nym)
 
 
-def testSyncLinkInvitation(poolNodesCreated, loadedFaberLinkInvitation):
+def testSyncLinkInvitation(poolNodesCreated, loadedFaberLinkInvitation,
+                           stewardClient):
     aliceCli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(aliceCli)
-    # li = getLinkInvitation("Faber", aliceCli)
-    # addFaber(stewardClient, li.targetIdentifier)
-    #
-    # aliceCli.enterCmd("sync Faber")
+    li = getLinkInvitation("Faber", aliceCli)
+    addFaber(stewardClient, li.targetIdentifier)
+
+    aliceCli.enterCmd("sync Faber")
     pass
