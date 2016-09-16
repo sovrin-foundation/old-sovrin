@@ -326,10 +326,11 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         self.submit(op, identifier=origin)
 
     def doGetAttributeTxn(self, identifier, attrName):
+        # Getting public attribute only
         op = {
             TARGET_NYM: identifier,
             TXN_TYPE: GET_ATTR,
-            DATA: json.dumps({"name": attrName})
+            DATA: json.dumps({RAW: attrName})
         }
         self.submit(op, identifier=identifier)
 
