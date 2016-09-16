@@ -330,7 +330,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         op = {
             TARGET_NYM: identifier,
             TXN_TYPE: GET_ATTR,
-            DATA: json.dumps({RAW: attrName})
+            RAW: attrName
         }
         self.submit(op, identifier=identifier)
 
