@@ -269,7 +269,8 @@ class Node(PlenumNode):
         """
         txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
         self.sendReplyToClient(Reply(txnWithMerkleInfo))
-        self.storeTxnInGraph(txnWithMerkleInfo)
+        reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
+        self.storeTxnInGraph(reply.result)
 
     def storeTxnInLedger(self, result):
         if result[TXN_TYPE] == ATTRIB:
