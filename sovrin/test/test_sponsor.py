@@ -45,20 +45,22 @@ def agentScenario(keySharedNodes, looper, tdir):
     s.run(setupAndStart)
     return s
 
+ShouldSkip = True
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testSponsorRegistersUser(sponsorWithAgentScenario):
     s = sponsorWithAgentScenario
     s.run(registersUser)
 
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testSponsorAddsUserEmail(sponsorWithAgentScenario):
     sponsorWithAgentScenario.run(
             addsUserEmail)
 
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testSponsorWithoutAgentRegistersUser(sponsorWithoutAgentScenario):
     s = sponsorWithoutAgentScenario
     s.run(registersUser)
@@ -71,22 +73,22 @@ def testSponsorWithoutAgentRegistersUser(sponsorWithoutAgentScenario):
 #     s.run(assignAgent)
 
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testSponsorWithoutAgentAddsUserEmail(sponsorWithoutAgentScenario):
     sponsorWithoutAgentScenario.run(addsUserEmail)
 
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testAgentRegistersUser(agentScenario):
     agentScenario.run(registersUser)
 
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testAgentAddsUserEmail(agentScenario):
     agentScenario.run(addsUserEmail)
 
 
-@pytest.mark.skipif(True, reason="Need to decide exact schema")
+@pytest.mark.skipif(ShouldSkip, reason="Need to decide exact schema")
 def testSponsorRegistersUserUsingAgentApi(nodeSet, looper, tdir):
     # Sponsor not on the blockchain, but is using an Agent's API
     with Scenario(nodeSet=nodeSet,
