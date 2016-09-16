@@ -278,7 +278,7 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                 except pyorient.PyOrientCommandException as ex:
                     logger.trace("Error occurred adding nym to graph")
                     logger.trace(traceback.format_exc())
-            self.graphStore.addNymTxnToGraph(txn)
+        self.graphStore.addNymTxnToGraph(txn)
 
     def getTxnById(self, txnId: str):
         if self.graphStore:
