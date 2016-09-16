@@ -21,6 +21,7 @@ allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE, RAW,
              ENC, HASH, ALIAS)
 reqOpKeys = (TXN_TYPE,)
 
+
 # client transaction types
 NYM = NYM
 ATTRIB = "ATTRIB"
@@ -42,6 +43,9 @@ VER_PRF = "VER_PRF"
 
 # Temp for demo
 GEN_CRED = "GEN_CRED"
+
+openTxns = (GET_NYM, GET_ATTR)
+
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {NYM: ([TARGET_NYM], [ROLE]),
