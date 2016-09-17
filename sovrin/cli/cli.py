@@ -732,8 +732,11 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
-
     def _syncLinkInvitation(self, linkName):
+
+        def _syncLinkPostGetAttr(reply, err):
+            print("### reply: {} err: {}".format(reply, err))
+
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
             self._getMatchingInvitations(linkName)
         if totalFound == 0:
@@ -753,9 +756,6 @@ class SovrinCli(PlenumCli):
                 nym = getCryptonym(li.targetIdentifier)
                 req = self.activeClient.doGetAttributeTxn(nym, "endpoint")[0]
 
-                def _syncLinkPostGetAttr(reply, err):
-                    print("### reply: {} err: {}".format(reply, err))
-
                 self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                             req.reqId, self.activeClient,
                                             _syncLinkPostGetAttr)
@@ -769,18 +769,22 @@ class SovrinCli(PlenumCli):
 
         return True
 
+    @staticmethod
+    def cleanLinkName(name):
+        return name.replace('"', '')
 
     def _printNoLinkFoundMsg(self):
         self.print("No matching link invitation(s) found in current keyring")
 
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
-            linkName = matchedVars.get('link_name').replace('"', '')
+            linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
             self._syncLinkInvitation(linkName)
             return True
 
     def _getMatchingInvitations(self, linkName):
-        linkInvitations = self._getInvitationMatchingLinks(linkName.replace('"',''))
+        linkInvitations = self._getInvitationMatchingLinks(
+            SovrinCli.cleanLinkName(linkName))
 
         exactlyMatchedLinks = linkInvitations["exactlyMatched"]
         likelyMatchedLinks = linkInvitations["likelyMatched"]
@@ -805,7 +809,8 @@ class SovrinCli(PlenumCli):
         for k, v in exactlyMatchedLinks.items():
             for li in v:
                 self.print("{}".format(li.name))
-        self.print("\nRe enter the command with more specific link invitation name")
+        self.print("\nRe enter the command with more specific "
+                   "link invitation name")
 
     def _showLink(self, matchedVars):
         if matchedVars.get('show_link') == 'show link':
@@ -906,7 +911,8 @@ class SovrinCli(PlenumCli):
                 credName, credVersion, self.activeSigner.identifier)
             keys = credDef[KEYS]
             pk = self.pKFromCredDef(keys)
-            attributes = self.activeClient.attributeRepo.getAttributes(proverId).encoded()
+            attributes = self.activeClient.attributeRepo.\
+                getAttributes(proverId).encoded()
             if attributes:
                 attributes = list(attributes.values())[0]
             sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
@@ -914,8 +920,10 @@ class SovrinCli(PlenumCli):
             # TODO: For real scenario, do we need to send this credential back
             # or it will be out of band?
             self.print("Credential: ", newline=False)
-            self.print("A={}, e={}, vprimeprime={}".format(*cred), Token.BoldBlue)
-            # TODO: For real scenario, do we need to send this credential back or it will be out of band?
+            self.print("A={}, e={}, vprimeprime={}".format(*cred),
+                       Token.BoldBlue)
+            # TODO: For real scenario, do we need to send this
+            # credential back or it will be out of band?
             return True
 
     def _addGenesisAction(self, matchedVars):

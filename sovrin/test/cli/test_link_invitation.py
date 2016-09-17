@@ -1,9 +1,9 @@
 import pytest
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM
+from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
 from plenum.common.util import getCryptonym
 from sovrin.client.link_invitation import LinkInvitation
-from sovrin.common.txn import USER
+from sovrin.common.txn import USER, ATTRIB
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated, \
     newCLI
 from sovrin.test.helper import genTestClient
@@ -138,20 +138,28 @@ def stewardClient(looper, tdirWithDomainTxns, poolTxnStewardData):
 
 
 def addFaber(stewardClient, nym):
-    op = {
+    addNym = {
         TARGET_NYM: nym,
         TXN_TYPE: NYM,
         ROLE: USER
     }
-    stewardClient.submit(op, identifier=nym)
+    stewardClient.submit(addNym, identifier=nym)
+    addEndpoint = {
+        TARGET_NYM: nym,
+        TXN_TYPE: ATTRIB,
+        RAW: '{"endpoint": "testendpoint"}'
+    }
+    stewardClient.submit(addEndpoint, identifier=nym)
 
 
-def testSyncLinkInvitation(poolNodesCreated, loadedFaberLinkInvitation,
+def testSyncLinkInvitation(looper, poolNodesCreated, loadedFaberLinkInvitation,
                            stewardClient):
     aliceCli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(aliceCli)
+    aliceCli.activeIdentifier
     li = getLinkInvitation("Faber", aliceCli)
     addFaber(stewardClient, li.targetIdentifier)
-
+    looper.runFor(20)
     aliceCli.enterCmd("sync Faber")
+    looper.runFor(30)
     pass

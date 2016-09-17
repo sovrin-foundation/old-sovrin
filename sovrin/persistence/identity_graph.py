@@ -256,6 +256,18 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
 
+    def getAttrs(self, frm, *attrNames):
+        cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {}".format(
+            Vertices.Nym, NYM, frm,Vertices.Attribute, Edges.HasAttribute)
+        allAttrsRecords = self.client.command(cmd)
+        result = {}
+        for attrRec in allAttrsRecords:
+            raw = json.loads(attrRec.oRecordData.get(RAW))
+            key, value = raw.popitem()
+            if len(attrNames) == 0 or key in attrNames:
+                result[key] = value
+        return result
+
     def getCredDef(self, frm, name, version):
         cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {} where " \
               "name = '{}' and version = '{}'".format(Vertices.Nym, NYM, frm,

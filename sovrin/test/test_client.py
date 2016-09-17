@@ -5,14 +5,14 @@ import libnacl.public
 import pytest
 
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import REQNACK, ENC, RAW
+from plenum.common.txn import REQNACK, ENC, RAW, DATA
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
 
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
-    TXN_ID, NONCE, SKEY, REFERENCE
+    TXN_ID, NONCE, SKEY, REFERENCE, GET_ATTR
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck
 
@@ -46,9 +46,7 @@ def attributeData():
     return json.dumps({'name': 'Mario'})
 
 
-@pytest.fixture(scope="module")
-def addedRawAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
-                      looper):
+def addAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData):
     op = {
         ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
@@ -57,6 +55,11 @@ def addedRawAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
     }
 
     submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+
+@pytest.fixture(scope="module")
+def addedRawAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
+                      looper):
+    addAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData)
 
 
 @pytest.fixture(scope="module")
@@ -187,6 +190,39 @@ def testAddNymsInQuickSuccession(nymsAddedInQuickSuccession):
 
 
 def testSponsorAddsAttributeForUser(addedRawAttribute):
+    pass
+
+
+def checkGetAttr(reqId, sponsor, attrName, attrValue):
+    reply, status = sponsor.getReply(reqId)
+    data = json.loads(reply.get(DATA))
+    print("reply: {}".format(reply))
+    assert status == "CONFIRMED" and \
+           (data is not None and data.get(attrName) == attrValue)
+
+
+def getAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData):
+    attrName = list(json.loads(attributeData).keys())[0]
+    attrValue = list(json.loads(attributeData).values())[0]
+    op = {
+        TARGET_NYM: userSignerA.verstr,
+        TXN_TYPE: GET_ATTR,
+        RAW: attrName
+    }
+    req = sponsor.submit(op, identifier=sponsorSigner.verstr)[0]
+
+    looper.run(eventually(checkGetAttr, req.reqId, sponsor,
+                          attrName, attrValue, retryWait=1, timeout=20))
+
+
+@pytest.fixture(scope="module")
+def checkAddAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
+                      looper):
+    addAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData)
+    getAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData)
+
+
+def testSponsorGetAttrsForUser(checkAddAttribute):
     pass
 
 
