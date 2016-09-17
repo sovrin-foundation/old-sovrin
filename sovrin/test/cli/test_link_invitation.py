@@ -168,7 +168,7 @@ def testSyncLinkInvitation(looper, poolNodesCreated, loadedFaberLinkInvitation,
     addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     addFaber(looper, stewardClient, li.targetIdentifier)
-    looper.runFor(20)
+    looper.runFor(5)
     aliceCli.enterCmd("sync Faber")
-    looper.runFor(30)
+    looper.runFor(5)
     pass

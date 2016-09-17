@@ -761,7 +761,7 @@ class SovrinCli(PlenumCli):
             else:
                 self.print("TODO: Synchronizing...")
                 nym = getCryptonym(li.targetIdentifier)
-                req = self.activeClient.doGetAttributeTxn("SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0=", "endpoint")[0]
+                req = self.activeClient.doGetAttributeTxn(nym, "endpoint")[0]
 
                 self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                             req.reqId, self.activeClient,
