@@ -260,7 +260,8 @@ class Node(PlenumNode):
     def processGetAttrsReq(self, request: Request, frm: str):
         self.transmitToClient(RequestAck(request.reqId), frm)
         attrNames = request.operation[RAW]
-        attrs = self.graphStore.getAttrs(frm, attrNames)
+        nym = request.operation[TARGET_NYM]
+        attrs = self.graphStore.getAttrs(nym, attrNames)
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)

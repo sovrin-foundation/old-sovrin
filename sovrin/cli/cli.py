@@ -735,7 +735,14 @@ class SovrinCli(PlenumCli):
     def _syncLinkInvitation(self, linkName):
 
         def _syncLinkPostGetAttr(reply, err):
-            print("### reply: {} err: {}".format(reply, err))
+            if err:
+                self.print('Error occurred: {}'.format(err))
+                return True
+            endPoint = json.loads(reply.get(DATA)).get('endpoint')
+            if not endPoint:
+                self.print('Endpoint not available')
+                return True
+
 
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
             self._getMatchingInvitations(linkName)
@@ -754,7 +761,7 @@ class SovrinCli(PlenumCli):
             else:
                 self.print("TODO: Synchronizing...")
                 nym = getCryptonym(li.targetIdentifier)
-                req = self.activeClient.doGetAttributeTxn(nym, "endpoint")[0]
+                req = self.activeClient.doGetAttributeTxn("SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0=", "endpoint")[0]
 
                 self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                             req.reqId, self.activeClient,

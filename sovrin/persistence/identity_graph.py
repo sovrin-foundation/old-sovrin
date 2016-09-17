@@ -229,7 +229,6 @@ class IdentityGraph(OrientDbGraphStore):
             TXN_ID: txnId,
         }
         self.createEdge(Edges.AddsAttribute, frm, attrVertex._rid, **kwargs)
-        # If `to` exists, which means the attribute is not public
         if to:
             to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                            to)
@@ -258,8 +257,9 @@ class IdentityGraph(OrientDbGraphStore):
         self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
 
     def getAttrs(self, frm, *attrNames):
-        cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {}".format(
-            Vertices.Nym, NYM, frm,Vertices.Attribute, Edges.HasAttribute)
+        cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {}"\
+            .format(Vertices.Nym, NYM, frm,Vertices.Attribute,
+                                     Edges.HasAttribute, frm)
         allAttrsRecords = self.client.command(cmd)
         result = {}
         for attrRec in allAttrsRecords:

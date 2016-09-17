@@ -136,32 +136,38 @@ def stewardClient(looper, tdirWithDomainTxns, poolTxnStewardData):
     looper.run(stewardClient.ensureConnectedToNodes())
     return stewardClient
 
+
 def addNym(stewardClient, nym):
     addNym = {
         TARGET_NYM: nym,
         TXN_TYPE: NYM,
         ROLE: USER
     }
-    stewardClient.submit(addNym, identifier=nym)
+    stewardClient.submit(addNym, identifier=stewardClient.defaultIdentifier)
 
 
-def addFaber(stewardClient, nym):
-    addNym(stewardClient, nym)
+def addEndpoint(stewardClient, nym):
     addEndpoint = {
         TARGET_NYM: nym,
         TXN_TYPE: ATTRIB,
         RAW: '{"endpoint": "testendpoint"}'
     }
-    stewardClient.submit(addEndpoint, identifier=nym)
+    stewardClient.submit(addEndpoint, identifier=stewardClient.defaultIdentifier)
+
+
+def addFaber(looper, stewardClient, aliceNym):
+    addNym(stewardClient, aliceNym)
+    looper.runFor(2)
+    addEndpoint(stewardClient, aliceNym)
 
 
 def testSyncLinkInvitation(looper, poolNodesCreated, loadedFaberLinkInvitation,
                            stewardClient):
     aliceCli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(aliceCli)
-    # addNym(stewardClient, aliceCli.activeSigner.verstr)
+    addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
-    addFaber(stewardClient, li.targetIdentifier)
+    addFaber(looper, stewardClient, li.targetIdentifier)
     looper.runFor(20)
     aliceCli.enterCmd("sync Faber")
     looper.runFor(30)
