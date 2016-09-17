@@ -9,19 +9,10 @@ from sovrin.common.txn import NYM
 
 class SecondaryStorage(PlenumSS):
 
-    def _merkleInfo(self, seqNo):
-        tree = self._primaryStorage.tree
-        rootHash = tree.merkle_tree_hash(0, int(seqNo))
-        auditPath = tree.inclusion_proof(0, int(seqNo))
-        return {
-            F.rootHash.name: base64.b64encode(rootHash).decode(),
-            F.auditPath.name: [base64.b64encode(h).decode() for h in auditPath]
-        }
-
     def getReply(self, identifier, reqId, **kwargs):
         txn = self._txnStore.getTxn(identifier, reqId, **kwargs)
         if txn:
-            txn.update(self._merkleInfo(txn.get(F.seqNo.name)))
+            txn.update(self._primaryStorage.merkleInfo(txn.get(F.seqNo.name)))
             return Reply(txn)
 
     def getReplies(self, *txnIds, seqNo=None):
@@ -30,7 +21,7 @@ class SecondaryStorage(PlenumSS):
             return txnData
         else:
             for seqNo in txnData:
-                txnData[seqNo].update(self._merkleInfo(seqNo))
+                txnData[seqNo].update(self._primaryStorage.merkleInfo(seqNo))
             return txnData
 
     def getAddNymTxn(self, nym):
