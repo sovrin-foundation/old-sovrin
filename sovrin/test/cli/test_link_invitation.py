@@ -136,14 +136,17 @@ def stewardClient(looper, tdirWithDomainTxns, poolTxnStewardData):
     looper.run(stewardClient.ensureConnectedToNodes())
     return stewardClient
 
-
-def addFaber(stewardClient, nym):
+def addNym(stewardClient, nym):
     addNym = {
         TARGET_NYM: nym,
         TXN_TYPE: NYM,
         ROLE: USER
     }
     stewardClient.submit(addNym, identifier=nym)
+
+
+def addFaber(stewardClient, nym):
+    addNym(stewardClient, nym)
     addEndpoint = {
         TARGET_NYM: nym,
         TXN_TYPE: ATTRIB,
@@ -156,7 +159,7 @@ def testSyncLinkInvitation(looper, poolNodesCreated, loadedFaberLinkInvitation,
                            stewardClient):
     aliceCli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(aliceCli)
-    aliceCli.activeIdentifier
+    # addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     addFaber(stewardClient, li.targetIdentifier)
     looper.runFor(20)

@@ -172,7 +172,8 @@ class IdentityGraph(OrientDbGraphStore):
     def addNym(self, txnId, nym, role, frm=None, reference=None, seqNo=None):
         kwargs = {
             NYM: nym,
-            TXN_ID: txnId,
+            TXN_ID: txnId,  # # Need to have txnId as a property for cases
+            # where we dont know the sponsor of this nym or its a genesis nym
             ROLE: role,    # Need to have role as a property of the vertex it
             # makes faster to query roles by vertex.
         }
