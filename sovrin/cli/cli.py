@@ -33,7 +33,7 @@ from sovrin.client.client import Client
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF, \
-    getTxnOrderedFields
+    getTxnOrderedFields, ENDPOINT
 from sovrin.persistence.wallet_storage_file import WalletStorageFile
 from sovrin.server.node import Node
 
@@ -732,23 +732,30 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
+    def _updateLinkWithEndpoint(self, endPoint):
+        self.print('Endpoint received: {}'.format(endPoint))
+
+    def _syncLinkPostEndPointRetrieval(self, reply, err, linkName):
+        if err:
+            self.print('Error occurred: {}'.format(err))
+            return True
+        endPoint = json.loads(reply.get(DATA)).get('endpoint')
+        if endPoint:
+            self._updateLinkWithEndpoint(endPoint)
+        else:
+            self.print('Endpoint not available')
+        msgs = ['show link "{}"'.format(linkName), 'accept invitation "{}"'
+            .format(linkName)]
+        self.printUsage(msgs)
+        return True
+
     def _syncLinkInvitation(self, linkName):
 
-        def _syncLinkPostGetAttr(reply, err):
-            if err:
-                self.print('Error occurred: {}'.format(err))
-                return True
-            endPoint = json.loads(reply.get(DATA)).get('endpoint')
-            if not endPoint:
-                self.print('Endpoint not available')
-                return True
-
-
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
-            self._getMatchingInvitations(linkName)
+            self._getMatchingInvitationsDetail(linkName)
         if totalFound == 0:
             self._printNoLinkFoundMsg()
-            return
+            return True
 
         if totalFound == 1:
             li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
@@ -757,24 +764,27 @@ class SovrinCli(PlenumCli):
                 self.print('Expanding {} to "{}"'.format(linkName, li.name))
 
             if li.targetEndPoint:
-                self.print("TODO: Ping...")
+                self.print("Ping to target endpoint: {} [Not Yet Implemented]".
+                           format(li.targetEndPoint))
             else:
-                self.print("TODO: Synchronizing...")
+                self.print("Synchronizing...")
                 nym = getCryptonym(li.targetIdentifier)
-                req = self.activeClient.doGetAttributeTxn(nym, "endpoint")[0]
+                req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
 
                 self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                             req.reqId, self.activeClient,
-                                            _syncLinkPostGetAttr)
+                                            self._syncLinkPostEndPointRetrieval,
+                                            li.name)
 
-            msgs = ['show link "{}"'.format(li.name), 'accept invitation "{}"'
-                .format(li.name)]
-            self.printUsage(msgs)
         else:
             self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks,
                                                likelyMatchedLinks)
 
         return True
+
+    @staticmethod
+    def getConnectUsageMsg():
+        return "connect(test | live)"
 
     @staticmethod
     def cleanLinkName(name):
@@ -786,10 +796,16 @@ class SovrinCli(PlenumCli):
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
             linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
-            self._syncLinkInvitation(linkName)
+            if self.activeEnv:
+                self._syncLinkInvitation(linkName)
+            else:
+                self.print("Cannot sync because not connected. "
+                           "Please connect first.")
+                msgs = [SovrinCli.getConnectUsageMsg()]
+                self.printUsage(msgs)
             return True
 
-    def _getMatchingInvitations(self, linkName):
+    def _getMatchingInvitationsDetail(self, linkName):
         linkInvitations = self._getInvitationMatchingLinks(
             SovrinCli.cleanLinkName(linkName))
 
@@ -824,7 +840,7 @@ class SovrinCli(PlenumCli):
             linkName = matchedVars.get('link_name').replace('"','')
 
             totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
-                self._getMatchingInvitations(linkName)
+                self._getMatchingInvitationsDetail(linkName)
 
             if totalFound == 0:
                 self._printNoLinkFoundMsg()

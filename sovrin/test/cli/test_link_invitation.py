@@ -2,8 +2,9 @@ import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
 from plenum.common.util import getCryptonym
+from plenum.test.eventually import eventually
 from sovrin.client.link_invitation import LinkInvitation
-from sovrin.common.txn import USER, ATTRIB
+from sovrin.common.txn import USER, ATTRIB, ENDPOINT
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated, \
     newCLI
 from sovrin.test.helper import genTestClient
@@ -146,29 +147,58 @@ def addNym(stewardClient, nym):
     stewardClient.submit(addNym, identifier=stewardClient.defaultIdentifier)
 
 
-def addEndpoint(stewardClient, nym):
+def addFabersEndpoint(stewardClient, nym, attrName, attrValue):
     addEndpoint = {
         TARGET_NYM: nym,
         TXN_TYPE: ATTRIB,
-        RAW: '{"endpoint": "testendpoint"}'
+        RAW: '{"' + attrName + '": "' + attrValue + '"}'
     }
     stewardClient.submit(addEndpoint, identifier=stewardClient.defaultIdentifier)
 
 
 def addFaber(looper, stewardClient, aliceNym):
     addNym(stewardClient, aliceNym)
-    looper.runFor(2)
-    addEndpoint(stewardClient, aliceNym)
 
 
-def testSyncLinkInvitation(looper, poolNodesCreated, loadedFaberLinkInvitation,
-                           stewardClient):
+def checkIfEndpointReceived(aCli, linkName, expStr):
+    assert expStr in aCli.lastCmdOutput
+    assert "Usage" in aCli.lastCmdOutput
+    assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
+    assert 'accept invitation "{}"'.format(linkName) in aCli.lastCmdOutput
+
+
+def testSyncLinkWhenEndpointNotAvailable(looper, poolNodesCreated,
+                                                   loadedFaberLinkInvitation,
+                                                   stewardClient):
     aliceCli = loadedFaberLinkInvitation
     ensureConnectedToTestEnv(aliceCli)
     addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     addFaber(looper, stewardClient, li.targetIdentifier)
-    looper.runFor(5)
+
     aliceCli.enterCmd("sync Faber")
-    looper.runFor(5)
-    pass
+    looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
+                          "Endpoint not available",
+                          retryWait=1,
+                          timeout=10))
+
+
+def testSyncLinkWhenEndpointIsAvailable(looper, poolNodesCreated,
+                                                   loadedFaberLinkInvitation,
+                                                   stewardClient):
+    aliceCli = loadedFaberLinkInvitation
+    ensureConnectedToTestEnv(aliceCli)
+    addNym(stewardClient, aliceCli.activeSigner.verstr)
+    li = getLinkInvitation("Faber", aliceCli)
+    addFaber(looper, stewardClient, li.targetIdentifier)
+    looper.runFor(0.5)
+
+    endpointValue = "0.0.0.0:0000"
+    addFabersEndpoint(stewardClient, li.targetIdentifier,
+                      ENDPOINT, endpointValue)
+    looper.runFor(0.5)
+    aliceCli.enterCmd("sync Faber")
+    looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
+                          "Endpoint received: {}".format(endpointValue),
+                          retryWait=1,
+                          timeout=10))

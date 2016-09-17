@@ -21,6 +21,8 @@ allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE, RAW,
              ENC, HASH, ALIAS)
 reqOpKeys = (TXN_TYPE,)
 
+# Attribute Names
+ENDPOINT = "endpoint"
 
 # client transaction types
 NYM = NYM
