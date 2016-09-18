@@ -217,32 +217,6 @@ class SovrinCli(PlenumCli):
                     nym = signer.verstr
                     return self._addNym(nym, role, other_client_name)
 
-                elif matchedVars.get('send_attrib') == 'send ATTRIB':
-                    nym = matchedVars.get('dest_id')
-                    raw = matchedVars.get('raw')
-                    enc = matchedVars.get('enc')
-                    hsh = matchedVars.get('hash')
-                    op = {
-                        TXN_TYPE: ATTRIB,
-                        TARGET_NYM: nym
-                    }
-                    data = None
-                    if not raw:
-                        op[RAW] = raw
-                        data = raw
-                    elif not enc:
-                        op[ENC] = enc
-                        data = enc
-                    elif not hsh:
-                        op[HASH] = hsh
-                        data = hsh
-
-                    req, = client.submit(op, identifier=self.activeSigner.identifier)
-                    self.print("Adding attributes {} for {}".
-                               format(data, nym), Token.BoldBlue)
-                    self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                            req.reqId, client)
-
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
         validRoles = (USER, SPONSOR, STEWARD)
@@ -259,7 +233,8 @@ class SovrinCli(PlenumCli):
             TARGET_NYM: nym,
             TXN_TYPE: GET_NYM,
         }
-        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
+        req, = self.activeClient.submit(op,
+                                        identifier=self.activeSigner.identifier)
         self.print("Getting nym {}".format(nym))
 
         def getNymReply(reply, err):
@@ -275,7 +250,8 @@ class SovrinCli(PlenumCli):
             TXN_TYPE: NYM,
             ROLE: role
         }
-        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
+        req, = self.activeClient.submit(op,
+                                        identifier=self.activeSigner.identifier)
         printStr = "Adding nym {}".format(nym)
 
         if other_client_name:
@@ -295,17 +271,18 @@ class SovrinCli(PlenumCli):
             TARGET_NYM: nym
         }
         data = None
-        if not raw:
+        if raw:
             op[RAW] = raw
             data = raw
-        elif not enc:
+        elif enc:
             op[ENC] = enc
             data = enc
-        elif not hsh:
+        elif hsh:
             op[HASH] = hsh
             data = hsh
 
-        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
+        req, = self.activeClient.submit(op,
+                                        identifier=self.activeSigner.identifier)
         self.print("Adding attributes {} for {}".
                    format(data, nym), Token.BoldBlue)
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
@@ -336,7 +313,8 @@ class SovrinCli(PlenumCli):
                 VERSION: credVersion
             }
         }
-        req, = self.activeClient.submit(op, identifier=self.activeSigner.identifier)
+        req, = self.activeClient.submit(op,
+                                        identifier=self.activeSigner.identifier)
         self.print("Getting cred def {} version {} for {}".
                    format(credName, credVersion, dest), Token.BoldBlue)
 
@@ -373,7 +351,8 @@ class SovrinCli(PlenumCli):
         proofBuilder.setParams(encodedAttrs=getEncodedAttrs(issuerId))
 
         if not masterSecret:
-            self.activeClient.wallet.addMasterSecret(str(proofBuilder.masterSecret))
+            self.activeClient.wallet.addMasterSecret(
+                str(proofBuilder.masterSecret))
 
         #TODO: Should probably be persisting proof objects
         self.activeClient.proofBuilders[proofBuilder.id] = (proofBuilder,
@@ -424,7 +403,8 @@ class SovrinCli(PlenumCli):
                 name, value = name.strip(), value.strip()
                 credential[name] = value
 
-            proofBuilder, credName, credVersion, issuerId = self.activeClient.proofBuilders[proofId]
+            proofBuilder, credName, credVersion, issuerId = \
+                self.activeClient.proofBuilders[proofId]
             credential[ISSUER] = issuerId
             credential[NAME] = credName
             credential[VERSION] = credVersion
@@ -432,11 +412,12 @@ class SovrinCli(PlenumCli):
             credential[CRED_V] = str(next(iter(proofBuilder.vprime.values())) +
                                   int(credential[V_PRIME_PRIME]))
             credential[ENCODED_ATTRS] = {
-                k: str(v) for k, v in next(iter(proofBuilder.encodedAttrs.values())).items()
+                k: str(v) for k, v in
+                next(iter(proofBuilder.encodedAttrs.values())).items()
             }
             # TODO: What if alias is not given (we don't have issuer id and
             # cred name here) ???
-            # TODO: is the below way of storing cred in dict ok?
+            # TODO: is the below way of storing  cred in dict ok?
             self.activeWallet.addCredential(alias, credential)
             self.print("Credential stored", Token.BoldBlue)
             return True
@@ -494,9 +475,12 @@ class SovrinCli(PlenumCli):
     def _sendAttribAction(self, matchedVars):
         if matchedVars.get('send_attrib') == 'send ATTRIB':
             nym = matchedVars.get('dest_id')
-            raw = ast.literal_eval(matchedVars.get('raw'))
-            enc = ast.literal_eval(matchedVars.get('enc'))
-            hsh = matchedVars.get('hash')
+            raw = matchedVars.get('raw') \
+                if matchedVars.get('raw') else None
+            enc = ast.literal_eval(matchedVars.get('enc')) \
+                if matchedVars.get('enc') else None
+            hsh = matchedVars.get('hash') \
+                if matchedVars.get('hash') else None
             self._addAttribToNym(nym, raw, enc, hsh)
             return True
 
@@ -506,8 +490,8 @@ class SovrinCli(PlenumCli):
             self.activeClient.wallet.addCredDefSk(credDef.name, credDef.version,
                                                   credDef.serializedSK)
             op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
-            req, = self.activeClient.submit(op,
-                                            identifier=self.activeSigner.identifier)
+            req, = self.activeClient.submit(
+                op, identifier=self.activeSigner.identifier)
             self.print("The following credential definition is published to the"
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
@@ -669,7 +653,7 @@ class SovrinCli(PlenumCli):
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
 
-            try:
+            #try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -684,9 +668,9 @@ class SovrinCli(PlenumCli):
                     msgs = ['accept invitation "{}"'.format(linkName),
                             'show link "{}"'.format(linkName)]
                     self.printUsage(msgs)
-            except Exception as e:
-                self.print('Error occurred during processing link '
-                           'invitation: {}'.format(e))
+            # except Exception as e:
+            #     self.print('Error occurred during processing link '
+            #                'invitation: {}'.format(e))
             return True
 
     @staticmethod

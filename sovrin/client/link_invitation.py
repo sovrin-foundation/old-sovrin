@@ -1,3 +1,5 @@
+import datetime
+
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
 SIGNER_VER_KEY = "Verification Key"
@@ -50,7 +52,9 @@ class LinkInvitation:
                     linkLastSyncNo):
         self.targetVerkey = targetVerKey
         self.linkStatus = linkStatus
-        self.linkLastSynced = linkLastSynced
+        self.linkLastSynced = datetime.datetime.strptime(
+            linkLastSynced,"%Y-%m-%dT%H:%M:%S.%f") \
+            if linkLastSynced else None
         self.linkLastSyncNo = linkLastSyncNo
 
     @staticmethod
@@ -101,7 +105,7 @@ class LinkInvitation:
         if self.linkStatus:
             optional[LINK_STATUS] = self.linkStatus
         if self.linkLastSynced:
-            optional[LINK_LAST_SYNCED] = self.linkLastSynced
+            optional[LINK_LAST_SYNCED] = self.linkLastSynced.isoformat()
         if self.linkLastSyncNo:
             optional[LINK_LAST_SEQ_NO] = self.linkLastSyncNo
 
@@ -110,7 +114,6 @@ class LinkInvitation:
             for cr in self.claimRequests:
                 claimRequests.append(dict(cr))
             optional[CLAIM_REQUESTS] = claimRequests
-
 
         fixed.update(optional)
         return fixed

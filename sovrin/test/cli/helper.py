@@ -43,6 +43,10 @@ def checkGetNym(cli, nym):
     # assert all(x in cli.lastCmdOutput for x in printeds)
 
 
+def checkAddAttr(cli):
+    assert "Adding attributes" in cli.lastCmdOutput
+
+
 def chkNymAddedOutput(cli, nym):
     checks = [x['msg'] == "Nym {} added".format(nym) for x in cli.printeds]
     assert any(checks)
@@ -66,8 +70,14 @@ def ensureNymAdded(cli, nym, role=USER):
         dest=TARGET_NYM, nym=nym, ROLE=ROLE, role=role))
     cli.looper.run(
         eventually(chkNymAddedOutput, cli, nym, retryWait=1, timeout=10))
+
     cli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym))
     cli.looper.run(eventually(checkGetNym, cli, nym, retryWait=1, timeout=10))
+
+    cli.enterCmd('send ATTRIB {dest}={nym} raw={raw}'.
+                 format(dest=TARGET_NYM, nym=nym,
+                        raw='{\"attrName\":\"attrValue\"}'))
+    cli.looper.run(eventually(checkAddAttr, cli, retryWait=1, timeout=10))
 
 
 def ensureNodesCreated(cli, nodeNames):
