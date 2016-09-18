@@ -165,6 +165,9 @@ def checkIfEndpointReceived(aCli, linkName, expStr):
     assert "Usage" in aCli.lastCmdOutput
     assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
     assert 'accept invitation "{}"'.format(linkName) in aCli.lastCmdOutput
+    if "Endpoint received" in expStr:
+        li = getLinkInvitation("Faber", aCli)
+        assert li.targetEndPoint is not None
 
 
 def testSyncLinkWhenEndpointNotAvailable(looper, poolNodesCreated,
@@ -190,6 +193,7 @@ def testSyncLinkWhenEndpointIsAvailable(looper, poolNodesCreated,
     ensureConnectedToTestEnv(aliceCli)
     addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
+    assert li.targetEndPoint is None
     addFaber(looper, stewardClient, li.targetIdentifier)
     looper.runFor(0.5)
 

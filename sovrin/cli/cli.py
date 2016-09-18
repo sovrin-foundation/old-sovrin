@@ -45,7 +45,8 @@ I'm thinking maybe the cli needs to support something like this:
 new node all
 <each node reports genesis transactions>
 new client steward with identifier <nym> (nym matches the genesis transactions)
-client steward add bob (cli creates a signer and an ADDNYM for that signer's cryptonym, and then an alias for bobto that cryptonym.)
+client steward add bob (cli creates a signer and an ADDNYM for that signer's
+cryptonym, and then an alias for bobto that cryptonym.)
 new client bob (cli uses the signer previously stored for this client)
 """
 
@@ -659,6 +660,8 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exists")
+                msgs = ['load <file path>']
+                self.printUsage(msgs)
                 return True
 
             with open(filePath) as data_file:
@@ -670,32 +673,34 @@ class SovrinCli(PlenumCli):
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
                 if isinstance(linkInvitation, dict):
-                    linkInvitationName = linkInvitation["name"]
+                    linkName = linkInvitation["name"]
                     existingLinkInvites = self.activeWallet.\
-                        getMatchingLinkInvitations(linkInvitationName)
+                        getMatchingLinkInvitations(linkName)
                     if len(existingLinkInvites) >= 1:
                         self.print("Link already exists")
                     else:
                         self._loadInvitation(invitationData)
-                    msgs = ['accept invitation "{}"'.format(linkInvitationName),
-                            'show link "{}"'.format(linkInvitationName)]
+                    msgs = ['accept invitation "{}"'.format(linkName),
+                            'show link "{}"'.format(linkName)]
                     self.printUsage(msgs)
             except Exception as e:
                 self.print('Error occurred during processing link '
                            'invitation: {}'.format(e))
-
             return True
 
     @staticmethod
     def _getFilePath(givenPath):
         curDirPath = os.path.dirname(os.path.abspath(__file__))
-        sampleFilePath = curDirPath + "/../../" + givenPath
-        finalPathToCheck = None
-        if os.path.exists(sampleFilePath):
-            finalPathToCheck = sampleFilePath
-        elif os.path.exists(givenPath):
-            finalPathToCheck = givenPath
-        return finalPathToCheck
+        sampleExplicitFilePath = curDirPath + "/../../" + givenPath
+        sampleImplicitFilePath = curDirPath + "/../../sample/" + givenPath
+        if os.path.exists(givenPath):
+            return givenPath
+        elif os.path.exists(sampleExplicitFilePath):
+            return sampleExplicitFilePath
+        elif os.path.exists(sampleImplicitFilePath):
+            return sampleImplicitFilePath
+        else:
+            return None
 
     def _getInvitationMatchingLinks(self, linkName):
         exactMatches = {}
@@ -732,20 +737,28 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
-    def _updateLinkWithEndpoint(self, endPoint):
-        self.print('Endpoint received: {}'.format(endPoint))
+    def _pingToEndpoint(self, endPoint):
+        self.print("Ping to target endpoint: {} [Not Yet Implemented]".
+                   format(endPoint))
 
-    def _syncLinkPostEndPointRetrieval(self, reply, err, linkName):
+    def _updateLinkWithLatestInfo(self, link, reply):
+        data = json.loads(reply.get(DATA))
+        endPoint = data.get('endpoint')
+        if endPoint:
+            link.updateEndPoint(endPoint)
+            self.activeWallet.addLinkInvitation(link)
+            self.print('Endpoint received: {}'.format(endPoint))
+            self._pingToEndpoint(endPoint)
+        else:
+            self.print('Endpoint not available')
+
+    def _syncLinkPostEndPointRetrieval(self, reply, err, link: LinkInvitation):
         if err:
             self.print('Error occurred: {}'.format(err))
             return True
-        endPoint = json.loads(reply.get(DATA)).get('endpoint')
-        if endPoint:
-            self._updateLinkWithEndpoint(endPoint)
-        else:
-            self.print('Endpoint not available')
-        msgs = ['show link "{}"'.format(linkName), 'accept invitation "{}"'
-            .format(linkName)]
+        self._updateLinkWithLatestInfo(link, reply)
+        msgs = ['show link "{}"'.format(link.name), 'accept invitation "{}"'
+            .format(link.name)]
         self.printUsage(msgs)
         return True
 
@@ -764,8 +777,7 @@ class SovrinCli(PlenumCli):
                 self.print('Expanding {} to "{}"'.format(linkName, li.name))
 
             if li.targetEndPoint:
-                self.print("Ping to target endpoint: {} [Not Yet Implemented]".
-                           format(li.targetEndPoint))
+                self._pingToEndpoint(li.targetEndPoint)
             else:
                 self.print("Synchronizing...")
                 nym = getCryptonym(li.targetIdentifier)
@@ -774,7 +786,7 @@ class SovrinCli(PlenumCli):
                 self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                             req.reqId, self.activeClient,
                                             self._syncLinkPostEndPointRetrieval,
-                                            li.name)
+                                            li)
 
         else:
             self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks,
@@ -866,11 +878,13 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exists")
+                msgs = ['show <file path>']
+                self.printUsage(msgs)
             else:
                 with open(filePath, 'r') as fin:
                     self.print(fin.read())
-            msgs = ['load {}'.format(givenFilePath)]
-            self.printUsage(msgs)
+                msgs = ['load {}'.format(givenFilePath)]
+                self.printUsage(msgs)
             return True
 
     def canConnectToEnv(self, envName: str):

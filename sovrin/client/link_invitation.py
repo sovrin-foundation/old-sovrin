@@ -40,7 +40,11 @@ class LinkInvitation:
         self.signerVerKey = signerVerKey
         self.updateState(None, None, None, None)
 
-    def updateState(self, targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo):
+    def updateEndPoint(self, endPoint):
+        self.targetEndPoint = endPoint
+
+    def updateState(self, targetVerKey, linkStatus, linkLastSynced,
+                    linkLastSyncNo):
         self.targetVerkey = targetVerKey
         self.linkStatus = linkStatus,
         self.linkLastSynced = linkLastSynced
@@ -59,7 +63,8 @@ class LinkInvitation:
         claimRequests = []
         if claimRequestJson:
             for cr in claimRequestJson:
-                claimRequests.append(ClaimRequest(cr.get("name"), cr.get("version")))
+                claimRequests.append(
+                    ClaimRequest(cr.get("name"), cr.get("version")))
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
         targetEndPoint = values.get(TARGET_END_POINT, None)
@@ -70,8 +75,8 @@ class LinkInvitation:
         linkLastSyncNo = values.get(LINK_LAST_SEQ_NO, None)
 
         li = LinkInvitation(name, signerIdentifier, signerVerKey, trustAnchor,
-                            targetIdentifier, targetEndPoint, linkNonce, claimRequests,
-                            signature)
+                            targetIdentifier, targetEndPoint, linkNonce,
+                            claimRequests, signature)
         li.updateState(targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
         return li
 

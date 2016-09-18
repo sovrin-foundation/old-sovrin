@@ -1,6 +1,8 @@
 import json
+import os
 from typing import Any, Dict
 
+from ledger.stores.directory_store import DirectoryStore
 from ledger.stores.text_file_store import TextFileStore
 from plenum.persistence.wallet_storage_file import WalletStorageFile \
     as PWalletStorageFile
@@ -37,9 +39,7 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
                                         isLineNoKey = True,
                                         storeContentHash=False)
 
-        self.linkInvitationStore = TextFileStore(dataDir, linkInvitations,
-                                        isLineNoKey = False,
-                                        storeContentHash=False)
+        self.linkInvitationStore = DirectoryStore(dataDir, linkInvitations)
 
 
     def addAttribute(self, name: str, val: Any, origin: str, dest: str = None,
@@ -91,7 +91,9 @@ class WalletStorageFile(WalletStorage, PWalletStorageFile):
         self.masterSecretStore.put(value=masterSecret)
 
     def addLinkInvitation(self, linkInvitation):
-        self.linkInvitationStore.put(key=linkInvitation.name, value=json.dumps(linkInvitation.getDictToBeStored()))
+        self.linkInvitationStore.put(key=linkInvitation.name,
+                                     value=json.dumps(
+                                         linkInvitation.getDictToBeStored()))
 
     def getMatchingLinkInvitations(self, name: str):
         allMatched = []
