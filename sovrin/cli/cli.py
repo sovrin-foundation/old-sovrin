@@ -1,4 +1,5 @@
 import ast
+import datetime
 import json
 import os
 from typing import Dict
@@ -660,7 +661,7 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exists")
-                msgs = ['load <file path>']
+                msgs = ['show <file path>', 'load <file path>']
                 self.printUsage(msgs)
                 return True
 
@@ -746,6 +747,7 @@ class SovrinCli(PlenumCli):
         endPoint = data.get('endpoint')
         if endPoint:
             link.updateEndPoint(endPoint)
+            link.updateSyncInfo(datetime.datetime.now())
             self.activeWallet.addLinkInvitation(link)
             self.print('Endpoint received: {}'.format(endPoint))
             self._pingToEndpoint(endPoint)
@@ -804,15 +806,25 @@ class SovrinCli(PlenumCli):
 
     def _printNoLinkFoundMsg(self):
         self.print("No matching link invitation(s) found in current keyring")
+        msgs = ['show <link file path>', 'load <link file path>']
+        self.printUsage(msgs)
+
+    def _isConnectedToAnyEnv(self):
+        return self.activeEnv and self.activeClient.hasSufficientConnections
 
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
             linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
-            if self.activeEnv:
+            if self._isConnectedToAnyEnv():
                 self._syncLinkInvitation(linkName)
             else:
-                self.print("Cannot sync because not connected. "
-                           "Please connect first.")
+                if not self.activeEnv:
+                    self.print("Cannot sync because not connected. "
+                               "Please connect first.")
+                elif not self.activeClient.hasSufficientConnections:
+                    self.print("Cannot sync because not connected. "
+                               "Please check if Sovrin is running")
+
                 msgs = [SovrinCli.getConnectUsageMsg()]
                 self.printUsage(msgs)
             return True
@@ -847,6 +859,9 @@ class SovrinCli(PlenumCli):
         self.print("\nRe enter the command with more specific "
                    "link invitation name")
 
+        msgs = ['show <link file path>', 'load <link file path>']
+        self.printUsage(msgs)
+
     def _showLink(self, matchedVars):
         if matchedVars.get('show_link') == 'show link':
             linkName = matchedVars.get('link_name').replace('"','')
@@ -864,11 +879,13 @@ class SovrinCli(PlenumCli):
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
                 self.print("{}".format(li.getLinkInfoStr()))
-                msgs = ['accept invitation "{}"'.format(li.name), 'sync "{}"'
-                    .format(li.name)]
+                msgs = ['sync "{}"'.format(li.name),
+                        'accept invitation "{}"'.format(li.name)]
                 self.printUsage(msgs)
             else:
-                self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks, likelyMatchedLinks)
+                self._printMoreThanOneLinkFoundMsg(linkName,
+                                                   exactlyMatchedLinks,
+                                                   likelyMatchedLinks)
 
             return True
 

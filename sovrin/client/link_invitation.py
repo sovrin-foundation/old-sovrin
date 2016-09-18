@@ -40,13 +40,16 @@ class LinkInvitation:
         self.signerVerKey = signerVerKey
         self.updateState(None, None, None, None)
 
+    def updateSyncInfo(self, linkLastSynced):
+        self.linkLastSynced = linkLastSynced
+
     def updateEndPoint(self, endPoint):
         self.targetEndPoint = endPoint
 
     def updateState(self, targetVerKey, linkStatus, linkLastSynced,
                     linkLastSyncNo):
         self.targetVerkey = targetVerKey
-        self.linkStatus = linkStatus,
+        self.linkStatus = linkStatus
         self.linkLastSynced = linkLastSynced
         self.linkLastSyncNo = linkLastSyncNo
 
@@ -112,17 +115,58 @@ class LinkInvitation:
         fixed.update(optional)
         return fixed
 
+    @staticmethod
+    def prettyDate(time=False):
+        """
+        Get a datetime object or a int() Epoch timestamp and return a
+        pretty string like 'an hour ago', 'Yesterday', '3 months ago',
+        'just now', etc
+        """
+        from datetime import datetime
+        now = datetime.now()
+        if time is None:
+            return '<this link has not yet been synchronized>'
+
+        if type(time) is int:
+            diff = now - datetime.fromtimestamp(time)
+        elif isinstance(time, datetime):
+            diff = now - time
+        elif not time:
+            diff = now - now
+        second_diff = diff.seconds
+        day_diff = diff.days
+
+        if day_diff < 0:
+            return ''
+
+        if day_diff == 0:
+            if second_diff < 10:
+                return "just now"
+            if second_diff < 60:
+                return str(second_diff) + " seconds ago"
+            if second_diff < 120:
+                return "a minute ago"
+            if second_diff < 3600:
+                return str(second_diff / 60) + " minutes ago"
+            if second_diff < 7200:
+                return "an hour ago"
+            if second_diff < 86400:
+                return str(second_diff / 3600) + " hours ago"
+        if day_diff == 1:
+            return "Yesterday"
+        if day_diff < 7:
+            return str(day_diff) + " days ago"
+
     def getLinkInfoStr(self) -> str:
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = '<unknown, waiting for sync>'
         targetEndPoint = self.targetEndPoint or "Not available"
         linkStatus = 'not verified, target verkey unknown'
-        linkLastSynced = '<this link has not yet been synchronized>'
+        linkLastSynced = LinkInvitation.prettyDate(self.linkLastSynced)
 
         if not self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED:
             trustAnchorStatus = '(confirmed)'
             targetVerKey = '<same as target>'
-            linkLastSynced = self.linkLastSynced
             linkStatus = self.linkStatus
 
         verKey = '<same as local identifier>'
