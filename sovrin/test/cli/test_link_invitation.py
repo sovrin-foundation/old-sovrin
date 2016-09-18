@@ -1,12 +1,11 @@
 import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
-from plenum.common.util import getCryptonym
 from plenum.test.eventually import eventually
 from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.txn import USER, ATTRIB, ENDPOINT
-from sovrin.test.cli.helper import ensureConnectedToTestEnv, ensureNodesCreated, \
-    newCLI
+from sovrin.test.cli.helper import ensureConnectedToTestEnv, \
+    ensureNodesCreated, newCLI
 from sovrin.test.helper import genTestClient
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
@@ -83,7 +82,7 @@ def testShowFile(cli):
 
 
 def testLoadFileNotExists(cli):
-    cli.enterCmd("load sample/faber-invitation.sovrin.not.exists")
+    cli.enterCmd("load sample/not-exists-file")
     assert "Given file does not exists" in cli.lastCmdOutput
 
 
@@ -97,7 +96,7 @@ def testLoadExistingLink(cli):
 
 
 def testShowLinkNotExists(cli):
-    cli.enterCmd("show link Not Exists")
+    cli.enterCmd("show link not-exists-link")
     assert "No matching link invitation(s) found in current keyring" \
            in cli.lastCmdOutput
 
@@ -169,6 +168,11 @@ def checkIfEndpointReceived(aCli, linkName, expStr):
         li = getLinkInvitation("Faber", aCli)
         assert li.targetEndPoint is not None
 
+
+def testSyncLinkNotExists(cli):
+    cli.enterCmd("sync not-exists-link")
+    assert "No matching link invitation(s) found in current keyring" \
+           in cli.lastCmdOutput
 
 def testSyncLinkWhenEndpointNotAvailable(looper, poolNodesCreated,
                                                    loadedFaberLinkInvitation,

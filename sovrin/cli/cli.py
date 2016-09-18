@@ -653,7 +653,7 @@ class SovrinCli(PlenumCli):
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
 
-            #try:
+            try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -668,9 +668,9 @@ class SovrinCli(PlenumCli):
                     msgs = ['accept invitation "{}"'.format(linkName),
                             'show link "{}"'.format(linkName)]
                     self.printUsage(msgs)
-            # except Exception as e:
-            #     self.print('Error occurred during processing link '
-            #                'invitation: {}'.format(e))
+            except Exception as e:
+                self.print('Error occurred during processing link '
+                           'invitation: {}'.format(e))
             return True
 
     @staticmethod
@@ -690,7 +690,7 @@ class SovrinCli(PlenumCli):
     def _getInvitationMatchingLinks(self, linkName):
         exactMatches = {}
         likelyMatched = {}
-        #  if we want to search in all wallets, then,
+        # if we want to search in all wallets, then,
         # change [self.activeWallet] to self.wallets.values()
         walletsToBeSearched = [self.activeWallet]  # self.wallets.values()
         for w in walletsToBeSearched:
@@ -731,12 +731,12 @@ class SovrinCli(PlenumCli):
         endPoint = data.get('endpoint')
         if endPoint:
             link.updateEndPoint(endPoint)
-            link.updateSyncInfo(datetime.datetime.now())
-            self.activeWallet.addLinkInvitation(link)
             self.print('Endpoint received: {}'.format(endPoint))
             self._pingToEndpoint(endPoint)
         else:
             self.print('Endpoint not available')
+        link.updateSyncInfo(datetime.datetime.now())
+        self.activeWallet.addLinkInvitation(link)
 
     def _syncLinkPostEndPointRetrieval(self, reply, err, link: LinkInvitation):
         if err:
@@ -765,24 +765,34 @@ class SovrinCli(PlenumCli):
             if li.targetEndPoint:
                 self._pingToEndpoint(li.targetEndPoint)
             else:
-                self.print("Synchronizing...")
-                nym = getCryptonym(li.targetIdentifier)
-                req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
+                if self._isConnectedToAnyEnv():
+                    self.print("Synchronizing...")
+                    nym = getCryptonym(li.targetIdentifier)
+                    req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
 
-                self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                            req.reqId, self.activeClient,
-                                            self._syncLinkPostEndPointRetrieval,
-                                            li)
-
+                    self.looper.loop.call_later(.2,
+                                                self.ensureReqCompleted,
+                                                req.reqId,
+                                                self.activeClient,
+                                                self._syncLinkPostEndPointRetrieval,
+                                                li)
+                else:
+                    if not self.activeEnv:
+                        self.print("Cannot sync because not connected. "
+                                   "Please connect first.")
+                    elif not self.activeClient.hasSufficientConnections:
+                        self.print("Cannot sync because not connected. "
+                                   "Please check if Sovrin is running")
+                    msgs = [SovrinCli.getConnectUsageMsg()]
+                    self.printUsage(msgs)
         else:
             self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks,
                                                likelyMatchedLinks)
-
         return True
 
     @staticmethod
     def getConnectUsageMsg():
-        return "connect(test | live)"
+        return "connect (test | live)"
 
     @staticmethod
     def cleanLinkName(name):
@@ -799,19 +809,9 @@ class SovrinCli(PlenumCli):
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
             linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
-            if self._isConnectedToAnyEnv():
-                self._syncLinkInvitation(linkName)
-            else:
-                if not self.activeEnv:
-                    self.print("Cannot sync because not connected. "
-                               "Please connect first.")
-                elif not self.activeClient.hasSufficientConnections:
-                    self.print("Cannot sync because not connected. "
-                               "Please check if Sovrin is running")
-
-                msgs = [SovrinCli.getConnectUsageMsg()]
-                self.printUsage(msgs)
+            self._syncLinkInvitation(linkName)
             return True
+
 
     def _getMatchingInvitationsDetail(self, linkName):
         linkInvitations = self._getInvitationMatchingLinks(
