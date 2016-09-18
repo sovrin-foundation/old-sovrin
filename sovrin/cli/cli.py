@@ -923,7 +923,8 @@ class SovrinCli(PlenumCli):
                 self.activeEnv = envName
                 self._buildClientIfNotExists(config)
                 self.print("Connecting to {}".format(envName))
-                self._setPrompt("{}@{}".format(self.currPromptText, envName))
+                # Prompt has to be changed, so it show the environment too
+                self._setPrompt(self.currPromptText)
             return True
 
     def getStatus(self):
@@ -932,8 +933,18 @@ class SovrinCli(PlenumCli):
             msg = "Not connected to Sovrin network.\nType 'connect test' " \
                   "or 'connect live' to connect to a network."
         else:
-            msg = "Connected to {} Sovrin network".format(self.activeEnv)
+            if self.activeClient.hasSufficientConnections:
+                msg = "Connected to {} Sovrin network".format(self.activeEnv)
+            else:
+                msg = "Attempting connection to {} Sovrin network".\
+                    format(self.activeEnv)
         self.print(msg)
+
+    def _setPrompt(self, promptText):
+        if self.activeEnv and \
+                not promptText.endswith("@{}".format(self.activeClient)):
+            promptText = "{}@{}".format(promptText, self.activeEnv)
+        super()._setPrompt(promptText)
 
     # This function would be invoked, when, issuer cli enters the send GEN_CRED
     # command received from prover. This is required for demo for sure, we'll
