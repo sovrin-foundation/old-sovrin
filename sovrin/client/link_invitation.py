@@ -40,7 +40,11 @@ class LinkInvitation:
         self.claimRequests = claimRequests
 
         self.signerVerKey = signerVerKey
-        self.updateState(None, None, None, None)
+
+        self.targetVerkey = None
+        self.linkStatus = None
+        self.linkLastSynced = None
+        self.linkLastSyncNo = None
 
     def updateSyncInfo(self, linkLastSynced):
         self.linkLastSynced = linkLastSynced
