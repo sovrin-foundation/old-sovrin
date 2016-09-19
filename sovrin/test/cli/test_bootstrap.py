@@ -1,42 +1,7 @@
-"""
-Pool cli
-    workon sovrin
-    sovrin --noreg
-    prompt PoolCli
-    new node all
-Faber cli
-    workon sovrin
-    sovrin --noreg
-    new keyring Faber        # use keyring Faber (if keyring already created)
-    prompt Faber
-    new key with seed Faber000000000000000000000000000
-Acme Corp cli
-    workon sovrin
-    sovrin --noreg
-    new keyring Acme        # use keyring Acme (if keyring already created)
-    prompt Acme
-    new key with seed Acme0000000000000000000000000000
-BoA cli
-    workon sovrin
-    sovrin --noreg
-    new keyring BoA        # use keyring BoA (if keyring already created)
-    prompt BoA
-    new key with seed Bank0000000000000000000000000000
-Steward cli
-    workon sovrin
-    sovrin --noreg
-    new keyring Steward        # use keyring Steward (if keyring already created)
-    prompt Steward
-    new key with seed 000000000000000000000000Steward1
-
-    connect test
-    status
-"""
 import pytest
 
-from plenum.common.looper import Looper
 from plenum.test.cli.helper import checkCmdValid
-from sovrin.test.cli.helper import newCLI
+from plenum.test.eventually import eventually
 
 
 @pytest.fixture("module")
@@ -70,26 +35,28 @@ def do(ctx):
     Fixture that is a 'do' function that closes over the test context
     'do' allows to call the do method of the current cli from the context.
     """
-    def x(attempt, expect):
+    def _(attempt, expect, within=None):
         cli = ctx['current_cli']
         checkCmdValid(cli, attempt)
-        if isinstance(expect, str) or callable(expect):
-            expect = [expect]
-        for e in expect:
-            if isinstance(e, str):
-                assert e in cli.lastCmdOutput
-            elif callable(e):
-                # callables should raise exceptions to signal an error is found
-                e(cli)
-            else:
-                raise AttributeError("only str, callable, or collections "
-                                     "of str and callable are allowed")
-    return x
 
-
-@pytest.yield_fixture(scope="module")
-def poolCLI(CliBuilder):
-    yield from CliBuilder("pool")
+        def check():
+            nonlocal expect
+            if isinstance(expect, str) or callable(expect):
+                expect = [expect]
+            for e in expect:
+                if isinstance(e, str):
+                    assert e in cli.lastCmdOutput
+                elif callable(e):
+                    # callables should raise exceptions to signal an error
+                    e(cli)
+                else:
+                    raise AttributeError("only str, callable, or collections "
+                                         "of str and callable are allowed")
+        if within:
+            cli.looper.run(eventually(check, timeout=within))
+        else:
+            check()
+    return _
 
 
 @pytest.yield_fixture(scope="module")
@@ -97,19 +64,34 @@ def faberCLI(CliBuilder):
     yield from CliBuilder("faber")
 
 
-def testPromptChange(poolCLI, be, do):
+def test(poolCLI, faberCLI, be, do):
 
     be(poolCLI)
 
-    do('prompt POOL', expect=prompt_is('POOL'))
+    do('new node all', within=10,
+                       expect=['Alpha now connected to Beta',
+                               'Alpha now connected to Gamma',
+                               'Alpha now connected to Delta',
+                               'Beta now connected to Alpha',
+                               'Beta now connected to Gamma',
+                               'Beta now connected to Delta',
+                               'Gamma now connected to Alpha',
+                               'Gamma now connected to Beta',
+                               'Gamma now connected to Delta',
+                               'Delta now connected to Alpha',
+                               'Delta now connected to Beta',
+                               'Delta now connected to Gamma'])
 
-    # do('new node all', expect=['node A created...',
-    #                            'node A created...'])
-    #
-    # be(faberCLI)
-    # do('new keyring Faber', expect=['Keyring Faber created.',
-    #                                 'Default keyring set to Faber.'])
-    # do('prompt Faber',      expect=prompt_is('faber')),
-    # do('new key with seed '
-    #    'Faber00000000000'
-    #    '0000000000000000',  expect='Key created blah blah')
+    be(faberCLI)
+
+    do('prompt FABER', expect=prompt_is('FABER'))
+
+    do('new keyring Faber', expect=['New wallet Faber created',
+                                    'Active wallet set to "Faber"'])
+    seed = 'Faber000000000000000000000000000'
+    idr = '3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4='
+
+    do('new key with seed ' + seed, expect=['Key created in wallet Faber',
+                                            'Identifier for key is ' + idr,
+                                            'Current identifier set to ' + idr])
+

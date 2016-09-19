@@ -51,24 +51,6 @@ def newKeyPairCreated(cli):
     return newKeyPair(cli)
 
 
-@pytest.yield_fixture(scope="module")
-def poolCLI(tdir, poolTxnData, poolTxnNodeNames, tdirWithPoolTxns,
-            tdirWithDomainTxns, tconf):
-    with Looper(debug=False) as looper:
-        cli = newCLI(looper, tdir, subDirectory="pool", conf=tconf,
-                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
-        seeds = poolTxnData["seeds"]
-        for nName in poolTxnNodeNames:
-            initLocalKeep(nName, cli.basedirpath, seeds[nName], override=True)
-        yield cli
-
-
-@pytest.fixture(scope="module")
-def poolNodesCreated(poolCLI, poolTxnNodeNames):
-    ensureNodesCreated(poolCLI, poolTxnNodeNames)
-    return poolCLI
-
-
 @pytest.fixture(scope="module")
 def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     def _(subdir):
@@ -80,3 +62,27 @@ def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
                          poolDir=tdirWithPoolTxns,
                          domainDir=tdirWithDomainTxns)
     return _
+
+
+@pytest.yield_fixture(scope="module")
+def poolCLI_baby(CliBuilder):
+    yield from CliBuilder("pool")
+
+
+@pytest.fixture(scope="module")
+def poolCLI(poolCLI_baby, poolTxnData, poolTxnNodeNames):
+    seeds = poolTxnData["seeds"]
+    for nName in poolTxnNodeNames:
+        initLocalKeep(nName,
+                      poolCLI_baby.basedirpath,
+                      seeds[nName],
+                      override=True)
+    return poolCLI_baby
+
+
+@pytest.fixture(scope="module")
+def poolNodesCreated(poolCLI, poolTxnNodeNames):
+    ensureNodesCreated(poolCLI, poolTxnNodeNames)
+    return poolCLI
+
+
