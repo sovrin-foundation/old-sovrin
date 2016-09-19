@@ -51,38 +51,27 @@ objects from one cli to another directly.
 
 
 @pytest.yield_fixture(scope="module")
-def byuCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    with Looper(debug=False) as looper:
-        yield newCLI(looper, tdir, subDirectory="byu", conf=tconf,
-                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
+def byuCLI(CliBuilder):
+    yield from CliBuilder("byu")
 
 
 @pytest.yield_fixture(scope="module")
-def philCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    with Looper(debug=False) as looper:
-        yield newCLI(looper, tdir, subDirectory="phil", conf=tconf,
-                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
+def philCLI(CliBuilder):
+    yield from CliBuilder("phil")
+
+@pytest.yield_fixture(scope="module")
+def trusteeCLI(CliBuilder):
+    yield from CliBuilder("trustee")
 
 
 @pytest.yield_fixture(scope="module")
-def trusteeCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    with Looper(debug=False) as looper:
-        yield newCLI(looper, tdir, subDirectory="trustee", conf=tconf,
-                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
+def tylerCLI(CliBuilder):
+    yield from CliBuilder("tyler")
 
 
 @pytest.yield_fixture(scope="module")
-def tylerCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    with Looper(debug=False) as looper:
-        yield newCLI(looper, tdir, subDirectory="tyler", conf=tconf,
-                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
-
-
-@pytest.yield_fixture(scope="module")
-def bookStoreCLI(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    with Looper(debug=False) as looper:
-        yield newCLI(looper, tdir, subDirectory="bookStore", conf=tconf,
-                     poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
+def bookStoreCLI(CliBuilder):
+    yield from CliBuilder("bookStore")
 
 
 @pytest.fixture(scope="module")

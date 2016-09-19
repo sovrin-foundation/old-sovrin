@@ -87,27 +87,14 @@ def do(ctx):
     return x
 
 
-@pytest.fixture(scope="module")
-def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    def x(subdir):
-        with Looper(debug=False) as looper:
-            yield newCLI(looper,
-                         tdir,
-                         subDirectory=subdir,
-                         conf=tconf,
-                         poolDir=tdirWithPoolTxns,
-                         domainDir=tdirWithDomainTxns)
-    return x
-
-
 @pytest.yield_fixture(scope="module")
 def poolCLI(CliBuilder):
-    yield next(CliBuilder("pool"))
+    yield from CliBuilder("pool")
 
 
 @pytest.yield_fixture(scope="module")
 def faberCLI(CliBuilder):
-    yield next(CliBuilder("faber"))
+    yield from CliBuilder("faber")
 
 
 def testPromptChange(poolCLI, be, do):

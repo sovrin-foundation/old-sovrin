@@ -67,3 +67,16 @@ def poolCLI(tdir, poolTxnData, poolTxnNodeNames, tdirWithPoolTxns,
 def poolNodesCreated(poolCLI, poolTxnNodeNames):
     ensureNodesCreated(poolCLI, poolTxnNodeNames)
     return poolCLI
+
+
+@pytest.fixture(scope="module")
+def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
+    def _(subdir):
+        with Looper(debug=False) as looper:
+            yield newCLI(looper,
+                         tdir,
+                         subDirectory=subdir,
+                         conf=tconf,
+                         poolDir=tdirWithPoolTxns,
+                         domainDir=tdirWithDomainTxns)
+    return _
