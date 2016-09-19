@@ -9,6 +9,7 @@ TARGET_VER_KEY = "Target Verification Key"
 TARGET_END_POINT = "Target endpoint"
 SIGNATURE = "Signature"
 CLAIM_REQUESTS = "Claim Requests"
+AVAILABLE_CLAIMS = "Available Claims"
 
 LINK_NONCE = "Nonce"
 LINK_STATUS = "Invitation status"
@@ -18,10 +19,14 @@ LINK_STATUS_ACCEPTED = "Accepted"
 
 
 class ClaimRequest:
-
     def __init__(self, name, version):
         self.name = name
         self.version = version
+
+
+class Claim:
+    def __init__(self, name):
+        self.name = name
 
 
 class LinkInvitation:
@@ -38,13 +43,16 @@ class LinkInvitation:
         self.linkNonce = linkNonce
         self.signature = signature
         self.claimRequests = claimRequests
-
         self.signerVerKey = signerVerKey
 
+        self.availableClaims = None
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
         self.linkLastSyncNo = None
+
+    def updateAvailableClaims(self, claims):
+        self.availableClaims = claims
 
     def updateSyncInfo(self, linkLastSynced):
         self.linkLastSynced = linkLastSynced
@@ -70,12 +78,17 @@ class LinkInvitation:
         signature = values[SIGNATURE]
 
         claimRequestJson = values.get(CLAIM_REQUESTS, None)
-
         claimRequests = []
         if claimRequestJson:
             for cr in claimRequestJson:
                 claimRequests.append(
                     ClaimRequest(cr.get("name"), cr.get("version")))
+
+        availableClaimsJson = values.get(AVAILABLE_CLAIMS, None)
+        availableClaims = []
+        if availableClaimsJson:
+            for ac in availableClaimsJson:
+                availableClaims.append(Claim(ac.get("name")))
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
         targetEndPoint = values.get(TARGET_END_POINT, None)
@@ -89,6 +102,8 @@ class LinkInvitation:
                             targetIdentifier, targetEndPoint, linkNonce,
                             claimRequests, signature)
         li.updateState(targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
+        li.updateAvailableClaims(availableClaims)
+
         return li
 
     def getDictToBeStored(self) -> dict:
@@ -118,6 +133,12 @@ class LinkInvitation:
             for cr in self.claimRequests:
                 claimRequests.append(dict(cr))
             optional[CLAIM_REQUESTS] = claimRequests
+
+        if self.availableClaims:
+            availableClaims = []
+            for ac in self.availableClaims:
+                availableClaims.append(dict(ac))
+            optional[AVAILABLE_CLAIMS] = availableClaims
 
         fixed.update(optional)
         return fixed
@@ -199,6 +220,11 @@ class LinkInvitation:
             optional = 'Claim Requests: '
             for cr in self.claimRequests:
                 optional += '\n    ' + cr.name
+
+        if self.availableClaims:
+            optional = 'Available Claims: '
+            for ac in self.availableClaims:
+                optional += '\n    ' + ac.name
 
         if self.linkLastSyncNo:
             optional += 'Last sync seq no: ' + self.linkLastSyncNo
