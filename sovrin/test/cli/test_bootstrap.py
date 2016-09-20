@@ -1,5 +1,5 @@
 import pytest
-from sovrin.test.cli.conftest import getFileLines
+from sovrin.test.cli.helper import getFileLines
 
 
 def prompt_is(prompt):
@@ -59,17 +59,16 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
     do('new keyring Phil',              expect=['New keyring Phil created',
                                                 'Active keyring set to "Phil"'])
 
-    philSeed = "11111111111111111111111111111111"
-    philIdr = "SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0="
-    do('new key with seed ' + philSeed,
-                                        expect=['Key created in keyring Phil',
-                                                'Identifier for key is ' +
-                                                    philIdr,
-                                                'Current identifier set to ' +
-                                                    philIdr])
+    mapper = {
+        'seed': '11111111111111111111111111111111',
+        'idr': 'SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0='}
+    do('new key with seed {seed}', expect=['Key created in keyring Phil',
+                                           'Identifier for key is {idr}',
+                                           'Current identifier set to {idr}'],
+                                   mapper=mapper)
 
-    do('connect test',                  expect=connectedToTest, mapper=faberMap)
-    looper.runFor(2)
+    do('connect test',             within=2,
+                                   expect=connectedToTest, mapper=faberMap)
 
     do('send NYM dest={target} role=SPONSOR',
                                         within=2,
@@ -105,10 +104,9 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
     do('sync {inviter}',                expect=syncWhenNotConnectedStatus,
                                         mapper=faberMap)
 
-    do('connect test',                  expect=connectedToTest,
+    do('connect test',                  within=2,
+                                        expect=connectedToTest,
                                         mapper=faberMap)
-
-    looper.runFor(2)
 
     do('sync {inviter}',                within=2,
                                         expect=syncLinkOutWithoutEndpoint,

@@ -1,19 +1,15 @@
 import pytest
-from plenum.common.raet import initLocalKeep
-from plenum.test.eventually import eventually
-from sovrin.cli.cli import SovrinCli
-from sovrin.client.link_invitation import LinkInvitation
-from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 import plenum
+from plenum.common.raet import initLocalKeep
+from plenum.test.eventually import eventually
+from sovrin.client.link_invitation import LinkInvitation
 
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
-from plenum.test.cli.conftest import nodeRegsForCLI, nodeNames
-
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated
@@ -55,17 +51,6 @@ def newKeyPairCreated(cli):
     return newKeyPair(cli)
 
 
-def getFileLines(path):
-    filePath = SovrinCli._getFilePath(path)
-    lines = []
-    with open(filePath, 'r') as fin:
-        lines = fin.readlines()
-    alteredLines = []
-    for line in lines:
-        alteredLines.append(line.replace('{', '{{').replace('}', '}}'))
-    return alteredLines
-
-
 @pytest.fixture(scope="module")
 def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     def _(subdir, looper=None):
@@ -103,7 +88,7 @@ def faberMap():
             'inviter-not-exists': "non-existing-inviter",
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
             "nonce": "b1134a647eb818069c089e7694f63e6d",
-            "endpoint" : "0.0.0.0:1212"
+            "endpoint": "0.0.0.0:1212"
             }
 
 
@@ -124,7 +109,7 @@ def fileNotExists():
 
 @pytest.fixture(scope="module")
 def connectedToTest():
-    return ["Connecting to test"]
+    return ["Connected to test"]
 
 
 @pytest.fixture(scope="module")
@@ -255,6 +240,7 @@ def showLinkOut():
             'accept invitation "{inviter}"',
             'sync "{inviter}"']
 
+
 @pytest.yield_fixture(scope="module")
 def poolCLI_baby(CliBuilder):
     yield from CliBuilder("pool")
@@ -265,7 +251,7 @@ def aliceCli(CliBuilder):
     yield from CliBuilder("alice")
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def philCLI(CliBuilder):
     yield from CliBuilder("phil")
 
@@ -301,9 +287,9 @@ def be(ctx):
     Fixture that is a 'be' function that closes over the test context.
     'be' allows to change the current cli in the context.
     """
-    def x(cli):
+    def _(cli):
         ctx['current_cli'] = cli
-    return x
+    return _
 
 
 @pytest.fixture("module")

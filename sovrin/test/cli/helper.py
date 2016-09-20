@@ -85,3 +85,14 @@ def ensureNodesCreated(cli, nodeNames):
     # TODO: Why 2 different interfaces one with list and one with varags
     assertAllNodesCreated(cli, nodeNames)
     checkAllNodesStarted(cli, *nodeNames)
+
+
+def getFileLines(path):
+    filePath = SovrinCli._getFilePath(path)
+    lines = []
+    with open(filePath, 'r') as fin:
+        lines = fin.readlines()
+    alteredLines = []
+    for line in lines:
+        alteredLines.append(line.replace('{', '{{').replace('}', '}}'))
+    return alteredLines
