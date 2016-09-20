@@ -374,3 +374,9 @@ def testNonSponsoredNymCanDoGetNym(genned, addedSponsor,
     needle = sponsorSigner.verstr
     someClient.doGetNym(needle)
     looper.run(eventually(someClient.hasNym, needle, retryWait=1, timeout=5))
+
+
+def testUserAddAttrsForHerSelf(userSignerA, userSignerAClient, looper,
+                               attributeData):
+    addAttribute(looper, userSignerAClient, userSignerA,
+                 userSignerA, attributeData)

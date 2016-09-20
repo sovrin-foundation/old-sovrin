@@ -48,9 +48,10 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
     faberIdr = '3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4='
 
     do('new key with seed ' + faberSeed,expect=['Key created in keyring Faber',
-                                            'Identifier for key is ' + faberIdr,
-                                            'Current identifier set to ' +
-                                                faberIdr])
+                                                'Identifier for key is ' +
+                                                    faberIdr,
+                                                'Current identifier set to ' +
+                                                    faberIdr])
 
     be(philCLI)
     do('prompt Phil',                   expect=prompt_is('Phil'))
@@ -62,8 +63,10 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
     philIdr = "SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0="
     do('new key with seed ' + philSeed,
                                         expect=['Key created in keyring Phil',
-                                                'Identifier for key is ' + philIdr,
-                                                'Current identifier set to ' + philIdr])
+                                                'Identifier for key is ' +
+                                                    philIdr,
+                                                'Current identifier set to ' +
+                                                    philIdr])
 
     do('connect test',                  expect=connectedToTest, mapper=faberMap)
     looper.runFor(2)
@@ -116,7 +119,8 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
                                         mapper=faberMap)
 
     be(philCLI)
-    # I had to give two open/close curly braces to avoid issue in mapping
+    # I had to give two open/close curly braces in raw data
+    # to avoid issue in mapping
     do('send ATTRIB dest={target} raw={{"endpoint": "0.0.0.0:1212"}}',
                                         within=2,
                                         expect=attrAddedOut,

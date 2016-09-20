@@ -137,14 +137,22 @@ def sponsorCli(looper, tdir):
     return newCLI(looper, tdir)
 
 
-@pytest.fixture(scope="module")
-def client1(client1Signer, looper, nodeSet, tdir, up):
+def buildClient(looper, nodeSet, client1Signer, tdir):
     client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
     for node in nodeSet:
         node.whitelistClient(client.name)
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
     return client
+
+@pytest.fixture(scope="module")
+def client1(client1Signer, looper, nodeSet, tdir, up):
+    return buildClient(looper, nodeSet, client1Signer, tdir)
+
+
+@pytest.fixture(scope="module")
+def userSignerAClient(looper, nodeSet, userSignerA, tdir):
+    return buildClient(looper, nodeSet, userSignerA, tdir)
 
 
 @pytest.fixture(scope="module")

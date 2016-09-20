@@ -174,8 +174,10 @@ class Node(PlenumNode):
                     request.reqId,
                     "{} cannot add {}".format(originRole, role))
         elif typ == ATTRIB:
-            if op.get(TARGET_NYM) and not \
-                            s.getSponsorFor(op[TARGET_NYM]) == origin:
+            if op.get(TARGET_NYM) and \
+                op[TARGET_NYM] != request.identifier and \
+                    not s.getSponsorFor(op[TARGET_NYM]) == origin:
+
                 raise UnauthorizedClientRequest(
                         request.identifier,
                         request.reqId,
