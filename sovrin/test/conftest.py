@@ -15,7 +15,7 @@ from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import TestNodeSet,\
-    genTestClient, createNym, addUser, TestNode
+    genTestClient, createNym, addUser, TestNode, makePendingTxnsRequest
 from sovrin.common.util import getConfig
 
 from plenum.test.conftest import getValueFromModule
@@ -60,8 +60,7 @@ def steward(genned, looper, tdir, up, stewardWallet):
 
 @pytest.fixture(scope="module")
 def updatedSteward(steward, stewardWallet):
-    pendingTxnsReqs = stewardWallet.getPendingTxnRequests()
-    steward.submitReqs(*pendingTxnsReqs)
+    makePendingTxnsRequest(steward, stewardWallet)
 
 
 def testCreateStewardWallet(stewardWallet):
@@ -196,12 +195,13 @@ def sponsorWallet():
 
 
 @pytest.fixture(scope="module")
-def sponsor(genned, addedSponsor, looper, tdir):
+def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
     s, _ = genTestClient(genned, tmpdir=tdir)
     # for node in genned:
     #     node.whitelistClient(s.name)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
+    makePendingTxnsRequest(s, sponsorWallet)
     return s
 
 

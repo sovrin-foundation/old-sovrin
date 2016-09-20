@@ -470,6 +470,11 @@ def addNym(ha, looper, nym, sponsNym, sponsor):
     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
+def makePendingTxnsRequest(client, wallet):
+    pendingTxnsReqs = wallet.getPendingTxnRequests()
+    client.submitReqs(*pendingTxnsReqs)
+
+
 class TestGraphStorage:
     def __init__(self):
         pass
