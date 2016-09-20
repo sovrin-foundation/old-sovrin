@@ -64,7 +64,7 @@ setup(
     install_requires=['base58', 'pyorient', 'plenum-dev', 'ledger-dev',
                       'semver'],
     setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
+    tests_require=['pytest==3.0.2'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
              'scripts/start_sovrin_node',
              'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys']
