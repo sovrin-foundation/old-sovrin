@@ -22,7 +22,7 @@ from plenum.test.conftest import getValueFromModule
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
-    nodeReg, up, ready, keySharedNodes, whitelistFixture, logcapture, tconf, \
+    nodeReg, up, ready, keySharedNodes, whitelist, logcapture, tconf, \
     tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, poolTxnNodeNames,\
     allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns
 
@@ -48,15 +48,23 @@ def stewardWallet():
     return wallet
 
 
-def testCreateStewardWallet(stewardWallet):
-    pass
+@pytest.fixture(scope="module")
+def steward(genned, looper, tdir, up, stewardWallet):
+    s, _ = genTestClient(genned, tmpdir=tdir)
+    # for node in genned:
+    #     node.whitelistClient(s.name)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    return s
 
 
 @pytest.fixture(scope="module")
-def sponsorSigner():
-    seed = b'sponsors are people too.........'
-    signer = SimpleSigner(seed=seed)
-    return signer
+def updatedSteward(steward):
+    steward.requestPendingTxns()
+
+
+def testCreateStewardWallet(stewardWallet):
+    pass
 
 
 @pytest.fixture(scope="module")
@@ -144,10 +152,21 @@ def sponsorCli(looper, tdir):
     return newCLI(looper, tdir)
 
 
-def buildClient(looper, nodeSet, client1Signer, tdir):
-    client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
-    for node in nodeSet:
-        node.whitelistClient(client.name)
+@pytest.fixture(scope="module")
+def clientAndWallet1(client1Signer, looper, nodeSet, tdir, up):
+    client, wallet = genTestClient(nodeSet, tmpdir=tdir)
+    wallet = Wallet(client.name)
+    wallet.addSigner(client1Signer)
+    return client, wallet
+
+
+@pytest.fixture(scope="module")
+def client1(clientAndWallet1, looper):
+    # DEPR
+    # client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
+    # for node in nodeSet:
+    #     node.whitelistClient(client.name)
+    client, wallet = clientAndWallet1
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
     return client
@@ -163,41 +182,39 @@ def userSignerAClient(looper, nodeSet, userSignerA, tdir):
 
 
 @pytest.fixture(scope="module")
-def userSignerA(genned, addedSponsor, sponsorSigner, looper, sponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userA')
+def wallet1(clientAndWallet1):
+    return clientAndWallet1[1]
 
 
 @pytest.fixture(scope="module")
-def userSignerB(genned, addedSponsor, sponsorSigner, looper, sponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userB')
+def sponsorWallet():
+    wallet = Wallet('sponsor')
+    seed = b'sponsors are people too.........'
+    wallet.addSigner(seed=seed)
+    return wallet
 
 
 @pytest.fixture(scope="module")
-def steward(genned, looper, tdir, up, stewardWallet):
-    s = genTestClient(genned, tmpdir=tdir)
-    for node in genned:
-        node.whitelistClient(s.name)
+def sponsor(genned, addedSponsor, looper, tdir):
+    s, _ = genTestClient(genned, tmpdir=tdir)
+    # for node in genned:
+    #     node.whitelistClient(s.name)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
 
 
 @pytest.fixture(scope="module")
-def updatedSteward(steward):
-    steward.requestPendingTxns()
+def addedSponsor(genned, steward, stewardWallet, looper, sponsorWallet):
+    createNym(looper, sponsorWallet.defaultId, steward, stewardWallet, SPONSOR)
+    return sponsorWallet
 
 
 @pytest.fixture(scope="module")
-def sponsor(genned, looper, tdir, up, steward, sponsorSigner):
-    s = genTestClient(genned, signer=sponsorSigner, tmpdir=tdir)
-    for node in genned:
-        node.whitelistClient(s.name)
-    looper.add(s)
-    looper.run(s.ensureConnectedToNodes())
-    return s
+def userSignerA(genned, addedSponsor, sponsorWallet, looper, sponsor):
+    return addUser(looper, sponsor, sponsorWallet, 'userA')
 
 
 @pytest.fixture(scope="module")
-def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
-    return sponsorSigner
+def userSignerB(genned, addedSponsor, sponsorWallet, looper, sponsor):
+    return addUser(looper, sponsor, sponsorWallet, 'userB')

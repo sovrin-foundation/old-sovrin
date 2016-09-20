@@ -32,12 +32,13 @@ def checkNacks(client, reqId, contains='', nodeCount=4):
 
 
 # TODO Ordering of parameters is bad
-def submitAndCheckNacks(looper, client, op, identifier,
+def submitAndCheckNacks(looper, client, wallet, op, identifier,
                         contains='UnauthorizedClientRequest'):
-    client.submit(op, identifier=identifier)
+    req = wallet.signOp(op, identifier=identifier)
+    client.submitReqs(req)
     looper.run(eventually(checkNacks,
                           client,
-                          client.lastReqId,
+                          req.reqId,
                           contains, retryWait=1, timeout=15))
 
 
@@ -46,20 +47,20 @@ def attributeData():
     return json.dumps({'name': 'Mario'})
 
 
-def addAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData):
+def addAttribute(looper, sponsor, sponsorWallet, userSignerA, attributeData):
     op = {
-        ORIGIN: sponsorSigner.verstr,
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
     }
 
-    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
+    submitAndCheck(looper, sponsor, sponsorWallet, op)
+
 
 @pytest.fixture(scope="module")
-def addedRawAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
+def addedRawAttribute(userSignerA, sponsor, sponsorWallet, attributeData,
                       looper):
-    addAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData)
+    addAttribute(looper, sponsor, sponsorWallet, userSignerA, attributeData)
 
 
 @pytest.fixture(scope="module")
@@ -69,16 +70,15 @@ def symEncData(attributeData):
 
 
 @pytest.fixture(scope="module")
-def addedEncryptedAttribute(userSignerA, sponsor, sponsorSigner, looper,
+def addedEncryptedAttribute(userSignerA, sponsor, sponsorWallet, looper,
                             symEncData):
-    sponsorNym = sponsorSigner.verstr
     op = {
         TARGET_NYM: userSignerA.verstr,
         TXN_TYPE: ATTRIB,
         ENC: symEncData.encData
     }
 
-    return submitAndCheck(looper, sponsor, op, identifier=sponsorNym)[0]
+    return submitAndCheck(looper, sponsor, sponsorWallet, op)[0]
 
 
 @pytest.fixture(scope="module")
@@ -86,8 +86,8 @@ def nonSponsor(looper, nodeSet, tdir):
     sseed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner(seed=sseed)
     c = genTestClient(nodeSet, tmpdir=tdir, signer=sponsorSigner)
-    for node in nodeSet:
-        node.whitelistClient(c.name)
+    # for node in nodeSet:
+    #     node.whitelistClient(c.name)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
     return c
@@ -98,15 +98,15 @@ def anotherSponsor(genned, steward, stewardSigner, tdir, looper):
     sseed = b'this is 1 secret sponsor seed...'
     signer = SimpleSigner(seed=sseed)
     c = genTestClient(genned, tmpdir=tdir, signer=signer)
-    for node in genned:
-        node.whitelistClient(c.name)
+    # for node in genned:
+    #     node.whitelistClient(c.name)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
     createNym(looper, signer.verstr, steward, stewardSigner, SPONSOR)
     return c
 
 
-def testNonStewardCannotCreateASponsor(genned, client1, client1Signer, looper):
+def testNonStewardCannotCreateASponsor(genned, client1, wallet1, looper):
     seed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner(seed)
 
@@ -118,8 +118,8 @@ def testNonStewardCannotCreateASponsor(genned, client1, client1Signer, looper):
         ROLE: SPONSOR
     }
 
-    submitAndCheckNacks(looper=looper, client=client1, op=op,
-                        identifier=client1Signer.identifier,
+    submitAndCheckNacks(looper=looper, client=client1, wallet=wallet1, op=op,
+                        identifier=wallet1.defaultId,
                         contains="InvalidIdentifier")
 
 

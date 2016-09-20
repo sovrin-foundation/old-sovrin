@@ -41,14 +41,17 @@ from sovrin.anon_creds.verifier import Verifier
 logger = getlogger()
 
 
-class Client(PlenumClient, Issuer, Prover, Verifier):
+# DEPR
+# class Client(PlenumClient, Issuer, Prover, Verifier):
+class Client(PlenumClient):
     def __init__(self,
                  name: str,
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
                  basedirpath: str=None,
-                 config=None):
+                 config=None,
+                 postReplyConsClbk=None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
@@ -66,10 +69,10 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         self.graphStore = self.getGraphStore()
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
-        Issuer.__init__(self, self.defaultIdentifier)
-        # TODO nym should be not used as id of Prover and Verifier
-        Prover.__init__(self, self.defaultIdentifier)
-        Verifier.__init__(self, self.defaultIdentifier)
+        # DEPR
+        # Issuer.__init__(self, self.defaultIdentifier)
+        # Prover.__init__(self, self.defaultIdentifier)
+        # Verifier.__init__(self, self.defaultIdentifier)
         dataDirs = ["data/{}s".format(r) for r in roles]
 
         # To make anonymous credentials optional, we may have a subclass
@@ -88,13 +91,15 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                          msgHandler=self.handlePeerMessage)
             self.peerStack.sign = self.sign
             self.peerInbox = deque()
+        self.postReplyConsClbk = postReplyConsClbk
 
-    def setupWallet(self, wallet=None):
-        if wallet:
-            self.wallet = wallet
-        else:
-            storage = WalletStorageFile.fromName(self.name, self.basedirpath)
-            self.wallet = Wallet(self.name, storage)
+    #DEPR
+    # def setupWallet_DEPRECATED(self, wallet=None):
+    #     if wallet:
+    #         self.wallet = wallet
+    #     else:
+    #         storage = WalletStorageFile.fromName(self.name, self.basedirpath)
+    #         self.wallet = Wallet(self.name, storage)
 
     def handlePeerMessage(self, msg):
         """
@@ -105,17 +110,18 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         """
         return self.peerMsgRouter.handle(msg)
 
-    def sign(self, msg: Dict, signer: Signer) -> Dict:
-        if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
-            msgCopy = deepcopy(msg)
-            keyName = {RAW, ENC, HASH}.intersection(
-                set(msgCopy[OPERATION].keys())).pop()
-            msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
-                                                   .encode()).hexdigest()
-            msg[f.SIG.nm] = signer.sign(msgCopy)
-            return msg
-        else:
-            return super().sign(msg, signer)
+    # DEPR
+    # def sign_DEPRECATED(self, msg: Dict, signer: Signer) -> Dict:
+    #     if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
+    #         msgCopy = deepcopy(msg)
+    #         keyName = {RAW, ENC, HASH}.intersection(
+    #             set(msgCopy[OPERATION].keys())).pop()
+    #         msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
+    #                                                .encode()).hexdigest()
+    #         msg[f.SIG.nm] = signer.sign(msgCopy)
+    #         return msg
+    #     else:
+    #         return super().sign(msg, signer)
 
     def _getOrientDbStore(self):
         return OrientDbStore(user=self.config.OrientDB["user"],
@@ -142,8 +148,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         for op in operations:
             if op[TXN_TYPE] == ATTRIB:
                 if not (RAW in op or ENC in op or HASH in op):
-                    error("An operation must have one of these keys: {} or {} {}"
-                          .format(RAW, ENC, HASH))
+                    error("An operation must have one of these keys: {} "
+                          "or {} {}".format(RAW, ENC, HASH))
 
                 # TODO: Consider encryption type too.
                 if ENC in op:
@@ -179,21 +185,20 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                                        origin, data[TYPE],
                                        data[IP], data[PORT], keys)
         requests = super().submit(*operations, identifier=identifier)
-        # for r in requests:
-        #     self.storage.addRequest(r)
         return requests
 
     def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
-        excludeFromCli = excludeFromCli or (msg.get(OP_FIELD_NAME) == REPLY and
-                                            msg[f.RESULT.nm][TXN_TYPE] == GET_TXNS)
+        excludeFromCli = excludeFromCli or (msg.get(OP_FIELD_NAME) == REPLY
+                                            and msg[f.RESULT.nm][TXN_TYPE] == GET_TXNS)
         super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
 
     def postReplyRecvd(self, reqId, frm, result, numReplies):
         reply = super().postReplyRecvd(reqId, frm, result, numReplies)
-        if reply:
+        if reply and self.postReplyConsClbk:
+
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
                 self.reqRepStore.setConsensus(reqId)
             if result[TXN_TYPE] == NYM:
@@ -307,7 +312,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
             return txns
 
     # TODO: Just for now. Remove it later
-    def doAttrDisclose(self, origin, target, txnId, key):
+    # DEPR
+    def doAttrDisclose_DEPRECATED(self, origin, target, txnId, key):
         box = libnacl.public.Box(b64decode(origin), b64decode(target))
 
         data = json.dumps({TXN_ID: txnId, SKEY: key})
@@ -321,7 +327,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         }
         self.submit(op, identifier=origin)
 
-    def doGetAttributeTxn(self, identifier, attrName):
+    # DEPR
+    def doGetAttributeTxn_DEPRECATED(self, identifier, attrName):
         # Getting public attribute only
         op = {
             TARGET_NYM: identifier,
@@ -338,7 +345,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         decData = box.decrypt(data).decode()
         return json.loads(decData)
 
-    def getAttributeForNym(self, nym, attrName, identifier=None):
+    # DEPR
+    def getAttributeForNym_DEPRECATED(self, nym, attrName, identifier=None):
         walletAttribute = self.wallet.getAttribute(attrName, nym)
         if walletAttribute:
             if TARGET_NYM in walletAttribute and \
@@ -355,7 +363,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     if walletAttribute[NAME] == attrName:
                         return {walletAttribute[NAME]: walletAttribute[HASH]}
 
-    def getAllAttributesForNym(self, nym, identifier=None):
+    # DEPR
+    def getAllAttributesForNym_DEPRECATED(self, nym, identifier=None):
         # TODO: Does this need to get attributes from the nodes?
         walletAttributes = self.wallet.attributes
         attributes = []
@@ -370,7 +379,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     attributes.append({attr[NAME]: attr[HASH]})
         return attributes
 
-    def doGetNym(self, nym, identifier=None):
+    # DEPR
+    def doGetNym_DEPRECATED(self, nym, identifier=None):
         identifier = identifier if identifier else self.defaultIdentifier
         op = {
             TARGET_NYM: nym,
@@ -378,7 +388,8 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
         }
         self.submit(op, identifier=identifier)
 
-    def doGetTxn(self, txnId, identifier=None):
+    # DEPR
+    def doGetTxn_DEPRECATED(self, txnId, identifier=None):
         identifier = identifier if identifier else self.defaultIdentifier
         op = {
             TARGET_NYM: identifier,
@@ -396,25 +407,27 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                     return True
             return False
 
-    def requestPendingTxns(self):
-        requests = []
-        for identifier in self.signers:
-            lastTxn = self.reqRepStore.getLastTxnForIdentifier(identifier)
-            op = {
-                TARGET_NYM: identifier,
-                TXN_TYPE: GET_TXNS,
-            }
-            if lastTxn:
-                op[DATA] = lastTxn
-            requests.append(self.submit(op, identifier=identifier))
-        return requests
+    # DEPR
+    # def requestPendingTxns(self):
+    #     requests = []
+    #     for identifier in self.signers:
+    #         lastTxn = self.reqRepStore.getLastTxnForIdentifier(identifier)
+    #         op = {
+    #             TARGET_NYM: identifier,
+    #             TXN_TYPE: GET_TXNS,
+    #         }
+    #         if lastTxn:
+    #             op[DATA] = lastTxn
+    #         requests.append(self.submit(op, identifier=identifier))
+    #     return requests
 
     def _statusChanged(self, old, new):
         super()._statusChanged(old, new)
-        if new == Status.started:
-            if not self.requestedPendingTxns:
-                self.requestPendingTxns()
-                self.requestedPendingTxns = True
+        # DEPR
+        # if new == Status.started:
+        #     if not self.requestedPendingTxns:
+        #         self.requestPendingTxns()
+        #         self.requestedPendingTxns = True
 
     def start(self, loop):
         super().start(loop)

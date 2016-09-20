@@ -1,7 +1,16 @@
-from typing import Any, Dict
+import json
+from _sha256 import sha256
+
+from copy import deepcopy
+from typing import Any, Dict, Union
 from typing import Optional
 
 from plenum.client.wallet import Wallet as PWallet
+from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH, TARGET_NYM, DATA
+from plenum.common.types import Identifier
+from plenum.common.types import Request
+from sovrin.common.txn import ATTRIB, GET_TXNS
+from sovrin.common.util import getSymmetricallyEncryptedVal
 
 ENCODING = "utf-8"
 
@@ -23,17 +32,27 @@ class Attribute(AttributeKey):
     def __init__(self,
                  name: str,
                  dest: str,
-                 val: Any,
+                 val: Union[str, dict],
                  origin: str,
-                 encKey: Optional[str]=None,
+                 # encKey: Optional[str]=None,
                  encType: Optional[str]=None,
                  hashed: bool=False):
         super().__init__(name, dest)
+        assert isinstance(val, (str, dict))
+        if isinstance(val, str):
+            # TODO: Is there a better way
+            json.loads(val)
+        else:
+            val = json.dumps(val)
         self.val = val
         self.origin = origin
-        self.encKey = encKey
+        self.encVal = None
+        self.encKey = None
         self.encType = encType
         self.hashed = hashed
+        if self.encType:
+            # TODO: Support more encryption types
+            self.encVal, self.encKey = getSymmetricallyEncryptedVal(val)
 
 
 class CredDefKey:
@@ -49,7 +68,7 @@ class CredDefKey:
 class CredDef(CredDefKey):
     def __init__(self, name: str, version: str, dest: str, typ: str, ip: str,
                  port: int, keys: Dict):
-        super().__init__(name, version, dest)  # TODO: JAL Why is dest included?
+        super().__init__(name, version, dest)  # TODO: JAL Why is dest included? Because till now CredDef was tied to an Issuer.
         self.typ = typ
         self.ip = ip
         self.port = port
@@ -94,6 +113,39 @@ class Wallet(PWallet):
         self._credentials = {}  # type: Dict[str, Credential]
         self._credMasterSecret = None
         self._links = {}  # type: Dict[str, Link]
+        self.lastKnownSeqs = {}     # type: Dict[str, int]
+
+    def signOp(self, op: Dict, identifier: Identifier=None) -> Request:
+        """
+        Signs the message if a signer is configured
+
+        :param identifier: signing identifier; if not supplied the default for
+            the wallet is used.
+        :param op: Operation to be signed
+        :return: a signed Request object
+        """
+        if op.get.get(TXN_TYPE) == ATTRIB:
+            opCopy = deepcopy(op)
+            keyName = {RAW, ENC, HASH}.intersection(set(opCopy.keys())).pop()
+            opCopy[keyName] = sha256(opCopy[keyName].encode()).hexdigest()
+            req = super().signRequest(Request(operation=opCopy),
+                                      identifier=identifier)
+            req.operation[keyName] = op[keyName]
+            return req
+        else:
+            return self.signRequest(Request(operation=op),
+                                    identifier=identifier)
+        # DEPR
+        # if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
+        #     msgCopy = deepcopy(msg)
+        #     keyName = {RAW, ENC, HASH}.intersection(
+        #         set(msgCopy[OPERATION].keys())).pop()
+        #     msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
+        #                                            .encode()).hexdigest()
+        #     msg[f.SIG.nm] = signer.sign(msgCopy)
+        #     return msg
+        # else:
+        #     return super().sign(msg, signer)
 
     def addAttribute(self, attrib: Attribute):
         self._attributes[attrib.key()] = attrib
@@ -147,3 +199,26 @@ class Wallet(PWallet):
     @property
     def credNames(self):
         return self._credentials.keys()
+
+    def addLastKnownSeqs(self, identifier, seqNo):
+        self.lastKnownSeqs[identifier] = seqNo
+
+    def getLastKnownSeqs(self, identifier):
+        return self.lastKnownSeqs.get(identifier)
+
+    def getPendingTxnRequests(self, *identifiers):
+        if not identifiers:
+            identifiers = self.ids.keys()
+        else:
+            identifiers = set(identifiers).intersection(set(self.ids.keys()))
+        requests = []
+        for identifier in identifiers:
+            lastTxn = self.getLastKnownSeqs(identifier)
+            op = {
+                TARGET_NYM: identifier,
+                TXN_TYPE: GET_TXNS,
+            }
+            if lastTxn:
+                op[DATA] = lastTxn
+            requests.append(self.signOp(op, identifier=identifier))
+        return requests
