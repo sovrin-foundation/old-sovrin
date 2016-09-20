@@ -87,9 +87,9 @@ def addedEncryptedAttribute(userIdA, sponsor, sponsorWallet, looper,
 def nonSponsor(looper, nodeSet, tdir):
     sseed = b'this is a secret sponsor seed...'
     signer = SimpleSigner(seed=sseed)
-    c = genTestClient(nodeSet, tmpdir=tdir)
+    c, _ = genTestClient(nodeSet, tmpdir=tdir)
     w = Wallet(c.name)
-    w.addSigner(signer)
+    w.addSigner(signer=signer)
     # for node in nodeSet:
     #     node.whitelistClient(c.name)
     looper.add(c)
@@ -105,7 +105,7 @@ def anotherSponsor(genned, steward, stewardWallet, tdir, looper):
     # for node in genned:
     #     node.whitelistClient(c.name)
     w = Wallet(c.name)
-    w.addSigner(signer)
+    w.addSigner(signer=signer)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
     createNym(looper, signer.verstr, steward, stewardWallet, SPONSOR)
@@ -382,7 +382,7 @@ def testNonSponsoredNymCanDoGetNym(genned, addedSponsor,
     signer = SimpleSigner()
     someClient = genTestClient(genned, tmpdir=tdir)
     wallet = Wallet(someClient.name)
-    wallet.addSigner(signer)
+    wallet.addSigner(signer=signer)
     looper.add(someClient)
     looper.run(someClient.ensureConnectedToNodes())
     needle = sponsorWallet.defaultId

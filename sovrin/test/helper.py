@@ -327,7 +327,7 @@ class TestClientStorage:
                                                                      ex))
 
 
-@Spyable(methods=[Client.handleOneNodeMsg, Client.requestPendingTxns])
+@Spyable(methods=[Client.handleOneNodeMsg])
 class TestClient(Client, StackedTester, TestClientStorage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

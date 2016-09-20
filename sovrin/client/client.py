@@ -198,8 +198,9 @@ class Client(PlenumClient):
 
     def postReplyRecvd(self, reqId, frm, result, numReplies):
         reply = super().postReplyRecvd(reqId, frm, result, numReplies)
-        if reply and self.postReplyConsClbk:
-
+        # TODO: Use callback here
+        # if reply and self.postReplyConsClbk:
+        if reply:
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
                 self.reqRepStore.setConsensus(reqId)
             if result[TXN_TYPE] == NYM:
@@ -228,6 +229,7 @@ class Client(PlenumClient):
                                     logger.error(
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
+                                    logger.trace(traceback.format_exc())
 
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:
@@ -254,7 +256,6 @@ class Client(PlenumClient):
                                            data[IP], data[PORT], keys)
 
     def requestConfirmed(self, reqId: int) -> bool:
-        # TODO: Check for f+1 replies being same in both cases below
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
             return self.reqRepStore.requestConfirmed(reqId)
         else:

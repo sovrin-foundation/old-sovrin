@@ -32,34 +32,25 @@ class Attribute(AttributeKey):
     def __init__(self,
                  name: str,
                  dest: str,
-                 val: Union[str, dict],
+                 val: Any,
                  origin: str,
-                 # encKey: Optional[str]=None,
+                 encKey: Optional[str]=None,
                  encType: Optional[str]=None,
                  hashed: bool=False):
         super().__init__(name, dest)
         assert isinstance(val, (str, dict))
-        if isinstance(val, str):
-            # TODO: Is there a better way
-            json.loads(val)
-        else:
-            val = json.dumps(val)
         self.val = val
         self.origin = origin
-        self.encVal = None
-        self.encKey = None
+        self.encKey = encKey
         self.encType = encType
         self.hashed = hashed
-        if self.encType:
-            # TODO: Support more encryption types
-            self.encVal, self.encKey = getSymmetricallyEncryptedVal(val)
 
 
 class CredDefKey:
     def __init__(self, name: str, version: str, dest: Optional[str]=None):
         self.name = name
         self.version = version
-        self.dest = dest
+        self.dest = dest    # author of the credential definition
 
     def key(self):
         return self.name, self.version, self.dest
@@ -68,7 +59,7 @@ class CredDefKey:
 class CredDef(CredDefKey):
     def __init__(self, name: str, version: str, dest: str, typ: str, ip: str,
                  port: int, keys: Dict):
-        super().__init__(name, version, dest)  # TODO: JAL Why is dest included? Because till now CredDef was tied to an Issuer.
+        super().__init__(name, version, dest)
         self.typ = typ
         self.ip = ip
         self.port = port
@@ -124,7 +115,7 @@ class Wallet(PWallet):
         :param op: Operation to be signed
         :return: a signed Request object
         """
-        if op.get.get(TXN_TYPE) == ATTRIB:
+        if op.get(TXN_TYPE) == ATTRIB:
             opCopy = deepcopy(op)
             keyName = {RAW, ENC, HASH}.intersection(set(opCopy.keys())).pop()
             opCopy[keyName] = sha256(opCopy[keyName].encode()).hexdigest()

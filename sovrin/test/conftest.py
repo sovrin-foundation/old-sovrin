@@ -59,8 +59,9 @@ def steward(genned, looper, tdir, up, stewardWallet):
 
 
 @pytest.fixture(scope="module")
-def updatedSteward(steward):
-    steward.requestPendingTxns()
+def updatedSteward(steward, stewardWallet):
+    pendingTxnsReqs = stewardWallet.getPendingTxnRequests()
+    steward.submitReqs(*pendingTxnsReqs)
 
 
 def testCreateStewardWallet(stewardWallet):
@@ -156,7 +157,7 @@ def sponsorCli(looper, tdir):
 def clientAndWallet1(client1Signer, looper, nodeSet, tdir, up):
     client, wallet = genTestClient(nodeSet, tmpdir=tdir)
     wallet = Wallet(client.name)
-    wallet.addSigner(client1Signer)
+    wallet.addSigner(signer=client1Signer)
     return client, wallet
 
 
