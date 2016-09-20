@@ -163,7 +163,6 @@ class SovrinCli(PlenumCli):
                         self._loadFile,
                         self._showLink,
                         self._connectTo,
-                        self._showLink,
                         self._syncLink
                         ])
         return actions
@@ -189,7 +188,8 @@ class SovrinCli(PlenumCli):
 
     def _printNotConnectedEnvMessage(self):
         self.print("Not connected to any environment. Please connect first.")
-        self.print("\t\tUsage: connect ({})".format("|".join(self.envs.keys())))
+        self.print("Usage:")
+        self.print("  connect ({})".format("|".join(sorted(self.envs.keys()))))
 
     def newClient(self, clientName, seed=None, identifier=None, signer=None,
                   wallet=None, config=None):
@@ -759,8 +759,8 @@ class SovrinCli(PlenumCli):
                                         li)
         else:
             if not self.activeEnv:
-                self.print("Cannot sync because not connected. "
-                           "Please connect first.")
+                self.print("Cannot sync because not connected. ")
+                self._printNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")
@@ -941,15 +941,14 @@ class SovrinCli(PlenumCli):
     def getStatus(self):
         # TODO: This needs to show active keyring and active identifier
         if not self.activeEnv:
-            msg = "Not connected to Sovrin network.\nType 'connect test' " \
-                  "or 'connect live' to connect to a network."
+            self._printNotConnectedEnvMessage()
         else:
             if self.activeClient.hasSufficientConnections:
                 msg = "Connected to {} Sovrin network".format(self.activeEnv)
             else:
                 msg = "Attempting connection to {} Sovrin network".\
                     format(self.activeEnv)
-        self.print(msg)
+            self.print(msg)
 
     def _setPrompt(self, promptText):
         if self.activeEnv and \

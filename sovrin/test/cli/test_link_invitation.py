@@ -2,85 +2,13 @@ import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
 from plenum.test.eventually import eventually
-from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.txn import USER, ATTRIB, ENDPOINT
+from sovrin.test.cli.conftest import getLinkInvitation
 from sovrin.test.cli.helper import ensureConnectedToTestEnv
 from sovrin.test.helper import genTestClient
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
-
-
-def getLinkInvitation(name, cli) -> LinkInvitation:
-    existingLinkInvites = cli.activeWallet.getMatchingLinkInvitations(name)
-    li = existingLinkInvites[0]
-    return li
-
-
-@pytest.yield_fixture(scope="module")
-def aliceCli(CliBuilder):
-    yield from CliBuilder("alice")
-
-
-@pytest.fixture(scope="module")
-def faberMap():
-    return {'inviter': 'Faber College',
-            'invite': "sample/faber-invitation.sovrin",
-            'invite-not-exists': "sample/faber-invitation.sovrin.not.exists",
-            'inviter-not-exists': "non-existing-inviter"
-            }
-
-
-@pytest.fixture(scope="module")
-def loadInviteOut():
-    return ["1 link invitation found for {inviter}.",
-            "Creating Link for {inviter}.",
-            "Generating Identifier and Signing key.",
-            "Usage",
-            'accept invitation "{inviter}"',
-            'show link "{inviter}"']
-
-
-@pytest.fixture(scope="module")
-def loadInviteNotFoundOut():
-    return ["Given file does not exist"]
-
-
-@pytest.fixture(scope="module")
-def linkAlreadyExists():
-    return ["Link already exists"]
-
-
-@pytest.fixture(scope="module")
-def linkNotExists():
-    return ["No matching link invitation(s) found in current keyring"]
-
-
-@pytest.fixture(scope="module")
-def faberInviteLoaded(aliceCli, be, do, faberMap, loadInviteOut):
-    be(aliceCli)
-    do("load {invite}", expect=loadInviteOut, mapper=faberMap)
-
-
-@pytest.fixture(scope="module")
-def acmeMap():
-    return {'inviter': 'Acme Corp',
-            'invite': "sample/acme-job-application.sovrin"}
-
-
-@pytest.fixture(scope="module")
-def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
-    be(aliceCli)
-    do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
-
-
-@pytest.fixture(scope="module")
-def showLinkOut():
-    return ["Name: {inviter}",
-            "Last synced: <this link has not yet been synchronized>",
-            "Usage",
-            'accept invitation "{inviter}"',
-            'sync "{inviter}"']
 
 
 @pytest.fixture(scope="module")
@@ -138,9 +66,9 @@ def checkIfEndpointReceived(aCli, linkName, expStr):
         assert li.targetEndPoint is not None
 
 
-def testShowFileNotExists(aliceCli, be, do, loadInviteNotFoundOut, faberMap):
+def testShowFileNotExists(aliceCli, be, do, fileNotExists, faberMap):
     be(aliceCli)
-    do("show {invite-not-exists}", expect=loadInviteNotFoundOut, mapper=faberMap)
+    do("show {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
 
 def testShowFile(aliceCli, be, do, faberMap):
@@ -150,9 +78,9 @@ def testShowFile(aliceCli, be, do, faberMap):
                         mapper=faberMap)
 
 
-def testLoadFileNotExists(aliceCli, be, do, loadInviteNotFoundOut, faberMap):
+def testLoadFileNotExists(aliceCli, be, do, fileNotExists, faberMap):
     be(aliceCli)
-    do("load {invite-not-exists}", expect=loadInviteNotFoundOut, mapper=faberMap)
+    do("load {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
 
 def testLoadFile(faberInviteLoaded):

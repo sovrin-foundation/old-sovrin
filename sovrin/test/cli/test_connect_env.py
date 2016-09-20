@@ -1,4 +1,5 @@
 from plenum.test.eventually import eventually
+from sovrin.test.cli.conftest import notConnectedStatus
 from sovrin.test.cli.helper import checkConnectedToEnv, ensureNodesCreated
 
 
@@ -8,9 +9,8 @@ def testConnectEnv(poolNodesCreated, looper):
     poolCLI.enterCmd("new key")
 
     poolCLI.enterCmd("status")
-    assert "Not connected to Sovrin network" in poolCLI.lastCmdOutput
-    assert "Type 'connect test' or 'connect live' to connect to a network." \
-           in poolCLI.lastCmdOutput
+    for msg in notConnectedStatus():
+        assert msg in poolCLI.lastCmdOutput
 
     poolCLI.enterCmd("connect dummy")
     assert "Unknown environment dummy" in poolCLI.lastCmdOutput

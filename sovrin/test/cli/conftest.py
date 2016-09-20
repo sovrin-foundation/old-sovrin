@@ -1,6 +1,8 @@
 import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
+from sovrin.cli.cli import SovrinCli
+from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 import plenum
@@ -53,6 +55,17 @@ def newKeyPairCreated(cli):
     return newKeyPair(cli)
 
 
+def getFileLines(path):
+    filePath = SovrinCli._getFilePath(path)
+    lines = []
+    with open(filePath, 'r') as fin:
+        lines = fin.readlines()
+    alteredLines = []
+    for line in lines:
+        alteredLines.append(line.replace('{', '{{').replace('}', '}}'))
+    return alteredLines
+
+
 @pytest.fixture(scope="module")
 def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     def _(subdir, looper=None):
@@ -71,9 +84,99 @@ def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     return _
 
 
+def getLinkInvitation(name, cli) -> LinkInvitation:
+    existingLinkInvites = cli.activeWallet.getMatchingLinkInvitations(name)
+    li = existingLinkInvites[0]
+    return li
+
+
+@pytest.fixture(scope="module")
+def faberMap():
+    return {'inviter': 'Faber College',
+            'invite': "sample/faber-invitation.sovrin",
+            'invite-not-exists': "sample/faber-invitation.sovrin.not.exists",
+            'inviter-not-exists': "non-existing-inviter",
+            "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
+            "nonce": "b1134a647eb818069c089e7694f63e6d"
+            }
+
+
+@pytest.fixture(scope="module")
+def loadInviteOut():
+    return ["1 link invitation found for {inviter}.",
+            "Creating Link for {inviter}.",
+            "Generating Identifier and Signing key.",
+            "Usage",
+            'accept invitation "{inviter}"',
+            'show link "{inviter}"']
+
+
+@pytest.fixture(scope="module")
+def fileNotExists():
+    return ["Given file does not exist"]
+
+
+@pytest.fixture(scope="module")
+def syncWhenNotConnectedStatus(notConnectedStatus):
+    return ["Cannot sync because not connected"] + notConnectedStatus
+
+
+@pytest.fixture(scope="module")
+def notConnectedStatus():
+    return ['Not connected to any environment. Please connect first.',
+            "Usage:",
+            "  connect (live|test)"]
+
+
+@pytest.fixture(scope="module")
+def linkAlreadyExists():
+    return ["Link already exists"]
+
+
+@pytest.fixture(scope="module")
+def linkNotExists():
+    return ["No matching link invitation(s) found in current keyring"]
+
+
+@pytest.fixture(scope="module")
+def faberInviteLoaded(aliceCli, be, do, faberMap, loadInviteOut):
+    be(aliceCli)
+    do("load {invite}", expect=loadInviteOut, mapper=faberMap)
+
+
+@pytest.fixture(scope="module")
+def acmeMap():
+    return {'inviter': 'Acme Corp',
+            'invite': "sample/acme-job-application.sovrin",
+            "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c"
+            }
+
+
+@pytest.fixture(scope="module")
+def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
+    be(aliceCli)
+    do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
+
+
+@pytest.fixture(scope="module")
+def showLinkOut():
+    return ["Name: {inviter}",
+            "Target: {target}",
+            "Invitation nonce: {nonce}",
+            "Last synced: <this link has not yet been synchronized>",
+            "Usage",
+            'accept invitation "{inviter}"',
+            'sync "{inviter}"']
+
 @pytest.yield_fixture(scope="module")
 def poolCLI_baby(CliBuilder):
     yield from CliBuilder("pool")
+
+
+@pytest.yield_fixture(scope="module")
+def aliceCli(CliBuilder):
+    yield from CliBuilder("alice")
 
 
 @pytest.fixture(scope="module")
