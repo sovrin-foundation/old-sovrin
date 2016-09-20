@@ -4,9 +4,10 @@ from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
 from plenum.test.eventually import eventually
 from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.txn import USER, ATTRIB, ENDPOINT
-from sovrin.test.cli.helper import ensureConnectedToTestEnv, \
-    ensureNodesCreated, newCLI
+from sovrin.test.cli.helper import ensureConnectedToTestEnv
 from sovrin.test.helper import genTestClient
+
+# noinspection PyUnresolvedReferences
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 
@@ -16,83 +17,73 @@ def getLinkInvitation(name, cli) -> LinkInvitation:
     return li
 
 
-def loadFaberLinkInvitationAgain(cli):
-    cli.enterCmd("load sample/faber-invitation.sovrin")
-    assert "Link already exists" in cli.lastCmdOutput
-
-
-def loadFaberLinkInvitation(cli, okIfAlreadyExists=False):
-    inviterName = "Faber College"
-    cli.enterCmd("load sample/faber-invitation.sovrin")
-    checkNewLoadAsserts = True
-    if okIfAlreadyExists and "Link already exists" in cli.lastCmdOutput:
-        checkNewLoadAsserts = False
-
-    if checkNewLoadAsserts:
-        assert "1 link invitation found for {}.".format(inviterName) \
-               in cli.lastCmdOutput
-        assert "Creating Link for {}.".format(inviterName) in cli.lastCmdOutput
-        assert "Generating Identifier and Signing key." in cli.lastCmdOutput
-
-    assert "Usage" in cli.lastCmdOutput
-    assert 'accept invitation "{}"'.format(inviterName) in cli.lastCmdOutput
-    assert 'show link "{}"'.format(inviterName) in cli.lastCmdOutput
+@pytest.yield_fixture(scope="module")
+def aliceCli(CliBuilder):
+    yield from CliBuilder("alice")
 
 
 @pytest.fixture(scope="module")
-def aliceCli(looper, tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns):
-    cli = newCLI(looper, tdir, subDirectory="alice", conf=tconf,
-                 poolDir=tdirWithPoolTxns, domainDir=tdirWithDomainTxns)
-    return cli
+def faberMap():
+    return {'inviter': 'Faber College',
+            'invite': "sample/faber-invitation.sovrin"}
 
 
 @pytest.fixture(scope="module")
-def loadedFaberLinkInvitation(aliceCli):
-    loadFaberLinkInvitation(aliceCli)
-    return aliceCli
-
-
-def loadAcmeCorpLinkInvitation(cli):
-    employeeName = "Acme Corp"
-    cli.enterCmd("load sample/acme-job-application.sovrin")
-    assert "1 link invitation found for {}.".format(employeeName) \
-           in cli.lastCmdOutput
-    assert "Creating Link for {}.".format(employeeName) in cli.lastCmdOutput
-    assert "Generating Identifier and Signing key." in cli.lastCmdOutput
-    assert "Usage" in cli.lastCmdOutput
-    assert 'accept invitation "{}"'.format(employeeName) in cli.lastCmdOutput
-    assert 'show link "{}"'.format(employeeName) in cli.lastCmdOutput
+def loadInviteOut():
+    return ["1 link invitation found for {inviter}.",
+            "Creating Link for {inviter}.",
+            "Generating Identifier and Signing key.",
+            "Usage",
+            'accept invitation "{inviter}"',
+            'show link "{inviter}"']
 
 
 @pytest.fixture(scope="module")
-def loadedAcmeCorpLinkInvitation(cli):
-    loadAcmeCorpLinkInvitation(cli)
-    return cli
+def faberInviteLoaded(aliceCli, be, do, faberMap, loadInviteOut):
+    be(aliceCli)
+    do("load {invite}", expect=loadInviteOut, mapper=faberMap)
+
+
+@pytest.fixture(scope="module")
+def acmeMap():
+    return {'inviter': 'Acme Corp',
+            'invite': "sample/acme-job-application.sovrin"}
+
+
+@pytest.fixture(scope="module")
+def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
+    be(aliceCli)
+    do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
 
 
 def testShowFileNotExists(cli):
     cli.enterCmd("show {}".format("sample/faber-invitation.sovrin.not.exists"))
-    assert "Given file does not exists" in cli.lastCmdOutput
+    assert "Given file does not exist" in cli.lastCmdOutput
 
 
-def testShowFile(cli):
-    cli.enterCmd("show {}".format("sample/faber-invitation.sovrin"))
-    assert "Given file does not exists" not in cli.lastCmdOutput
-    assert "link-invitation" in cli.lastCmdOutput
+def testShowFile(aliceCli, be, do, faberMap):
+    be(aliceCli)
+    do("show {invite}", expect="link-invitation",
+                        not_expect="Given file does not exist",
+                        mapper=faberMap)
 
 
-def testLoadFileNotExists(cli):
-    cli.enterCmd("load sample/not-exists-file")
-    assert "Given file does not exists" in cli.lastCmdOutput
+def testLoadFileNotExists(aliceCli, be, do):
+    be(aliceCli)
+    do("load sample/not-exists-file", "Given file does not exist")
 
 
-def testLoadFile(loadedFaberLinkInvitation):
+def testLoadFile(faberInviteLoaded):
     pass
 
 
-def testLoadExistingLink(cli):
-    loadFaberLinkInvitation(cli)
-    loadFaberLinkInvitationAgain(cli)
+def testLoadSecondFile(faberInviteLoaded, acmeInviteLoaded):
+    pass
+
+
+def testLoadExistingLink(aliceCli, be, do, faberInviteLoaded, faberMap):
+    be(aliceCli)
+    do("load {invite}", expect="Link already exists", mapper=faberMap)
 
 
 def testShowLinkNotExists(cli):
@@ -101,29 +92,25 @@ def testShowLinkNotExists(cli):
            in cli.lastCmdOutput
 
 
-def assertSowLinkOutput(cli, linkName):
-    assert "Name: {}".format(linkName) in cli.lastCmdOutput
-    assert "Last synced: <this link has not yet been synchronized>" \
-           in cli.lastCmdOutput
-    assert "Usage" in cli.lastCmdOutput
-    assert 'accept invitation "{}"'.format(linkName) in cli.lastCmdOutput
-    assert 'sync "{}"'.format(linkName) in cli.lastCmdOutput
+@pytest.fixture(scope="module")
+def showLinkOut():
+    return ["Name: {inviter}",
+            "Last synced: <this link has not yet been synchronized>",
+            "Usage",
+            'accept invitation "{inviter}"',
+            'sync "{inviter}"']
 
 
-def testShowFaberLink(cli):
-    loadFaberLinkInvitation(cli, okIfAlreadyExists=True)
-    inviterName = "Faber College"
-    cli.enterCmd("show link {}".format(inviterName))
-    assertSowLinkOutput(cli, inviterName)
+def testShowFaberLink(aliceCli, faberInviteLoaded, be, do, faberMap, showLinkOut):
+    be(aliceCli)
+    do("show link {inviter}", expect=showLinkOut, mapper=faberMap)
 
 
-def testShowAcmeCorpLink(loadedAcmeCorpLinkInvitation):
-    cli = loadedAcmeCorpLinkInvitation
-    employeeName = 'Acme Corp'
-    cli.enterCmd('show link "{}"'.format(employeeName))
-    assertSowLinkOutput(cli, employeeName)
-    assert "Claim Requests: " in cli.lastCmdOutput
-    assert "Job Application" in cli.lastCmdOutput
+def testShowAcmeLink(aliceCli, acmeInviteLoaded, be, do, acmeMap, showLinkOut):
+    be(aliceCli)
+    expected = showLinkOut + ["Claim Requests: ",
+                              "Job Application"]
+    do("show link {inviter}", expect=expected, mapper=acmeMap)
 
 
 @pytest.fixture(scope="module")
@@ -174,11 +161,28 @@ def testSyncLinkNotExists(cli):
     assert "No matching link invitation(s) found in current keyring" \
            in cli.lastCmdOutput
 
-def testSyncLinkWhenEndpointNotAvailable(looper, poolNodesCreated,
-                                                   loadedFaberLinkInvitation,
-                                                   stewardClient):
-    aliceCli = loadedFaberLinkInvitation
+
+@pytest.fixture(scope="module")
+def aliceConnected(aliceCli, be, do, poolNodesCreated):
+
+    # Done to initialise a wallet.
+    # TODO: a wallet should not be required for connecting, right?
+    be(aliceCli)
+    do("new key")
+
     ensureConnectedToTestEnv(aliceCli)
+    return aliceCli
+
+
+def testAliceConnect(aliceConnected):
+    pass
+
+def testSyncLinkWhenEndpointNotAvailable(looper,
+                                         aliceCli,
+                                         poolNodesCreated,
+                                         faberInviteLoaded,
+                                         aliceConnected,
+                                         stewardClient):
     addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     addFaber(looper, stewardClient, li.targetIdentifier)
@@ -190,11 +194,12 @@ def testSyncLinkWhenEndpointNotAvailable(looper, poolNodesCreated,
                           timeout=10))
 
 
-def testSyncLinkWhenEndpointIsAvailable(looper, poolNodesCreated,
-                                                   loadedFaberLinkInvitation,
-                                                   stewardClient):
-    aliceCli = loadedFaberLinkInvitation
-    ensureConnectedToTestEnv(aliceCli)
+def testSyncLinkWhenEndpointIsAvailable(looper,
+                                        aliceCli,
+                                        poolNodesCreated,
+                                        faberInviteLoaded,
+                                        aliceConnected,
+                                        stewardClient):
     addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     assert li.targetEndPoint is None

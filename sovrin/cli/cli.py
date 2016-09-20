@@ -644,7 +644,7 @@ class SovrinCli(PlenumCli):
             givenFilePath = matchedVars.get('file_path')
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
-                self.print("Given file does not exists")
+                self.print("Given file does not exist")
                 msgs = ['show <file path>', 'load <file path>']
                 self.printUsage(msgs)
                 return True
@@ -887,7 +887,7 @@ class SovrinCli(PlenumCli):
             givenFilePath = matchedVars.get('file_path')
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
-                self.print("Given file does not exists")
+                self.print("Given file does not exist")
                 msgs = ['show <file path>']
                 self.printUsage(msgs)
             else:
