@@ -1,7 +1,6 @@
 import sovrin.anon_creds.cred_def as cred_def
 import sovrin.anon_creds.issuer as issuer
-from sovrin.client.wallet import Wallet
-from sovrin.persistence.wallet_storage_file import WalletStorageFile
+from sovrin.client.wallet import Wallet, CredDefSk, CredDefKey
 
 
 def testCredDefSecretKey(tdir):
@@ -13,8 +12,9 @@ def testCredDefSecretKey(tdir):
     primes = dict(p_prime=P_PRIME1, q_prime=Q_PRIME1)
     gvtCredDef = cred_def.CredDef(GVT.attribNames(), **primes)
     serializedSk = gvtCredDef.serializedSK
-    walletStorage = WalletStorageFile(tdir)
-    wallet = Wallet("testWallet", walletStorage)
+    wallet = Wallet("testWallet")
     name, version = gvtCredDef.name, gvtCredDef.version
-    wallet.addCredDefSk(name, version, serializedSk)
-    assert serializedSk == wallet.getCredDefSk(name, version)
+    cdsk = CredDefSk(name, version, serializedSk)
+    wallet.addCredDefSk(cdsk)
+    stored = wallet.getCredDefSk(CredDefKey(name, version))
+    assert serializedSk == stored.secretKey

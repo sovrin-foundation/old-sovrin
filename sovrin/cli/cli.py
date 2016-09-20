@@ -35,7 +35,6 @@ from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF, \
     getTxnOrderedFields, ENDPOINT
-from sovrin.persistence.wallet_storage_file import WalletStorageFile
 from sovrin.server.node import Node
 
 """

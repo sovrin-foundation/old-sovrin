@@ -37,7 +37,6 @@ from sovrin.persistence.identity_graph import getEdgeByTxnType, IdentityGraph
 from sovrin.anon_creds.issuer import Issuer
 from sovrin.anon_creds.prover import Prover
 from sovrin.anon_creds.verifier import Verifier
-from sovrin.persistence.wallet_storage_file import WalletStorageFile
 
 logger = getlogger()
 
@@ -48,21 +47,13 @@ class Client(PlenumClient, Issuer, Prover, Verifier):
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
-                 lastReqId: int=0,
-                 signer: Signer=None,
-                 signers: Dict[str, Signer]=None,
                  basedirpath: str=None,
-                 wallet: Wallet = None,
                  config=None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
                          ha,
-                         lastReqId,
-                         signer,
-                         signers,
                          basedirpath,
-                         wallet,
                          config)
         # self.storage = self.getStorage(basedirpath)
         # self.lastReqId = self.storage.lastReqId

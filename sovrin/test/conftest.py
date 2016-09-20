@@ -7,6 +7,7 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.plugin_helper import loadPlugins
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.plugin.helper import getPluginPath
+from sovrin.client.wallet import Wallet
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
@@ -21,7 +22,7 @@ from plenum.test.conftest import getValueFromModule
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
-    nodeReg, up, ready, keySharedNodes, whitelist, logcapture, tconf, \
+    nodeReg, up, ready, keySharedNodes, whitelistFixture, logcapture, tconf, \
     tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, poolTxnNodeNames,\
     allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns
 
@@ -38,11 +39,17 @@ def allPluginsPath():
 
 
 @pytest.fixture(scope="module")
-def stewardSigner():
+def stewardWallet():
+    wallet = Wallet('steward')
     seed = b'is a pit   seed, or somepin else'
-    signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
-    return signer
+    wallet.addSigner(seed=seed)
+    assert wallet.defaultId == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
+    # assert signer.verstr == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
+    return wallet
+
+
+def testCreateStewardWallet(stewardWallet):
+    pass
 
 
 @pytest.fixture(scope="module")
@@ -53,8 +60,8 @@ def sponsorSigner():
 
 
 @pytest.fixture(scope="module")
-def genesisTxns(stewardSigner):
-    nym = stewardSigner.verstr
+def genesisTxns(stewardWallet: Wallet):
+    nym = stewardWallet.defaultId
     return [{
         TXN_TYPE: NYM,
         TARGET_NYM: nym,
@@ -166,8 +173,8 @@ def userSignerB(genned, addedSponsor, sponsorSigner, looper, sponsor):
 
 
 @pytest.fixture(scope="module")
-def steward(genned, looper, tdir, up, stewardSigner):
-    s = genTestClient(genned, signer=stewardSigner, tmpdir=tdir)
+def steward(genned, looper, tdir, up, stewardWallet):
+    s = genTestClient(genned, tmpdir=tdir)
     for node in genned:
         node.whitelistClient(s.name)
     looper.add(s)

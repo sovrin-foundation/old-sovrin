@@ -368,14 +368,12 @@ class TestVerifier(TestAnonCredsRole, Verifier):
 def genTestClient(nodes: TestNodeSet=None,
                   nodeReg=None,
                   tmpdir=None,
-                  signer=None,
                   peerHA: Union[HA, Tuple[str, int]]=None,
                   testClientClass=TestClient,
                   usePoolLedger=False) -> TestClient:
     testClient = genPlenumTestClient(nodes,
                                nodeReg,
                                tmpdir,
-                               signer,
                                testClientClass,
                                bootstrapKeys=False,
                                usePoolLedger=usePoolLedger)
