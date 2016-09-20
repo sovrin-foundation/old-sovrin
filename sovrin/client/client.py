@@ -142,7 +142,8 @@ class Client(PlenumClient):
     def getTxnLogStore(self):
         return ClientTxnLog(self.name, self.basedirpath)
 
-    def submit(self, *operations: Mapping, identifier: str=None) -> \
+    #DEPR
+    def submit_DEPRECATED(self, *operations: Mapping, identifier: str=None) -> \
             List[Request]:
         origin = identifier or self.defaultIdentifier
         for op in operations:

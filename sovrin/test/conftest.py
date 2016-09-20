@@ -211,10 +211,20 @@ def addedSponsor(genned, steward, stewardWallet, looper, sponsorWallet):
 
 
 @pytest.fixture(scope="module")
-def userSignerA(genned, addedSponsor, sponsorWallet, looper, sponsor):
+def userWalletA(genned, addedSponsor, sponsorWallet, looper, sponsor):
     return addUser(looper, sponsor, sponsorWallet, 'userA')
 
 
 @pytest.fixture(scope="module")
-def userSignerB(genned, addedSponsor, sponsorWallet, looper, sponsor):
+def userWalletB(genned, addedSponsor, sponsorWallet, looper, sponsor):
     return addUser(looper, sponsor, sponsorWallet, 'userB')
+
+
+@pytest.fixture(scope="module")
+def userIdA(userWalletA):
+    return userWalletA.defaultId
+
+
+@pytest.fixture(scope="module")
+def userIdB(userWalletB):
+    return userWalletB.defaultId

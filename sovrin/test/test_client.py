@@ -9,6 +9,7 @@ from plenum.common.txn import REQNACK, ENC, RAW, DATA
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
+from sovrin.client.wallet import Wallet
 
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
@@ -47,9 +48,10 @@ def attributeData():
     return json.dumps({'name': 'Mario'})
 
 
-def addAttribute(looper, sponsor, sponsorWallet, userSignerA, attributeData):
+def addAttribute(looper, sponsor, sponsorWallet, userIdA,
+                 attributeData):
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
     }
@@ -58,9 +60,9 @@ def addAttribute(looper, sponsor, sponsorWallet, userSignerA, attributeData):
 
 
 @pytest.fixture(scope="module")
-def addedRawAttribute(userSignerA, sponsor, sponsorWallet, attributeData,
+def addedRawAttribute(userWalletA, sponsor, sponsorWallet, attributeData,
                       looper):
-    addAttribute(looper, sponsor, sponsorWallet, userSignerA, attributeData)
+    addAttribute(looper, sponsor, sponsorWallet, userWalletA, attributeData)
 
 
 @pytest.fixture(scope="module")
@@ -70,10 +72,10 @@ def symEncData(attributeData):
 
 
 @pytest.fixture(scope="module")
-def addedEncryptedAttribute(userSignerA, sponsor, sponsorWallet, looper,
+def addedEncryptedAttribute(userIdA, sponsor, sponsorWallet, looper,
                             symEncData):
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         ENC: symEncData.encData
     }
@@ -84,26 +86,30 @@ def addedEncryptedAttribute(userSignerA, sponsor, sponsorWallet, looper,
 @pytest.fixture(scope="module")
 def nonSponsor(looper, nodeSet, tdir):
     sseed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner(seed=sseed)
-    c = genTestClient(nodeSet, tmpdir=tdir, signer=sponsorSigner)
+    signer = SimpleSigner(seed=sseed)
+    c = genTestClient(nodeSet, tmpdir=tdir)
+    w = Wallet(c.name)
+    w.addSigner(signer)
     # for node in nodeSet:
     #     node.whitelistClient(c.name)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    return c
+    return c, w
 
 
 @pytest.fixture(scope="module")
-def anotherSponsor(genned, steward, stewardSigner, tdir, looper):
+def anotherSponsor(genned, steward, stewardWallet, tdir, looper):
     sseed = b'this is 1 secret sponsor seed...'
     signer = SimpleSigner(seed=sseed)
-    c = genTestClient(genned, tmpdir=tdir, signer=signer)
+    c, _ = genTestClient(genned, tmpdir=tdir)
     # for node in genned:
     #     node.whitelistClient(c.name)
+    w = Wallet(c.name)
+    w.addSigner(signer)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    createNym(looper, signer.verstr, steward, stewardSigner, SPONSOR)
-    return c
+    createNym(looper, signer.verstr, steward, stewardWallet, SPONSOR)
+    return c, w
 
 
 def testNonStewardCannotCreateASponsor(genned, client1, wallet1, looper):
@@ -128,16 +134,14 @@ def testStewardCreatesASponsor(updatedSteward, addedSponsor):
 
 
 @pytest.mark.skipif(True, reason="Cannot create another sponsor with same nym")
-def testStewardCreatesAnotherSponsor(genned, steward, stewardSigner, looper,
-                                     sponsorSigner):
-    createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
-    return sponsorSigner
+def testStewardCreatesAnotherSponsor(genned, steward, stewardWallet, looper,
+                                     sponsorWallet):
+    createNym(looper, sponsorWallet.defaultId, steward, stewardWallet, SPONSOR)
+    return sponsorWallet
 
 
 def testNonSponsorCannotCreateAUser(genned, looper, nonSponsor):
-
-    sponsNym = nonSponsor.getSigner().verstr
-
+    client, wallet = nonSponsor
     useed = b'this is a secret apricot seed...'
     userSigner = SimpleSigner(seed=useed)
 
@@ -149,17 +153,17 @@ def testNonSponsorCannotCreateAUser(genned, looper, nonSponsor):
         ROLE: USER
     }
 
-    submitAndCheckNacks(looper, nonSponsor, op, identifier=sponsNym,
+    submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId,
                         contains="InvalidIdentifier")
 
 
-def testSponsorCreatesAUser(updatedSteward, userSignerA):
+def testSponsorCreatesAUser(updatedSteward, userWalletA):
     pass
 
 
 @pytest.fixture(scope="module")
 def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
-                               sponsor):
+                               sponsor, sponsorWallet):
     usigner = SimpleSigner()
     opA = {
         TARGET_NYM: usigner.verstr,
@@ -167,11 +171,17 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
         ROLE: USER
     }
     opB = opA
-    sponsorNym = sponsor.getSigner().verstr
-    sponsor.submit(opA, opB, identifier=sponsorNym)
+    sponsorNym = sponsorWallet.defaultId
+    reqA = sponsorWallet.signOp(opA)
+    reqB = sponsorWallet.signOp(opB)
+    sponsor.submitReqs(reqA, reqB)
+    # DEPR
+    # sponsor.submit(opA, opB, identifier=sponsorNym)
     try:
-        submitAndCheck(looper, sponsor, opA, identifier=sponsorNym)
-        submitAndCheckNacks(looper, sponsor, opB, identifier=sponsorNym)
+        submitAndCheck(looper, sponsor, sponsorWallet, opA,
+                       identifier=sponsorNym)
+        submitAndCheckNacks(looper, sponsor, sponsorWallet, opB,
+                            identifier=sponsorNym)
     except Exception as ex:
         pass
 
@@ -201,36 +211,38 @@ def checkGetAttr(reqId, sponsor, attrName, attrValue):
            (data is not None and data.get(attrName) == attrValue)
 
 
-def getAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData):
+def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
     attrName = list(json.loads(attributeData).keys())[0]
     attrValue = list(json.loads(attributeData).values())[0]
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: GET_ATTR,
         RAW: attrName
     }
-    req = sponsor.submit(op, identifier=sponsorSigner.verstr)[0]
+    req = sponsorWallet.signOp(op)
+    sponsor.submitReqs(req)
+    # req = sponsor.submit(op, identifier=sponsorSigner.verstr)[0]
 
     looper.run(eventually(checkGetAttr, req.reqId, sponsor,
                           attrName, attrValue, retryWait=1, timeout=20))
 
 
 @pytest.fixture(scope="module")
-def checkAddAttribute(userSignerA, sponsor, sponsorSigner, attributeData,
+def checkAddAttribute(userWalletA, sponsor, sponsorWallet, attributeData,
                       looper):
-    addAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData)
-    getAttribute(looper, sponsor, sponsorSigner, userSignerA, attributeData)
+    addAttribute(looper, sponsor, sponsorWallet, userWalletA, attributeData)
+    getAttribute(looper, sponsor, sponsorWallet, userWalletA, attributeData)
 
 
 def testSponsorGetAttrsForUser(checkAddAttribute):
     pass
 
 
-def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
+def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorWallet):
     userSigner = SimpleSigner()
-    txnId = createNym(looper, userSigner.verstr, sponsor, sponsorSigner, USER)
+    txnId = createNym(looper, userSigner.verstr, sponsor, sponsorWallet, USER)
 
-    sponsNym = sponsorSigner.verstr
+    sponsNym = sponsorWallet.defaultId
 
     op = {
         TARGET_NYM: "jasonlaw",
@@ -241,47 +253,44 @@ def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorSigner):
         ROLE: USER
     }
 
-    submitAndCheck(looper, sponsor, op, identifier=sponsNym)
+    submitAndCheck(looper, sponsor, sponsorWallet, op, identifier=sponsNym)
 
 
-def testNonSponsorCannotAddAttributeForUser(nonSponsor, userSignerA, genned,
+def testNonSponsorCannotAddAttributeForUser(nonSponsor, userIdA, genned,
                                             looper, attributeData):
-
-    nym = nonSponsor.getSigner().verstr
-
+    client, wallet = nonSponsor
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
     }
-
-    submitAndCheckNacks(looper, nonSponsor, op, identifier=nym,
+    submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId,
                         contains="InvalidIdentifier")
 
 
-def testOnlyUsersSponsorCanAddAttribute(userSignerA, looper, genned,
-                                        steward, stewardSigner,
+def testOnlyUsersSponsorCanAddAttribute(userIdA, looper, genned,
+                                        steward, stewardWallet,
                                         attributeData, anotherSponsor):
+    client, wallet = anotherSponsor
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
     }
 
-    submitAndCheckNacks(looper, anotherSponsor, op,
-                        identifier=anotherSponsor.getSigner().verstr)
+    submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId)
 
 
-def testStewardCannotAddUsersAttribute(userSignerA, genned, looper, steward,
-                                       stewardSigner, attributeData):
+def testStewardCannotAddUsersAttribute(userIdA, genned, looper, steward,
+                                       stewardWallet, attributeData):
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
     }
 
-    submitAndCheckNacks(looper, steward, op,
-                        identifier=stewardSigner.verstr)
+    submitAndCheckNacks(looper, steward, stewardWallet, op,
+                        identifier=stewardWallet.defaultId)
 
 
 @pytest.mark.skipif(True, reason="Attribute encryption is done in client")
@@ -317,29 +326,31 @@ def testSponsorAddedAttributeCanBeChanged(addedRawAttribute):
     raise NotImplementedError
 
 
-def testGetAttribute(genned, addedSponsor, sponsorSigner,
-                     sponsor, userSignerA, addedRawAttribute):
-    assert sponsor.getAllAttributesForNym(userSignerA.verstr) == \
+def testGetAttribute(genned, addedSponsor, sponsorWallet,
+                     sponsor, userIdA, addedRawAttribute):
+    assert sponsor.getAllAttributesForNym(userIdA) == \
            [{'name': 'Mario'}]
 
 
-def testLatestAttrIsReceived(genned, addedSponsor, sponsorSigner, looper,
-                             sponsor, userSignerA):
+def testLatestAttrIsReceived(genned, addedSponsor, sponsorWallet, looper,
+                             sponsor, userIdA):
 
     attr1 = {'name': 'Mario'}
     op = {
-        TARGET_NYM: userSignerA.verstr,
+        TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         RAW: json.dumps(attr1)
     }
-    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
-    assert sponsor.getAllAttributesForNym(userSignerA.verstr)[0] == attr1
+    submitAndCheck(looper, sponsor, sponsorWallet, op,
+                   identifier=sponsorWallet.defaultId)
+    assert sponsor.getAllAttributesForNym(userIdA)[0] == attr1
 
     attr2 = {'name': 'Luigi'}
     op[RAW] = json.dumps(attr2)
 
-    submitAndCheck(looper, sponsor, op, identifier=sponsorSigner.verstr)
-    allAttributesForNym = sponsor.getAllAttributesForNym(userSignerA.verstr)
+    submitAndCheck(looper, sponsor, sponsorWallet, op,
+                   identifier=sponsorWallet.defaultId)
+    allAttributesForNym = sponsor.getAllAttributesForNym(userIdA)
     assert allAttributesForNym[0] == attr2
 
 
@@ -351,11 +362,12 @@ def testGetTxnsNoSeqNo():
     pass
 
 
-def testGetTxnsSeqNo(genned, addedSponsor, tdir, sponsorSigner, looper):
+def testGetTxnsSeqNo(genned, addedSponsor, tdir, sponsorWallet, looper):
     """
     Test GET_TXNS from client and provide seqNo to fetch from
     """
-    sponsor = genTestClient(genned, signer=sponsorSigner, tmpdir=tdir)
+    sponsor = genTestClient(genned, tmpdir=tdir)
+
     looper.add(sponsor)
     looper.run(sponsor.ensureConnectedToNodes())
 
@@ -366,12 +378,14 @@ def testGetTxnsSeqNo(genned, addedSponsor, tdir, sponsorSigner, looper):
 
 
 def testNonSponsoredNymCanDoGetNym(genned, addedSponsor,
-                                   sponsorSigner, tdir, looper):
+                                   sponsorWallet, tdir, looper):
     signer = SimpleSigner()
-    someClient = genTestClient(genned, tmpdir=tdir, signer=signer)
+    someClient = genTestClient(genned, tmpdir=tdir)
+    wallet = Wallet(someClient.name)
+    wallet.addSigner(signer)
     looper.add(someClient)
     looper.run(someClient.ensureConnectedToNodes())
-    needle = sponsorSigner.verstr
+    needle = sponsorWallet.defaultId
     someClient.doGetNym(needle)
     looper.run(eventually(someClient.hasNym, needle, retryWait=1, timeout=5))
 
