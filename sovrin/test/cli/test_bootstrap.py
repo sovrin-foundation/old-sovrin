@@ -66,10 +66,10 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
                                                 'Current identifier set to ' + philIdr])
 
     do('connect test',                  expect=connectedToTest, mapper=faberMap)
-    looper.runFor(5)
+    looper.runFor(2)
 
     do('send NYM dest={target} role=SPONSOR',
-                                        within=3,
+                                        within=2,
                                         expect=nymAddedOut, mapper=faberMap)
 
     be(aliceCli)
@@ -105,9 +105,9 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
     do('connect test',                  expect=connectedToTest,
                                         mapper=faberMap)
 
-    looper.runFor(3)
+    looper.runFor(2)
 
-    do('sync {inviter}',                within=5,
+    do('sync {inviter}',                within=2,
                                         expect=syncLinkOutWithoutEndpoint,
                                         mapper=faberMap)
 
@@ -118,13 +118,13 @@ def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
     be(philCLI)
     # I had to give two open/close curly braces to avoid issue in mapping
     do('send ATTRIB dest={target} raw={{"endpoint": "0.0.0.0:1212"}}',
-                                        within=5,
+                                        within=2,
                                         expect=attrAddedOut,
                                         mapper=faberMap)
 
     be(aliceCli)
 
-    do('sync {inviter}',                within=5,
+    do('sync {inviter}',                within=2,
                                         expect=syncLinkOutWithEndpoint,
                                         mapper=faberMap)
 
