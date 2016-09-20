@@ -17,6 +17,9 @@ LINK_LAST_SYNCED = "Last Synced"
 LINK_LAST_SEQ_NO = "Last Sync no"
 LINK_STATUS_ACCEPTED = "Accepted"
 
+LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
+UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
+
 
 class ClaimRequest:
     def __init__(self, name, version):
@@ -153,7 +156,7 @@ class LinkInvitation:
         from datetime import datetime
         now = datetime.now()
         if time is None:
-            return '<this link has not yet been synchronized>'
+            return LINK_NOT_SYNCHRONIZED
 
         if type(time) is int:
             diff = now - datetime.fromtimestamp(time)
@@ -187,10 +190,14 @@ class LinkInvitation:
 
     def getLinkInfoStr(self) -> str:
         trustAnchorStatus = '(not yet written to Sovrin)'
-        targetVerKey = '<unknown, waiting for sync>'
-        targetEndPoint = self.targetEndPoint or "Not available"
+        targetVerKey = UNKNOWN_WAITING_FOR_SYNC
+        targetEndPoint = self.targetEndPoint or UNKNOWN_WAITING_FOR_SYNC
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = LinkInvitation.prettyDate(self.linkLastSynced)
+
+        if linkLastSynced != LINK_NOT_SYNCHRONIZED and \
+                        targetEndPoint == UNKNOWN_WAITING_FOR_SYNC:
+            targetEndPoint = "Not Available"
 
         if not self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED:
             trustAnchorStatus = '(confirmed)'

@@ -91,13 +91,19 @@ def getLinkInvitation(name, cli) -> LinkInvitation:
 
 
 @pytest.fixture(scope="module")
+def aliceMap():
+    return {'keyring-name': 'Alice',
+            }
+
+@pytest.fixture(scope="module")
 def faberMap():
     return {'inviter': 'Faber College',
             'invite': "sample/faber-invitation.sovrin",
             'invite-not-exists': "sample/faber-invitation.sovrin.not.exists",
             'inviter-not-exists': "non-existing-inviter",
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
-            "nonce": "b1134a647eb818069c089e7694f63e6d"
+            "nonce": "b1134a647eb818069c089e7694f63e6d",
+            "endpoint" : "0.0.0.0:1212"
             }
 
 
@@ -117,6 +123,11 @@ def fileNotExists():
 
 
 @pytest.fixture(scope="module")
+def connectedToTest():
+    return ["Connecting to test"]
+
+
+@pytest.fixture(scope="module")
 def syncWhenNotConnectedStatus(notConnectedStatus):
     return ["Cannot sync because not connected"] + notConnectedStatus
 
@@ -126,6 +137,13 @@ def notConnectedStatus():
     return ['Not connected to any environment. Please connect first.',
             "Usage:",
             "  connect (live|test)"]
+
+
+@pytest.fixture(scope="module")
+def newKeyringOut():
+    return ["New keyring {keyring-name} created",
+            'Active keyring set to "{keyring-name}"'
+            ]
 
 
 @pytest.fixture(scope="module")
@@ -160,11 +178,79 @@ def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
 
 
 @pytest.fixture(scope="module")
+def attrAddedOut():
+    return ["Attribute added for nym {target}"]
+
+
+@pytest.fixture(scope="module")
+def nymAddedOut():
+    return ["Nym {target} added"]
+
+
+@pytest.fixture(scope="module")
+def unSyncedEndpointOut():
+    return ["Target endpoint: <unknown, waiting for sync>"]
+
+
+@pytest.fixture(scope="module")
+def showLinkOutWithoutEndpoint(showLinkOut, unSyncedEndpointOut):
+    return showLinkOut + unSyncedEndpointOut
+
+
+@pytest.fixture(scope="module")
+def endpointReceived():
+    return ["Endpoint received:"]
+
+
+@pytest.fixture(scope="module")
+def endpointNotAvailable():
+    return ["Endpoint not available"]
+
+
+@pytest.fixture(scope="module")
+def syncLinkOut():
+    return ["Synchronizing..."]
+
+
+@pytest.fixture(scope="module")
+def syncLinkOutWithEndpoint(syncLinkOut, endpointReceived):
+    return syncLinkOut + endpointReceived
+
+
+@pytest.fixture(scope="module")
+def syncLinkOutWithoutEndpoint(syncLinkOut, endpointNotAvailable):
+    return syncLinkOut + endpointNotAvailable
+
+
+@pytest.fixture(scope="module")
+def showSyncedLinkWithEndpointOut(showLinkOut):
+    return showLinkOut + \
+        ["Last synced: "] + \
+        ["Target endpoint: {endpoint}"]
+
+
+@pytest.fixture(scope="module")
+def showSyncedLinkWithoutEndpointOut(showLinkOut):
+    return showLinkOut + \
+        ["Last synced: "] + \
+        ["Target endpoint: Not Available"]
+
+
+@pytest.fixture(scope="module")
+def linkNotYetSynced():
+    return ["Last synced: <this link has not yet been synchronized>"]
+
+
+@pytest.fixture(scope="module")
+def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
+    return showLinkOut + linkNotYetSynced
+
+
+@pytest.fixture(scope="module")
 def showLinkOut():
     return ["Name: {inviter}",
             "Target: {target}",
             "Invitation nonce: {nonce}",
-            "Last synced: <this link has not yet been synchronized>",
             "Usage",
             'accept invitation "{inviter}"',
             'sync "{inviter}"']
@@ -177,6 +263,11 @@ def poolCLI_baby(CliBuilder):
 @pytest.yield_fixture(scope="module")
 def aliceCli(CliBuilder):
     yield from CliBuilder("alice")
+
+
+@pytest.fixture(scope="module")
+def philCLI(CliBuilder):
+    yield from CliBuilder("phil")
 
 
 @pytest.fixture(scope="module")

@@ -285,8 +285,13 @@ class SovrinCli(PlenumCli):
                                         identifier=self.activeSigner.identifier)
         self.print("Adding attributes {} for {}".
                    format(data, nym), Token.BoldBlue)
+
+        def out(reply, error):
+            self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
+                       Token.BoldBlue)
+
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.activeClient)
+                                    req.reqId, self.activeClient, out)
 
     @staticmethod
     def _buildCredDef(matchedVars):
