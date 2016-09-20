@@ -201,7 +201,6 @@ def testSyncLinkWhenEndpointNotAvailable(looper,
                                          faberInviteLoaded,
                                          aliceConnected,
                                          stewardClient):
-    addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     addFaber(looper, stewardClient, li.targetIdentifier)
 
@@ -218,7 +217,6 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
                                         faberInviteLoaded,
                                         aliceConnected,
                                         stewardClient):
-    addNym(stewardClient, aliceCli.activeSigner.verstr)
     li = getLinkInvitation("Faber", aliceCli)
     assert li.targetEndPoint is None
     addFaber(looper, stewardClient, li.targetIdentifier)

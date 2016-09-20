@@ -34,12 +34,12 @@ def test(poolCLI, faberCLI, be, do):
 
     do('prompt FABER', expect=prompt_is('FABER'))
 
-    do('new keyring Faber', expect=['New wallet Faber created',
-                                    'Active wallet set to "Faber"'])
+    do('new keyring Faber', expect=['New keyring Faber created',
+                                    'Active keyring set to "Faber"'])
     seed = 'Faber000000000000000000000000000'
     idr = '3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4='
 
-    do('new key with seed ' + seed, expect=['Key created in wallet Faber',
+    do('new key with seed ' + seed, expect=['Key created in keyring Faber',
                                             'Identifier for key is ' + idr,
                                             'Current identifier set to ' + idr])
 
