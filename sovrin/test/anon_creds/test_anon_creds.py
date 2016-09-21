@@ -116,7 +116,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerWallet, proverWallet,
     # Issuer's attribute repository
     attrRepo = IssuerModule.InMemoryAttrRepo()
     attrRepo.attributes = {proverId: attributes}
-    # issuer.attributeRepo = attrRepo
+
     name1 = "Qualifications"
     version1 = "1.0"
     ip = issuerC.peerHA[0]
@@ -125,6 +125,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerWallet, proverWallet,
 
     # This is the issuer entity
     issuer = IssuerModule.Issuer(issuerId, attrRepo)
+    # issuer.attributeRepo = attrRepo
     # Issuer publishes credential definition to Sovrin ledger
     credDef = issuer.addNewCredDef(attrNames, name1, version1,
                                    p_prime="prime1", q_prime="prime1", ip=ip,
@@ -148,6 +149,8 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerWallet, proverWallet,
 
     encodedAttributes = attributes.encoded()
     revealedAttrs = ["undergrad"]
+
+    prover = ProverModule.Prover(proverId)
     pk = {
         issuerId: prover.getPk(credDef)
     }
@@ -157,13 +160,16 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerWallet, proverWallet,
     cred = issuer.createCred(proverId, name1, version1,
                              proofBuilder.U[issuerId])
     logger.display("Prover: Received credential from "
-                   "{}".format(issuerSigner.verstr))
+                   "{}".format(issuerWallet.defaultId))
 
     # Prover intends to prove certain attributes to a Verifier
     # Verifier issues a nonce
     logger.display("Prover: Requesting Nonce from verifier…")
     logger.display("Verifier: Nonce received from prover"
                    " {}".format(proverId))
+
+    verifierId = verifierWallet.defaultId
+    verifier = VerifierModule.Verifier(verifierId)
     nonce = verifier.generateNonce(interactionId)
     logger.display("Verifier: Nonce sent.")
     logger.display("Prover: Nonce received")
