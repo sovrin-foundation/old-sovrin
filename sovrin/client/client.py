@@ -246,9 +246,11 @@ class Client(PlenumClient):
                         logger.error("{} cannot be converted to JSON"
                                      .format(data))
                 else:
-                    self.wallet.addCredDef(data[NAME], data[VERSION],
-                                           result[TARGET_NYM], data[TYPE],
-                                           data[IP], data[PORT], keys)
+                    # DEPR
+                    # self.wallet.addCredDef(data[NAME], data[VERSION],
+                    #                        result[TARGET_NYM], data[TYPE],
+                    #                        data[IP], data[PORT], keys)
+                    pass
 
     def requestConfirmed(self, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):

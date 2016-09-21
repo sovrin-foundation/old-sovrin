@@ -1,11 +1,14 @@
 import pytest
 
 from plenum.client.signer import SimpleSigner
+from plenum.test.eventually import eventually
 from plenum.test.helper import genHa
-from plenum.common.txn import TXN_TYPE, DATA
+from plenum.common.txn import TXN_TYPE, DATA, USER, NAME, VERSION, TYPE, IP, \
+    PORT, KEYS
+from sovrin.client.wallet import Wallet, CredDef, CredDefKey
 
 from sovrin.common.util import getConfig
-from sovrin.test.helper import addNym
+from sovrin.test.helper import createNym
 from sovrin.common.txn import CRED_DEF
 from sovrin.test.helper import submitAndCheck
 
@@ -17,22 +20,26 @@ import sovrin.anon_creds.cred_def as CredDefModule
 config = getConfig()
 
 
-@pytest.fixture(scope="module")
-def issuerSigner():
+def _newWallet():
     signer = SimpleSigner()
-    return signer
-
-
-@pytest.fixture(scope="module")
-def proverSigner():
-    signer = SimpleSigner()
-    return signer
+    w = Wallet(signer.identifier)
+    w.addSigner(signer=signer)
+    return w
 
 
 @pytest.fixture(scope="module")
-def verifierSigner():
-    signer = SimpleSigner()
-    return signer
+def issuerWallet():
+    return _newWallet()
+
+
+@pytest.fixture(scope="module")
+def proverWallet():
+    return _newWallet()
+
+
+@pytest.fixture(scope="module")
+def verifierWallet():
+    return _newWallet()
 
 
 @pytest.fixture(scope="module")
@@ -61,19 +68,23 @@ def proverAttributes():
 
 
 @pytest.fixture(scope="module")
-def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
-             issuerSigner, proverSigner, verifierSigner, issuerHA, proverHA,
+def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
+             issuerWallet, proverWallet, verifierWallet, issuerHA, proverHA,
              verifierHA):
     """
     Creating nyms for issuer, prover and verifier on Sovrin.
     """
-    sponsNym = sponsorSigner.verstr
-    iNym = issuerSigner.verstr
-    pNym = proverSigner.verstr
-    vNym = verifierSigner.verstr
+    sponsNym = sponsorWallet.defaultId
+    iNym = issuerWallet.defaultId
+    pNym = proverWallet.defaultId
+    vNym = verifierWallet.defaultId
 
-    for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
-        addNym(ha, looper, nym, sponsNym, sponsor)
+    # DEPR
+    # for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
+    #     addNym(ha, looper, nym, sponsNym, sponsor)
+
+    for nym in (iNym, pNym, vNym):
+        createNym(looper, nym, sponsor, sponsorWallet, USER)
 
 
 @pytest.fixture(scope="module")
@@ -92,15 +103,32 @@ def credDef(attrNames):
 
 @pytest.fixture(scope="module")
 def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorSigner, looper, tdir, nodeSet, credDef):
+                              sponsorWallet, looper, tdir, nodeSet, credDef):
+    old = sponsorWallet.pendingCount
     data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
+    credDef = CredDef(data[NAME], data[VERSION],
+                                     sponsorWallet.defaultId, data[TYPE],
+                                     data[IP], data[PORT], data[KEYS])
+    pending = sponsorWallet.addCredDef(credDef)
+    assert pending == old + 1
+    reqs = sponsorWallet.preparePending()
+    # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
+    sponsor.submitReqs(*reqs)
 
-    op = {
-        TXN_TYPE: CRED_DEF,
-        DATA: data
-    }
-    return submitAndCheck(looper, sponsor, op,
-                          identifier=sponsorSigner.verstr)
+    key = CredDefKey(*credDef.key())
+
+    def chk():
+        assert sponsorWallet.getCredDef(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=15))
+    return sponsorWallet.getCredDef(key).seqNo
+
+    # DEPR
+    # op = {
+    #     TXN_TYPE: CRED_DEF,
+    #     DATA: data
+    # }
+    # return submitAndCheck(looper, sponsor, sponsorWallet, op)
 
 
 

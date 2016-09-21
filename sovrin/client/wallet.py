@@ -13,11 +13,11 @@ from typing import Tuple
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
 from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH, TARGET_NYM, DATA, \
-    IDENTIFIER
+    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE
 from plenum.common.types import Identifier, f
 from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.types import Request
-from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR
+from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF
 
 ENCODING = "utf-8"
 
@@ -108,24 +108,43 @@ class Attribute(AttributeKey):
 
 
 class CredDefKey:
-    def __init__(self, name: str, version: str, dest: Optional[Identifier]=None):
+    def __init__(self, name: str, version: str, origin: Optional[Identifier]=None):
         self.name = name
         self.version = version
-        self.dest = dest    # author of the credential definition
+        self.origin = origin    # author of the credential definition
 
     def key(self):
-        return self.name, self.version, self.dest
+        return self.name, self.version, self.origin
 
 
 class CredDef(CredDefKey):
-    def __init__(self, name: str, version: str, dest: Optional[Identifier],
+    def __init__(self, name: str, version: str, origin: Optional[Identifier],
                  typ: str, ip: str,
-                 port: int, keys: Dict):
-        super().__init__(name, version, dest)
+                 port: int, keys: Dict,
+                 seqNo: Optional[int] = None):
+        super().__init__(name, version, origin)
         self.typ = typ
         self.ip = ip
         self.port = port
         self.keys = keys
+        self.seqNo = seqNo
+
+    @property
+    def request(self):
+        if not self.seqNo:
+            assert self.origin is not None
+            op = {
+                TXN_TYPE: CRED_DEF,
+                DATA: {
+                    NAME: self.name,
+                    VERSION: self.version,
+                    IP: self.ip,
+                    PORT: self.port,
+                    KEYS: self.keys,
+                }
+            }
+            return Request(identifier=self.origin,
+                           operation=op)
 
 
 class CredDefSk(CredDefKey):
@@ -177,7 +196,9 @@ class Wallet(PWallet):
 
         self.replyHandler = {
             ATTRIB: self._attribReply,
-            GET_ATTR: self._getAttrReply
+            GET_ATTR: self._getAttrReply,
+            CRED_DEF: self._credDefReply,
+            GET_CRED_DEF: self._getCredDefReply,
         }
 
     # DEPR
@@ -263,8 +284,20 @@ class Wallet(PWallet):
     # def attributes(self):
     #     return self._attributes
     #
+
     def addCredDef(self, credDef: CredDef):
+        """
+        :param credDef: credDef to add
+        :return: number of pending txns
+        """
         self._credDefs[credDef.key()] = credDef
+        req = credDef.request
+        if req:
+            self._pending.appendleft((req, credDef.key()))
+        return len(self._pending)
+
+    # def addCredDef(self, credDef: CredDef):
+    #     self._credDefs[credDef.key()] = credDef
 
     def getCredDef(self, key: CredDefKey):
         return self._credDefs[key.key()]
@@ -349,7 +382,7 @@ class Wallet(PWallet):
             # raise NotImplementedError
 
     def _attribReply(self, result, preparedReq):
-        sreq, attrKey = preparedReq
+        _, attrKey = preparedReq
         attrib = self.getAttribute(AttributeKey(*attrKey))
         attrib.seqNo = result[F.seqNo.name]
 
@@ -358,6 +391,21 @@ class Wallet(PWallet):
         # If yes then change the graph query on node to return the sequence
         # number of the attribute txn too.
         pass
+
+    def _credDefReply(self, result, preparedReq):
+        # TODO: Duplicate code from _attribReply, abstract this behavior,
+        # Have a mixin like `HasSeqNo`
+        _, key = preparedReq
+        credDef = self.getCredDef(CredDefKey(*key))
+        credDef.seqNo = result[F.seqNo.name]
+
+    def _getCredDefReply(self, result, preparedReq):
+        data = json.loads(result.get(DATA))
+        keys = json.loads(data[KEYS])
+        credDef = CredDef(data[NAME], data[VERSION],
+                               result[TARGET_NYM], data[TYPE],
+                               data[IP], data[PORT], keys)
+        self.addCredDef(credDef)
 
     def pendRequest(self, req):
         self._pending.appendleft((req, None))

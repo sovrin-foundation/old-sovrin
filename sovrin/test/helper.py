@@ -467,14 +467,14 @@ def submitAndCheck(looper, client, wallet, op, identifier=None):
     return checkSubmitted(looper, client, optype, txnsBefore)
 
 
-def addNym(ha, looper, nym, sponsNym, sponsor):
-    op = {
-        TARGET_NYM: nym,
-        TXN_TYPE: NYM,
-        ROLE: USER,
-        DATA: json.dumps({'ha': ha})
-    }
-    submitAndCheck(looper, sponsor, op, identifier=sponsNym)
+# def addNym(ha, looper, nym, sponsNym, sponsor):
+#     op = {
+#         TARGET_NYM: nym,
+#         TXN_TYPE: NYM,
+#         ROLE: USER,
+#         DATA: json.dumps({'ha': ha})
+#     }
+#     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
 def makePendingTxnsRequest(client, wallet):
