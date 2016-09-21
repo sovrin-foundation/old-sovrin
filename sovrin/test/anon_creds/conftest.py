@@ -97,8 +97,8 @@ def attrNames():
 def credDef(attrNames):
     ip, port = genHa()
     return CredDefModule.CredDef(attrNames, 'name1', 'version1',
-                   p_prime="prime1", q_prime="prime1",
-                   ip=ip, port=port)
+                                 p_prime="prime1", q_prime="prime1",
+                                 ip=ip, port=port)
 
 
 @pytest.fixture(scope="module")
@@ -107,8 +107,8 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     old = sponsorWallet.pendingCount
     data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
     credDef = CredDef(data[NAME], data[VERSION],
-                                     sponsorWallet.defaultId, data[TYPE],
-                                     data[IP], data[PORT], data[KEYS])
+                      sponsorWallet.defaultId, data[TYPE],
+                      data[IP], data[PORT], data[KEYS])
     pending = sponsorWallet.addCredDef(credDef)
     assert pending == old + 1
     reqs = sponsorWallet.preparePending()
@@ -129,7 +129,3 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     #     DATA: data
     # }
     # return submitAndCheck(looper, sponsor, sponsorWallet, op)
-
-
-
-

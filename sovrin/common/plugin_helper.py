@@ -35,7 +35,7 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
                         "sovrin.anon_creds.issuer.AttribDef = anoncreds.protocol.types.AttribDef\n" \
                         "sovrin.anon_creds.issuer.Attribs = anoncreds.protocol.types.Attribs\n" \
                         "sovrin.anon_creds.issuer.AttrRepo = anoncreds.protocol.attribute_repo.AttrRepo\n" \
-                        "sovrin.anon_creds.issuer.InMemoryAttrRepo = anoncreds.protocol.attribute_repo.InMemoryAttrRepo\n" \
+                        "sovrin.anon_creds.issuer.InMemoryAttrRepo = anoncreds.protocol.attribute_repo.AttrRepo\n" \
                         "sovrin.anon_creds.issuer.Issuer = anoncreds.protocol.issuer.Issuer\n" \
                         "sovrin.anon_creds.prover.Prover = anoncreds.protocol.prover.Prover\n" \
                         "sovrin.anon_creds.verifier.Verifier = anoncreds.protocol.verifier.Verifier\n" \
@@ -43,7 +43,7 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
                         "sovrin.anon_creds.proof_builder.Proof = anoncreds.protocol.types.Proof\n" \
                         "sovrin.anon_creds.cred_def.CredDef = anoncreds.protocol.credential_definition.CredentialDefinition\n" \
 
-    modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
+    modules_to_reload = ["sovrin.cli.cli"]
     test_modules_to_reload = [
         "sovrin.test.helper", "sovrin.test.cli.helper",
         "sovrin.test.anon_creds.conftest",
