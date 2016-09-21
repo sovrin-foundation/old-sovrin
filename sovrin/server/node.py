@@ -264,7 +264,7 @@ class Node(PlenumNode):
         self.transmitToClient(RequestAck(request.reqId), frm)
         attrNames = request.operation[RAW]
         nym = request.operation[TARGET_NYM]
-        attrs = self.graphStore.getAttrs(nym, attrNames)
+        attrs = self.graphStore.getRawAttrs(nym, attrNames)
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)

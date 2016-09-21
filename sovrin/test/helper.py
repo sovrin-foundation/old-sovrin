@@ -33,7 +33,7 @@ from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.wallet import Wallet
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
-    TXN_ID, USER
+    TXN_ID, USER, GET_NYM
 from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
@@ -461,7 +461,9 @@ def submitAndCheck(looper, client, wallet, op, identifier=None):
     optype = op[TXN_TYPE]
     txnsBefore = client.getTxnsByType(optype)
     req = wallet.signOp(op, identifier=identifier)
-    client.submitReqs(req)
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
     return checkSubmitted(looper, client, optype, txnsBefore)
 
 
@@ -477,7 +479,42 @@ def addNym(ha, looper, nym, sponsNym, sponsor):
 
 def makePendingTxnsRequest(client, wallet):
     pendingTxnsReqs = wallet.getPendingTxnRequests()
-    client.submitReqs(*pendingTxnsReqs)
+    for req in pendingTxnsReqs:
+        wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
+
+
+def makeNymRequest(client, wallet, nym, role):
+    op = {
+        TARGET_NYM: nym,
+        TXN_TYPE: NYM,
+        ROLE: role
+    }
+    req = wallet.signOp(op)
+    # TODO: This looks boilerplate
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    return client.submitReqs(*reqs)
+
+
+def makeGetNymRequest(client, wallet, nym):
+    op = {
+        TARGET_NYM: nym,
+        TXN_TYPE: GET_NYM,
+    }
+    req = wallet.signOp(op)
+    # TODO: This looks boilerplate
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    return client.submitReqs(*reqs)
+
+
+def makeAttribRequest(client, wallet, attrib):
+    wallet.addAttribute(attrib)
+    # TODO: This looks boilerplate
+    reqs = wallet.preparePending()
+    return client.submitReqs(*reqs)
 
 
 class TestGraphStorage:

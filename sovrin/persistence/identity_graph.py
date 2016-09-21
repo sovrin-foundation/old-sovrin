@@ -256,7 +256,7 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
 
-    def getAttrs(self, frm, *attrNames):
+    def getRawAttrs(self, frm, *attrNames):
         cmd = 'select expand(outE("{}").inV("{}")) from {} where {}="{}"'.\
             format(Edges.HasAttribute, Vertices.Attribute, Vertices.Nym,
                    NYM, frm)

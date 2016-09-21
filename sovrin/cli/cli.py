@@ -167,8 +167,9 @@ class SovrinCli(PlenumCli):
         return actions
 
     def _buildWalletClass(self, nm):
-        storage = WalletStorageFile.fromName(nm, self.basedirpath)
-        return Wallet(nm, storage)
+        # DEPR
+        # storage = WalletStorageFile.fromName(nm, self.basedirpath)
+        return Wallet(nm)
 
     @property
     def genesisTransactions(self):
@@ -195,8 +196,15 @@ class SovrinCli(PlenumCli):
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
             return
-        return super().newClient(clientName, seed=seed, identifier=identifier,
-                                 signer=signer, wallet=wallet, config=config)
+
+        # DEPR
+        # return super().newClient(clientName, seed=seed, identifier=identifier,
+        #                          signer=signer, wallet=wallet, config=config)
+        return super().newClient(clientName, config=config)
+
+    @staticmethod
+    def bootstrapClientKeys(idr, verkey, nodes):
+        pass
 
     def _clientCommand(self, matchedVars):
         if matchedVars.get('client') == 'client':
@@ -629,7 +637,7 @@ class SovrinCli(PlenumCli):
 
         self.print("1 link invitation found for {}.".format(linkInvitationName))
         cseed = cleanSeed(None)
-        alias = "cid-" + str(len(self.activeWallet.signers) + 1)
+        alias = "cid-" + str(len(self.activeWallet.identifiers) + 1)
         signer = SimpleSigner(identifier=None, seed=cseed, alias=alias)
         self._addSignerToGivenWallet(signer, self.activeWallet)
 
@@ -673,6 +681,7 @@ class SovrinCli(PlenumCli):
             except Exception as e:
                 self.print('Error occurred during processing link '
                            'invitation: {}'.format(e))
+
             return True
 
     @staticmethod

@@ -53,6 +53,7 @@ def steward(genned, looper, tdir, up, stewardWallet):
     s, _ = genTestClient(genned, tmpdir=tdir)
     # for node in genned:
     #     node.whitelistClient(s.name)
+    s.registerObserver(stewardWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
@@ -61,10 +62,6 @@ def steward(genned, looper, tdir, up, stewardWallet):
 @pytest.fixture(scope="module")
 def updatedSteward(steward, stewardWallet):
     makePendingTxnsRequest(steward, stewardWallet)
-
-
-def testCreateStewardWallet(stewardWallet):
-    pass
 
 
 @pytest.fixture(scope="module")
@@ -199,6 +196,7 @@ def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
     s, _ = genTestClient(genned, tmpdir=tdir)
     # for node in genned:
     #     node.whitelistClient(s.name)
+    s.registerObserver(sponsorWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     makePendingTxnsRequest(s, sponsorWallet)

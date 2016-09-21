@@ -15,9 +15,9 @@ from plenum.client.wallet import Wallet as PWallet
 from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH, TARGET_NYM, DATA, \
     IDENTIFIER
 from plenum.common.types import Identifier, f
+from sovrin.client.link_invitation import LinkInvitation
 from sovrin.common.types import Request
-from sovrin.common.txn import ATTRIB, GET_TXNS
-
+from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR
 
 ENCODING = "utf-8"
 
@@ -148,7 +148,7 @@ class Credential:
 
 
 class Link:
-    def __init__(self, name):
+    def __init__(self, name, value):
         self.name = name
 
     def key(self):
@@ -167,12 +167,18 @@ class Wallet(PWallet):
         self._credMasterSecret = None
         self._links = {}  # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
+        self._linkInvitations = {}  # type: Dict[str, dict]
 
         # transactions not yet submitted
         self._pending = deque()  # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
         # pending transactions that have been prepared (probably submitted)
         self._prepared = {}  # type: Dict[(Identifier, int), Request]
+
+        self.replyHandler = {
+            ATTRIB: self._attribReply,
+            GET_ATTR: self._getAttrReply
+        }
 
     # DEPR
     # def signOp(self, op: Dict, identifier: Identifier=None) -> Request:
@@ -235,7 +241,7 @@ class Wallet(PWallet):
         return self._attributes.get(key.key())
 
     def getAttributesForNym(self, idr: Identifier):
-        return [a for a in self._attributes if a.dest == idr]
+        return [a for a in self._attributes.values() if a.dest == idr]
 
     # DEPR
     # def getAllAttributesForNym_DEPRECATED(self, nym, identifier=None):
@@ -331,13 +337,40 @@ class Wallet(PWallet):
         replies
         :return:
         """
-        find = self._prepared.get((result[IDENTIFIER], reqId))
-        if not find:
+        preparedReq = self._prepared.get((result[IDENTIFIER], reqId))
+        if not preparedReq:
             raise RuntimeError('no matching prepared value for {},{}'.
                                format(result[IDENTIFIER], reqId))
-        if result[TXN_TYPE] == ATTRIB:
-            sreq, attrKey = find
-            attrib = self.getAttribute(AttributeKey(*attrKey))
-            attrib.seqNo = result[F.seqNo.name]
+        typ = result.get(TXN_TYPE)
+        if typ and typ in self.replyHandler:
+            self.replyHandler[typ](result, preparedReq)
         else:
-            raise NotImplementedError
+            print("Not implemented handler for {}".format(typ))
+            # raise NotImplementedError
+
+    def _attribReply(self, result, preparedReq):
+        sreq, attrKey = preparedReq
+        attrib = self.getAttribute(AttributeKey(*attrKey))
+        attrib.seqNo = result[F.seqNo.name]
+
+    def _getAttrReply(self, result, preparedReq):
+        # TODO: Confirm if we need to add the retrieved attribute to the wallet.
+        # If yes then change the graph query on node to return the sequence
+        # number of the attribute txn too.
+        pass
+
+    def pendRequest(self, req):
+        self._pending.appendleft((req, None))
+
+    def addLinkInvitation(self, linkInvitation):
+        self._linkInvitations[linkInvitation.name] = linkInvitation.\
+            getDictToBeStored()
+
+    def getMatchingLinkInvitations(self, name: str):
+        allMatched = []
+        for k, v in self._linkInvitations.items():
+            if name == k or name.lower() in k.lower():
+                liValues = v
+                li = LinkInvitation.getFromDict(k, liValues)
+                allMatched.append(li)
+        return allMatched

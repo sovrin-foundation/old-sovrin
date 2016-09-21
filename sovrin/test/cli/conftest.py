@@ -1,3 +1,5 @@
+import traceback
+
 import pytest
 
 import plenum
@@ -327,6 +329,9 @@ def do(ctx):
                             try:
                                 e(cli)
                             except:
+                                # Since its a test so not using logger is not
+                                # a big deal
+                                traceback.print_exc()
                                 continue
                             raise RuntimeError("did not expect success")
                     else:
