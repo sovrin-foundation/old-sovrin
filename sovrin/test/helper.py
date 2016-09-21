@@ -439,17 +439,12 @@ def addUser(looper, creatorClient, creatorWallet, name):
     return wallet
 
 
-def submitAndCheck(looper, client, wallet, op, identifier=None):
-    # TODO: This assumes every transaction will have an edge in graph, why?
-    # Fix this
-    txnsBefore = client.getTxnsByType(op[TXN_TYPE])
-    req = wallet.signOp(op, identifier=identifier)
-    client.submitReqs(req)
+def checkSubmitted(looper, client, optype, txnsBefore):
     txnsAfter = []
 
     def checkTxnCountAdvanced():
         nonlocal txnsAfter
-        txnsAfter = client.getTxnsByType(op[TXN_TYPE])
+        txnsAfter = client.getTxnsByType(optype)
         logger.debug("old and new txns {} {}".format(txnsBefore, txnsAfter))
         assert len(txnsAfter) > len(txnsBefore)
 
@@ -458,6 +453,16 @@ def submitAndCheck(looper, client, wallet, op, identifier=None):
     txnIdsAfter = [txn[TXN_ID] for txn in txnsAfter]
     logger.debug("old and new txnids {} {}".format(txnIdsBefore, txnIdsAfter))
     return list(set(txnIdsAfter) - set(txnIdsBefore))
+
+
+def submitAndCheck(looper, client, wallet, op, identifier=None):
+    # TODO: This assumes every transaction will have an edge in graph, why?
+    # Fix this
+    optype = op[TXN_TYPE]
+    txnsBefore = client.getTxnsByType(optype)
+    req = wallet.signOp(op, identifier=identifier)
+    client.submitReqs(req)
+    return checkSubmitted(looper, client, optype, txnsBefore)
 
 
 def addNym(ha, looper, nym, sponsNym, sponsor):

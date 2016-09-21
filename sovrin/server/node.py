@@ -13,7 +13,8 @@ from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION
-from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
+from sovrin.common.types import Request
+from plenum.common.types import Reply, RequestAck, RequestNack, f, \
     NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
 from plenum.common.util import getlogger, error
 from plenum.persistence.storage import initStorage

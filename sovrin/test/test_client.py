@@ -9,13 +9,15 @@ from plenum.common.txn import REQNACK, ENC, RAW, DATA
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
-from sovrin.client.wallet import Wallet
+from sovrin.client.client import Client
+from sovrin.client.wallet import Wallet, Attribute, LedgerStore
 
 from sovrin.common.txn import ATTRIB, NYM, \
     TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
     TXN_ID, NONCE, SKEY, REFERENCE, GET_ATTR, GET_NYM
 from sovrin.common.util import getSymmetricallyEncryptedVal
-from sovrin.test.helper import genTestClient, createNym, submitAndCheck
+from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
+    checkSubmitted, TestClient
 
 logger = getlogger()
 
@@ -48,21 +50,47 @@ def attributeData():
     return json.dumps({'name': 'Mario'})
 
 
-def addAttribute(looper, sponsor, sponsorWallet, userIdA,
-                 attributeData):
+def addAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
     op = {
         TARGET_NYM: userIdA,
         TXN_TYPE: ATTRIB,
         RAW: attributeData
     }
-
-    submitAndCheck(looper, sponsor, sponsorWallet, op)
+    return submitAndCheck(looper, sponsor, sponsorWallet, op)
 
 
 @pytest.fixture(scope="module")
-def addedRawAttribute(userWalletA, sponsor, sponsorWallet, attributeData,
-                      looper):
-    addAttribute(looper, sponsor, sponsorWallet, userWalletA, attributeData)
+def addedRawAttribute(userWalletA: Wallet, sponsor: Client, sponsorWallet: Wallet,
+                      attributeData, looper):
+    attrib = Attribute(name='test attribute',
+                       origin=sponsorWallet.defaultId,
+                       value=attributeData,
+                       dest=userWalletA.defaultId,
+                       ledgerStore=LedgerStore.RAW)
+    old = sponsorWallet.pendingCount
+    pending = sponsorWallet.addAttribute(attrib)
+    assert pending == old + 1
+    reqs = sponsorWallet.preparePending()
+    sponsor.registerObserver(sponsorWallet.handleIncomingReply)
+    sponsor.submitReqs(*reqs)
+
+    def checkWalletForTxns():
+        assert sponsorWallet.getAttribute(attrib).seqNo is not None
+
+    def fail():
+        assert False
+
+    looper.run(eventually(checkWalletForTxns, retryWait=1, timeout=15))
+
+    # def checkWalletUpdated():
+    #     nonlocal txnsAfter
+    #     txnsAfter = sponsor.getTxnsByType(optype)
+    #     logger.debug("old and new txns {} {}".format(txnsBefore, txnsAfter))
+    #     assert len(txnsAfter) > len(txnsBefore)
+    #
+    #
+    # checkSubmitted(looper, sponsor, ATTRIB, txnsBefore):
+
 
 
 @pytest.fixture(scope="module")
@@ -230,8 +258,16 @@ def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
 @pytest.fixture(scope="module")
 def checkAddAttribute(userWalletA, sponsor, sponsorWallet, attributeData,
                       looper):
-    addAttribute(looper, sponsor, sponsorWallet, userWalletA, attributeData)
-    getAttribute(looper, sponsor, sponsorWallet, userWalletA, attributeData)
+    addAttribute(looper=looper,
+                 sponsor=sponsor,
+                 sponsorWallet=sponsorWallet,
+                 userIdA=userWalletA.defaultId,
+                 attributeData=attributeData)
+    getAttribute(looper=looper,
+                 sponsor=sponsor,
+                 sponsorWallet=sponsorWallet,
+                 userIdA=userWalletA.defaultId,
+                 attributeData=attributeData)
 
 
 def testSponsorGetAttrsForUser(checkAddAttribute):
@@ -326,9 +362,10 @@ def testSponsorAddedAttributeCanBeChanged(addedRawAttribute):
     raise NotImplementedError
 
 
-def testGetAttribute(genned, addedSponsor, sponsorWallet,
-                     sponsor, userIdA, addedRawAttribute):
-    assert sponsor.getAllAttributesForNym(userIdA) == \
+def testGetAttribute(genned, addedSponsor, sponsorWallet: Wallet, sponsor, userIdA,
+                     addedRawAttribute):
+    print(1)
+    assert sponsorWallet.getAttributesForNym(userIdA) == \
            [{'name': 'Mario'}]
 
 

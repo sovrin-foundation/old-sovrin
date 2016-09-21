@@ -1,10 +1,10 @@
 import json
 import traceback
+import uuid
 from _sha256 import sha256
 from base64 import b64decode
 from collections import deque
-from copy import deepcopy
-from typing import Mapping, List, Dict, Union, Tuple, Optional
+from typing import Mapping, List, Dict, Union, Tuple, Optional, Callable
 
 import base58
 import pyorient
@@ -14,16 +14,15 @@ from raet.raeting import AutoMode
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
-from plenum.client.signer import Signer
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import REPLY, STEWARD, ENC, HASH, RAW, NAME, VERSION,\
     KEYS, TYPE, IP, PORT
-from plenum.common.types import OP_FIELD_NAME, Request, f, HA, OPERATION
+from sovrin.common.types import Request
+from plenum.common.types import OP_FIELD_NAME, f, HA
 from plenum.common.util import getlogger, getSymmetricallyEncryptedVal, \
     libnacl, error
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.client.wallet import Wallet
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
@@ -33,10 +32,6 @@ from sovrin.persistence.client_req_rep_store_orientdb import \
     ClientReqRepStoreOrientDB
 from sovrin.persistence.client_txn_log import ClientTxnLog
 from sovrin.persistence.identity_graph import getEdgeByTxnType, IdentityGraph
-
-from sovrin.anon_creds.issuer import Issuer
-from sovrin.anon_creds.prover import Prover
-from sovrin.anon_creds.verifier import Verifier
 
 logger = getlogger()
 
@@ -50,8 +45,7 @@ class Client(PlenumClient):
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
                  basedirpath: str=None,
-                 config=None,
-                 postReplyConsClbk=None):
+                 config=None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
@@ -91,7 +85,7 @@ class Client(PlenumClient):
                                          msgHandler=self.handlePeerMessage)
             self.peerStack.sign = self.sign
             self.peerInbox = deque()
-        self.postReplyConsClbk = postReplyConsClbk
+        self._observers = {}  # type Dict[str, Callable]
 
     #DEPR
     # def setupWallet_DEPRECATED(self, wallet=None):
@@ -199,8 +193,9 @@ class Client(PlenumClient):
     def postReplyRecvd(self, reqId, frm, result, numReplies):
         reply = super().postReplyRecvd(reqId, frm, result, numReplies)
         # TODO: Use callback here
-        # if reply and self.postReplyConsClbk:
         if reply:
+            for name in self._observers:
+                self._observers[name](name, reqId, frm, result, numReplies)
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
                 self.reqRepStore.setConsensus(reqId)
             if result[TXN_TYPE] == NYM:
@@ -289,8 +284,7 @@ class Client(PlenumClient):
         # TODO Add merkleInfo as well
 
     def getTxnsByNym(self, nym: str):
-        # TODO Implement this
-        pass
+        raise NotImplementedError
 
     def getTxnsByType(self, txnType):
         if self.graphStore:
@@ -366,20 +360,20 @@ class Client(PlenumClient):
                         return {walletAttribute[NAME]: walletAttribute[HASH]}
 
     # DEPR
-    def getAllAttributesForNym_DEPRECATED(self, nym, identifier=None):
-        # TODO: Does this need to get attributes from the nodes?
-        walletAttributes = self.wallet.attributes
-        attributes = []
-        for attr in walletAttributes:
-            if TARGET_NYM in attr and attr[TARGET_NYM] == nym:
-                if RAW in attr:
-                    attributes.append({attr[NAME]: attr[RAW]})
-                elif ENC in attr:
-                    attributes.append(self._getDecryptedData(attr[ENC],
-                                                             attr[SKEY]))
-                elif HASH in attr:
-                    attributes.append({attr[NAME]: attr[HASH]})
-        return attributes
+    # def getAllAttributesForNym_DEPRECATED(self, nym, identifier=None):
+    #     # TODO: Does this need to get attributes from the nodes?
+    #     walletAttributes = self.wallet.attributes
+    #     attributes = []
+    #     for attr in walletAttributes:
+    #         if TARGET_NYM in attr and attr[TARGET_NYM] == nym:
+    #             if RAW in attr:
+    #                 attributes.append({attr[NAME]: attr[RAW]})
+    #             elif ENC in attr:
+    #                 attributes.append(self._getDecryptedData(attr[ENC],
+    #                                                          attr[SKEY]))
+    #             elif HASH in attr:
+    #                 attributes.append({attr[NAME]: attr[HASH]})
+    #     return attributes
 
     # DEPR
     def doGetNym_DEPRECATED(self, nym, identifier=None):
@@ -446,3 +440,15 @@ class Client(PlenumClient):
             return s + await self.peerStack.service(limit)
         else:
             return s
+
+    def registerObserver(self, observer: Callable, name=None):
+        if not name:
+            name = uuid.uuid4()
+        if name in self._observers:
+            raise RuntimeError("Observer {} already registered".format(name))
+        self._observers[name] = observer
+
+    def deregisterObserver(self, name):
+        if name not in self._observers:
+            raise RuntimeError("Observer {} not registered".format(name))
+        del self._observers[name]
