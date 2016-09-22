@@ -1031,3 +1031,18 @@ class SovrinCli(PlenumCli):
 
     def print(self, msg, token=None, newline=True):
         super().print(msg, token=token, newline=newline)
+
+    def createFunctionMappings(self):
+        from collections import defaultdict
+
+        def defaultHelper():
+            self.printHelp()
+
+        def showHelper():
+            self.print("""Shows the info about the link invitation
+            Usage:  show <invitation filename>""")
+        mappings = {
+                'show': showHelper
+        }
+
+        return defaultdict(lambda: defaultHelper, **mappings)
