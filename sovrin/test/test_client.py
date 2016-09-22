@@ -12,6 +12,7 @@ from plenum.test.eventually import eventually
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.common.identity import Identity
 
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
     SPONSOR, TXN_ID, NONCE, SKEY, REFERENCE, GET_ATTR
@@ -213,13 +214,32 @@ def testSponsorCreatesAUser(updatedSteward, userWalletA):
 def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
                                sponsor, sponsorWallet):
     usigner = SimpleSigner()
-    opA = {
-        TARGET_NYM: usigner.verstr,
-        TXN_TYPE: NYM,
-        # ROLE: USER# DEPR
-    }
-    opB = opA
-    sponsorNym = sponsorWallet.defaultId
+    nym = usigner.verstr
+    idy = Identity(identifier=nym)
+    sponsorWallet.addSponsoredIdentity(idy)
+    # Creating a NYM request with same nym again
+    req = idy.ledgerRequest()
+    sponsorWallet._pending.appendleft((req, idy.identifier))
+    reqs = sponsorWallet.preparePending()
+    sponsor.submitReqs(*reqs)
+
+    def check():
+         assert sponsorWallet._sponsored[nym].seqNo
+
+    looper.run(eventually(check, timeout=2))
+
+    looper.run(eventually(checkNacks,
+                          sponsor,
+                          req.reqId,
+                          "is already added",
+                          retryWait=1, timeout=15))
+
+    # opA = {
+    #     TARGET_NYM: usigner.verstr,
+    #     TXN_TYPE: NYM
+    # }
+    # opB = opA
+    # sponsorNym = sponsorWallet.defaultId
     # reqA = sponsorWallet.signOp(opA)
     # reqB = sponsorWallet.signOp(opB)
     # sponsorWallet.pendRequest(reqA)
@@ -228,13 +248,13 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
 
     # DEPR
     # sponsor.submit(opA, opB, identifier=sponsorNym)
-    try:
-        submitAndCheck(looper, sponsor, sponsorWallet, opA,
-                       identifier=sponsorNym)
-        submitAndCheckNacks(looper, sponsor, sponsorWallet, opB,
-                            identifier=sponsorNym)
-    except Exception as ex:
-        pass
+    # try:
+    #     submitAndCheck(looper, sponsor, sponsorWallet, opA,
+    #                    identifier=sponsorNym)
+    #     submitAndCheckNacks(looper, sponsor, sponsorWallet, opB,
+    #                         identifier=sponsorNym)
+    # except Exception as ex:
+    #     pass
 
     count = 0
     for name, node in genned.nodes.items():

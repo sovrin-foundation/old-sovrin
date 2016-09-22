@@ -1,4 +1,6 @@
 import json
+import operator
+
 from collections import deque
 from typing import Dict
 from typing import Optional
@@ -243,7 +245,8 @@ class Wallet(PWallet, Sponsoring):
             sreq = self.signRequest(req)
             new[req.identifier, req.reqId] = sreq, key
         self._prepared.update(new)
-        return [req for req, _ in new.values()]
+        # Return request in the order they were submitted
+        return sorted([req for req, _ in new.values()], key=operator.attrgetter("reqId"))
 
     def handleIncomingReply(self, observer_name, reqId, frm, result, numReplies):
         """
