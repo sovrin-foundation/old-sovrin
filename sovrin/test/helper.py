@@ -31,9 +31,10 @@ from plenum.test.helper import genTestClientProvider as \
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
-from sovrin.client.wallet import Wallet
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
-    TXN_ID, USER, GET_NYM
+    TXN_ID, GET_NYM
 from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
@@ -419,23 +420,29 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
     return s
 
 
-def createNym(looper, nym, creatorClient, creatorWallet, role, identifier=None):
-    op = {
-        TARGET_NYM: nym,
-        TXN_TYPE: NYM,
-        ROLE: role
-    }
-    return submitAndCheck(looper,
-                          creatorClient,
-                          creatorWallet,
-                          op,
-                          identifier=identifier)[0]
+def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
+    idy = Identity(identifier=nym,
+                   role=role)
+    creatorWallet.addSponsoredIdentity(idy)
+    reqs = creatorWallet.preparePending()
+    creatorClient.submitReqs(*reqs)
+
+    def check():
+         assert creatorWallet._sponsored[nym].seqNo
+
+    looper.run(eventually(check, timeout=2))
+    #
+    # return submitAndCheck(looper,
+    #                       creatorClient,
+    #                       creatorWallet,
+    #                       op,
+    #                       identifier=identifier)[0]
 
 
 def addUser(looper, creatorClient, creatorWallet, name):
     wallet = Wallet(name)
     wallet.addSigner()
-    createNym(looper, wallet.defaultId, creatorClient, creatorWallet, USER)
+    createNym(looper, wallet.defaultId, creatorClient, creatorWallet)
     return wallet
 
 

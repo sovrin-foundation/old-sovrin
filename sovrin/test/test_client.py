@@ -10,15 +10,14 @@ from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
 from sovrin.client.client import Client
-from sovrin.client.wallet import Wallet, Attribute, LedgerStore
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.client.wallet.attribute import Attribute, LedgerStore
 
-from sovrin.common.txn import ATTRIB, NYM, \
-    TARGET_NYM, TXN_TYPE, ROLE, SPONSOR, ORIGIN, USER, \
-    TXN_ID, NONCE, SKEY, REFERENCE, GET_ATTR, GET_NYM
+from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
+    SPONSOR, TXN_ID, NONCE, SKEY, REFERENCE, GET_ATTR
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
-    checkSubmitted, TestClient, makeNymRequest, makeAttribRequest, \
-    makeGetNymRequest
+    makeAttribRequest, makeGetNymRequest
 
 logger = getlogger()
 
@@ -67,7 +66,6 @@ def addAttributeAndCheck(looper, client, wallet, attrib):
     pending = wallet.addAttribute(attrib)
     assert pending == old + 1
     reqs = wallet.preparePending()
-    # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
     client.submitReqs(*reqs)
 
     def checkWalletForTxns():
@@ -200,7 +198,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nonSponsor):
     op = {
         TARGET_NYM: userNym,
         TXN_TYPE: NYM,
-        ROLE: USER
+        # ROLE: USER# DEPR
     }
 
     submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId,
@@ -218,7 +216,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
     opA = {
         TARGET_NYM: usigner.verstr,
         TXN_TYPE: NYM,
-        ROLE: USER
+        # ROLE: USER# DEPR
     }
     opB = opA
     sponsorNym = sponsorWallet.defaultId
@@ -303,24 +301,25 @@ def testSponsorGetAttrsForUser(checkAddAttribute):
     pass
 
 
-def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorWallet):
-    userSigner = SimpleSigner()
-    txnId = createNym(looper, userSigner.verstr, sponsor, sponsorWallet, USER)
-
-    sponsNym = sponsorWallet.defaultId
-
-    op = {
-        TARGET_NYM: "jasonlaw",
-        TXN_TYPE: NYM,
-        # TODO: Should REFERENCE be symmetrically encrypted and the key
-        # should then be disclosed in another transaction
-        REFERENCE: txnId,
-        ROLE: USER
-    }
-
-    submitAndCheck(looper, sponsor, sponsorWallet, op, identifier=sponsNym)
-
-
+# DEPRECATED FUNCTIONALITY - HUMAN READABLE NAMES NOT SUPPORTED
+# def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorWallet):
+#     userSigner = SimpleSigner()
+#     txnId = createNym(looper, userSigner.verstr, sponsor, sponsorWallet)
+#
+#     sponsNym = sponsorWallet.defaultId
+#
+#     op = {
+#         TARGET_NYM: "jasonlaw",
+#         TXN_TYPE: NYM,
+#         # TODO: Should REFERENCE be symmetrically encrypted and the key
+#         # should then be disclosed in another transaction
+#         REFERENCE: txnId,
+#         # ROLE: USER  # DEPR
+#     }
+#
+#     submitAndCheck(looper, sponsor, sponsorWallet, op, identifier=sponsNym)
+#
+#
 def testNonSponsorCannotAddAttributeForUser(genned, nonSponsor, userIdA,
                                             looper, attributeData):
     client, wallet = nonSponsor

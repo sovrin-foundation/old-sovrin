@@ -6,9 +6,10 @@ from functools import reduce
 from typing import Dict, Optional
 
 from ledger.util import F
+from plenum.common.error import fault
 from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
     DATA, RAW, ENC, HASH
-from plenum.common.types import f, Reply
+from plenum.common.types import f
 from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
@@ -472,11 +473,11 @@ class IdentityGraph(OrientDbGraphStore):
                             seqNo=txn.get(F.seqNo.name))
                 self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
             except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The nym {} was already added to graph".format(
-                    nym))
+                logger.debug("The nym {} was already added to graph".
+                             format(nym))
             except pyorient.PyOrientCommandException as ex:
-                    logger.error("An exception was raised while adding "
-                                 "nym {}: {}".format(nym, ex))
+                fault(ex, "An exception was raised while adding "
+                          "nym {}: {}".format(nym, ex))
 
     def addAttribTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)

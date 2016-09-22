@@ -2,26 +2,10 @@ from typing import Dict
 
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
+from plenum.common.types import Identifier
 from sovrin.agent.agent_net import AgentNet
 from sovrin.client.client import Client
-
-
-Identifier = str
-
-
-class SyncedKey:
-    def __init__(self, verkey=None, last_synced=None, seqNo=None):
-
-        # None indicates the identifier is a cryptonym
-        self.verkey = verkey
-
-        # timestamp for when the ledger was last checked for key replacement or
-        # revocation
-        self.last_synced = last_synced
-
-        # seqence number of the latest key management transaction for this
-        # identifier
-        self.seqNo = seqNo
+from sovrin.common.identity import Identity
 
 
 class Agent(Motor, AgentNet):
@@ -33,7 +17,7 @@ class Agent(Motor, AgentNet):
         self.client = client
 
         # known identifiers of this agent's owner
-        self.ownerIdentifiers = {}  # type: Dict[Identifier, SyncedKey]
+        self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
 
     def name(self):
         pass

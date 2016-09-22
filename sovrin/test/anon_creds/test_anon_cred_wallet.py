@@ -1,6 +1,7 @@
 import sovrin.anon_creds.cred_def as cred_def
 import sovrin.anon_creds.issuer as issuer
-from sovrin.client.wallet import Wallet, CredDefSk, CredDefKey
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.client.wallet.cred_def import CredDefSk, CredDefKey
 
 
 def testCredDefSecretKey(tdir):

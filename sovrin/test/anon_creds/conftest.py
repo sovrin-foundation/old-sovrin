@@ -3,14 +3,13 @@ import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa
-from plenum.common.txn import TXN_TYPE, DATA, USER, NAME, VERSION, TYPE, IP, \
-    PORT, KEYS
-from sovrin.client.wallet import Wallet, CredDef, CredDefKey
+from plenum.common.txn import USER, NAME, VERSION, TYPE, IP, PORT, KEYS
+from sovrin.client.wallet.cred_def import CredDef
+from sovrin.client.wallet.cred_def import CredDefKey
+from sovrin.client.wallet.wallet import Wallet
 
 from sovrin.common.util import getConfig
 from sovrin.test.helper import createNym
-from sovrin.common.txn import CRED_DEF
-from sovrin.test.helper import submitAndCheck
 
 import sovrin.anon_creds.cred_def as CredDefModule
 

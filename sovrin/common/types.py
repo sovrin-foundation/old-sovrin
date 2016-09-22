@@ -1,5 +1,5 @@
-from hashlib import sha256
 from copy import deepcopy
+from hashlib import sha256
 
 from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH
 from plenum.common.types import Request as PRequest, OPERATION
@@ -20,3 +20,5 @@ class Request(PRequest):
             op[keyName] = sha256(op[keyName].encode()).hexdigest()
             return d
         return super().getSigningState()
+
+

@@ -2,39 +2,35 @@ import ast
 import datetime
 import json
 import os
-from typing import Dict
-
 from hashlib import sha256
 
-from plenum.common.txn_util import createGenesisTxnFile
-from sovrin.client.link_invitation import LinkInvitation
-from sovrin.common.util import getConfig
-
-
-from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
-    ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
-from sovrin.anon_creds.cred_def import CredDef
-from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
-from sovrin.anon_creds.proof_builder import ProofBuilder
-from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
-from sovrin.anon_creds.cred_def import SerFmt
-
-from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
+from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
-from plenum.client.signer import Signer, SimpleSigner
+from plenum.client.signer import SimpleSigner
 from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS
+from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, cleanSeed, getCryptonym
-
+from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
+    ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
+from sovrin.anon_creds.cred_def import CredDef
+from sovrin.anon_creds.cred_def import SerFmt
+from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
+from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
+from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
-from sovrin.client.wallet import Wallet
+from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF, \
     getTxnOrderedFields, ENDPOINT
+from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
 """
@@ -236,12 +232,8 @@ class SovrinCli(PlenumCli):
         return role
 
     def _getNym(self, nym):
-        op = {
-            TARGET_NYM: nym,
-            TXN_TYPE: GET_NYM,
-        }
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        req = self.activeWallet.getNymRequest(nym=nym)
+        self.activeClient.submitReqs(req)
         self.print("Getting nym {}".format(nym))
 
         def getNymReply(reply, err):
@@ -252,13 +244,10 @@ class SovrinCli(PlenumCli):
                                     req.reqId, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
-        op = {
-            TARGET_NYM: nym,
-            TXN_TYPE: NYM,
-            ROLE: role
-        }
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        idy = Identity(nym)
+        self.activeWallet.addSponsoredIdentity(idy)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
         printStr = "Adding nym {}".format(nym)
 
         if other_client_name:
@@ -273,32 +262,31 @@ class SovrinCli(PlenumCli):
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
-        op = {
-            TXN_TYPE: ATTRIB,
-            TARGET_NYM: nym
-        }
-        data = None
+        assert int(bool(raw)) + int(bool(enc)) + int(bool(hsh)) == 1
         if raw:
-            op[RAW] = raw
+            l = LedgerStore.RAW
             data = raw
         elif enc:
-            op[ENC] = enc
+            l = LedgerStore.ENC
             data = enc
         elif hsh:
-            op[HASH] = hsh
+            l = LedgerStore.HASH
             data = hsh
+        else:
+            raise RuntimeError('One of raw, enc, or hash are required.')
 
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        attrib = Attribute('some name', data, self.activeWallet.defaultId)
+        if nym != self.activeWallet.defaultId:
+            attrib.dest = nym
+        self.activeWallet.addAttribute(attrib)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
         self.print("Adding attributes {} for {}".
                    format(data, nym), Token.BoldBlue)
 
-        def out(reply, error):
-            self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
-                       Token.BoldBlue)
-
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.activeClient, out)
+                                    req.reqId, self.activeClient)
+        raise NotImplementedError("Need to test by seeing that wallet updates")
 
     @staticmethod
     def _buildCredDef(matchedVars):

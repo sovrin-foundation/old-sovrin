@@ -1,184 +1,55 @@
 import json
-from _sha256 import sha256
 from collections import deque
-
-from copy import deepcopy
-from enum import unique, IntEnum
-from typing import Any, Dict, Union, TypeVar
+from typing import Dict
 from typing import Optional
-
-from collections import OrderedDict
-from typing import Tuple
 
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
-from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE
-from plenum.common.types import Identifier, f
-from sovrin.client.link_invitation import LinkInvitation
+from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
+    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE
+from plenum.common.types import Identifier
+from sovrin.client.wallet.attribute import Attribute, AttributeKey
+from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
+from sovrin.client.wallet.credential import Credential
+from sovrin.client.wallet.link import Link
+from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
+    GET_NYM, SPONSOR
+from sovrin.common.identity import Identity
 from sovrin.common.types import Request
-from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF
 
 ENCODING = "utf-8"
 
-Cryptonym = str
 
-
-@unique
-class LedgerStore(IntEnum):
+class Sponsoring:
     """
-    How to store an attribute on the distributed ledger.
-
-    1. DONT: don't store on public ledger
-    2. HASH: store just a hash
-    3. ENC: store encrypted
-    4. RAW: store in plain text
+    Mixin to add sponsoring behaviors to a Wallet
     """
-    DONT = 1
-    HASH = 2
-    ENC = 3
-    RAW = 4
+    def __init__(self):
+        self._sponsored = {}  # type: Dict[Identifier, Identity]
 
-    @property
-    def isWriting(self) -> bool:
-        """
-        Return whether this transaction needs to be written
-        """
-        return self != self.DONT
-
-
-class AttributeKey:
-    def __init__(self,
-                 name: str,
-                 origin: Identifier,
-                 dest: Optional[Identifier]=None):
-        self.name = name
-        self.origin = origin
-        self.dest = dest
-
-    def key(self):
-        return self.name, self.origin, self.dest
-
-Value = TypeVar('Value', str, dict)
+    def addSponsoredIdentity(self, idy: Identity):
+        assert isinstance(self, Wallet)
+        if idy.role and idy.role not in (SPONSOR, STEWARD):
+            raise AttributeError("invalid role: {}".format(idy.role))
+        if idy.identifier in self._sponsored:
+            raise RuntimeError("identifier already added")
+        self._sponsored[idy.identifier] = idy
+        req = idy.ledgerRequest()
+        if req:
+            if not req.identifier:
+                req.identifier = self.defaultId
+            self._pending.appendleft((req, idy.identifier))
+        return len(self._pending)
 
 
-class Attribute(AttributeKey):
-    # TODO we want to store a history of the attribute changes
-    def __init__(self,
-                 name: str,  # local human friendly name
-                 value: Value,
-                 origin: Identifier,  # authoring attribute
-                 dest: Optional[Identifier]=None,  # target
-                 ledgerStore: LedgerStore=LedgerStore.DONT,
-                 encKey: Optional[str]=None,  # encryption key
-                 seqNo: Optional[int]=None):  # ledger sequence number
-        super().__init__(name, origin, dest)
-        self.value = value
-        self.ledgerStore = ledgerStore
-        self.encKey = encKey
-        self.seqNo = seqNo
-
-    def _op(self):
-        op = {
-            TXN_TYPE: ATTRIB
-        }
-        if self.dest:
-            op[TARGET_NYM] = self.dest
-        if self.ledgerStore == LedgerStore.RAW:
-            op[RAW] = self.value
-        elif self.ledgerStore == LedgerStore.ENC:
-            raise NotImplementedError
-        elif self.ledgerStore == LedgerStore.HASH:
-            raise NotImplementedError
-        elif self.ledgerStore == LedgerStore.DONT:
-            raise RuntimeError("This attribute cannot be stored externally")
-        else:
-            raise RuntimeError("Unknown ledgerStore: {}".format(self.ledgerStore))
-        return op
-
-    def ledgerRequest(self):
-        """
-        Generates a Request object to be submitted to the ledger.
-        :return: a Request to be submitted, or None if it shouldn't be written
-        """
-        if self.ledgerStore.isWriting and not self.seqNo:
-            assert self.origin is not None
-            return Request(identifier=self.origin,
-                           operation=self._op())
-
-
-class CredDefKey:
-    def __init__(self, name: str, version: str, origin: Optional[Identifier]=None):
-        self.name = name
-        self.version = version
-        self.origin = origin    # author of the credential definition
-
-    def key(self):
-        return self.name, self.version, self.origin
-
-
-class CredDef(CredDefKey):
-    def __init__(self, name: str, version: str, origin: Optional[Identifier],
-                 typ: str, ip: str,
-                 port: int, keys: Dict,
-                 seqNo: Optional[int] = None):
-        super().__init__(name, version, origin)
-        self.typ = typ
-        self.ip = ip
-        self.port = port
-        self.keys = keys
-        self.seqNo = seqNo
-
-    @property
-    def request(self):
-        if not self.seqNo:
-            assert self.origin is not None
-            op = {
-                TXN_TYPE: CRED_DEF,
-                DATA: {
-                    NAME: self.name,
-                    VERSION: self.version,
-                    IP: self.ip,
-                    PORT: self.port,
-                    KEYS: self.keys,
-                }
-            }
-            return Request(identifier=self.origin,
-                           operation=op)
-
-
-class CredDefSk(CredDefKey):
-    def __init__(self,
-                 name: str,
-                 version: str,
-                 secretKey: str,
-                 dest: Optional[str]=None):
-        super().__init__(name, version, dest)
-        self.secretKey = secretKey
-
-
-class Credential:
-    def __init__(self, name: str, data: Dict):
-        self.name = name
-        self.data = data
-
-    def key(self):
-        return self.name
-
-
-class Link:
-    def __init__(self, name, value):
-        self.name = name
-
-    def key(self):
-        return self.name
-
-
-class Wallet(PWallet):
+class Wallet(PWallet, Sponsoring):
     clientNotPresentMsg = "The wallet does not have a client associated with it"
 
     def __init__(self, name: str):
         PWallet.__init__(self, name)
+        Sponsoring.__init__(self)
+
         self._attributes = {}  # type: Dict[(str, Identifier, Optional[Identifier]), Attribute]
         self._credDefs = {}  # type: Dict[(str, str, str), CredDef]
         self._credDefSks = {}  # type: Dict[(str, str, str), CredDefSk]
@@ -186,7 +57,7 @@ class Wallet(PWallet):
         self._credMasterSecret = None
         self._links = {}  # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        self._linkInvitations = {}  # type: Dict[str, dict]
+        self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of links
 
         # transactions not yet submitted
         self._pending = deque()  # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
@@ -199,6 +70,9 @@ class Wallet(PWallet):
             GET_ATTR: self._getAttrReply,
             CRED_DEF: self._credDefReply,
             GET_CRED_DEF: self._getCredDefReply,
+            NYM: self._nymReply,
+            GET_NYM: self._getNymReply,
+            GET_TXNS: self._getTxnsReply
         }
 
     # DEPR
@@ -354,13 +228,20 @@ class Wallet(PWallet):
             requests.append(self.signOp(op, identifier=identifier))
         return requests
 
+    # def getNymRequest(self, nym: IDENTIFIER, requester: Identifier=None):
+    #     op = {
+    #         TARGET_NYM: nym,
+    #         TXN_TYPE: GET_NYM,
+    #     }
+    #     return self.signOp(op, requester)
+
     def preparePending(self):
         new = {}
         while self._pending:
-            req, attrKey = self._pending.pop()
+            req, key = self._pending.pop()
 
             sreq = self.signRequest(req)
-            new[req.identifier, req.reqId] = sreq, attrKey
+            new[req.identifier, req.reqId] = sreq, key
         self._prepared.update(new)
         return [req for req, _ in new.values()]
 
@@ -378,8 +259,7 @@ class Wallet(PWallet):
         if typ and typ in self.replyHandler:
             self.replyHandler[typ](result, preparedReq)
         else:
-            print("Not implemented handler for {}".format(typ))
-            # raise NotImplementedError
+            raise NotImplementedError('No handler for {}'.format(typ))
 
     def _attribReply(self, result, preparedReq):
         _, attrKey = preparedReq
@@ -403,9 +283,25 @@ class Wallet(PWallet):
         data = json.loads(result.get(DATA))
         keys = json.loads(data[KEYS])
         credDef = CredDef(data[NAME], data[VERSION],
-                               result[TARGET_NYM], data[TYPE],
-                               data[IP], data[PORT], keys)
+                          result[TARGET_NYM], data[TYPE],
+                          data[IP], data[PORT], keys)
         self.addCredDef(credDef)
+
+    def _nymReply(self, result, preparedReq):
+        target = result[TARGET_NYM]
+        idy = self._sponsored.get(target)
+        if idy:
+            idy.seqNo = result[F.seqNo.name]
+        else:
+            raise NotImplementedError
+
+    def _getNymReply(self, result, preparedReq):
+        raise NotImplementedError
+
+    def _getTxnsReply(self, result, preparedReq):
+        # TODO
+        print(result)
+        # for now, just print and move on
 
     def pendRequest(self, req):
         self._pending.appendleft((req, None))

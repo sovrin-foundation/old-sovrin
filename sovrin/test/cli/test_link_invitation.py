@@ -1,14 +1,16 @@
 import json
 
 import pytest
-from plenum.client.signer import SimpleSigner
-from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
+
 from plenum.test.eventually import eventually
 from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
-from sovrin.client.link_invitation import LinkInvitation
-from sovrin.client.wallet import Attribute, LedgerStore, Wallet
-from sovrin.common.txn import USER, ATTRIB, ENDPOINT, SPONSOR
+from sovrin.client.wallet.attribute import Attribute
+from sovrin.client.wallet.attribute import LedgerStore
+from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.txn import USER, ENDPOINT, SPONSOR
 from sovrin.test.cli.helper import ensureConnectedToTestEnv
+from sovrin.test.helper import makeNymRequest, makeAttribRequest, \
 from sovrin.test.cli.conftest import getLinkInvitation
 from sovrin.test.helper import genTestClient, makeNymRequest, makeAttribRequest, \
     makePendingTxnsRequest, createNym, TestClient

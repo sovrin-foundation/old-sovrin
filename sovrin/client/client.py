@@ -11,6 +11,7 @@ import pyorient
 
 from raet.raeting import AutoMode
 
+from plenum.common.error import fault
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
@@ -195,7 +196,10 @@ class Client(PlenumClient):
         # TODO: Use callback here
         if reply:
             for name in self._observers:
-                self._observers[name](name, reqId, frm, result, numReplies)
+                try:
+                    self._observers[name](name, reqId, frm, result, numReplies)
+                except Exception as ex:
+                    logger.error("Observer threw an exception", exc_info=ex)
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
                 self.reqRepStore.setConsensus(reqId)
             if result[TXN_TYPE] == NYM:
@@ -221,10 +225,10 @@ class Client(PlenumClient):
                                 try:
                                     self.graphStore.addAttribTxnToGraph(txn)
                                 except pyorient.PyOrientCommandException as ex:
-                                    logger.error(
+                                    fault(ex,
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
-                                    logger.trace(traceback.format_exc())
+
 
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:

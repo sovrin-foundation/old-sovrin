@@ -7,7 +7,7 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.plugin_helper import loadPlugins
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.plugin.helper import getPluginPath
-from sovrin.client.wallet import Wallet
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
