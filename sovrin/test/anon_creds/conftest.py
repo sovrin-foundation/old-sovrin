@@ -83,7 +83,7 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
     #     addNym(ha, looper, nym, sponsNym, sponsor)
 
     for nym in (iNym, pNym, vNym):
-        createNym(looper, nym, sponsor, sponsorWallet, USER)
+        createNym(looper, nym, sponsor, sponsorWallet)
 
 
 @pytest.fixture(scope="module")
