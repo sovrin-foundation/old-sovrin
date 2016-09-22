@@ -1,4 +1,6 @@
 import json
+
+import datetime
 import operator
 
 from collections import deque
@@ -8,8 +10,8 @@ from typing import Optional
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE
-from plenum.common.types import Identifier
+    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW
+from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
 from sovrin.client.wallet.credential import Credential
@@ -59,7 +61,8 @@ class Wallet(PWallet, Sponsoring):
         self._credMasterSecret = None
         self._links = {}  # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of links
+        self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
+        self.knownIds = {}  # type: Dict[str, Identifier]
 
         # transactions not yet submitted
         self._pending = deque()  # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
@@ -76,40 +79,6 @@ class Wallet(PWallet, Sponsoring):
             GET_NYM: self._getNymReply,
             GET_TXNS: self._getTxnsReply
         }
-
-    # DEPR
-    # def signOp(self, op: Dict, identifier: Identifier=None) -> Request:
-    #     """
-    #     Signs the message if a signer is configured
-    #
-    #     :param identifier: signing identifier; if not supplied the default for
-    #         the wallet is used.
-    #     :param op: Operation to be signed
-    #     :return: a signed Request object
-    #     """
-    #     if op.get(TXN_TYPE) == ATTRIB:
-    #         opCopy = deepcopy(op)
-    #         keyName = {RAW, ENC, HASH}.intersection(set(opCopy.keys())).pop()
-    #         opCopy[keyName] = sha256(opCopy[keyName].encode()).hexdigest()
-    #         req = super().signRequest(Request(operation=opCopy),
-    #                                   identifier=identifier)
-    #         req.operation[keyName] = op[keyName]
-    #         return req
-    #     else:
-    #         return super().signRequest(Request(operation=op),
-    #                                    identifier=identifier)
-
-        # DEPR
-        # if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
-        #     msgCopy = deepcopy(msg)
-        #     keyName = {RAW, ENC, HASH}.intersection(
-        #         set(msgCopy[OPERATION].keys())).pop()
-        #     msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
-        #                                            .encode()).hexdigest()
-        #     msg[f.SIG.nm] = signer.sign(msgCopy)
-        #     return msg
-        # else:
-        #     return super().sign(msg, signer)
 
     @property
     def pendingCount(self):
@@ -139,27 +108,6 @@ class Wallet(PWallet, Sponsoring):
 
     def getAttributesForNym(self, idr: Identifier):
         return [a for a in self._attributes.values() if a.dest == idr]
-
-    # DEPR
-    # def getAllAttributesForNym_DEPRECATED(self, nym, identifier=None):
-    #     # TODO: Does this need to get attributes from the nodes?
-    #     walletAttributes = self.wallet.attributes
-    #     attributes = []
-    #     for attr in walletAttributes:
-    #         if TARGET_NYM in attr and attr[TARGET_NYM] == nym:
-    #             if RAW in attr:
-    #                 attributes.append({attr[NAME]: attr[RAW]})
-    #             elif ENC in attr:
-    #                 attributes.append(self._getDecryptedData(attr[ENC],
-    #                                                          attr[SKEY]))
-    #             elif HASH in attr:
-    #                 attributes.append({attr[NAME]: attr[HASH]})
-    #     return attributes
-
-    # @property
-    # def attributes(self):
-    #     return self._attributes
-    #
 
     def addCredDef(self, credDef: CredDef):
         """
@@ -230,13 +178,6 @@ class Wallet(PWallet, Sponsoring):
             requests.append(self.signOp(op, identifier=identifier))
         return requests
 
-    # def getNymRequest(self, nym: IDENTIFIER, requester: Identifier=None):
-    #     op = {
-    #         TARGET_NYM: nym,
-    #         TXN_TYPE: GET_NYM,
-    #     }
-    #     return self.signOp(op, requester)
-
     def preparePending(self):
         new = {}
         while self._pending:
@@ -246,7 +187,8 @@ class Wallet(PWallet, Sponsoring):
             new[req.identifier, req.reqId] = sreq, key
         self._prepared.update(new)
         # Return request in the order they were submitted
-        return sorted([req for req, _ in new.values()], key=operator.attrgetter("reqId"))
+        return sorted([req for req, _ in new.values()],
+                      key=operator.attrgetter("reqId"))
 
     def handleIncomingReply(self, observer_name, reqId, frm, result, numReplies):
         """
@@ -273,7 +215,9 @@ class Wallet(PWallet, Sponsoring):
         # TODO: Confirm if we need to add the retrieved attribute to the wallet.
         # If yes then change the graph query on node to return the sequence
         # number of the attribute txn too.
-        pass
+        _, attrKey = preparedReq
+        attrib = self.getAttribute(AttributeKey(*attrKey))
+        attrib.seqNo = result[F.seqNo.name]
 
     def _credDefReply(self, result, preparedReq):
         # TODO: Duplicate code from _attribReply, abstract this behavior,
@@ -299,7 +243,15 @@ class Wallet(PWallet, Sponsoring):
             raise NotImplementedError
 
     def _getNymReply(self, result, preparedReq):
-        raise NotImplementedError
+        data = json.loads(result.get(DATA))
+        nym = data.get(TARGET_NYM)
+        idy = self.knownIds.get(nym)
+        if idy:
+            idy.role = data.get(ROLE)
+            idy.sponsor = data.get(f.IDENTIFIER.nm)
+            idy.last_synced = datetime.datetime.utcnow()
+            # TODO: THE GET_NYM reply should contain the sequence number of
+            # the NYM transaction
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO
@@ -321,3 +273,49 @@ class Wallet(PWallet, Sponsoring):
                 li = LinkInvitation.getFromDict(k, liValues)
                 allMatched.append(li)
         return allMatched
+
+    # TODO: Is `requestAttribute` a better name?
+    def makeGetAttributeRequest(self, attrName: str, origin=None, dest=None):
+        # # TODO: How do i move this to Attribute
+        op = {
+            TARGET_NYM: dest,
+            TXN_TYPE: GET_ATTR,
+            RAW: attrName
+        }
+        req = self.signOp(op)
+        return self.prepReq(req)
+
+    def requestAttribute(self, attrib: Attribute, sender):
+        """
+        :param attrib: attribute to add
+        :return: number of pending txns
+        """
+        self._attributes[attrib.key()] = attrib
+        req = attrib.getRequest(sender)
+        if req:
+            return self.prepReq(req)
+
+    def requestIdentity(self, identity: Identity, sender):
+        """
+        :param attrib: attribute to add
+        :return: number of pending txns
+        """
+        self.knownIds[identity.identifier] = identity
+        req = identity.getRequest(sender)
+        if req:
+            return self.prepReq(req)
+
+    def requestCredDef(self, credefKey: CredDefKey, sender):
+        """
+        :param attrib: attribute to add
+        :return: number of pending txns
+        """
+        credDef = CredDef(*credefKey.key())
+        self._credDefs[credefKey.key()] = credDef
+        req = credDef.getRequest(sender)
+        if req:
+            return self.prepReq(req)
+
+    def prepReq(self, req):
+        self.pendRequest(req)
+        return self.preparePending()[0]

@@ -1,29 +1,17 @@
 import pytest
-
-from plenum.client.signer import SimpleSigner
+import sovrin.anon_creds.cred_def as CredDefModule
+from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa
-from plenum.common.txn import USER, NAME, VERSION, TYPE, IP, PORT, KEYS
 from sovrin.client.wallet.cred_def import CredDef
 from sovrin.client.wallet.cred_def import CredDefKey
-from sovrin.client.wallet.wallet import Wallet
-
 from sovrin.common.util import getConfig
-from sovrin.test.helper import createNym
-
-import sovrin.anon_creds.cred_def as CredDefModule
+from sovrin.test.helper import createNym, _newWallet
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
 
 config = getConfig()
-
-
-def _newWallet():
-    signer = SimpleSigner()
-    w = Wallet(signer.identifier)
-    w.addSigner(signer=signer)
-    return w
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +61,6 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
     """
     Creating nyms for issuer, prover and verifier on Sovrin.
     """
-    sponsNym = sponsorWallet.defaultId
     iNym = issuerWallet.defaultId
     pNym = proverWallet.defaultId
     vNym = verifierWallet.defaultId

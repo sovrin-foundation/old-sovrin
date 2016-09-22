@@ -1,8 +1,9 @@
 from typing import Optional, Dict
 
-from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, IP, PORT, KEYS
+from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, IP, PORT, KEYS, \
+    TARGET_NYM, RAW
 from plenum.common.types import Identifier
-from sovrin.common.txn import CRED_DEF
+from sovrin.common.txn import CRED_DEF, GET_CRED_DEF
 from sovrin.common.types import Request
 
 
@@ -17,9 +18,9 @@ class CredDefKey:
 
 
 class CredDef(CredDefKey):
-    def __init__(self, name: str, version: str, origin: Optional[Identifier],
-                 typ: str, ip: str,
-                 port: int, keys: Dict,
+    def __init__(self, name: str, version: str, origin: Optional[Identifier]=None,
+                 typ: str=None, ip: str=None,
+                 port: int=None, keys: Dict=None,
                  seqNo: Optional[int] = None):
         super().__init__(name, version, origin)
         self.typ = typ
@@ -42,8 +43,22 @@ class CredDef(CredDefKey):
                     KEYS: self.keys,
                 }
             }
-            return Request(identifier=self.origin,
-                           operation=op)
+            return Request(identifier=self.origin, operation=op)
+
+    def _opForGet(self):
+        op = {
+            TARGET_NYM: self.origin,
+            TXN_TYPE: GET_CRED_DEF,
+            DATA: {
+                NAME: self.name,
+                VERSION: self.version,
+            }
+        }
+        return op
+
+    def getRequest(self, requestAuthor: Identifier):
+        if not self.seqNo:
+            return Request(identifier=requestAuthor, operation=self._opForGet())
 
 
 class CredDefSk(CredDefKey):

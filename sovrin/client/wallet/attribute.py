@@ -1,10 +1,10 @@
 from enum import unique, IntEnum
 from typing import Optional, TypeVar
 
-from plenum.common.txn import TXN_TYPE, TARGET_NYM, RAW
+from plenum.common.txn import TXN_TYPE, TARGET_NYM, RAW, ORIGIN
 from plenum.common.types import Identifier
 from sovrin.common.generates_request import GeneratesRequest
-from sovrin.common.txn import ATTRIB
+from sovrin.common.txn import ATTRIB, GET_ATTR
 from sovrin.common.types import Request
 
 Value = TypeVar('Value', str, dict)
@@ -50,8 +50,8 @@ class Attribute(AttributeKey, GeneratesRequest):
     # TODO we want to store a history of the attribute changes
     def __init__(self,
                  name: str,  # local human friendly name
-                 value: Value,
-                 origin: Identifier,  # authoring attribute
+                 value: Value=None,     # None when we gt the attribute
+                 origin: Identifier=None,  # authoring of the attribute
                  dest: Optional[Identifier]=None,  # target
                  ledgerStore: LedgerStore=LedgerStore.DONT,
                  encKey: Optional[str]=None,  # encryption key
@@ -86,3 +86,17 @@ class Attribute(AttributeKey, GeneratesRequest):
             assert self.origin is not None
             return Request(identifier=self.origin,
                            operation=self._op())
+
+    def _opForGet(self):
+        op = {
+            TARGET_NYM: self.dest,
+            TXN_TYPE: GET_ATTR,
+            RAW: self.name
+        }
+        if self.origin:
+            op[ORIGIN] = self.origin
+        return op
+
+    def getRequest(self, requestAuthor: Identifier):
+        if not self.seqNo:
+            return Request(identifier=requestAuthor, operation=self._opForGet())

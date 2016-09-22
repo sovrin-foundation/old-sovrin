@@ -44,7 +44,6 @@ def stewardWallet():
     seed = b'is a pit   seed, or somepin else'
     wallet.addSigner(seed=seed)
     assert wallet.defaultId == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
-    # assert signer.verstr == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
     return wallet
 
 

@@ -527,3 +527,10 @@ def makeAttribRequest(client, wallet, attrib):
 class TestGraphStorage:
     def __init__(self):
         pass
+
+
+def _newWallet(name=None):
+    signer = SimpleSigner()
+    w = Wallet(name or signer.identifier)
+    w.addSigner(signer=signer)
+    return w

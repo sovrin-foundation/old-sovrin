@@ -1,7 +1,7 @@
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, STEWARD
 from plenum.common.types import Identifier
 from sovrin.common.generates_request import GeneratesRequest
-from sovrin.common.txn import SPONSOR
+from sovrin.common.txn import SPONSOR, GET_NYM
 from sovrin.common.types import Request
 
 
@@ -46,3 +46,13 @@ class Identity(GeneratesRequest):
         if not self.seqNo:
             assert self.identifier is not None
             return Request(identifier=self.sponsor, operation=self._op())
+
+    def _opForGet(self):
+        return {
+            TARGET_NYM: self.identifier,
+            TXN_TYPE: GET_NYM,
+        }
+
+    def getRequest(self, requestAuthor: Identifier):
+        if not self.seqNo:
+            return Request(identifier=requestAuthor, operation=self._opForGet())

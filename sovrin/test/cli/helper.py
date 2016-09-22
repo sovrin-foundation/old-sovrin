@@ -1,3 +1,5 @@
+import json
+
 import os
 from plenum.test.cli.test_cli_client_port import initDirWithGenesisTxns
 from plenum.test.eventually import eventually
@@ -64,10 +66,12 @@ def ensureConnectedToTestEnv(cli):
             eventually(checkConnectedToEnv, cli, retryWait=1, timeout=10))
 
 
-def ensureNymAdded(cli, nym, role=USER):
+def ensureNymAdded(cli, nym, role=None):
     ensureConnectedToTestEnv(cli)
-    cli.enterCmd("send NYM {dest}={nym} {ROLE}={role}".format(
-        dest=TARGET_NYM, nym=nym, ROLE=ROLE, role=role))
+    cmd = "send NYM {dest}={nym}".format(dest=TARGET_NYM, nym=nym)
+    if role:
+        cmd += " {ROLE}={role}".format(ROLE=ROLE, role=role)
+    cli.enterCmd(cmd)
     cli.looper.run(
         eventually(chkNymAddedOutput, cli, nym, retryWait=1, timeout=10))
 
@@ -76,7 +80,8 @@ def ensureNymAdded(cli, nym, role=USER):
 
     cli.enterCmd('send ATTRIB {dest}={nym} raw={raw}'.
                  format(dest=TARGET_NYM, nym=nym,
-                        raw='{\"attrName\":\"attrValue\"}'))
+                        # raw='{\"attrName\":\"attrValue\"}'))
+                        raw=json.dumps({"attrName":"attrValue"})))
     cli.looper.run(eventually(checkAddAttr, cli, retryWait=1, timeout=10))
 
 

@@ -7,14 +7,6 @@ from ioflo.aid.consoling import Console
 from functools import partial
 
 
-# TODO: Make sure next 3 imports are not needed
-
-import sovrin.anon_creds.issuer as Issuer
-# from sovrin.anon_creds.proof_builder import ProofBuilder
-import sovrin.anon_creds.proof_builder as proof_builder
-# from sovrin.anon_creds.verifier import Verifier
-import sovrin.anon_creds.verifier as Verifier
-
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
 from plenum.common.txn import DATA, TXN_TYPE

@@ -47,7 +47,8 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
     test_modules_to_reload = [
         "sovrin.test.helper", "sovrin.test.cli.helper",
         "sovrin.test.anon_creds.conftest",
-        "sovrin.test.anon_creds.test_anon_creds"
+        "sovrin.test.anon_creds.test_anon_creds",
+        # "sovrin.test.anon_creds.anon_creds_demo"
     ]
 
     if reloadTestModules:

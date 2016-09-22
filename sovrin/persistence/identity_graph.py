@@ -488,8 +488,8 @@ class IdentityGraph(OrientDbGraphStore):
                               to=txn.get(TARGET_NYM))
             self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsAttribute, txn)
         except pyorient.PyOrientCommandException as ex:
-            logger.error(
-                "An exception was raised while adding attribute: {}".format(ex))
+            fault(ex, "An exception was raised while adding attribute: {}".
+                  format(ex))
 
     def addCredDefTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)

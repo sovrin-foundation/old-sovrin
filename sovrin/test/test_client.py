@@ -69,15 +69,16 @@ def addAttributeAndCheck(looper, client, wallet, attrib):
     reqs = wallet.preparePending()
     client.submitReqs(*reqs)
 
-    def checkWalletForTxns():
+    def chk():
         assert wallet.getAttribute(attrib).seqNo is not None
 
-    looper.run(eventually(checkWalletForTxns, retryWait=1, timeout=15))
+    looper.run(eventually(chk, retryWait=1, timeout=15))
     return wallet.getAttribute(attrib).seqNo
 
 
 @pytest.fixture(scope="module")
-def addedRawAttribute(userWalletA: Wallet, sponsor: Client, sponsorWallet: Wallet,
+def addedRawAttribute(userWalletA: Wallet, sponsor: Client,
+                      sponsorWallet: Wallet,
                       attributeData, looper):
     attrib = Attribute(name='test attribute',
                        origin=sponsorWallet.defaultId,
@@ -134,8 +135,6 @@ def nonSponsor(looper, nodeSet, tdir):
     w = Wallet(c.name)
     w.addSigner(signer=signer)
     c.registerObserver(w.handleIncomingReply)
-    # for node in nodeSet:
-    #     node.whitelistClient(c.name)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
     return c, w
@@ -146,8 +145,6 @@ def anotherSponsor(genned, steward, stewardWallet, tdir, looper):
     sseed = b'this is 1 secret sponsor seed...'
     signer = SimpleSigner(seed=sseed)
     c, _ = genTestClient(genned, tmpdir=tdir)
-    # for node in genned:
-    #     node.whitelistClient(c.name)
     w = Wallet(c.name)
     w.addSigner(signer=signer)
     c.registerObserver(w.handleIncomingReply)
@@ -198,8 +195,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nonSponsor):
 
     op = {
         TARGET_NYM: userNym,
-        TXN_TYPE: NYM,
-        # ROLE: USER# DEPR
+        TXN_TYPE: NYM
     }
 
     submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId,
@@ -233,29 +229,6 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
                           req.reqId,
                           "is already added",
                           retryWait=1, timeout=15))
-
-    # opA = {
-    #     TARGET_NYM: usigner.verstr,
-    #     TXN_TYPE: NYM
-    # }
-    # opB = opA
-    # sponsorNym = sponsorWallet.defaultId
-    # reqA = sponsorWallet.signOp(opA)
-    # reqB = sponsorWallet.signOp(opB)
-    # sponsorWallet.pendRequest(reqA)
-    # sponsorWallet.pendRequest(reqB)
-    # sponsor.submitReqs(reqA, reqB)
-
-    # DEPR
-    # sponsor.submit(opA, opB, identifier=sponsorNym)
-    # try:
-    #     submitAndCheck(looper, sponsor, sponsorWallet, opA,
-    #                    identifier=sponsorNym)
-    #     submitAndCheckNacks(looper, sponsor, sponsorWallet, opB,
-    #                         identifier=sponsorNym)
-    # except Exception as ex:
-    #     pass
-
     count = 0
     for name, node in genned.nodes.items():
         txns = node.domainLedger.getAllTxn()
@@ -304,12 +277,6 @@ def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
 @pytest.fixture(scope="module")
 def checkAddAttribute(userWalletA, sponsor, sponsorWallet, attributeData,
                       addedRawAttribute, looper):
-    # DEPR
-    # addAttribute(looper=looper,
-    #              sponsor=sponsor,
-    #              sponsorWallet=sponsorWallet,
-    #              userIdA=userWalletA.defaultId,
-    #              attributeData=attributeData)
     getAttribute(looper=looper,
                  sponsor=sponsor,
                  sponsorWallet=sponsorWallet,
@@ -353,13 +320,6 @@ def testNonSponsorCannotAddAttributeForUser(genned, nonSponsor, userIdA,
                           client,
                           reqs[0].reqId,
                           "InvalidIdentifier", retryWait=1, timeout=15))
-    # op = {
-    #     TARGET_NYM: userIdA,
-    #     TXN_TYPE: ATTRIB,
-    #     RAW: attributeData
-    # }
-    # submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId,
-    #                     contains="InvalidIdentifier")
 
 
 def testOnlyUsersSponsorCanAddAttribute(genned, looper,
@@ -376,13 +336,6 @@ def testOnlyUsersSponsorCanAddAttribute(genned, looper,
                           client,
                           reqs[0].reqId,
                           retryWait=1, timeout=15))
-    # op = {
-    #     TARGET_NYM: userIdA,
-    #     TXN_TYPE: ATTRIB,
-    #     RAW: attributeData
-    # }
-    #
-    # submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId)
 
 
 def testStewardCannotAddUsersAttribute(genned, looper, steward,
@@ -397,14 +350,6 @@ def testStewardCannotAddUsersAttribute(genned, looper, steward,
                           steward,
                           reqs[0].reqId,
                           retryWait=1, timeout=15))
-    # op = {
-    #     TARGET_NYM: userIdA,
-    #     TXN_TYPE: ATTRIB,
-    #     RAW: attributeData
-    # }
-    #
-    # submitAndCheckNacks(looper, steward, stewardWallet, op,
-    #                     identifier=stewardWallet.defaultId)
 
 
 @pytest.mark.skipif(True, reason="Attribute encryption is done in client")
@@ -446,6 +391,8 @@ def testGetAttribute(genned, addedSponsor, sponsorWallet: Wallet, sponsor,
            [attributeData, ]
 
 
+# TODO: Ask Jason, if getting the latest attribute makes sense since in case
+# of encrypted and hashed attributes, there is no name.
 def testLatestAttrIsReceived(genned, addedSponsor, sponsorWallet, looper,
                              sponsor, userIdA):
 
@@ -456,13 +403,6 @@ def testLatestAttrIsReceived(genned, addedSponsor, sponsorWallet, looper,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, sponsor, sponsorWallet, attrib)
-    # op = {
-    #     TARGET_NYM: userIdA,
-    #     TXN_TYPE: ATTRIB,
-    #     RAW: json.dumps(attr1)
-    # }
-    # submitAndCheck(looper, sponsor, sponsorWallet, op,
-    #                identifier=sponsorWallet.defaultId)
     assert sponsorWallet.getAttributesForNym(userIdA)[0].value == attr1
 
     attr2 = json.dumps({'name': 'Luigi'})
@@ -472,10 +412,7 @@ def testLatestAttrIsReceived(genned, addedSponsor, sponsorWallet, looper,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, sponsor, sponsorWallet, attrib)
-    # op[RAW] = json.dumps(attr2)
-    #
-    # submitAndCheck(looper, sponsor, sponsorWallet, op,
-    #                identifier=sponsorWallet.defaultId)
+    logger.debug([a.value for a in sponsorWallet.getAttributesForNym(userIdA)])
     assert sponsorWallet.getAttributesForNym(userIdA)[1].value == attr2
 
 

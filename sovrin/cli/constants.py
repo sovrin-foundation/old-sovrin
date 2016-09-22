@@ -18,8 +18,8 @@ CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(
 
 # TODO we can genericize the other TXN types in the same way
 TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=) " \
-          "\s* (?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role_key>role=) " \
-          "\s* (?P<role>USER|SPONSOR|STEWARD))"
+          "\s* (?P<dest_id>[A-Za-z0-9+=/]*) (\s+ (?P<role_key>role=) " \
+          "\s* (?P<role>USER|SPONSOR|STEWARD))?)"
 SEND_NYM_REG_EX = TXN_NYM.format(cmdName='send_nym', cmd='send')
 ADD_GENESIS_NYM_REG_EX = TXN_NYM.format(cmdName='add_genesis',
                                         cmd='add \s+ genesis \s+ transaction')
