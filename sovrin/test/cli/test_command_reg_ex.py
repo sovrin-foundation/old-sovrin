@@ -100,3 +100,17 @@ def testSyncLinkRegEx(grammar):
 
     matchedVars = getMatchedVariables(grammar, 'sync "faber" ')
     assertCliTokens(matchedVars, {"sync_link": "sync", "link_name": '"faber" '})
+
+
+def testAcceptInvitationLinkRegEx(grammar):
+    matchedVars = getMatchedVariables(grammar, "accept invitation faber")
+    assertCliTokens(matchedVars, {"accept_invite": "accept invitation",
+                                  "link_name": "faber"})
+
+    matchedVars = getMatchedVariables(grammar, 'accept invitation "faber"')
+    assertCliTokens(matchedVars, {"accept_invite": "accept invitation",
+                                  "link_name": '"faber"'})
+
+    matchedVars = getMatchedVariables(grammar, 'accept invitation "faber" ')
+    assertCliTokens(matchedVars, {"accept_invite": "accept invitation",
+                                  "link_name": '"faber" '})

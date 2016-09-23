@@ -109,19 +109,23 @@ def fileNotExists():
 
 @pytest.fixture(scope="module")
 def connectedToTest():
-    return ["Connected to test"]
+    return ["Connecting to test"]
 
 
 @pytest.fixture(scope="module")
-def syncWhenNotConnectedStatus(notConnectedStatus):
-    return ["Cannot sync because not connected"] + notConnectedStatus
-
+def syncWhenNotConnectedStatus(connectUsage):
+    return ["Cannot sync because not connected"] + connectUsage
 
 @pytest.fixture(scope="module")
-def notConnectedStatus():
-    return ['Not connected to any environment. Please connect first.',
-            "Usage:",
+def connectUsage():
+    return ["Usage:",
             "  connect (live|test)"]
+
+
+@pytest.fixture(scope="module")
+def notConnectedStatus(connectUsage):
+    return ['Not connected to any environment. Please connect first.'] +\
+            connectUsage
 
 
 @pytest.fixture(scope="module")
