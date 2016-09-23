@@ -1035,14 +1035,44 @@ class SovrinCli(PlenumCli):
     def createFunctionMappings(self):
         from collections import defaultdict
 
+        def promtHelper():
+            self.print("""Changes the prompt to provided principal name
+                       Usage: prompt <principal name>""")
+
+        def principalsHelper():
+            self.print("a person like Alice, an organization like Faber College, or an IoT-style thing")
+
+        def loadHelper():
+            self.print("""Creates the link, generates Identifier and signing keys
+            Usage: load <invitation filename>""")
+
         def defaultHelper():
             self.printHelp()
 
         def showHelper():
             self.print("""Shows the info about the link invitation
             Usage:  show <invitation filename>""")
+
+        def showLinkHelper():
+            self.print("""Shows link info in case of one matching link, otherwise shows all the matching links
+                      Usage: show link <name>""")
+
+        def connectHelper():
+            self.print("""Let's you connect to the respective environment
+                     Usage:  connect <test> |<live>""")
+
+        def syncHelper():
+            self.print("""Synchronizes the link between the endpoints
+                     Usage:  sync <link name>""")
+
         mappings = {
-                'show': showHelper
+            'show': showHelper,
+            'prompt' : promtHelper,
+            'principals' : principalsHelper,
+            'load' :      loadHelper,
+            'show link' : showLinkHelper,
+            'connect': connectHelper,
+            'sync'  : syncHelper
         }
 
         return defaultdict(lambda: defaultHelper, **mappings)
