@@ -217,7 +217,9 @@ class Wallet(PWallet, Sponsoring):
         # number of the attribute txn too.
         _, attrKey = preparedReq
         attrib = self.getAttribute(AttributeKey(*attrKey))
-        attrib.seqNo = result[F.seqNo.name]
+        # TODO: THE GET_ATTR reply should contain the sequence number of
+        # the ATTRIB transaction
+        # attrib.seqNo = result[F.seqNo.name]
 
     def _credDefReply(self, result, preparedReq):
         # TODO: Duplicate code from _attribReply, abstract this behavior,
@@ -258,8 +260,8 @@ class Wallet(PWallet, Sponsoring):
         print(result)
         # for now, just print and move on
 
-    def pendRequest(self, req):
-        self._pending.appendleft((req, None))
+    def pendRequest(self, req, key=None):
+        self._pending.appendleft((req, key))
 
     def addLinkInvitation(self, linkInvitation):
         self._linkInvitations[linkInvitation.name] = linkInvitation.\
@@ -293,7 +295,7 @@ class Wallet(PWallet, Sponsoring):
         self._attributes[attrib.key()] = attrib
         req = attrib.getRequest(sender)
         if req:
-            return self.prepReq(req)
+            return self.prepReq(req, key=attrib.key())
 
     def requestIdentity(self, identity: Identity, sender):
         """
@@ -316,6 +318,6 @@ class Wallet(PWallet, Sponsoring):
         if req:
             return self.prepReq(req)
 
-    def prepReq(self, req):
-        self.pendRequest(req)
+    def prepReq(self, req, key=None):
+        self.pendRequest(req, key=key)
         return self.preparePending()[0]

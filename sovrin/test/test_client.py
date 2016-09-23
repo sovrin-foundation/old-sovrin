@@ -259,15 +259,13 @@ def checkGetAttr(reqId, sponsor, attrName, attrValue):
 def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
     attrName = list(json.loads(attributeData).keys())[0]
     attrValue = list(json.loads(attributeData).values())[0]
-    op = {
-        TARGET_NYM: userIdA,
-        TXN_TYPE: GET_ATTR,
-        RAW: attrName
-    }
-    req = sponsorWallet.signOp(op)
-    sponsorWallet.pendRequest(req)
-    reqs = sponsorWallet.preparePending()
-    sponsor.submitReqs(*reqs)
+    attrib = Attribute(name="test attribute",
+                       value=None,
+                       dest=userIdA,
+                       ledgerStore=LedgerStore.RAW)
+    req = sponsorWallet.requestAttribute(attrib,
+                                         sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
     # req = sponsor.submit(op, identifier=sponsorSigner.verstr)[0]
 
     looper.run(eventually(checkGetAttr, req.reqId, sponsor,
