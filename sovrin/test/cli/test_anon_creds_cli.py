@@ -59,6 +59,7 @@ def byuCLI(CliBuilder):
 def philCLI(CliBuilder):
     yield from CliBuilder("phil")
 
+
 @pytest.yield_fixture(scope="module")
 def trusteeCLI(CliBuilder):
     yield from CliBuilder("trustee")
@@ -128,7 +129,7 @@ def philConnected(philCreated, philCLI, nodesSetup, nodeNames):
 
 @pytest.fixture(scope="module")
 def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI,
-                     nodesSetup, nodeNames):
+                     nodesSetup):
     ensureNymAdded(trusteeCLI, bookStorePubKey, USER)
 
 
@@ -144,17 +145,17 @@ def bookStoreConnected(bookStoreCreated, bookStoreCLI, nodesSetup,
 
 
 @pytest.fixture(scope="module")
-def byuCreated(byuPubKey, philCreated, philCLI, nodesSetup, nodeNames):
+def byuCreated(byuPubKey, philCreated, philCLI, nodesSetup):
     ensureNymAdded(philCLI, byuPubKey, SPONSOR)
 
 
 @pytest.fixture(scope="module")
-def tylerCreated(tylerPubKey, byuCreated, byuCLI, nodesSetup, nodeNames):
+def tylerCreated(tylerPubKey, byuCreated, byuCLI, nodesSetup):
     ensureNymAdded(byuCLI, tylerPubKey, USER)
 
 
 @pytest.fixture(scope="module")
-def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, nodesSetup,
+def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI,
                                       byuCLI):
     ensureConnectedToTestEnv(tylerCLI)
     issuerId = byuCLI.activeSigner.verstr
