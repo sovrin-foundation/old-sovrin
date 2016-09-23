@@ -62,5 +62,9 @@ Possible values: "orientdb"|"file"
 ReqReplyStore = "orientdb"
 
 RAETLogLevel = "concise"
+RAETLogLevelCli = "mute"
+RAETLogFilePath = None
+RAETLogFilePathCli = None
+
 
 PluginsToLoad = ["anoncreds"]

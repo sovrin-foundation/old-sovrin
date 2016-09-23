@@ -53,15 +53,6 @@ def attributeData():
     return json.dumps({'name': 'Mario'})
 
 
-# def addAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
-#     op = {
-#         TARGET_NYM: userIdA,
-#         TXN_TYPE: ATTRIB,
-#         RAW: attributeData
-#     }
-#     return submitAndCheck(looper, sponsor, sponsorWallet, op)
-
-
 def addAttributeAndCheck(looper, client, wallet, attrib):
     old = wallet.pendingCount
     pending = wallet.addAttribute(attrib)
@@ -86,27 +77,7 @@ def addedRawAttribute(userWalletA: Wallet, sponsor: Client,
                        dest=userWalletA.defaultId,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, sponsor, sponsorWallet, attrib)
-    # old = sponsorWallet.pendingCount
-    # pending = sponsorWallet.addAttribute(attrib)
-    # assert pending == old + 1
-    # reqs = sponsorWallet.preparePending()
-    # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
-    # sponsor.submitReqs(*reqs)
-
-    # def checkWalletForTxns():
-    #     assert sponsorWallet.getAttribute(attrib).seqNo is not None
-    #
-    # looper.run(eventually(checkWalletForTxns, retryWait=1, timeout=15))
     return attrib
-
-    # def checkWalletUpdated():
-    #     nonlocal txnsAfter
-    #     txnsAfter = sponsor.getTxnsByType(optype)
-    #     logger.debug("old and new txns {} {}".format(txnsBefore, txnsAfter))
-    #     assert len(txnsAfter) > len(txnsBefore)
-    #
-    #
-    # checkSubmitted(looper, sponsor, ATTRIB, txnsBefore):
 
 
 @pytest.fixture(scope="module")
@@ -251,7 +222,6 @@ def checkGetAttr(reqId, sponsor, attrName, attrValue):
     reply, status = sponsor.getReply(reqId)
     assert reply
     data = json.loads(reply.get(DATA))
-    print("reply: {}".format(reply))
     assert status == "CONFIRMED" and \
            (data is not None and data.get(attrName) == attrValue)
 
@@ -259,15 +229,13 @@ def checkGetAttr(reqId, sponsor, attrName, attrValue):
 def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
     attrName = list(json.loads(attributeData).keys())[0]
     attrValue = list(json.loads(attributeData).values())[0]
-    attrib = Attribute(name="test attribute",
+    attrib = Attribute(name=attrName,
                        value=None,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     req = sponsorWallet.requestAttribute(attrib,
                                          sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
-    # req = sponsor.submit(op, identifier=sponsorSigner.verstr)[0]
-
     looper.run(eventually(checkGetAttr, req.reqId, sponsor,
                           attrName, attrValue, retryWait=1, timeout=20))
 
@@ -385,8 +353,7 @@ def testSponsorAddedAttributeCanBeChanged(addedRawAttribute):
 
 def testGetAttribute(genned, addedSponsor, sponsorWallet: Wallet, sponsor,
                      userIdA, addedRawAttribute, attributeData):
-    assert [a.value for a in sponsorWallet.getAttributesForNym(userIdA)] == \
-           [attributeData, ]
+    assert attributeData in [a.value for a in sponsorWallet.getAttributesForNym(userIdA)]
 
 
 # TODO: Ask Jason, if getting the latest attribute makes sense since in case
@@ -395,23 +362,24 @@ def testLatestAttrIsReceived(genned, addedSponsor, sponsorWallet, looper,
                              sponsor, userIdA):
 
     attr1 = json.dumps({'name': 'Mario'})
-    attrib = Attribute(name='test4 attribute',
+    attrib = Attribute(name='name',
                        origin=sponsorWallet.defaultId,
                        value=attr1,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, sponsor, sponsorWallet, attrib)
-    assert sponsorWallet.getAttributesForNym(userIdA)[0].value == attr1
+    assert attr1 in [a.value for a in sponsorWallet.getAttributesForNym(userIdA)]
 
     attr2 = json.dumps({'name': 'Luigi'})
-    attrib = Attribute(name='test5 attribute',
+    attrib = Attribute(name='name',
                        origin=sponsorWallet.defaultId,
                        value=attr2,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, sponsor, sponsorWallet, attrib)
     logger.debug([a.value for a in sponsorWallet.getAttributesForNym(userIdA)])
-    assert sponsorWallet.getAttributesForNym(userIdA)[1].value == attr2
+    assert attr2 in [a.value for a in
+                     sponsorWallet.getAttributesForNym(userIdA)]
 
 
 @pytest.mark.skipif(True, reason="Test not implemented")

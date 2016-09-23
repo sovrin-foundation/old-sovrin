@@ -62,7 +62,7 @@ class Wallet(PWallet, Sponsoring):
         self._links = {}  # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
-        self.knownIds = {}  # type: Dict[str, Identifier]
+        self.knownIds = {}  # type: Dict[str, Identity]
 
         # transactions not yet submitted
         self._pending = deque()  # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]

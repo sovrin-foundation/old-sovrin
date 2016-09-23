@@ -1,7 +1,7 @@
 import ast
 import datetime
 import json
-from typing import Dict
+from typing import Dict, Any
 
 import os
 from hashlib import sha256
@@ -17,6 +17,7 @@ from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS, TYPE, \
     PORT, IP
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, cleanSeed, getCryptonym
+from sovrin.agent.endpoint import Endpoint
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import SerFmt
@@ -80,6 +81,15 @@ class SovrinCli(PlenumCli):
         self.attributeRepo = None   # type: AttrRepo
         self.proofBuilders = {}
         self.verifier = Verifier(randomString())
+        _, port = self.nextAvailableClientAddr()
+        self.endpoint = Endpoint(port, self.handleEndpointMsg)
+
+    def handleEndpointMsg(self, msg):
+        pass
+
+    def sendToEndpoint(self, msg: Any):
+        pass
+
     @property
     def lexers(self):
         lexerNames = [
