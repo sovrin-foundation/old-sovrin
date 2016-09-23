@@ -13,7 +13,7 @@ def faberCLI(CliBuilder):
     yield from CliBuilder("faber")
 
 
-def test(poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
+def test(looper, poolCLI, philCLI, faberCLI, aliceCli, be, do, fileNotExists,
          notConnectedStatus, loadInviteOut, linkNotExists, showUnSyncedLinkOut,
          syncWhenNotConnectedStatus, showSyncedLinkWithoutEndpointOut,
          connectedToTest, syncLinkOutWithoutEndpoint, newKeyringOut,

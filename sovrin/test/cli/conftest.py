@@ -5,16 +5,18 @@ import pytest
 import plenum
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-from sovrin.client.link_invitation import LinkInvitation
+from sovrin.client.wallet.link_invitation import LinkInvitation
 
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
+from plenum.test.cli.conftest import nodeNames
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated
+
 
 config = getConfig()
 

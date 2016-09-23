@@ -158,10 +158,6 @@ def clientAndWallet1(client1Signer, looper, nodeSet, tdir, up):
 
 @pytest.fixture(scope="module")
 def client1(clientAndWallet1, looper):
-    # DEPR
-    # client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
-    # for node in nodeSet:
-    #     node.whitelistClient(client.name)
     client, wallet = clientAndWallet1
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
@@ -193,8 +189,6 @@ def sponsorWallet():
 @pytest.fixture(scope="module")
 def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
     s, _ = genTestClient(genned, tmpdir=tdir)
-    # for node in genned:
-    #     node.whitelistClient(s.name)
     s.registerObserver(sponsorWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
@@ -226,3 +220,14 @@ def userIdA(userWalletA):
 @pytest.fixture(scope="module")
 def userIdB(userWalletB):
     return userWalletB.defaultId
+
+
+@pytest.fixture(scope="module")
+def userClientA(genned, userWalletA, looper, tdir):
+    u, _ = genTestClient(genned, tmpdir=tdir)
+    u.registerObserver(userWalletA.handleIncomingReply)
+    looper.add(u)
+    looper.run(u.ensureConnectedToNodes())
+    makePendingTxnsRequest(u, userWalletA)
+    return u
+

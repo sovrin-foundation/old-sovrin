@@ -312,6 +312,8 @@ class SovrinCli(PlenumCli):
 
         def chk(reply, error):
             assert self.activeWallet.getAttribute(attrib).seqNo is not None
+            self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
+                       Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient, chk)
@@ -816,6 +818,7 @@ class SovrinCli(PlenumCli):
         else:
             if not self.activeEnv:
                 self.print("Cannot sync because not connected. ")
+                self._printNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")

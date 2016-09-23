@@ -454,7 +454,12 @@ def testNonSponsoredNymCanDoGetNym(genned, addedSponsor,
     looper.run(eventually(someClient.hasNym, needle, retryWait=1, timeout=5))
 
 
-def testUserAddAttrsForHerSelf(userSignerA, userSignerAClient, looper,
-                               attributeData):
-    addAttribute(looper, userSignerAClient, userSignerA,
-                 userSignerA, attributeData)
+def testUserAddAttrsForHerSelf(genned, looper, userClientA, userWalletA,
+                               userIdA, attributeData):
+    attr1 = json.dumps({'age': 25})
+    attrib = Attribute(name='test4 attribute',
+                       origin=userIdA,
+                       value=attr1,
+                       dest=userIdA,
+                       ledgerStore=LedgerStore.RAW)
+    addAttributeAndCheck(looper, userClientA, userWalletA, attrib)

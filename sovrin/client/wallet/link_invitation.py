@@ -22,6 +22,7 @@ UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
 LINK_ITEM_PREFIX = '\n\t'
 
+
 class ClaimRequest:
     def __init__(self, name, version):
         self.name = name
