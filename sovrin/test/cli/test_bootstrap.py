@@ -73,14 +73,12 @@ def philKeyCreated(be, do, philCLI):
 
 
 @pytest.fixture(scope="module")
-def faberAddedByPhil(looper, be, do, poolNodesStarted, philKeyCreated,
+def faberAddedByPhil(be, do, poolNodesStarted, philKeyCreated,
                      connectedToTest, nymAddedOut, faberMap):
     philCLI = philKeyCreated
     be(philCLI)
-    do('connect test', within=2,
-       expect=connectedToTest, mapper=faberMap)
-
-    looper.runFor(2)
+    do('connect test',          within=3,
+                                expect=connectedToTest, mapper=faberMap)
 
     do('send NYM dest={target} role=SPONSOR',
        within=2,
@@ -160,27 +158,25 @@ def testSyncLinkNotExists(be, do, aliceWithKeyring, linkNotExists, faberMap):
 
 def testFaberInviteSyncWhenNotConnected(be, do, aliceWithKeyring,
                                         faberInviteLoadedByAlice,
-                                        syncWhenNotConnectedStatus,
+                                        syncWhenNotConnected,
                                         faberMap):
     aliceCLI = aliceWithKeyring
     be(aliceCLI)
-    do('sync {inviter}', expect=syncWhenNotConnectedStatus,
+    do('sync {inviter}', expect=syncWhenNotConnected,
        mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithoutEndpoint(be, do, aliceWithKeyring, faberMap,
                                      faberInviteLoadedByAlice, poolNodesStarted,
-                                     connectedToTest, looper,
+                                     connectedToTest,
                                      syncLinkOutWithoutEndpoint):
     aliceCLI = aliceWithKeyring
     be(aliceCLI)
 
-    do('connect test',                  within=1,
+    do('connect test',                  within=3,
                                         expect=connectedToTest,
                                         mapper=faberMap)
-
-    looper.runFor(2)
 
     do('sync {inviter}',                within=2,
                                         expect=syncLinkOutWithoutEndpoint,
@@ -256,25 +252,26 @@ def testAcceptNotExistsLink(be, do, aliceWithKeyring, linkNotExists, faberMap):
        mapper=faberMap)
 
 
-# def testAcceptUnSyncedInviteWhenNotConnected(be, do, aliceWithKeyring,
+# def testAcceptUnSyncedInviteWhenNotConnected(be, do,
 #                                              faberInviteLoadedByAlice,
-#                                              acceptWhenNotConnectedStatus,
+#                                              acceptWhenNotConnected,
 #                                              faberMap):
 #     aliceCLI = faberInviteLoadedByAlice
 #     be(aliceCLI)
-#     do('accept invitation {inviter}',       expect=acceptWhenNotConnectedStatus,
+#     do('accept invitation {inviter}',       expect=acceptWhenNotConnected,
 #                                             mapper=faberMap)
-
-
+#
+#
 # def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
-#                                           acceptUnSyncedWhenConnectedStatus,
+#                                           acceptUnSyncedWhenConnected,
 #                                           faberMap, connectedToTest,
-#                                           poolNodesStarted, looper):
+#                                           poolNodesStarted):
 #     aliceCLI = faberInviteLoadedByAlice
 #     be(aliceCLI)
-#     do('connect test',                 within=1,
-#                                        expect=connectedToTest,
-#                                        mapper=faberMap)
-#     looper.runFor(4)
-#     do('accept invitation {inviter}', expect=acceptUnSyncedWhenConnectedStatus,
-#        mapper=faberMap)
+#     do('connect test',                  within=3,
+#                                         expect=connectedToTest,
+#                                         mapper=faberMap)
+#
+#     do('accept invitation {inviter}',   within=3,
+#                                         expect=acceptUnSyncedWhenConnected,
+#                                         mapper=faberMap)

@@ -113,14 +113,14 @@ def fileNotExists():
 
 @pytest.fixture(scope="module")
 def connectedToTest():
-    return ["Connecting to test"]
+    return ["Connected to test"]
 
 @pytest.fixture(scope="module")
 def canNotSyncMsg():
     return ["Cannot sync because not connected"]
 
 @pytest.fixture(scope="module")
-def syncWhenNotConnectedStatus(canNotSyncMsg, connectUsage):
+def syncWhenNotConnected(canNotSyncMsg, connectUsage):
     return canNotSyncMsg + connectUsage
 
 
@@ -130,12 +130,12 @@ def canNotAcceptMsg():
 
 
 @pytest.fixture(scope="module")
-def acceptWhenNotConnectedStatus(canNotAcceptMsg, connectUsage):
+def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
     return canNotAcceptMsg + connectUsage
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedWhenConnectedStatus(syncLinkOut, connectUsage):
+def acceptUnSyncedWhenConnected(syncLinkOut, connectUsage):
     return syncLinkOut
 
 

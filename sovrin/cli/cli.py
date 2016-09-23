@@ -1044,6 +1044,7 @@ class SovrinCli(PlenumCli):
                 self.print("Connecting to {}".format(envName))
                 # Prompt has to be changed, so it show the environment too
                 self._setPrompt(self.currPromptText)
+                self.ensureClientConnected()
             return True
 
     def getStatus(self):
@@ -1110,6 +1111,12 @@ class SovrinCli(PlenumCli):
     @staticmethod
     def bootstrapClientKey(client, node, identifier=None):
         pass
+
+    def ensureClientConnected(self):
+        if self._isConnectedToAnyEnv():
+            self.print("Connected to {}".format(self.activeEnv))
+        else:
+            self.looper.loop.call_later(.2, self.ensureClientConnected)
 
     def ensureReqCompleted(self, reqId, client, clbk=None, *args):
         reply, err = client.replyIfConsensus(reqId)

@@ -47,12 +47,6 @@ def aliceConnected(aliceCli, be, do, poolNodesCreated):
 
 
 def addNym(client, wallet, nym, role=USER):
-    # addNym = {
-    #     TARGET_NYM: nym,
-    #     TXN_TYPE: NYM,
-    #     ROLE: USER
-    # }
-    # stewardClient.submit(addNym, identifier=stewardClient.defaultIdentifier)
     return makeNymRequest(client, wallet, nym, role)
 
 
@@ -150,8 +144,6 @@ def testSyncLinkWhenEndpointNotAvailable(faberAdded,
                                          aliceCli,
                                          stewardClientAndWallet):
     li = getLinkInvitation("Faber", aliceCli)
-    # addFaber(looper, stewardClient, li.targetIdentifier)
-    # createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
     aliceCli.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
                           "Endpoint not available",
@@ -169,7 +161,6 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
     endpointValue = "0.0.0.0:0000"
     addFabersEndpoint(looper, client, wallet, li.targetIdentifier,
                       ENDPOINT, endpointValue)
-    # looper.runFor(0.5)
     aliceCli.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
                           "Endpoint received: {}".format(endpointValue),
