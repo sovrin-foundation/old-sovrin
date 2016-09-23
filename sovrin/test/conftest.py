@@ -163,15 +163,6 @@ def client1(clientAndWallet1, looper):
     looper.run(client.ensureConnectedToNodes())
     return client
 
-@pytest.fixture(scope="module")
-def client1(client1Signer, looper, nodeSet, tdir, up):
-    return buildClient(looper, nodeSet, client1Signer, tdir)
-
-
-@pytest.fixture(scope="module")
-def userSignerAClient(looper, nodeSet, userSignerA, tdir):
-    return buildClient(looper, nodeSet, userSignerA, tdir)
-
 
 @pytest.fixture(scope="module")
 def wallet1(clientAndWallet1):
