@@ -20,6 +20,7 @@ LINK_STATUS_ACCEPTED = "Accepted"
 LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
 UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
+LINK_ITEM_PREFIX = '\n\t'
 
 class ClaimRequest:
     def __init__(self, name, version):
@@ -188,6 +189,9 @@ class LinkInvitation:
         if day_diff < 7:
             return str(day_diff) + " days ago"
 
+    def isLinkAccepted(self):
+        return self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED
+
     def getLinkInfoStr(self) -> str:
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = UNKNOWN_WAITING_FOR_SYNC
@@ -199,7 +203,7 @@ class LinkInvitation:
                         targetEndPoint == UNKNOWN_WAITING_FOR_SYNC:
             targetEndPoint = "Not Available"
 
-        if not self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED:
+        if self.isLinkAccepted():
             trustAnchorStatus = '(confirmed)'
             targetVerKey = '<same as target>'
             linkStatus = self.linkStatus
@@ -208,7 +212,11 @@ class LinkInvitation:
         if self.signerVerKey:
             verKey = self.signerVerKey
 
-        fixed = \
+        fixedLinkHeading = "Link "
+        if not self.isLinkAccepted():
+            fixedLinkHeading += "(not yet accepted)"
+
+        fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
             'Identifier: ' + self.signerIdentifier + '\n' \
@@ -222,18 +230,22 @@ class LinkInvitation:
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
-        optional = ""
+
+
+        optionalLinkItems = ""
         if self.claimRequests:
-            optional = 'Claim Requests: '
+            optionalLinkItems = 'Claim Requests: '
             for cr in self.claimRequests:
-                optional += '\n    ' + cr.name
+                optionalLinkItems += '\n    ' + cr.name
 
         if self.availableClaims:
-            optional = 'Available Claims: '
+            optionalLinkItems = 'Available Claims: '
             for ac in self.availableClaims:
-                optional += '\n    ' + ac.name
+                optionalLinkItems += '\n    ' + ac.name
 
         if self.linkLastSyncNo:
-            optional += 'Last sync seq no: ' + self.linkLastSyncNo
+            optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
 
-        return fixed + optional
+        linkItems = fixedLinkItems + optionalLinkItems
+        indentedLinkItems = LINK_ITEM_PREFIX.join(linkItems.splitlines())
+        return fixedLinkHeading + indentedLinkItems

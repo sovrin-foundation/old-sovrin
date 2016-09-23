@@ -765,7 +765,6 @@ class SovrinCli(PlenumCli):
         else:
             if not self.activeEnv:
                 self.print("Cannot sync because not connected. ")
-                self._printNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")
