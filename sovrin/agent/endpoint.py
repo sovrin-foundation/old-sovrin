@@ -14,7 +14,7 @@ class Endpoint(AgentNet, SimpleStack):
                  name: str=None):
         stackParams = {
             "name": name or randomString(8),
-            "ha": HA("0.0.0.0", port),
+            "ha": HA("127.0.0.1", port),
             "main": True,
             "auto": AutoMode.always,
             "mutable": "mutable",

@@ -20,7 +20,7 @@ class Agent(Motor, AgentNet):
         # known identifiers of this agent's owner
         self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
         self.endpoint = Endpoint(port, self.handleEndpointMessage,
-                                 name=self._name)
+                                 name=self._name) if port else None
 
     def name(self):
         pass
@@ -30,10 +30,18 @@ class Agent(Motor, AgentNet):
         if self.get_status() == Status.starting:
             self.status = Status.started
             c += 1
-        c += await self.endpoint.service(limit)
         if self.client:
             c += await self.client.prod(limit)
+        if self.endpoint:
+            c += await self.endpoint.service(limit)
         return c
+
+    def start(self, loop):
+        super().start(loop)
+        if self.client:
+            self.client.start(loop)
+        if self.endpoint:
+            self.endpoint.start()
 
     def _statusChanged(self, old, new):
         pass
