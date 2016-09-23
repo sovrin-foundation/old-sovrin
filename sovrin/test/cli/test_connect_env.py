@@ -3,13 +3,14 @@ from sovrin.test.cli.conftest import notConnectedStatus
 from sovrin.test.cli.helper import checkConnectedToEnv, ensureNodesCreated
 
 
-def testConnectEnv(poolNodesCreated, looper):
+def testConnectEnv(poolNodesCreated, looper, notConnectedStatus):
     poolCLI = poolNodesCreated
+    notConnectedMsgs = notConnectedStatus
     # Done to initialise a wallet.
     poolCLI.enterCmd("new key")
 
     poolCLI.enterCmd("status")
-    for msg in notConnectedStatus():
+    for msg in notConnectedMsgs:
         assert msg in poolCLI.lastCmdOutput
 
     poolCLI.enterCmd("connect dummy")

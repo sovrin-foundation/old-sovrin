@@ -1,25 +1,37 @@
+import json
+
 import pytest
-from plenum.client.signer import SimpleSigner
-from plenum.common.txn import TARGET_NYM, TXN_TYPE, ROLE, NYM, RAW
+
 from plenum.test.eventually import eventually
-from sovrin.common.txn import USER, ATTRIB, ENDPOINT
-from sovrin.test.cli.conftest import getLinkInvitation
+from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
+from sovrin.client.wallet.attribute import Attribute
+from sovrin.client.wallet.attribute import LedgerStore
+from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.txn import USER, ATTRIB, ENDPOINT, SPONSOR
 from sovrin.test.cli.helper import ensureConnectedToTestEnv
-from sovrin.test.helper import genTestClient
+from sovrin.test.cli.conftest import getLinkInvitation
+from sovrin.test.helper import genTestClient, makeNymRequest, makeAttribRequest, \
+    makePendingTxnsRequest, createNym, TestClient
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
+from sovrin.test.test_client import addAttributeAndCheck
 
 
 @pytest.fixture(scope="module")
-def stewardClient(looper, tdirWithDomainTxns, poolTxnStewardData):
-    name, seed = poolTxnStewardData
-    signer = SimpleSigner(seed=seed)
-    stewardClient = genTestClient(signer=signer, tmpdir=tdirWithDomainTxns,
-                                  usePoolLedger=True)
-    looper.add(stewardClient)
-    looper.run(stewardClient.ensureConnectedToNodes())
-    return stewardClient
+def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
+                           poolTxnStewardData):
+    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
+                                              tdirWithDomainTxns,
+                                              clientClass=TestClient,
+                                              walletClass=Wallet)
+    client.registerObserver(wallet.handleIncomingReply)
+
+    looper.add(client)
+    looper.run(client.ensureConnectedToNodes())
+    makePendingTxnsRequest(client, wallet)
+    return client, wallet
 
 
 @pytest.fixture(scope="module")
@@ -34,26 +46,24 @@ def aliceConnected(aliceCli, be, do, poolNodesCreated):
     return aliceCli
 
 
-def addNym(stewardClient, nym):
-    addNym = {
-        TARGET_NYM: nym,
-        TXN_TYPE: NYM,
-        ROLE: USER
-    }
-    stewardClient.submit(addNym, identifier=stewardClient.defaultIdentifier)
+def addNym(client, wallet, nym, role=USER):
+    # addNym = {
+    #     TARGET_NYM: nym,
+    #     TXN_TYPE: NYM,
+    #     ROLE: USER
+    # }
+    # stewardClient.submit(addNym, identifier=stewardClient.defaultIdentifier)
+    return makeNymRequest(client, wallet, nym, role)
 
 
-def addFabersEndpoint(stewardClient, nym, attrName, attrValue):
-    addEndpoint = {
-        TARGET_NYM: nym,
-        TXN_TYPE: ATTRIB,
-        RAW: '{"' + attrName + '": "' + attrValue + '"}'
-    }
-    stewardClient.submit(addEndpoint, identifier=stewardClient.defaultIdentifier)
-
-
-def addFaber(looper, stewardClient, aliceNym):
-    addNym(stewardClient, aliceNym)
+def addFabersEndpoint(looper, client, wallet, nym, attrName, attrValue):
+    val = json.dumps({attrName: attrValue})
+    attrib = Attribute(name='Faber Endpoint',
+                       origin=wallet.defaultId,
+                       value=val,
+                       dest=nym,
+                       ledgerStore=LedgerStore.RAW)
+    addAttributeAndCheck(looper, client, wallet, attrib)
 
 
 def checkIfEndpointReceived(aCli, linkName, expStr):
@@ -121,3 +131,47 @@ def testSyncLinkNotExists(aliceCli, be, do, linkNotExists, faberMap):
 
 def testAliceConnect(aliceConnected):
     pass
+
+
+@pytest.fixture(scope="module")
+def faberAdded(poolNodesCreated,
+             looper,
+             aliceCli,
+             faberInviteLoaded,
+             aliceConnected,
+             stewardClientAndWallet):
+    client, wallet = stewardClientAndWallet
+    li = getLinkInvitation("Faber", aliceCli)
+    createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
+
+
+def testSyncLinkWhenEndpointNotAvailable(faberAdded,
+                                         looper,
+                                         aliceCli,
+                                         stewardClientAndWallet):
+    li = getLinkInvitation("Faber", aliceCli)
+    # addFaber(looper, stewardClient, li.targetIdentifier)
+    # createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
+    aliceCli.enterCmd("sync Faber")
+    looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
+                          "Endpoint not available",
+                          retryWait=1,
+                          timeout=10))
+
+
+def testSyncLinkWhenEndpointIsAvailable(looper,
+                                        aliceCli,
+                                        stewardClientAndWallet,
+                                        faberAdded):
+    client, wallet = stewardClientAndWallet
+    li = getLinkInvitation("Faber", aliceCli)
+    assert li.targetEndPoint is None
+    endpointValue = "0.0.0.0:0000"
+    addFabersEndpoint(looper, client, wallet, li.targetIdentifier,
+                      ENDPOINT, endpointValue)
+    # looper.runFor(0.5)
+    aliceCli.enterCmd("sync Faber")
+    looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
+                          "Endpoint received: {}".format(endpointValue),
+                          retryWait=1,
+                          timeout=10))

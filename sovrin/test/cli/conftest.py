@@ -1,18 +1,22 @@
+import traceback
+
 import pytest
 
 import plenum
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-from sovrin.client.link_invitation import LinkInvitation
+from sovrin.client.wallet.link_invitation import LinkInvitation
 
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
+from plenum.test.cli.conftest import nodeNames
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated
+
 
 config = getConfig()
 
@@ -111,10 +115,37 @@ def fileNotExists():
 def connectedToTest():
     return ["Connecting to test"]
 
+@pytest.fixture(scope="module")
+def canNotSyncMsg():
+    return ["Cannot sync because not connected"]
 
 @pytest.fixture(scope="module")
-def syncWhenNotConnectedStatus(connectUsage):
-    return ["Cannot sync because not connected"] + connectUsage
+def syncWhenNotConnectedStatus(canNotSyncMsg, connectUsage):
+    return canNotSyncMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def canNotAcceptMsg():
+    return ["Cannot accept because not connected"]
+
+
+@pytest.fixture(scope="module")
+def acceptWhenNotConnectedStatus(canNotAcceptMsg, connectUsage):
+    return canNotAcceptMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedWhenConnectedStatus(syncLinkOut, connectUsage):
+    return syncLinkOut
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedLinkWhenNotConnected(canNotSyncMsg, connectUsage):
+    return ["Invitation not yet verified",
+            "Link not yet synchronized. Attempting to sync...",
+            "Invitation acceptance aborted."
+            ] + canNotSyncMsg + connectUsage
+
 
 @pytest.fixture(scope="module")
 def connectUsage():
@@ -198,7 +229,7 @@ def endpointNotAvailable():
 
 @pytest.fixture(scope="module")
 def syncLinkOut():
-    return ["Synchronizing..."]
+    return ["Synchronizing...", "Link {inviter} Synced"]
 
 
 @pytest.fixture(scope="module")
@@ -331,6 +362,9 @@ def do(ctx):
                             try:
                                 e(cli)
                             except:
+                                # Since its a test so not using logger is not
+                                # a big deal
+                                traceback.print_exc()
                                 continue
                             raise RuntimeError("did not expect success")
                     else:

@@ -22,6 +22,7 @@ UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
 LINK_ITEM_PREFIX = '\n\t'
 
+
 class ClaimRequest:
     def __init__(self, name, version):
         self.name = name
@@ -189,7 +190,7 @@ class LinkInvitation:
         if day_diff < 7:
             return str(day_diff) + " days ago"
 
-    def isLinkAccepted(self):
+    def isAccepted(self):
         return self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED
 
     def getLinkInfoStr(self) -> str:
@@ -203,7 +204,7 @@ class LinkInvitation:
                         targetEndPoint == UNKNOWN_WAITING_FOR_SYNC:
             targetEndPoint = "Not Available"
 
-        if self.isLinkAccepted():
+        if self.isAccepted():
             trustAnchorStatus = '(confirmed)'
             targetVerKey = '<same as target>'
             linkStatus = self.linkStatus
@@ -213,7 +214,7 @@ class LinkInvitation:
             verKey = self.signerVerKey
 
         fixedLinkHeading = "Link "
-        if not self.isLinkAccepted():
+        if not self.isAccepted():
             fixedLinkHeading += "(not yet accepted)"
 
         fixedLinkItems = \

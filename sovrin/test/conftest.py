@@ -7,6 +7,7 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.plugin_helper import loadPlugins
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.plugin.helper import getPluginPath
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
@@ -14,7 +15,7 @@ from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import TestNodeSet,\
-    genTestClient, createNym, addUser, TestNode
+    genTestClient, createNym, addUser, TestNode, makePendingTxnsRequest
 from sovrin.common.util import getConfig
 
 from plenum.test.conftest import getValueFromModule
@@ -38,23 +39,33 @@ def allPluginsPath():
 
 
 @pytest.fixture(scope="module")
-def stewardSigner():
+def stewardWallet():
+    wallet = Wallet('steward')
     seed = b'is a pit   seed, or somepin else'
-    signer = SimpleSigner(seed=seed)
-    assert signer.verstr == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
-    return signer
+    wallet.addSigner(seed=seed)
+    assert wallet.defaultId == 'LRtO/oin94hzKKCVG4GOG1eMuH7uVMJ3txDUHBX2BqY='
+    return wallet
 
 
 @pytest.fixture(scope="module")
-def sponsorSigner():
-    seed = b'sponsors are people too.........'
-    signer = SimpleSigner(seed=seed)
-    return signer
+def steward(genned, looper, tdir, up, stewardWallet):
+    s, _ = genTestClient(genned, tmpdir=tdir)
+    # for node in genned:
+    #     node.whitelistClient(s.name)
+    s.registerObserver(stewardWallet.handleIncomingReply)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    return s
 
 
 @pytest.fixture(scope="module")
-def genesisTxns(stewardSigner):
-    nym = stewardSigner.verstr
+def updatedSteward(steward, stewardWallet):
+    makePendingTxnsRequest(steward, stewardWallet)
+
+
+@pytest.fixture(scope="module")
+def genesisTxns(stewardWallet: Wallet):
+    nym = stewardWallet.defaultId
     return [{
         TXN_TYPE: NYM,
         TARGET_NYM: nym,
@@ -137,10 +148,17 @@ def sponsorCli(looper, tdir):
     return newCLI(looper, tdir)
 
 
-def buildClient(looper, nodeSet, client1Signer, tdir):
-    client = genTestClient(nodeSet, signer=client1Signer, tmpdir=tdir)
-    for node in nodeSet:
-        node.whitelistClient(client.name)
+@pytest.fixture(scope="module")
+def clientAndWallet1(client1Signer, looper, nodeSet, tdir, up):
+    client, wallet = genTestClient(nodeSet, tmpdir=tdir)
+    wallet = Wallet(client.name)
+    wallet.addSigner(signer=client1Signer)
+    return client, wallet
+
+
+@pytest.fixture(scope="module")
+def client1(clientAndWallet1, looper):
+    client, wallet = clientAndWallet1
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
     return client
@@ -156,41 +174,60 @@ def userSignerAClient(looper, nodeSet, userSignerA, tdir):
 
 
 @pytest.fixture(scope="module")
-def userSignerA(genned, addedSponsor, sponsorSigner, looper, sponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userA')
+def wallet1(clientAndWallet1):
+    return clientAndWallet1[1]
 
 
 @pytest.fixture(scope="module")
-def userSignerB(genned, addedSponsor, sponsorSigner, looper, sponsor):
-    return addUser(looper, sponsor, sponsorSigner, 'userB')
+def sponsorWallet():
+    wallet = Wallet('sponsor')
+    seed = b'sponsors are people too.........'
+    wallet.addSigner(seed=seed)
+    return wallet
 
 
 @pytest.fixture(scope="module")
-def steward(genned, looper, tdir, up, stewardSigner):
-    s = genTestClient(genned, signer=stewardSigner, tmpdir=tdir)
-    for node in genned:
-        node.whitelistClient(s.name)
+def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
+    s, _ = genTestClient(genned, tmpdir=tdir)
+    s.registerObserver(sponsorWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
+    makePendingTxnsRequest(s, sponsorWallet)
     return s
 
 
 @pytest.fixture(scope="module")
-def updatedSteward(steward):
-    steward.requestPendingTxns()
+def addedSponsor(genned, steward, stewardWallet, looper, sponsorWallet):
+    createNym(looper, sponsorWallet.defaultId, steward, stewardWallet, SPONSOR)
+    return sponsorWallet
 
 
 @pytest.fixture(scope="module")
-def sponsor(genned, looper, tdir, up, steward, sponsorSigner):
-    s = genTestClient(genned, signer=sponsorSigner, tmpdir=tdir)
-    for node in genned:
-        node.whitelistClient(s.name)
-    looper.add(s)
-    looper.run(s.ensureConnectedToNodes())
-    return s
+def userWalletA(genned, addedSponsor, sponsorWallet, looper, sponsor):
+    return addUser(looper, sponsor, sponsorWallet, 'userA')
 
 
 @pytest.fixture(scope="module")
-def addedSponsor(genned, steward, stewardSigner, looper, sponsorSigner):
-    createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
-    return sponsorSigner
+def userWalletB(genned, addedSponsor, sponsorWallet, looper, sponsor):
+    return addUser(looper, sponsor, sponsorWallet, 'userB')
+
+
+@pytest.fixture(scope="module")
+def userIdA(userWalletA):
+    return userWalletA.defaultId
+
+
+@pytest.fixture(scope="module")
+def userIdB(userWalletB):
+    return userWalletB.defaultId
+
+
+@pytest.fixture(scope="module")
+def userClientA(genned, userWalletA, looper, tdir):
+    u, _ = genTestClient(genned, tmpdir=tdir)
+    u.registerObserver(userWalletA.handleIncomingReply)
+    looper.add(u)
+    looper.run(u.ensureConnectedToNodes())
+    makePendingTxnsRequest(u, userWalletA)
+    return u
+
