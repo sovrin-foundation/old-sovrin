@@ -64,7 +64,7 @@ class Wallet(PWallet, Sponsoring):
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
-        self._claims = {}            # type: Dict[(str, version), Claim]
+        self._claims = {}            # type: Dict[str, Claim]
         # transactions not yet submitted
         self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
@@ -85,20 +85,23 @@ class Wallet(PWallet, Sponsoring):
     def pendingCount(self):
         return len(self._pending)
 
-    def getClaimByName(self, claimName):
-        for cl in self._claims.values():
-            if cl.name == claimName or cl.name.lower() in claimName.lower():
-                return cl
-
-    def getLinkByClaimName(self, claimName):
+    def getMatchingLinksByClaimName(self, claimName):
+        matchingLinks = []
         for k, v in self._linkInvitations.items():
             li = LinkInvitation.getFromDict(k, v)
             for ac in li.availableClaims:
                 if ac.name == claimName or ac.name.lower() in claimName.lower():
-                    return li
+                    matchingLinks.append(li)
+        return matchingLinks
 
-    def addClaim(self, cl):
-        self._claims[(cl.name, cl.version)] = cl
+    def _buildClaimKey(self, linkName, claimName):
+        return linkName + ":" + claimName
+
+    def addClaim(self, linkName, cl):
+        self._claims[self._buildClaimKey(linkName, cl.name)] = cl
+
+    def getClaimByLinkAndClaimName(self, linkName, claimName):
+        return self._claims[self._buildClaimKey(linkName, claimName)]
 
     def addAttribute(self, attrib: Attribute):
         """

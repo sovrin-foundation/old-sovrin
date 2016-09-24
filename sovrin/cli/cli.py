@@ -224,7 +224,7 @@ class SovrinCli(PlenumCli):
                     name, version, definition = cl['name'], cl['version'], \
                                                 cl['definition']
                     availableClaims.append(AvailableClaimData(name, version))
-                    self.activeWallet.addClaim(Claim(name, version, definition))
+                    self.activeWallet.addClaim(li.name, Claim(name, version, definition))
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
                 li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
                 li.updateAvailableClaims(availableClaims)
@@ -1085,15 +1085,37 @@ class SovrinCli(PlenumCli):
 
             return True
 
+    def _printNoClaimFoundMsg(self):
+        self.print("No matching claim(s) found in any links in current keyring")
+
+    def _printMoreThanOneClaimFoundMsg(self, claimName, matchingLinks):
+        self.print('More than one link matches "{}"'.format(claimName))
+        for li in matchingLinks.items():
+            self.print("{}".format(li.name))
+        # TODO: Any suggestion in more than one link?
+
+    def _getOneLinkAssociatedWithClaim(self, claimName):
+        matchingLinks = self.activeWallet.getMatchingLinksByClaimName(claimName)
+
+        if len(matchingLinks) == 0:
+            self._printNoClaimFoundMsg()
+            return None
+
+        if len(matchingLinks) > 1:
+            self._printMoreThanOneClaimFoundMsg(claimName, matchingLinks)
+            return None
+
+        return matchingLinks[0]
+
     def _showClaim(self, matchedVars):
         if matchedVars.get('show_claim') == 'show claim':
             claimName = SovrinCli.removeDoubleQuotes(
                 matchedVars.get('claim_name'))
-            li = self.activeWallet.getLinkByClaimName(claimName)
-            if li:
-                self.print("Found claim {} in link Faber College.".
-                           format(claimName))
-                cl = self.activeWallet.getClaimByName(claimName)
+            matchingLink = self._getOneLinkAssociatedWithClaim(claimName)
+            if matchingLink:
+                self.print("Found claim {} in link {}".
+                           format(claimName, matchingLink.name))
+                cl = self.activeWallet.getClaimByLinkAndClaimName(matchingLink.name, claimName)
                 self.print(cl.getClaimInfoStr())
                 msgs = ['request claim {}'.format(claimName)]
                 self.printUsage(msgs)

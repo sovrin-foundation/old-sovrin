@@ -75,9 +75,9 @@ GEN_CRED_REG_EX = \
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-"\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
-"\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
-"\s*)"
+    "\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+    "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
+    "\s*)"
 
 ADD_ATTRS_PROVER_REG_EX = "(\s*(?P<add_attrs>attribute \s+ known \s+ to) " \
                           "\s+ (?P<issuer_id>[A-Za-z0-9+=/]+) " \
@@ -111,7 +111,8 @@ ACCEPT_LINK_REG_EX = '(\s*(?P<accept_link_invite>accept \s+ invitation) ' \
                    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
 SHOW_CLAIM_REG_EX = '(\s*(?P<show_claim>show \s+ claim) ' \
-                   '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) \s*)'
+                    '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
+                    '\s*)'
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)

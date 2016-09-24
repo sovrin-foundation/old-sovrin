@@ -291,7 +291,7 @@ def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
 
 @pytest.fixture(scope="module")
 def showClaimNotFoundOut():
-    return [ "Claim not found in any link"
+    return [ "No matching claim(s) found in any links in current keyring"
     ]
 
 @pytest.fixture(scope="module")
@@ -310,7 +310,7 @@ def transcriptClaimMap():
 
 @pytest.fixture(scope="module")
 def showClaimOut():
-    return ["Found claim {name} in link {inviter}.",
+    return ["Found claim {name} in link {inviter}",
             "Name: {name}",
             "Status: {status}",
             "Version: {version}",
