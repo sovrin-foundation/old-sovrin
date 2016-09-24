@@ -1,42 +1,51 @@
 import ast
 import datetime
 import json
+from typing import Dict, Any
+
 import os
-from typing import Dict
-
 from hashlib import sha256
+from plenum.common.signing import serializeForSig
+from raet.nacling import Verifier as SigVerifier
+from base64 import b64decode
 
-from plenum.common.txn_util import createGenesisTxnFile
-from sovrin.client.link_invitation import LinkInvitation
-from sovrin.common.util import getConfig
-
-
-from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
-    ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
-from sovrin.anon_creds.cred_def import CredDef
-from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
-from sovrin.anon_creds.proof_builder import ProofBuilder
-from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
-from sovrin.anon_creds.cred_def import SerFmt
-
-from plenum.cli.cli import Cli as PlenumCli
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
+from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
-from plenum.client.signer import Signer, SimpleSigner
-from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS
-from plenum.common.util import randomString, cleanSeed, getCryptonym
-
+from plenum.client.signer import SimpleSigner
+from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
+    PORT, IP
+from plenum.common.txn_util import createGenesisTxnFile
+from plenum.common.util import randomString, cleanSeed, getCryptonym, isHex, \
+    cryptonymToHex
+from sovrin.agent.endpoint import Endpoint
+from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
+    ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
+from sovrin.anon_creds.cred_def import SerFmt
+from sovrin.anon_creds.issuer import AttrRepo
+from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
+from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
+from sovrin.anon_creds.proof_builder import ProofBuilder
+from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
-from sovrin.client.wallet import Wallet
+from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
+from sovrin.client.wallet.credential import Credential as WalletCredential
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.client.wallet.link_invitation import LinkInvitation, \
+    TARGET_VER_KEY_SAME_AS_ID, LINK_STATUS_ACCEPTED, AvailableClaimData, \
+    LINK_ITEM_PREFIX, ClaimRequest
+from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
-    SPONSOR, TXN_ID, REFERENCE, USER, GET_NYM, ATTRIB, CRED_DEF, GET_CRED_DEF, \
-    getTxnOrderedFields, ENDPOINT
-from sovrin.persistence.wallet_storage_file import WalletStorageFile
+    SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
+from sovrin.common.util import getConfig
 from sovrin.server.node import Node
+import sovrin.anon_creds.cred_def as CredDefModule
+
 
 """
 Objective
@@ -75,6 +84,12 @@ class SovrinCli(PlenumCli):
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
         super().__init__(*args, **kwargs)
+        self.attributeRepo = None   # type: AttrRepo
+        self.proofBuilders = {}
+        self.verifier = Verifier(randomString())
+        _, port = self.nextAvailableClientAddr()
+        self.endpoint = Endpoint(port, self.handleEndpointMsg)
+
 
     @property
     def lexers(self):
@@ -98,7 +113,8 @@ class SovrinCli(PlenumCli):
             'conn'
             'load_file',
             'show_link',
-            'sync_link'
+            'sync_link',
+            'accept_link_invite'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -108,7 +124,7 @@ class SovrinCli(PlenumCli):
     def completers(self):
         completers = {}
         completers["nym"] = WordCompleter([])
-        completers["role"] = WordCompleter(["USER", "SPONSOR", "STEWARD"])
+        completers["role"] = WordCompleter(["SPONSOR", "STEWARD"])
         completers["send_nym"] = WordCompleter(["send", "NYM"])
         completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
         completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
@@ -134,6 +150,9 @@ class SovrinCli(PlenumCli):
         completers["conn"] = WordCompleter(["connect"])
         completers["env_name"] = WordCompleter(list(self.envs.keys()))
         completers["sync_link"] = WordCompleter(["sync"])
+        completers["accept_link_invite"] = WordCompleter(["accept",
+                                                          "invitation"])
+
         return {**super().completers, **completers}
 
     def initializeGrammar(self):
@@ -163,13 +182,71 @@ class SovrinCli(PlenumCli):
                         self._loadFile,
                         self._showLink,
                         self._connectTo,
-                        self._syncLink
+                        self._syncLink,
+                        self._acceptInvitationLink
                         ])
         return actions
 
+    @staticmethod
+    def verifySig(identifier, signature, msg) -> bool:
+        b64sig = signature.encode('utf-8')
+        sig = b64decode(b64sig)
+        vr = SigVerifier(identifier)
+        return vr.verify(sig, msg)
+
+    def _printShowAndReqClaimUsage(self, availableClaims):
+        claimName = "|".join([cl.name for cl in availableClaims])
+        msgs = ['show claim {}'.format(claimName),
+                'request claim {}'.format(claimName)]
+        self.printUsage(msgs)
+
+    def _handleAcceptInviteResponse(self, msg: dict):
+        signature = msg.get("signature")
+        identifier = msg.get("identifier")
+        del msg["signature"]
+        ser = serializeForSig(msg)
+        key = cryptonymToHex(identifier) if not isHex(identifier) else identifier
+        isVerified = SovrinCli.verifySig(key, signature, ser)
+        if isVerified:
+            msg["signature"] = signature
+            self.print("Signature accepted.")
+            self.print("Trust established.")
+            # Not sure how to know if the responder is a trust anchor or not
+            self.print("Identifier created in Sovrin.")
+            li = self._getLinkByTarget(getCryptonym(identifier))
+            if li:
+                availableClaims = []
+                for cl in msg['claimsList']:
+                    name, version, attributes = cl['name'], cl['version'], \
+                                                cl['definition']['attributes']
+                    availableClaims.append(AvailableClaimData(name, version))
+                    self.activeWallet.addClaim(name, version, attributes)
+                li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
+                li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
+                li.updateAvailableClaims(availableClaims)
+                self.activeWallet.addLinkInvitation(li)
+
+                if len(availableClaims) > 0:
+                    self.print("Available claims: {}".
+                               format(",".join([cl.name for cl in availableClaims])))
+                    self._printShowAndReqClaimUsage(availableClaims)
+            else:
+                self.print("No matching invitation found")
+        else:
+            self.print("Signature rejected")
+
+    def handleEndpointMsg(self, msg):
+        if msg["type"] == "AVAIL_CLAIM_LIST":
+            self._handleAcceptInviteResponse(msg)
+
+    def sendToEndpoint(self, msg: Any, endpoint: str):
+        pass
+
+
     def _buildWalletClass(self, nm):
-        storage = WalletStorageFile.fromName(nm, self.basedirpath)
-        return Wallet(nm, storage)
+        # DEPR
+        # storage = WalletStorageFile.fromName(nm, self.basedirpath)
+        return Wallet(nm)
 
     @property
     def genesisTransactions(self):
@@ -177,6 +254,10 @@ class SovrinCli(PlenumCli):
 
     def reset(self):
         self._genesisTransactions = []
+
+    # @property
+    # def activeWallet(self) -> Wallet:
+    #     return super().activeWallet()
 
     def newNode(self, nodeName: str):
         config = getConfig()
@@ -188,16 +269,38 @@ class SovrinCli(PlenumCli):
 
     def _printNotConnectedEnvMessage(self):
         self.print("Not connected to any environment. Please connect first.")
-        self.print("Usage:")
-        self.print("  connect ({})".format("|".join(sorted(self.envs.keys()))))
+        self._printConnectUsage()
 
-    def newClient(self, clientName, seed=None, identifier=None, signer=None,
-                  wallet=None, config=None):
+    def _printConnectUsage(self):
+        msgs = ["connect ({})".format("|".join(sorted(self.envs.keys())))]
+        self.printUsage(msgs)
+
+    def newClient(self, clientName,
+                  # seed=None,
+                  # identifier=None,
+                  # signer=None,
+                  # wallet=None,
+                  config=None):
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
             return
-        return super().newClient(clientName, seed=seed, identifier=identifier,
-                                 signer=signer, wallet=wallet, config=config)
+
+        # DEPR
+        # return super().newClient(clientName, seed=seed, identifier=identifier,
+        #                          signer=signer, wallet=wallet, config=config)
+        client = super().newClient(clientName, config=config)
+        if self.activeWallet:
+            client.registerObserver(self.activeWallet.handleIncomingReply)
+            pendingTxnsReqs = self.activeWallet.getPendingTxnRequests()
+            for req in pendingTxnsReqs:
+                self.activeWallet.pendRequest(req)
+            reqs = self.activeWallet.preparePending()
+            client.submitReqs(*reqs)
+        return client
+
+    @staticmethod
+    def bootstrapClientKeys(idr, verkey, nodes):
+        pass
 
     def _clientCommand(self, matchedVars):
         if matchedVars.get('client') == 'client':
@@ -219,22 +322,18 @@ class SovrinCli(PlenumCli):
 
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
-        validRoles = (USER, SPONSOR, STEWARD)
+        validRoles = (SPONSOR, STEWARD)
         if role and role not in validRoles:
             self.print("Invalid role. Valid roles are: {}".
                        format(", ".join(validRoles)), Token.Error)
             return False
-        elif not role:
-            role = USER
         return role
 
     def _getNym(self, nym):
-        op = {
-            TARGET_NYM: nym,
-            TXN_TYPE: GET_NYM,
-        }
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        identity = Identity(identifier=nym)
+        req = self.activeWallet.requestIdentity(identity,
+                                                sender=self.activeWallet.defaultId)
+        self.activeClient.submitReqs(req)
         self.print("Getting nym {}".format(nym))
 
         def getNymReply(reply, err):
@@ -245,13 +344,10 @@ class SovrinCli(PlenumCli):
                                     req.reqId, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
-        op = {
-            TARGET_NYM: nym,
-            TXN_TYPE: NYM,
-            ROLE: role
-        }
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        idy = Identity(nym, role=role)
+        self.activeWallet.addSponsoredIdentity(idy)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
         printStr = "Adding nym {}".format(nym)
 
         if other_client_name:
@@ -266,32 +362,36 @@ class SovrinCli(PlenumCli):
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
-        op = {
-            TXN_TYPE: ATTRIB,
-            TARGET_NYM: nym
-        }
-        data = None
+        assert int(bool(raw)) + int(bool(enc)) + int(bool(hsh)) == 1
         if raw:
-            op[RAW] = raw
+            l = LedgerStore.RAW
             data = raw
         elif enc:
-            op[ENC] = enc
+            l = LedgerStore.ENC
             data = enc
         elif hsh:
-            op[HASH] = hsh
+            l = LedgerStore.HASH
             data = hsh
+        else:
+            raise RuntimeError('One of raw, enc, or hash are required.')
 
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        attrib = Attribute(randomString(5), data, self.activeWallet.defaultId,
+                           ledgerStore=LedgerStore.RAW)
+        if nym != self.activeWallet.defaultId:
+            attrib.dest = nym
+        self.activeWallet.addAttribute(attrib)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
         self.print("Adding attributes {} for {}".
                    format(data, nym), Token.BoldBlue)
 
-        def out(reply, error):
+        def chk(reply, error):
+            assert self.activeWallet.getAttribute(attrib).seqNo is not None
             self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
                        Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                    req.reqId, self.activeClient, out)
+                                    req.reqId, self.activeClient, chk)
 
     @staticmethod
     def _buildCredDef(matchedVars):
@@ -304,22 +404,26 @@ class SovrinCli(PlenumCli):
         port = matchedVars.get('port')
         keys = matchedVars.get('keys')
         attributes = [s.strip() for s in keys.split(",")]
-        return CredDef(attrNames=attributes, name=name,
+        return CredDefModule.CredDef(attrNames=attributes, name=name,
                        version=version, ip=ip, port=port,
                        p_prime="prime1", q_prime="prime1")
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):
-        op = {
-            TARGET_NYM: dest,
-            TXN_TYPE: GET_CRED_DEF,
-            DATA: {
-                NAME: credName,
-                VERSION: credVersion
-            }
-        }
-        req, = self.activeClient.submit(op,
-                                        identifier=self.activeSigner.identifier)
+        credDefKey = CredDefKey(credName, credVersion, dest)
+        req = self.activeWallet.requestCredDef(credDefKey,
+                                               self.activeWallet.defaultId)
+        # op = {
+        #     TARGET_NYM: dest,
+        #     TXN_TYPE: GET_CRED_DEF,
+        #     DATA: {
+        #         NAME: credName,
+        #         VERSION: credVersion
+        #     }
+        # }
+        # req, = self.activeClient.submit(op,
+        #                                 identifier=self.activeSigner.identifier)
+        self.activeClient.submitReqs(req)
         self.print("Getting cred def {} version {} for {}".
                    format(credName, credVersion, dest), Token.BoldBlue)
 
@@ -331,11 +435,11 @@ class SovrinCli(PlenumCli):
     # send the proper command/msg to issuer
     def _sendCredReqToIssuer(self, reply, err, credName,
                                            credVersion, issuerId, proverId):
-        credDef = self.activeClient.wallet.getCredDef(credName,
-                                           credVersion, issuerId)
+        credDef = self.activeWallet.getCredDef(CredDefKey(credName,
+                                           credVersion, issuerId))
 
         def getEncodedAttrs(issuerId):
-            attributes = self.activeClient.attributeRepo.getAttributes(issuerId)
+            attributes = self.attributeRepo.getAttributes(issuerId)
             attribTypes = []
             for nm in attributes.keys():
                 attribTypes.append(AttribType(nm, encode=True))
@@ -346,22 +450,21 @@ class SovrinCli(PlenumCli):
             }
 
         self.logger.debug("cred def is {}".format(credDef))
-        keys = credDef[KEYS]
+        keys = credDef.keys
         pk = {
             issuerId: self.pKFromCredDef(keys)
         }
-        masterSecret = self.activeClient.wallet.masterSecret
+        masterSecret = self.activeWallet.masterSecret
 
         proofBuilder = ProofBuilder(pk, masterSecret)
         proofBuilder.setParams(encodedAttrs=getEncodedAttrs(issuerId))
 
         if not masterSecret:
-            self.activeClient.wallet.addMasterSecret(
+            self.activeWallet.addMasterSecret(
                 str(proofBuilder.masterSecret))
 
         #TODO: Should probably be persisting proof objects
-        self.activeClient.proofBuilders[proofBuilder.id] = (proofBuilder,
-                                                            credName,
+        self.proofBuilders[proofBuilder.id] = (proofBuilder, credName,
                                                             credVersion,
                                                             issuerId)
         u = proofBuilder.U[issuerId]
@@ -378,11 +481,11 @@ class SovrinCli(PlenumCli):
 
     @staticmethod
     def pKFromCredDef(keys):
-        return CredDef.getPk(keys)
+        return CredDefModule.CredDef.getPk(keys)
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
-            self.activeClient.attributeRepo = InMemoryAttrRepo()
+            self.attributeRepo = InMemoryAttrRepo()
             self.print("attribute repo initialized", Token.BoldBlue)
             return True
 
@@ -391,7 +494,7 @@ class SovrinCli(PlenumCli):
             # TODO: For now I am generating random interaction id, but we need
             # to come back to this
             interactionId = randomString(7)
-            nonce = self.activeClient.generateNonce(interactionId)
+            nonce = self.verifier.generateNonce(interactionId)
             self.print("Verification nonce is {}".format(nonce), Token.BoldBlue)
             return True
 
@@ -409,7 +512,7 @@ class SovrinCli(PlenumCli):
                 credential[name] = value
 
             proofBuilder, credName, credVersion, issuerId = \
-                self.activeClient.proofBuilders[proofId]
+                self.proofBuilders[proofId]
             credential[ISSUER] = issuerId
             credential[NAME] = credName
             credential[VERSION] = credVersion
@@ -423,7 +526,8 @@ class SovrinCli(PlenumCli):
             # TODO: What if alias is not given (we don't have issuer id and
             # cred name here) ???
             # TODO: is the below way of storing  cred in dict ok?
-            self.activeWallet.addCredential(alias, credential)
+            self.activeWallet.addCredential(WalletCredential(alias,
+                                                             credential))
             self.print("Credential stored", Token.BoldBlue)
             return True
 
@@ -446,7 +550,7 @@ class SovrinCli(PlenumCli):
                 attribTypes.append(AttribType(name, encode=True))
             attribsDef = AttribDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes)
-            self.activeClient.attributeRepo.addAttributes(proverId, attribs)
+            self.attributeRepo.addAttributes(proverId, attribs)
             self.print("attribute added successfully for prover id {}".
                        format(proverId), Token.BoldBlue)
             return True
@@ -458,8 +562,8 @@ class SovrinCli(PlenumCli):
             attributes = self.parseAttributeString(attrs)
             # TODO: Refactor ASAP
             if not hasattr(self.activeClient, "attributes"):
-                self.activeClient.attributeRepo = InMemoryAttrRepo()
-            self.activeClient.attributeRepo.addAttributes(issuerId, attributes)
+                self.attributeRepo = InMemoryAttrRepo()
+            self.attributeRepo.addAttributes(issuerId, attributes)
             self.print("attribute added successfully for issuer id {}".
                        format(issuerId), Token.BoldBlue)
             return True
@@ -492,17 +596,26 @@ class SovrinCli(PlenumCli):
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
             credDef = self._buildCredDef(matchedVars)
-            self.activeClient.wallet.addCredDefSk(credDef.name, credDef.version,
-                                                  credDef.serializedSK)
-            op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
-            req, = self.activeClient.submit(
-                op, identifier=self.activeSigner.identifier)
+            sk = CredDefSk(credDef.name, credDef.version, credDef.serializedSK,
+                           dest=self.activeWallet.defaultId)
+            self.activeWallet.addCredDefSk(sk)
+            data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
+            cd = CredDef(data[NAME], data[VERSION],
+                                self.activeWallet.defaultId, data[TYPE],
+                              data[IP], data[PORT], data[KEYS])
+            self.activeWallet.addCredDef(cd)
+            reqs = self.activeWallet.preparePending()
+
+            # op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
+            # req, = self.activeClient.submit(
+            #     op, identifier=self.activeSigner.identifier)
+            self.activeClient.submitReqs(*reqs)
             self.print("The following credential definition is published to the"
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
             self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
             self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                        req.reqId, self.activeClient)
+                                        reqs[0].reqId, self.activeClient)
             return True
 
     # will get invoked when prover cli enters request credential command
@@ -525,27 +638,30 @@ class SovrinCli(PlenumCli):
 
     def _prepProofAction(self, matchedVars):
         if matchedVars.get('prep_proof') == 'prepare proof of':
-            nonce = CredDef.getCryptoInteger(matchedVars.get('nonce'))
+            nonce = self.getCryptoInteger(matchedVars.get('nonce'))
             revealedAttrs = (matchedVars.get('revealed_attrs'), )
             credAlias = matchedVars.get('cred_alias')
 
-            credential = json.loads(self.activeClient.wallet.getCredential(credAlias))
-            name = credential.get(NAME)
-            version = credential.get(VERSION)
-            issuer = credential.get(ISSUER)
-            A = credential.get(CRED_A)
-            e = credential.get(CRED_E)
-            v = credential.get(CRED_V)
-            cred = Credential(CredDef.getCryptoInteger(A), CredDef.getCryptoInteger(e),
-                              CredDef.getCryptoInteger(v))
-            credDef = self.activeClient.wallet.getCredDef(name, version, issuer)
-            keys = credDef[KEYS]
+            credential = self.activeWallet.getCredential(credAlias)
+            data = credential.data
+            name = data.get(NAME)
+            version = data.get(VERSION)
+            issuer = data.get(ISSUER)
+            A = data.get(CRED_A)
+            e = data.get(CRED_E)
+            v = data.get(CRED_V)
+            cred = Credential(self.getCryptoInteger(A),
+                              self.getCryptoInteger(e),
+                              self.getCryptoInteger(v))
+            credDef = self.activeWallet.getCredDef(CredDefKey(name, version,
+                                                              issuer))
+            keys = credDef.keys
             credDefPks = {
                 issuer: self.pKFromCredDef(keys)
             }
-            masterSecret = CredDef.getCryptoInteger(self.activeClient.wallet.
-                                             masterSecret)
-            attributes = self.activeClient.attributeRepo.getAttributes(issuer)
+            masterSecret = self.getCryptoInteger(
+                self.activeWallet.masterSecret)
+            attributes = self.attributeRepo.getAttributes(issuer)
             attribTypes = []
             for nm in attributes.keys():
                 attribTypes.append(AttribType(nm, encode=True))
@@ -575,6 +691,10 @@ class SovrinCli(PlenumCli):
             self.print("{}".format(json.dumps(out)), Token.BoldBlue)
             return True
 
+    @staticmethod
+    def getCryptoInteger(x):
+        return CredDefModule.CredDef.getCryptoInteger(x)
+
     def _verifyProofAction(self, matchedVars):
         if matchedVars.get('verif_proof') == 'verify status is':
             status = matchedVars.get('status')
@@ -589,19 +709,19 @@ class SovrinCli(PlenumCli):
 
     def doVerification(self, reply, err, status, proof):
         issuer = proof[ISSUER]
-        credDef = self.activeClient.wallet.getCredDef(proof[NAME],
-                                                      proof[VERSION], issuer)
-        keys = credDef[KEYS]
+        credDef = self.activeWallet.getCredDef(CredDefKey(proof[NAME],
+                                                      proof[VERSION], issuer))
+        keys = credDef.keys
         pk = {
             issuer: self.pKFromCredDef(keys)
         }
         prf = ProofBuilder.prepareProofFromDict(proof)
         attrs = {
-            issuer: {k: CredDef.getCryptoInteger(v) for k, v in
+            issuer: {k: self.getCryptoInteger(v) for k, v in
                      next(iter(proof[ATTRS].values())).items()}
         }
-        result = self.activeClient.verifyProof(pk, prf,
-                                               CredDef.getCryptoInteger(
+        result = self.verifier.verifyProof(pk, prf,
+                                               self.getCryptoInteger(
                                                    proof["nonce"]), attrs,
                                                proof[REVEALED_ATTRS])
         if not result:
@@ -625,12 +745,18 @@ class SovrinCli(PlenumCli):
         targetIdentifier = linkInviation["identifier"]
         targetEndPoint = linkInviation.get("endpoint", None)
         linkNonce = linkInviation["nonce"]
-        claimRequests = invitationData.get("claim-requests", None)
+        claimRequestsJson = invitationData.get("claim-requests", None)
+        claimRequests = []
+        if claimRequestsJson:
+            for cr in claimRequestsJson:
+                claimRequests.append(
+                    ClaimRequest(cr["name"], cr["version"]))
+
         signature = invitationData["sig"]
 
         self.print("1 link invitation found for {}.".format(linkInvitationName))
         cseed = cleanSeed(None)
-        alias = "cid-" + str(len(self.activeWallet.signers) + 1)
+        alias = "cid-" + str(len(self.activeWallet.identifiers) + 1)
         signer = SimpleSigner(identifier=None, seed=cseed, alias=alias)
         self._addSignerToGivenWallet(signer, self.activeWallet)
 
@@ -657,7 +783,7 @@ class SovrinCli(PlenumCli):
             with open(filePath) as data_file:
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
-            try:
+            #try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -671,9 +797,10 @@ class SovrinCli(PlenumCli):
                         self._loadInvitation(invitationData)
 
                     self._printShowAndAcceptLinkUsage(linkName)
-            except Exception as e:
-                self.print('Error occurred during processing link '
-                           'invitation: {}'.format(e))
+            # except Exception as e:
+            #     self.print('Error occurred during processing link '
+            #                'invitation: {}'.format(e))
+
             return True
 
     @staticmethod
@@ -741,73 +868,130 @@ class SovrinCli(PlenumCli):
         link.updateSyncInfo(datetime.datetime.now())
         self.activeWallet.addLinkInvitation(link)
 
-    def _syncLinkPostEndPointRetrieval(self, reply, err, link: LinkInvitation):
+    def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
+                                       link: LinkInvitation):
         if err:
             self.print('Error occurred: {}'.format(err))
             return True
 
         self._updateLinkWithLatestInfo(link, reply)
-        self._printShowAndAcceptLinkUsage(link.name)
+        self.print("Link {} synced".format(link.name))
+        postSync(link)
         return True
 
-    def _getTargetEndpoint(self, li):
+    def _printUsagePostSync(self, link):
+        self._printShowAndAcceptLinkUsage(link.name)
+
+    def _getTargetEndpoint(self, li, postSync):
         if self._isConnectedToAnyEnv():
             self.print("Synchronizing...")
             nym = getCryptonym(li.targetIdentifier)
-            req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
-
+            # req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
+            attrib = Attribute(name=ENDPOINT,
+                               value=None,
+                               dest=nym,
+                               ledgerStore=LedgerStore.RAW)
+            # req = attrib.getRequest(self.activeWallet.defaultId)
+            req = self.activeWallet.requestAttribute(
+                attrib, sender=self.activeWallet.defaultId)
+            self.activeClient.submitReqs(req)
             self.looper.loop.call_later(.2,
                                         self.ensureReqCompleted,
                                         req.reqId,
                                         self.activeClient,
                                         self._syncLinkPostEndPointRetrieval,
+                                        postSync,
                                         li)
         else:
+
             if not self.activeEnv:
-                self.print("Cannot sync because not connected. ")
+                self.print("Cannot sync because not connected.")
                 self._printNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")
             self._printConnectUsage()
 
-    def _syncLinkInvitation(self, linkName):
+    def _getLinkByTarget(self, target) -> LinkInvitation:
+        return self.activeWallet.getLinkInvitationByTarget(target)
 
+    def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
             self._getMatchingInvitationsDetail(linkName)
 
         if totalFound == 0:
             self._printNoLinkFoundMsg()
-            return True
+            return None
 
-        if totalFound == 1:
-            li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
-            if li.name != linkName:
-                self.print('Expanding {} to "{}"'.format(linkName, li.name))
+        if totalFound > 1:
+            self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks,
+                                               likelyMatchedLinks)
+            return None
+        li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
+        if li.name != linkName:
+            self.print('Expanding {} to "{}"'.format(linkName, li.name))
+        return li
 
+    def _sendAcceptInviteToTargetEndpoint(self, link: LinkInvitation):
+        self.print("Starting communication with {}".format(link.name))
+        op = {
+            "from": self.activeWallet.defaultId,
+            "invitationNonce": link.nonce
+        }
+        signedNonce = self.activeWallet.signOp(op, self.activeWallet.defaultId)
+        op["signedInvitationNonce"] = signedNonce
+        self.sendToEndpoint(op, link.targetEndPoint)
+
+
+    def _acceptLinkPostSync(self, link: LinkInvitation):
+        self._sendAcceptInviteToTargetEndpoint(link)
+
+    def _acceptLinkInvitation(self, linkName):
+        li = self._getOneLinkForFurtherProcessing(linkName)
+        if li:
+            if li.isAccepted():
+                self._printLinkAlreadyExcepted(li.name)
+            else:
+                self.print("Invitation not yet verified.")
+                if not li.targetEndPoint:
+                    self.print("Link not yet synchronized. "
+                               "Attempting to sync...")
+                    if self._isConnectedToAnyEnv():
+                        self._getTargetEndpoint(li, self._acceptLinkPostSync)
+                    else:
+                        self.print("Invitation acceptance aborted.")
+                        self.print("Cannot sync because not connected")
+                        self._printNotConnectedEnvMessage()
+                        return True
+                else:
+                    self._sendAcceptInviteToTargetEndpoint(li)
+
+
+    def _syncLinkInvitation(self, linkName):
+        li = self._getOneLinkForFurtherProcessing(linkName)
+        if li:
             if li.targetEndPoint:
                 self._pingToEndpoint(li.targetEndPoint)
                 self._printShowAndAcceptLinkUsage(li.name)
             else:
-                self._getTargetEndpoint(li)
-        else:
-            self._printMoreThanOneLinkFoundMsg(linkName, exactlyMatchedLinks,
-                                               likelyMatchedLinks)
-        return True
+                self._getTargetEndpoint(li, self._printUsagePostSync)
 
 
     @staticmethod
     def cleanLinkName(name):
         return name.replace('"', '')
 
-    def _printConnectUsage(self):
-        msgs = ['connect (test | live)']
-        self.printUsage(msgs)
+    # def _printConnectUsage(self):
+    #     msgs = ['connect (test | live)']
+    #     self.printUsage(msgs)
 
     def _printSyncAndAcceptUsage(self, linkName):
         msgs = ['sync "{}"'.format(linkName),
                 'accept invitation "{}"'.format(linkName)]
         self.printUsage(msgs)
+
+    def _printLinkAlreadyExcepted(self, linkName):
+        self.print("Link {} is already accepted")
 
     def _printShowAndAcceptLinkUsage(self, linkName):
         msgs = ['show link "{}"'.format(linkName),
@@ -824,6 +1008,12 @@ class SovrinCli(PlenumCli):
 
     def _isConnectedToAnyEnv(self):
         return self.activeEnv and self.activeClient.hasSufficientConnections
+
+    def _acceptInvitationLink(self, matchedVars):
+        if matchedVars.get('accept_link_invite') == 'accept invitation':
+            linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
+            self._acceptLinkInvitation(linkName)
+            return True
 
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
@@ -879,7 +1069,10 @@ class SovrinCli(PlenumCli):
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
                 self.print("{}".format(li.getLinkInfoStr()))
-                self._printSyncAndAcceptUsage(li.name)
+                if li.isAccepted():
+                    self._printShowAndReqClaimUsage(li.availableClaims)
+                else:
+                    self._printSyncAndAcceptUsage(li.name)
             else:
                 self._printMoreThanOneLinkFoundMsg(linkName,
                                                    exactlyMatchedLinks,
@@ -941,6 +1134,7 @@ class SovrinCli(PlenumCli):
                 self.print("Connecting to {}".format(envName))
                 # Prompt has to be changed, so it show the environment too
                 self._setPrompt(self.currPromptText)
+                self.ensureClientConnected()
             return True
 
     def getStatus(self):
@@ -970,15 +1164,16 @@ class SovrinCli(PlenumCli):
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
             uValue = matchedVars.get('u_value')
-            credDef = self.activeClient.wallet.getCredDef(
-                credName, credVersion, self.activeSigner.identifier)
-            keys = credDef[KEYS]
+            credDefKey = CredDefKey(credName, credVersion,
+                                    self.activeWallet.defaultId)
+            credDef = self.activeWallet.getCredDef(credDefKey)
+            keys = credDef.keys
             pk = self.pKFromCredDef(keys)
-            attributes = self.activeClient.attributeRepo.\
+            attributes = self.attributeRepo.\
                 getAttributes(proverId).encoded()
             if attributes:
                 attributes = list(attributes.values())[0]
-            sk = self.activeClient.wallet.getCredDefSk(credName, credVersion)
+            sk = self.activeWallet.getCredDefSk(credDefKey).secretKey
             cred = Issuer.generateCredential(uValue, attributes, pk, sk)
             # TODO: For real scenario, do we need to send this credential back
             # or it will be out of band?
@@ -1006,6 +1201,12 @@ class SovrinCli(PlenumCli):
     @staticmethod
     def bootstrapClientKey(client, node, identifier=None):
         pass
+
+    def ensureClientConnected(self):
+        if self._isConnectedToAnyEnv():
+            self.print("Connected to {}".format(self.activeEnv))
+        else:
+            self.looper.loop.call_later(.2, self.ensureClientConnected)
 
     def ensureReqCompleted(self, reqId, client, clbk=None, *args):
         reply, err = client.replyIfConsensus(reqId)

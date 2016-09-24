@@ -1,18 +1,22 @@
+import traceback
+
 import pytest
 
 import plenum
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-from sovrin.client.link_invitation import LinkInvitation
+from sovrin.client.wallet.link_invitation import LinkInvitation
 
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
+from plenum.test.cli.conftest import nodeNames
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated
+
 
 config = getConfig()
 
@@ -88,7 +92,8 @@ def faberMap():
             'inviter-not-exists': "non-existing-inviter",
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
             "nonce": "b1134a647eb818069c089e7694f63e6d",
-            "endpoint": "0.0.0.0:1212"
+            "endpoint": "0.0.0.0:1212",
+            "claims" : "Transcript"
             }
 
 
@@ -113,15 +118,57 @@ def connectedToTest():
 
 
 @pytest.fixture(scope="module")
-def syncWhenNotConnectedStatus(notConnectedStatus):
-    return ["Cannot sync because not connected"] + notConnectedStatus
+def canNotSyncMsg():
+    return ["Cannot sync because not connected"]
 
 
 @pytest.fixture(scope="module")
-def notConnectedStatus():
-    return ['Not connected to any environment. Please connect first.',
-            "Usage:",
+def syncWhenNotConnected(canNotSyncMsg, connectUsage):
+    return canNotSyncMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def canNotAcceptMsg():
+    return ["Cannot accept because not connected"]
+
+
+@pytest.fixture(scope="module")
+def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
+    return canNotAcceptMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedWhenConnected(commonAcceptInvitationMsgs):
+    return commonAcceptInvitationMsgs + \
+            ["Link {inviter} synced",
+             "Starting communication with {inviter}"]
+
+
+@pytest.fixture(scope="module")
+def commonAcceptInvitationMsgs():
+    return ["Invitation not yet verified",
+            "Link not yet synchronized. Attempting to sync...",
+            ]
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
+                                       canNotSyncMsg, connectUsage):
+    return commonAcceptInvitationMsgs + \
+            ["Invitation acceptance aborted."] + \
+            canNotSyncMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def connectUsage():
+    return ["Usage:",
             "  connect (live|test)"]
+
+
+@pytest.fixture(scope="module")
+def notConnectedStatus(connectUsage):
+    return ['Not connected to any environment. Please connect first.'] +\
+            connectUsage
 
 
 @pytest.fixture(scope="module")
@@ -142,8 +189,8 @@ def linkNotExists():
 
 
 @pytest.fixture(scope="module")
-def faberInviteLoaded(aliceCli, be, do, faberMap, loadInviteOut):
-    be(aliceCli)
+def faberInviteLoaded(aliceCLI, be, do, faberMap, loadInviteOut):
+    be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=faberMap)
 
 
@@ -152,13 +199,14 @@ def acmeMap():
     return {'inviter': 'Acme Corp',
             'invite': "sample/acme-job-application.sovrin",
             "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
-            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c"
+            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
+            "claim-requests" : "Job Application"
             }
 
 
 @pytest.fixture(scope="module")
-def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
-    be(aliceCli)
+def acmeInviteLoaded(aliceCLI, be, do, acmeMap, loadInviteOut):
+    be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
 
 
@@ -192,19 +240,27 @@ def endpointNotAvailable():
     return ["Endpoint not available"]
 
 
+
 @pytest.fixture(scope="module")
-def syncLinkOut():
+def syncLinkOutEndsWith():
+    return ["Link {inviter} synced"]
+
+
+@pytest.fixture(scope="module")
+def syncLinkOutStartsWith():
     return ["Synchronizing..."]
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithEndpoint(syncLinkOut, endpointReceived):
-    return syncLinkOut + endpointReceived
+def syncLinkOutWithEndpoint(syncLinkOutStartsWith, endpointReceived,
+                            syncLinkOutEndsWith):
+    return syncLinkOutStartsWith + endpointReceived + syncLinkOutEndsWith
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithoutEndpoint(syncLinkOut, endpointNotAvailable):
-    return syncLinkOut + endpointNotAvailable
+def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith, endpointNotAvailable,
+                               syncLinkOutEndsWith):
+    return syncLinkOutStartsWith + endpointNotAvailable + syncLinkOutEndsWith
 
 
 @pytest.fixture(scope="module")
@@ -232,10 +288,32 @@ def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
 
 
 @pytest.fixture(scope="module")
-def showLinkOut():
-    return ["Name: {inviter}",
+def showAcceptedLinkOut():
+    return [
+            "Link",
+            "Name: {inviter}",
             "Target: {target}",
+            "Target Verification key: <same as target>",
+            "Trust anchor: {inviter} (confirmed)",
             "Invitation nonce: {nonce}",
+            "Invitation status: Accepted",
+            "Available claims: {claims}",
+            "Usage",
+            'show claim {claims}',
+            'request claim {claims}'
+    ]
+
+
+@pytest.fixture(scope="module")
+def showLinkOut():
+    return [
+            "Link (not yet accepted)",
+            "Name: {inviter}",
+            "Target: {target}",
+            "Target Verification key: <unknown, waiting for sync>",
+            "Trust anchor: {inviter} (not yet written to Sovrin)",
+            "Invitation nonce: {nonce}",
+            "Invitation status: not verified, target verkey unknown",
             "Usage",
             'accept invitation "{inviter}"',
             'sync "{inviter}"']
@@ -247,7 +325,7 @@ def poolCLI_baby(CliBuilder):
 
 
 @pytest.yield_fixture(scope="module")
-def aliceCli(CliBuilder):
+def aliceCLI(CliBuilder):
     yield from CliBuilder("alice")
 
 
@@ -327,6 +405,9 @@ def do(ctx):
                             try:
                                 e(cli)
                             except:
+                                # Since its a test so not using logger is not
+                                # a big deal
+                                traceback.print_exc()
                                 continue
                             raise RuntimeError("did not expect success")
                     else:

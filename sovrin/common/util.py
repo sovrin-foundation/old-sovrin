@@ -59,13 +59,13 @@ def getInstalledConfig(installDir, configFile):
                                 format(configPath))
 
 
-def getConfig():
-    plenumConfig = PlenumConfig()
+def getConfig(baseDir=None):
+    plenumConfig = PlenumConfig(baseDir)
     sovrinConfig = importlib.import_module("sovrin.config")
     refConfig = plenumConfig
     refConfig.__dict__.update(sovrinConfig.__dict__)
     try:
-        homeDir = os.path.expanduser("~")
+        homeDir = baseDir or os.path.expanduser("~")
         configDir = os.path.join(homeDir, ".sovrin")
         config = getInstalledConfig(configDir, "sovrin_config.py")
         refConfig.__dict__.update(config.__dict__)

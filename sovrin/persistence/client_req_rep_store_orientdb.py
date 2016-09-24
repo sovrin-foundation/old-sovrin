@@ -2,7 +2,8 @@ from typing import Any, Sequence, List
 
 from plenum.common.txn import TXN_ID
 from plenum.common.txn import TXN_TYPE, TXN_TIME
-from plenum.common.types import Request, f
+from plenum.common.types import f
+from sovrin.common.types import Request
 from plenum.common.util import checkIfMoreThanFSameItems, getMaxFailures
 from plenum.persistence.orientdb_store import OrientDbStore
 

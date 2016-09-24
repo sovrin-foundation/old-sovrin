@@ -59,6 +59,7 @@ def byuCLI(CliBuilder):
 def philCLI(CliBuilder):
     yield from CliBuilder("phil")
 
+
 @pytest.yield_fixture(scope="module")
 def trusteeCLI(CliBuilder):
     yield from CliBuilder("trustee")
@@ -128,7 +129,7 @@ def philConnected(philCreated, philCLI, nodesSetup, nodeNames):
 
 @pytest.fixture(scope="module")
 def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI,
-                     nodesSetup, nodeNames):
+                     nodesSetup):
     ensureNymAdded(trusteeCLI, bookStorePubKey, USER)
 
 
@@ -144,26 +145,30 @@ def bookStoreConnected(bookStoreCreated, bookStoreCLI, nodesSetup,
 
 
 @pytest.fixture(scope="module")
-def byuCreated(byuPubKey, philCreated, philCLI, nodesSetup, nodeNames):
+def byuCreated(byuPubKey, philCreated, philCLI, nodesSetup):
     ensureNymAdded(philCLI, byuPubKey, SPONSOR)
 
 
 @pytest.fixture(scope="module")
-def tylerCreated(tylerPubKey, byuCreated, byuCLI, nodesSetup, nodeNames):
-    ensureNymAdded(byuCLI, tylerPubKey, USER)
+def tylerCreated(byuCreated, tylerPubKey, byuCLI, nodesSetup, nodeNames):
+    ensureNymAdded(byuCLI, tylerPubKey)
+
+
+@pytest.fixture(scope="module")
+def tylerConnected(tylerCreated, tylerCLI):
+    ensureConnectedToTestEnv(tylerCLI)
 
 
 @pytest.fixture(scope="module")
 def tylerStoresAttributesAsKnownToBYU(tylerCreated, tylerCLI, nodesSetup,
-                                      byuCLI):
-    ensureConnectedToTestEnv(tylerCLI)
-    issuerId = byuCLI.activeSigner.verstr
+                                      byuCLI, tylerConnected):
+    issuerId = byuCLI.activeWallet.defaultId
     checkCmdValid(tylerCLI,
                   "attribute known to {} first_name=Tyler, last_name=Ruff, "
                   "birth_date=12/17/1991, expiry_date=12/31/2101, "
                   "undergrad=True, "
                   "postgrad=False".format(issuerId))
-    assert issuerId in tylerCLI.activeClient.attributeRepo.attributes
+    assert issuerId in tylerCLI.attributeRepo.attributes
 
 
 @pytest.fixture(scope="module")
@@ -195,16 +200,17 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
     output = byuCLI.lastCmdOutput
     assert "credential definition is published" in output
     assert credDefName in output
-    return byuCLI.activeSigner.verstr
+    return byuCLI.activeWallet.defaultId
 
 
 @pytest.fixture(scope="module")
 def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
                    attrAddedToRepo, byuAddsCredDef,
-                   credDefNameVersion):
+                   credDefNameVersion, tylerConnected,
+                   tylerStoresAttributesAsKnownToBYU):
     credDefName, credDefVersion = credDefNameVersion
     issuerIdentifier = byuAddsCredDef
-    proverName = tylerCLI.activeSigner.alias
+    proverName = tylerCLI.activeWallet.defaultAlias
     checkCmdValid(tylerCLI, "request credential {} version {} from {} for {}"
                   .format(credDefName, credDefVersion, issuerIdentifier,
                           proverName))
@@ -232,7 +238,7 @@ def byuCreatedCredential(nodesSetup, byuCLI, tylerCLI,
                          credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     proofId, U = tylerPreparedU
-    proverId = tylerCLI.activeSigner.alias
+    proverId = tylerCLI.activeWallet.defaultAlias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
                   .format(proverId, credDefName, credDefVersion, U))
     assert "Credential:" in byuCLI.lastCmdOutput
@@ -247,10 +253,10 @@ def byuCreatedCredential(nodesSetup, byuCLI, tylerCLI,
 
 @pytest.fixture(scope="module")
 def attrRepoInitialized(byuCLI, byuCreated):
-    assert byuCLI.activeClient.attributeRepo is None
+    assert byuCLI.attributeRepo is None
     byuCLI.enterCmd("initialize mock attribute repo")
     assert byuCLI.lastCmdOutput == "attribute repo initialized"
-    assert byuCLI.activeClient.attributeRepo is not None
+    assert byuCLI.attributeRepo is not None
     return byuCLI
 
 
@@ -258,14 +264,14 @@ def attrRepoInitialized(byuCLI, byuCreated):
 def attrAddedToRepo(attrRepoInitialized):
     byuCLI = attrRepoInitialized
     proverId = "Tyler"
-    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is None
+    assert byuCLI.attributeRepo.getAttributes(proverId) is None
     checkCmdValid(byuCLI, "add attribute first_name=Tyler, last_name=Ruff, "
                           "birth_date=12/17/1991, expiry_date=12/31/2101, "
                           "undergrad=True, "
                           "postgrad=False for {}".format(proverId))
     assert byuCLI.lastCmdOutput == \
            "attribute added successfully for prover id {}".format(proverId)
-    assert byuCLI.activeClient.attributeRepo.getAttributes(proverId) is not None
+    assert byuCLI.attributeRepo.getAttributes(proverId) is not None
 
 
 @pytest.fixture(scope="module")
@@ -363,7 +369,8 @@ def testAddAttrToRepo(attrAddedToRepo):
     pass
 
 
-def testTylerAddsBYUKnownAttributes(tylerStoresAttributesAsKnownToBYU):
+def testTylerAddsBYUKnownAttributes(tylerConnected,
+                                    tylerStoresAttributesAsKnownToBYU):
     pass
 
 
@@ -407,7 +414,7 @@ def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected,
     bookStoreCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
 
 
-def testStrTointeger():
+def testStrTointeger(philCLI):
     s = "10516306386726286019672155171905126058592128650909982334149995178986" \
         "73041451400057431499605181158943503786100424862329515980934309973855" \
         "43633459501210681944476644996687930156869752481111735518704772442711" \
@@ -446,5 +453,5 @@ def testStrTointeger():
         "41915506224275376177925859647928995537185609046742534998874286371343" \
         "66703575716284805303334603968057185045321034098727958620904195146881" \
         "865483244806147104667605098138613899840626729916612169723470228930801507396158440259774040553984850335586645194467365045176677506537296253654429662975816874630847874003647935529333964941855401786336352853043803498640759072173609203160413437402970023625421911392981092263211748047448929085861379410272047860536995972453496075851660446485058108906037436369067625674495155937598646143535510599911729010586276679305856525112130907097314388354485920043436412137797426978774012573863335500074359101826932761239032674620096110906293228090163"
-    i = cred_def.CredDef.getCryptoInteger(s)
+    i = philCLI.getCryptoInteger(s)
     assert str(i) == s

@@ -3,9 +3,11 @@ import datetime
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
 SIGNER_VER_KEY = "Verification Key"
+SIGNER_VER_KEY_SAME_AS_ID = '<same as local identifier>'
 
 TARGET_IDENTIFIER = "Target"
 TARGET_VER_KEY = "Target Verification Key"
+TARGET_VER_KEY_SAME_AS_ID = '<same as target>'
 TARGET_END_POINT = "Target endpoint"
 SIGNATURE = "Signature"
 CLAIM_REQUESTS = "Claim Requests"
@@ -20,16 +22,31 @@ LINK_STATUS_ACCEPTED = "Accepted"
 LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
 UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
+LINK_ITEM_PREFIX = '\n\t'
+
 
 class ClaimRequest:
     def __init__(self, name, version):
         self.name = name
         self.version = version
 
+    def getDictToBeStored(self):
+        return {
+            "name": self.name,
+            "version" : self.version
+        }
 
-class Claim:
-    def __init__(self, name):
+
+class AvailableClaimData:
+    def __init__(self, name, version=None):
         self.name = name
+        self.version = version
+
+    def getDictToBeStored(self):
+        return {
+            "name": self.name,
+            "version" : self.version
+        }
 
 
 class LinkInvitation:
@@ -43,9 +60,10 @@ class LinkInvitation:
         self.trustAnchor = trustAnchor
         self.targetIdentifier = targetIdentifier
         self.targetEndPoint = targetEndPoint
-        self.linkNonce = linkNonce
+        self.nonce = linkNonce
         self.signature = signature
         self.claimRequests = claimRequests
+
         self.signerVerKey = signerVerKey
 
         self.availableClaims = None
@@ -62,6 +80,12 @@ class LinkInvitation:
 
     def updateEndPoint(self, endPoint):
         self.targetEndPoint = endPoint
+
+    def updateAcceptanceStatus(self, status):
+        self.linkStatus = status
+
+    def updateTargetVerKey(self, targetVerKey):
+        self.targetVerkey = targetVerKey
 
     def updateState(self, targetVerKey, linkStatus, linkLastSynced,
                     linkLastSyncNo):
@@ -91,7 +115,8 @@ class LinkInvitation:
         availableClaims = []
         if availableClaimsJson:
             for ac in availableClaimsJson:
-                availableClaims.append(Claim(ac.get("name")))
+                availableClaims.append(
+                    AvailableClaimData(ac.get("name"), ac.get("version", None)))
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
         targetEndPoint = values.get(TARGET_END_POINT, None)
@@ -114,7 +139,7 @@ class LinkInvitation:
             SIGNER_IDENTIFIER: self.signerIdentifier,
             TRUST_ANCHOR: self.trustAnchor,
             TARGET_IDENTIFIER: self.targetIdentifier,
-            LINK_NONCE: self.linkNonce,
+            LINK_NONCE: self.nonce,
             SIGNATURE: self.signature
         }
         optional = {}
@@ -134,13 +159,13 @@ class LinkInvitation:
         if self.claimRequests:
             claimRequests = []
             for cr in self.claimRequests:
-                claimRequests.append(dict(cr))
+                claimRequests.append(cr.getDictToBeStored())
             optional[CLAIM_REQUESTS] = claimRequests
 
         if self.availableClaims:
             availableClaims = []
             for ac in self.availableClaims:
-                availableClaims.append(dict(ac))
+                availableClaims.append(ac.getDictToBeStored())
             optional[AVAILABLE_CLAIMS] = availableClaims
 
         fixed.update(optional)
@@ -188,6 +213,9 @@ class LinkInvitation:
         if day_diff < 7:
             return str(day_diff) + " days ago"
 
+    def isAccepted(self):
+        return self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED
+
     def getLinkInfoStr(self) -> str:
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = UNKNOWN_WAITING_FOR_SYNC
@@ -199,16 +227,20 @@ class LinkInvitation:
                         targetEndPoint == UNKNOWN_WAITING_FOR_SYNC:
             targetEndPoint = "Not Available"
 
-        if not self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED:
+        if self.isAccepted():
             trustAnchorStatus = '(confirmed)'
-            targetVerKey = '<same as target>'
+            targetVerKey = TARGET_VER_KEY_SAME_AS_ID
             linkStatus = self.linkStatus
 
-        verKey = '<same as local identifier>'
+        verKey = SIGNER_VER_KEY_SAME_AS_ID
         if self.signerVerKey:
             verKey = self.signerVerKey
 
-        fixed = \
+        fixedLinkHeading = "Link "
+        if not self.isAccepted():
+            fixedLinkHeading += "(not yet accepted)"
+
+        fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
             'Identifier: ' + self.signerIdentifier + '\n' \
@@ -218,22 +250,22 @@ class LinkInvitation:
             'Target: ' + self.targetIdentifier + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.linkNonce + '\n' \
+            'Invitation nonce: ' + self.nonce + '\n' \
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
-        optional = ""
-        if self.claimRequests:
-            optional = 'Claim Requests: '
-            for cr in self.claimRequests:
-                optional += '\n    ' + cr.name
+        optionalLinkItems = ""
+        if len(self.claimRequests) > 0:
+            optionalLinkItems = "Claim Requests: {}". \
+                format(",".join([cr.name for cr in self.claimRequests]))
 
-        if self.availableClaims:
-            optional = 'Available Claims: '
-            for ac in self.availableClaims:
-                optional += '\n    ' + ac.name
+        if len(self.availableClaims) > 0:
+            optionalLinkItems = "Available claims: {}".\
+                format(",".join([cl.name for cl in self.availableClaims]))
 
         if self.linkLastSyncNo:
-            optional += 'Last sync seq no: ' + self.linkLastSyncNo
+            optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
 
-        return fixed + optional
+        linkItems = fixedLinkItems + optionalLinkItems
+        indentedLinkItems = LINK_ITEM_PREFIX.join(linkItems.splitlines())
+        return fixedLinkHeading + indentedLinkItems

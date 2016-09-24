@@ -12,6 +12,14 @@ def grammar():
     return compile("".join(grams))
 
 
+def test_send_nym_with_role(grammar):
+    getMatchedVariables(grammar, 'send NYM dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= role=SPONSOR')
+
+
+def test_send_nym_without_role(grammar):
+    getMatchedVariables(grammar, 'send NYM dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU=')
+
+
 def test_send_attrib_reg_ex(grammar):
     getMatchedVariables(grammar, 'send ATTRIB dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= raw={"legal org": "BRIGHAM YOUNG UNIVERSITY, PROVO, UT", "email":"mail@byu.edu"}')
 
@@ -91,6 +99,7 @@ def test_connect_reg_ex(grammar):
     getMatchedVariables(grammar, "connect test")
     getMatchedVariables(grammar, "connect live")
 
+
 def testSyncLinkRegEx(grammar):
     matchedVars = getMatchedVariables(grammar, "sync faber")
     assertCliTokens(matchedVars, {"sync_link": "sync", "link_name": "faber"})
@@ -100,3 +109,17 @@ def testSyncLinkRegEx(grammar):
 
     matchedVars = getMatchedVariables(grammar, 'sync "faber" ')
     assertCliTokens(matchedVars, {"sync_link": "sync", "link_name": '"faber" '})
+
+
+def testAcceptInvitationLinkRegEx(grammar):
+    matchedVars = getMatchedVariables(grammar, "accept invitation faber")
+    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation",
+                                  "link_name": "faber"})
+
+    matchedVars = getMatchedVariables(grammar, 'accept invitation "faber"')
+    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation",
+                                  "link_name": '"faber"'})
+
+    matchedVars = getMatchedVariables(grammar, 'accept invitation "faber" ')
+    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation",
+                                  "link_name": '"faber" '})
