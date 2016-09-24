@@ -1,4 +1,7 @@
+import json
+
 import pytest
+from plenum.client.signer import SimpleSigner
 from sovrin.test.cli.helper import getFileLines
 
 
@@ -51,6 +54,7 @@ def faberKeyCreated(be, do, faberCLI):
                                                  'Current identifier set to ' +
                                                  faberIdr])
     return faberCLI
+
 
 
 @pytest.fixture(scope="module")
@@ -252,26 +256,58 @@ def testAcceptNotExistsLink(be, do, aliceWithKeyring, linkNotExists, faberMap):
        mapper=faberMap)
 
 
-# def testAcceptUnSyncedInviteWhenNotConnected(be, do,
-#                                              faberInviteLoadedByAlice,
-#                                              acceptWhenNotConnected,
-#                                              faberMap):
-#     aliceCLI = faberInviteLoadedByAlice
-#     be(aliceCLI)
-#     do('accept invitation {inviter}',       expect=acceptWhenNotConnected,
-#                                             mapper=faberMap)
-#
-#
-# def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
-#                                           acceptUnSyncedWhenConnected,
-#                                           faberMap, connectedToTest,
-#                                           poolNodesStarted):
-#     aliceCLI = faberInviteLoadedByAlice
-#     be(aliceCLI)
-#     do('connect test',                  within=3,
-#                                         expect=connectedToTest,
-#                                         mapper=faberMap)
-#
-#     do('accept invitation {inviter}',   within=3,
-#                                         expect=acceptUnSyncedWhenConnected,
-#                                         mapper=faberMap)
+# TODO: Below tests works fine individually, when run inside whole suite,
+# then, it fails (seems, cli state doesn't get clear)
+def testAcceptUnSyncedInviteWhenNotConnected(be, do,
+                                             faberInviteLoadedByAlice,
+                                             acceptUnSyncedLinkWhenNotConnected,
+                                             faberMap):
+    aliceCLI = faberInviteLoadedByAlice
+    be(aliceCLI)
+    do('accept invitation {inviter}', expect=acceptUnSyncedLinkWhenNotConnected,
+                                      mapper=faberMap)
+
+
+def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
+                                          acceptUnSyncedWhenConnected,
+                                          faberMap, connectedToTest,
+                                          poolNodesStarted):
+    aliceCLI = faberInviteLoadedByAlice
+    be(aliceCLI)
+    if not aliceCLI._isConnectedToAnyEnv():
+        do('connect test',                  within=3,
+                                            expect=connectedToTest,
+                                            mapper=faberMap)
+
+    do('accept invitation {inviter}',   within=3,
+                                        expect=acceptUnSyncedWhenConnected,
+                                        mapper=faberMap)
+
+
+def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint, faberKeyCreated):
+    aliceCLI = faberInviteSyncedWithEndpoint
+    faberCLI = faberKeyCreated
+    signer = SimpleSigner(identifier=faberCLI.activeWallet.defaultId)
+    msg = """{
+        "type":"AVAIL_CLAIM_LIST",
+        "identifier": "<identifier>",
+        "claimsList": [ {
+            "name": "Transcript",
+            "version": "1.2",
+            "definition": {
+                "attributes": {
+                    "studentName": "string",
+                    "ssn": "int",
+                    "degree": "string",
+                    "year": "string",
+                    "status": "string"
+                }
+            }
+        } ]
+      }""".replace("<identifier>", str(faberCLI.activeWallet.defaultId))
+
+    acceptInviteResp = json.loads(msg)
+
+    signature = signer.sign(acceptInviteResp)
+    acceptInviteResp["signature"] = signature
+    aliceCLI._handleAcceptInviteResponse(acceptInviteResp)

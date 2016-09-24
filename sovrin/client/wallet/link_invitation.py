@@ -3,9 +3,11 @@ import datetime
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
 SIGNER_VER_KEY = "Verification Key"
+SIGNER_VER_KEY_SAME_AS_ID = '<same as local identifier>'
 
 TARGET_IDENTIFIER = "Target"
 TARGET_VER_KEY = "Target Verification Key"
+TARGET_VER_KEY_SAME_AS_ID = '<same as target>'
 TARGET_END_POINT = "Target endpoint"
 SIGNATURE = "Signature"
 CLAIM_REQUESTS = "Claim Requests"
@@ -29,9 +31,10 @@ class ClaimRequest:
         self.version = version
 
 
-class Claim:
-    def __init__(self, name):
+class AvailableClaimData:
+    def __init__(self, name, version=None):
         self.name = name
+        self.version = version
 
 
 class LinkInvitation:
@@ -45,7 +48,7 @@ class LinkInvitation:
         self.trustAnchor = trustAnchor
         self.targetIdentifier = targetIdentifier
         self.targetEndPoint = targetEndPoint
-        self.linkNonce = linkNonce
+        self.nonce = linkNonce
         self.signature = signature
         self.claimRequests = claimRequests
         self.signerVerKey = signerVerKey
@@ -64,6 +67,12 @@ class LinkInvitation:
 
     def updateEndPoint(self, endPoint):
         self.targetEndPoint = endPoint
+
+    def updateAcceptanceStatus(self, status):
+        self.linkStatus = status
+
+    def updateTargetVerKey(self, targetVerKey):
+        self.targetVerkey = targetVerKey
 
     def updateState(self, targetVerKey, linkStatus, linkLastSynced,
                     linkLastSyncNo):
@@ -93,7 +102,8 @@ class LinkInvitation:
         availableClaims = []
         if availableClaimsJson:
             for ac in availableClaimsJson:
-                availableClaims.append(Claim(ac.get("name")))
+                availableClaims.append(
+                    AvailableClaimData(ac.get("name"), ac.get("version", None)))
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
         targetEndPoint = values.get(TARGET_END_POINT, None)
@@ -116,7 +126,7 @@ class LinkInvitation:
             SIGNER_IDENTIFIER: self.signerIdentifier,
             TRUST_ANCHOR: self.trustAnchor,
             TARGET_IDENTIFIER: self.targetIdentifier,
-            LINK_NONCE: self.linkNonce,
+            LINK_NONCE: self.nonce,
             SIGNATURE: self.signature
         }
         optional = {}
@@ -206,10 +216,10 @@ class LinkInvitation:
 
         if self.isAccepted():
             trustAnchorStatus = '(confirmed)'
-            targetVerKey = '<same as target>'
+            targetVerKey = TARGET_VER_KEY_SAME_AS_ID
             linkStatus = self.linkStatus
 
-        verKey = '<same as local identifier>'
+        verKey = SIGNER_VER_KEY_SAME_AS_ID
         if self.signerVerKey:
             verKey = self.signerVerKey
 
@@ -227,7 +237,7 @@ class LinkInvitation:
             'Target: ' + self.targetIdentifier + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.linkNonce + '\n' \
+            'Invitation nonce: ' + self.nonce + '\n' \
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 

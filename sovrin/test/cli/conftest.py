@@ -115,9 +115,11 @@ def fileNotExists():
 def connectedToTest():
     return ["Connected to test"]
 
+
 @pytest.fixture(scope="module")
 def canNotSyncMsg():
     return ["Cannot sync because not connected"]
+
 
 @pytest.fixture(scope="module")
 def syncWhenNotConnected(canNotSyncMsg, connectUsage):
@@ -135,16 +137,25 @@ def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedWhenConnected(syncLinkOut, connectUsage):
-    return syncLinkOut
+def acceptUnSyncedWhenConnected(commonAcceptInvitationMsgs):
+    return commonAcceptInvitationMsgs + \
+            ["Link {inviter} synced",
+             "Starting communication with {inviter}"]
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedLinkWhenNotConnected(canNotSyncMsg, connectUsage):
+def commonAcceptInvitationMsgs():
     return ["Invitation not yet verified",
             "Link not yet synchronized. Attempting to sync...",
-            "Invitation acceptance aborted."
-            ] + canNotSyncMsg + connectUsage
+            ]
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedLinkWhenNotConnected(commonAcceptInvitationMsgs,
+                                       canNotSyncMsg, connectUsage):
+    return commonAcceptInvitationMsgs + \
+            ["Invitation acceptance aborted."] + \
+            canNotSyncMsg + connectUsage
 
 
 @pytest.fixture(scope="module")
@@ -227,19 +238,27 @@ def endpointNotAvailable():
     return ["Endpoint not available"]
 
 
-@pytest.fixture(scope="module")
-def syncLinkOut():
-    return ["Synchronizing...", "Link {inviter} Synced"]
-
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithEndpoint(syncLinkOut, endpointReceived):
-    return syncLinkOut + endpointReceived
+def syncLinkOutEndsWith():
+    return ["Link {inviter} synced"]
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithoutEndpoint(syncLinkOut, endpointNotAvailable):
-    return syncLinkOut + endpointNotAvailable
+def syncLinkOutStartsWith():
+    return ["Synchronizing..."]
+
+
+@pytest.fixture(scope="module")
+def syncLinkOutWithEndpoint(syncLinkOutStartsWith, endpointReceived,
+                            syncLinkOutEndsWith):
+    return syncLinkOutStartsWith + endpointReceived + syncLinkOutEndsWith
+
+
+@pytest.fixture(scope="module")
+def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith, endpointNotAvailable,
+                               syncLinkOutEndsWith):
+    return syncLinkOutStartsWith + endpointNotAvailable + syncLinkOutEndsWith
 
 
 @pytest.fixture(scope="module")

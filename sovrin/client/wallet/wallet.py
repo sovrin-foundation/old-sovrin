@@ -54,21 +54,21 @@ class Wallet(PWallet, Sponsoring):
         PWallet.__init__(self, name)
         Sponsoring.__init__(self)
 
-        self._attributes = {}  # type: Dict[(str, Identifier, Optional[Identifier]), Attribute]
-        self._credDefs = {}  # type: Dict[(str, str, str), CredDef]
-        self._credDefSks = {}  # type: Dict[(str, str, str), CredDefSk]
-        self._credentials = {}  # type: Dict[str, Credential]
         self._credMasterSecret = None
-        self._links = {}  # type: Dict[str, Link]
+        self._attributes = {}       # type: Dict[(str, Identifier, Optional[Identifier]), Attribute]
+        self._credDefs = {}         # type: Dict[(str, str, str), CredDef]
+        self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
+        self._credentials = {}      # type: Dict[str, Credential]
+        self._links = {}            # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
-        self.knownIds = {}  # type: Dict[str, Identifier]
-
+        self.knownIds = {}          # type: Dict[str, Identifier]
+        self.claims = {}            # type: Dict[(str, version), Claim]
         # transactions not yet submitted
-        self._pending = deque()  # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
+        self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
         # pending transactions that have been prepared (probably submitted)
-        self._prepared = {}  # type: Dict[(Identifier, int), Request]
+        self._prepared = {}         # type: Dict[(Identifier, int), Request]
 
         self.replyHandler = {
             ATTRIB: self._attribReply,
@@ -83,6 +83,9 @@ class Wallet(PWallet, Sponsoring):
     @property
     def pendingCount(self):
         return len(self._pending)
+
+    def addClaim(self, name, version, attributes):
+        self.claims[(name, version)] = attributes
 
     def addAttribute(self, attrib: Attribute):
         """
@@ -267,12 +270,18 @@ class Wallet(PWallet, Sponsoring):
         self._linkInvitations[linkInvitation.name] = linkInvitation.\
             getDictToBeStored()
 
+    def getLinkInvitationByTarget(self, target: str):
+        for k, v in self._linkInvitations.items():
+            li = LinkInvitation.getFromDict(k, v)
+            if li.targetIdentifier == target:
+                return li
+
     def getMatchingLinkInvitations(self, name: str):
         allMatched = []
         for k, v in self._linkInvitations.items():
             if name == k or name.lower() in k.lower():
-                liValues = v
-                li = LinkInvitation.getFromDict(k, liValues)
+                # liValues = v
+                li = LinkInvitation.getFromDict(k, v)
                 allMatched.append(li)
         return allMatched
 

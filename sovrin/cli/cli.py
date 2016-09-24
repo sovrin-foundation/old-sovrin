@@ -1,10 +1,12 @@
 import ast
 import datetime
 import json
-from typing import Dict
+from typing import Dict, Any
 
 import os
 from hashlib import sha256
+from raet.nacling import Verifier as SigVerifier
+from base64 import b64decode
 
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
@@ -13,7 +15,7 @@ from pygments.token import Token
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import DATA, RAW, ENC, HASH, NAME, VERSION, KEYS, TYPE, \
+from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
     PORT, IP
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, cleanSeed, getCryptonym
@@ -31,7 +33,9 @@ from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.client.wallet.link_invitation import LinkInvitation, \
+    TARGET_VER_KEY_SAME_AS_ID, LINK_STATUS_ACCEPTED, AvailableClaimData, \
+    LINK_ITEM_PREFIX
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
@@ -80,6 +84,7 @@ class SovrinCli(PlenumCli):
         self.attributeRepo = None   # type: AttrRepo
         self.proofBuilders = {}
         self.verifier = Verifier(randomString())
+
     @property
     def lexers(self):
         lexerNames = [
@@ -175,6 +180,52 @@ class SovrinCli(PlenumCli):
                         self._acceptInvitationLink
                         ])
         return actions
+
+    @staticmethod
+    def verifySig(identifier, signature, msg) -> bool:
+        b64sig = signature.encode('utf-8')
+        sig = b64decode(b64sig)
+        vr = SigVerifier(identifier)
+        return vr.verify(sig, msg)
+
+    def _handleAcceptInviteResponse(self, msg: dict):
+        signature = msg.get("signature")
+        identifier = msg.get("identifier")
+        del msg["signature"]
+        isVerified = SovrinCli.verifySig(identifier, signature, msg)
+        if isVerified:
+            msg["signature"] = signature
+            self.print("Signature accepted")
+            self.print("Trust established.")
+            # Not sure how to know if the responder is a trust anchor or not
+            self.print("Identifier created in Sovrin.")
+            li = self._getLinkByTarget(identifier)
+            if li:
+                availableClaims = []
+                for cl in msg['claims_list']:
+                    name, version, attributes = cl['name'], cl['version'], \
+                                                cl['attributes']
+                    availableClaims.append(AvailableClaimData(name, version))
+                    self.activeWallet.addClaim(name, version, attributes)
+                li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
+                li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
+                li.updateAvailableClaims(availableClaims)
+                if len(availableClaims) > 0:
+                    self.print("Available claims: {}".
+                               format(",".join([cl.name for cl in availableClaims])))
+
+            else:
+                self.print("No matching invitation found")
+        else:
+            self.print("Signature rejected")
+
+    def handleEndpointMsg(self, msg):
+        if msg["type"] == "AVAIL_CLAIM_LIST":
+            self._handleAcceptInviteResponse(msg)
+
+    def sendToEndpoint(self, msg: Any, endpoint: str):
+        pass
+
 
     def _buildWalletClass(self, nm):
         # DEPR
@@ -802,7 +853,7 @@ class SovrinCli(PlenumCli):
             return True
 
         self._updateLinkWithLatestInfo(link, reply)
-        self.print("Link {} Synced".format(link.name))
+        self.print("Link {} synced".format(link.name))
         postSync(link)
         return True
 
@@ -839,6 +890,9 @@ class SovrinCli(PlenumCli):
                            "Please check if Sovrin is running")
             self._printConnectUsage()
 
+    def _getLinkByTarget(self, target) -> LinkInvitation:
+        return self.activeWallet.getLinkInvitationByTarget(target)
+
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
             self._getMatchingInvitationsDetail(linkName)
@@ -856,12 +910,18 @@ class SovrinCli(PlenumCli):
             self.print('Expanding {} to "{}"'.format(linkName, li.name))
         return li
 
+    def _sendAcceptInviteToTargetEndpoint(self, link: LinkInvitation):
+        self.print("Starting communication with {}".format(link.name))
+        op = {
+            "from": self.activeWallet.defaultId,
+            "invitationNonce": link.nonce
+        }
+        signedNonce = self.activeWallet.signOp(op, self.activeWallet.defaultId)
+        op["signedInvitationNonce"] = signedNonce
 
-    def _acceptLinkWithEndpoint(self, link: LinkInvitation):
-        pass
 
     def _acceptLinkPostSync(self, link: LinkInvitation):
-        self._acceptLinkWithEndpoint(link)
+        self._sendAcceptInviteToTargetEndpoint(link)
 
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
@@ -869,15 +929,19 @@ class SovrinCli(PlenumCli):
             if li.isAccepted():
                 self._printLinkAlreadyExcepted(li.name)
             else:
+                self.print("Invitation not yet verified.")
                 if not li.targetEndPoint:
+                    self.print("Link not yet synchronized. "
+                               "Attempting to sync...")
                     if self._isConnectedToAnyEnv():
                         self._getTargetEndpoint(li, self._acceptLinkPostSync)
                     else:
-                        self.print("Cannot accept because not connected")
+                        self.print("Invitation acceptance aborted.")
+                        self.print("Cannot sync because not connected")
                         self._printNotConnectedEnvMessage()
                         return True
                 else:
-                    self._acceptLinkWithEndpoint(li)
+                    self._sendAcceptInviteToTargetEndpoint(li)
 
 
     def _syncLinkInvitation(self, linkName):
