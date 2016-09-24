@@ -13,6 +13,7 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
+from sovrin.client.wallet.claim import Claim
 from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
@@ -63,7 +64,7 @@ class Wallet(PWallet, Sponsoring):
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
-        self.claims = {}            # type: Dict[(str, version), Claim]
+        self._claims = {}            # type: Dict[(str, version), Claim]
         # transactions not yet submitted
         self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
@@ -84,8 +85,20 @@ class Wallet(PWallet, Sponsoring):
     def pendingCount(self):
         return len(self._pending)
 
-    def addClaim(self, name, version, attributes):
-        self.claims[(name, version)] = attributes
+    def getClaimByName(self, claimName):
+        for cl in self._claims.values():
+            if cl.name == claimName or cl.name.lower() in claimName.lower():
+                return cl
+
+    def getLinkByClaimName(self, claimName):
+        for k, v in self._linkInvitations.items():
+            li = LinkInvitation.getFromDict(k, v)
+            for ac in li.availableClaims:
+                if ac.name == claimName or ac.name.lower() in claimName.lower():
+                    return li
+
+    def addClaim(self, cl):
+        self._claims[(cl.name, cl.version)] = cl
 
     def addAttribute(self, attrib: Attribute):
         """

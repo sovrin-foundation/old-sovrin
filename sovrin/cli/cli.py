@@ -33,6 +33,7 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.client.wallet.claim import Claim
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
@@ -114,6 +115,7 @@ class SovrinCli(PlenumCli):
             'load_file',
             'show_link',
             'sync_link',
+            'show_claim',
             'accept_link_invite'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
@@ -150,6 +152,7 @@ class SovrinCli(PlenumCli):
         completers["conn"] = WordCompleter(["connect"])
         completers["env_name"] = WordCompleter(list(self.envs.keys()))
         completers["sync_link"] = WordCompleter(["sync"])
+        completers["show_claim"] = WordCompleter(["show", "claim"])
         completers["accept_link_invite"] = WordCompleter(["accept",
                                                           "invitation"])
 
@@ -183,6 +186,7 @@ class SovrinCli(PlenumCli):
                         self._showLink,
                         self._connectTo,
                         self._syncLink,
+                        self._showClaim,
                         self._acceptInvitationLink
                         ])
         return actions
@@ -217,13 +221,14 @@ class SovrinCli(PlenumCli):
             if li:
                 availableClaims = []
                 for cl in msg['claimsList']:
-                    name, version, attributes = cl['name'], cl['version'], \
-                                                cl['definition']['attributes']
+                    name, version, definition = cl['name'], cl['version'], \
+                                                cl['definition']
                     availableClaims.append(AvailableClaimData(name, version))
-                    self.activeWallet.addClaim(name, version, attributes)
+                    self.activeWallet.addClaim(Claim(name, version, definition))
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
                 li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
                 li.updateAvailableClaims(availableClaims)
+
                 self.activeWallet.addLinkInvitation(li)
 
                 if len(availableClaims) > 0:
@@ -783,7 +788,7 @@ class SovrinCli(PlenumCli):
             with open(filePath) as data_file:
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
-            #try:
+            try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -797,9 +802,9 @@ class SovrinCli(PlenumCli):
                         self._loadInvitation(invitationData)
 
                     self._printShowAndAcceptLinkUsage(linkName)
-            # except Exception as e:
-            #     self.print('Error occurred during processing link '
-            #                'invitation: {}'.format(e))
+            except Exception as e:
+                self.print('Error occurred during processing link '
+                           'invitation: {}'.format(e))
 
             return True
 
@@ -978,7 +983,7 @@ class SovrinCli(PlenumCli):
 
 
     @staticmethod
-    def cleanLinkName(name):
+    def removeDoubleQuotes(name):
         return name.replace('"', '')
 
     # def _printConnectUsage(self):
@@ -1011,19 +1016,19 @@ class SovrinCli(PlenumCli):
 
     def _acceptInvitationLink(self, matchedVars):
         if matchedVars.get('accept_link_invite') == 'accept invitation':
-            linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
+            linkName = SovrinCli.removeDoubleQuotes(matchedVars.get('link_name'))
             self._acceptLinkInvitation(linkName)
             return True
 
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
-            linkName = SovrinCli.cleanLinkName(matchedVars.get('link_name'))
+            linkName = SovrinCli.removeDoubleQuotes(matchedVars.get('link_name'))
             self._syncLinkInvitation(linkName)
             return True
 
     def _getMatchingInvitationsDetail(self, linkName):
         linkInvitations = self._getInvitationMatchingLinks(
-            SovrinCli.cleanLinkName(linkName))
+            SovrinCli.removeDoubleQuotes(linkName))
 
         exactlyMatchedLinks = linkInvitations["exactlyMatched"]
         likelyMatchedLinks = linkInvitations["likelyMatched"]
@@ -1079,6 +1084,23 @@ class SovrinCli(PlenumCli):
                                                    likelyMatchedLinks)
 
             return True
+
+    def _showClaim(self, matchedVars):
+        if matchedVars.get('show_claim') == 'show claim':
+            claimName = SovrinCli.removeDoubleQuotes(
+                matchedVars.get('claim_name'))
+            li = self.activeWallet.getLinkByClaimName(claimName)
+            if li:
+                self.print("Found claim {} in link Faber College.".
+                           format(claimName))
+                cl = self.activeWallet.getClaimByName(claimName)
+                self.print(cl.getClaimInfoStr())
+                msgs = ['request claim {}'.format(claimName)]
+                self.printUsage(msgs)
+            else:
+                self.print("Claim not found in any link")
+            return True
+
 
     def _showFile(self, matchedVars):
         if matchedVars.get('show_file') == 'show':

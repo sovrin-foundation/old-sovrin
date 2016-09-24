@@ -324,7 +324,7 @@ def faberRespondedToAcceptInvite(faberInviteSyncedWithEndpoint,
             "version": "1.2",
             "definition": {
                 "attributes": {
-                    "studentName": "string",
+                    "student_name": "string",
                     "ssn": "int",
                     "degree": "string",
                     "year": "string",
@@ -353,9 +353,28 @@ def testFaberRespondsToAcceptInvite(faberRespondedToAcceptInvite):
 def testShowLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
                                   faberRespondedToAcceptInvite):
     aliceCli = faberRespondedToAcceptInvite
-
     be(aliceCli)
 
     do("show link {inviter}",           expect=showAcceptedLinkOut,
                                         not_expect="Link (not yet accepted)",
                                         mapper=faberMap)
+
+
+def testShowClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
+                                   faberRespondedToAcceptInvite):
+    aliceCli = faberRespondedToAcceptInvite
+    be(aliceCli)
+
+    do("show claim claim-to-show-not-exists",
+                                        expect=showClaimNotFoundOut,
+                                        mapper=faberMap)
+
+
+def testShowClaimExists(be, do, transcriptClaimMap, showClaimOut,
+                                   faberRespondedToAcceptInvite):
+    aliceCli = faberRespondedToAcceptInvite
+    be(aliceCli)
+
+    do("show claim {name}",
+                                        expect=showClaimOut,
+                                        mapper=transcriptClaimMap)

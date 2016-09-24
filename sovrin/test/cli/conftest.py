@@ -84,6 +84,7 @@ def aliceMap():
     return {'keyring-name': 'Alice',
             }
 
+
 @pytest.fixture(scope="module")
 def faberMap():
     return {'inviter': 'Faber College',
@@ -93,7 +94,8 @@ def faberMap():
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
             "nonce": "b1134a647eb818069c089e7694f63e6d",
             "endpoint": "0.0.0.0:1212",
-            "claims" : "Transcript"
+            "claims": "Transcript",
+            "claim-to-show": "Transcript"
             }
 
 
@@ -286,6 +288,42 @@ def linkNotYetSynced():
 def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
     return showLinkOut + linkNotYetSynced
 
+
+@pytest.fixture(scope="module")
+def showClaimNotFoundOut():
+    return [ "Claim not found in any link"
+    ]
+
+@pytest.fixture(scope="module")
+def transcriptClaimMap():
+    return {
+            'inviter' : 'Faber College',
+            'name': 'Transcript',
+            'status': "available (not yet issued)",
+            "version": "1.2",
+            "attr-student_name": "string",
+            "attr-ssn": "int",
+            "attr-degree": "string",
+            "attr-year": "string",
+            "attr-status": "string"
+    }
+
+@pytest.fixture(scope="module")
+def showClaimOut():
+    return ["Found claim {name} in link {inviter}.",
+            "Name: {name}",
+            "Status: {status}",
+            "Version: {version}",
+            "Definition:",
+            "Attributes:",
+            "student_name: {attr-student_name}",
+            "ssn: {attr-ssn}",
+            "degree: {attr-degree}",
+            "year: {attr-year}",
+            "status: {attr-status}",
+            "Usage",
+            "request claim {name}"
+    ]
 
 @pytest.fixture(scope="module")
 def showAcceptedLinkOut():
