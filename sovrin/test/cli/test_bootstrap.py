@@ -322,15 +322,8 @@ def faberRespondedToAcceptInvite(faberInviteSyncedWithEndpoint,
         "claimsList": [ {
             "name": "Transcript",
             "version": "1.2",
-            "definition": {
-                "attributes": {
-                    "student_name": "string",
-                    "ssn": "int",
-                    "degree": "string",
-                    "year": "string",
-                    "status": "string"
-                }
-            }
+            "defIdr":"<DefID>",
+            "issuerIdr": "<IssuerID>"
         } ]
       }""".replace("<identifier>", faberCli.activeWallet.defaultId)
 
@@ -378,3 +371,13 @@ def testShowClaimExists(be, do, transcriptClaimMap, showClaimOut,
     do("show claim {name}",
                                         expect=showClaimOut,
                                         mapper=transcriptClaimMap)
+
+
+def testRequestClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
+                                   faberRespondedToAcceptInvite):
+    aliceCli = faberRespondedToAcceptInvite
+    be(aliceCli)
+
+    do("request claim claim-to-show-not-exists",
+                                        expect=showClaimNotFoundOut,
+                                        mapper=faberMap)
