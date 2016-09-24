@@ -31,6 +31,7 @@ from plenum.test.helper import genTestClientProvider as \
 from plenum.test.testable import Spyable
 from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
+from sovrin.client.wallet.attribute import LedgerStore, Attribute
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
@@ -534,3 +535,30 @@ def _newWallet(name=None):
     w = Wallet(name or signer.identifier)
     w.addSigner(signer=signer)
     return w
+
+
+def addAttributeAndCheck(looper, client, wallet, attrib):
+    old = wallet.pendingCount
+    pending = wallet.addAttribute(attrib)
+    assert pending == old + 1
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
+
+    def chk():
+        assert wallet.getAttribute(attrib).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=15))
+    return wallet.getAttribute(attrib).seqNo
+
+
+def addRawAttribute(looper, client, wallet, name, value, dest=None,
+                    localName=None):
+    if not localName:
+        localName = name
+    attrData = json.dumps({name: value})
+    attrib = Attribute(name=localName,
+                       origin=wallet.defaultId,
+                       value=attrData,
+                       dest=dest,
+                       ledgerStore=LedgerStore.RAW)
+    addAttributeAndCheck(looper, client, wallet, attrib)

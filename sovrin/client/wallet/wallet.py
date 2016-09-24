@@ -139,9 +139,6 @@ class Wallet(PWallet, Sponsoring):
             self._pending.appendleft((req, credDef.key()))
         return len(self._pending)
 
-    # def addCredDef(self, credDef: CredDef):
-    #     self._credDefs[credDef.key()] = credDef
-
     def getCredDef(self, key: CredDefKey):
         return self._credDefs[key.key()]
 

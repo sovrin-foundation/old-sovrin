@@ -3,22 +3,20 @@ import json
 import base58
 import libnacl.public
 import pytest
-
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import REQNACK, ENC, RAW, DATA
+from plenum.common.txn import REQNACK, ENC, DATA
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict, getlogger
 from plenum.test.eventually import eventually
 from sovrin.client.client import Client
-from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
-
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
-    SPONSOR, TXN_ID, NONCE, SKEY, REFERENCE, GET_ATTR
+    SPONSOR, TXN_ID, NONCE, SKEY
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
-    makeAttribRequest, makeGetNymRequest
+    makeAttribRequest, makeGetNymRequest, addAttributeAndCheck
 
 logger = getlogger()
 
@@ -51,20 +49,6 @@ def submitAndCheckNacks(looper, client, wallet, op, identifier,
 @pytest.fixture(scope="module")
 def attributeData():
     return json.dumps({'name': 'Mario'})
-
-
-def addAttributeAndCheck(looper, client, wallet, attrib):
-    old = wallet.pendingCount
-    pending = wallet.addAttribute(attrib)
-    assert pending == old + 1
-    reqs = wallet.preparePending()
-    client.submitReqs(*reqs)
-
-    def chk():
-        assert wallet.getAttribute(attrib).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=15))
-    return wallet.getAttribute(attrib).seqNo
 
 
 @pytest.fixture(scope="module")

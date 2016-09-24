@@ -1,15 +1,35 @@
+import pytest
+from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
-from pytest import yield_fixture
+from sovrin.agent.faber import runFaber
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR
 from sovrin.test.helper import createNym
 
 
-@yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def emptyLooper():
     with Looper() as l:
         yield l
 
 
-@yield_fixture(scope="module")
-def faberAdded():
-    createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
+@pytest.fixture(scope="module")
+def faberWallet():
+    name = "Faber College"
+    wallet = Wallet(name)
+    return wallet
+
+
+@pytest.fixture(scope="module")
+def faberAdded(genned, looper, steward, stewardWallet):
+    createNym(looper, faberWallet.defaultId, steward, stewardWallet,
+              role=SPONSOR)
+
+
+@pytest.fixture(scope="module")
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet):
+    faberWallet.addSigner(signer=SimpleSigner())
+    faber = runFaber(faberWallet.name, faberWallet,
+                     basedirpath=tdirWithPoolTxns, startRunning=False)
+    emptyLooper.add(faber)
+    return faber, faberWallet

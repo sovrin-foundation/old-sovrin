@@ -463,4 +463,4 @@ def faberAdded(poolNodesCreated,
              stewardClientAndWallet):
     client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
-    createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
+    createNym(looper, li.remoteIdentifier, client, wallet, role=SPONSOR)

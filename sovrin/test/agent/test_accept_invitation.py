@@ -1,20 +1,4 @@
-import pytest
-from plenum.client.signer import SimpleSigner
-from plenum.common.util import randomString
-from sovrin.agent.faber import runFaber
 from sovrin.client.wallet.link_invitation import LinkInvitation
-from sovrin.client.wallet.wallet import Wallet
-
-
-@pytest.fixture(scope="module")
-def faberIsRunning(emptyLooper, tdirWithPoolTxns):
-    name = randomString()
-    wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner())
-    faber = runFaber(name, wallet, basedirpath=tdirWithPoolTxns,
-                     startRunning=False)
-    emptyLooper.add(faber)
-    return faber, wallet
 
 
 def testFaberCreateLink(faberIsRunning):

@@ -1,4 +1,5 @@
 import datetime
+from typing import Dict
 
 from sovrin.common.util import getNonce
 
@@ -47,22 +48,22 @@ class AvailableClaimData:
     def getDictToBeStored(self):
         return {
             "name": self.name,
-            "version" : self.version
+            "version": self.version
         }
 
 
 # TODO: Rename to Link
-class Link:
+class LinkInvitation:
     # Rename `signerIdentifier`,
-    def __init__(self, name, signerIdentifier, trustAnchor=None,
-                 targetIdentifier=None, targetEndPoint=None, linkNonce=None,
-                 claimRequests=None):
+    def __init__(self, name, localIdentifier, trustAnchor=None,
+                 remoteIdentifier=None, remoteEndPoint=None, linkNonce=None,
+                 claimRequests=None, invitationData: Dict=None):
         self.name = name
-        self.signerIdentifier = signerIdentifier
+        self.localIdentifier = localIdentifier
 
         self.trustAnchor = trustAnchor
-        self.targetIdentifier = targetIdentifier
-        self.targetEndPoint = targetEndPoint
+        self.remoteIdentifier = remoteIdentifier
+        self.remoteEndPoint = remoteEndPoint
         self.linkNonce = linkNonce or getNonce()
         # TODO: Keep the whole invitation data, including signature
         # self.signature = signature
@@ -76,35 +77,20 @@ class Link:
         self.linkLastSynced = None
         self.linkLastSyncNo = None
 
-    def updateAvailableClaims(self, claims):
-        self.availableClaims = claims
-
-    def updateSyncInfo(self, linkLastSynced):
-        self.linkLastSynced = linkLastSynced
-
-    def updateEndPoint(self, endPoint):
-        self.targetEndPoint = endPoint
-
-    def updateAcceptanceStatus(self, status):
-        self.linkStatus = status
-
-    def updateTargetVerKey(self, targetVerKey):
-        self.targetVerkey = targetVerKey
-
     def updateState(self, targetVerKey, linkStatus, linkLastSynced,
                     linkLastSyncNo):
         self.targetVerkey = targetVerKey
         self.linkStatus = linkStatus
         self.linkLastSynced = datetime.datetime.strptime(
-            linkLastSynced,"%Y-%m-%dT%H:%M:%S.%f") \
+            linkLastSynced, "%Y-%m-%dT%H:%M:%S.%f") \
             if linkLastSynced else None
         self.linkLastSyncNo = linkLastSyncNo
 
     @staticmethod
     def getFromDict(name, values):
-        signerIdentifier = values[SIGNER_IDENTIFIER]
+        localIdentifier = values[SIGNER_IDENTIFIER]
         trustAnchor = values[TRUST_ANCHOR]
-        targetIdentifier = values[TARGET_IDENTIFIER]
+        remoteIdentifier = values[TARGET_IDENTIFIER]
         linkNonce = values[LINK_NONCE]
         # signature = values[SIGNATURE]
 
@@ -122,27 +108,27 @@ class Link:
                 availableClaims.append(
                     AvailableClaimData(ac.get("name"), ac.get("version", None)))
 
-        signerVerKey = values.get(SIGNER_VER_KEY, None)
-        targetEndPoint = values.get(TARGET_END_POINT, None)
+        localVerKey = values.get(SIGNER_VER_KEY, None)
+        remoteEndPoint = values.get(TARGET_END_POINT, None)
 
-        targetVerKey = values.get(TARGET_VER_KEY, None)
+        remoteVerKey = values.get(TARGET_VER_KEY, None)
         linkStatus = values.get(LINK_STATUS, None)
         linkLastSynced = values.get(LINK_LAST_SYNCED, None)
         linkLastSyncNo = values.get(LINK_LAST_SEQ_NO, None)
 
-        li = LinkInvitation(name, signerIdentifier, signerVerKey, trustAnchor,
-                            targetIdentifier, targetEndPoint, linkNonce,
+        li = LinkInvitation(name, localIdentifier, localVerKey, trustAnchor,
+                            remoteIdentifier, remoteEndPoint, linkNonce,
                             claimRequests)
-        li.updateState(targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
-        li.updateAvailableClaims(availableClaims)
+        li.updateState(remoteVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
+        li.availableClaims = availableClaims
 
         return li
 
     def getDictToBeStored(self) -> dict:
         fixed = {
-            SIGNER_IDENTIFIER: self.signerIdentifier,
+            SIGNER_IDENTIFIER: self.localIdentifier,
             TRUST_ANCHOR: self.trustAnchor,
-            TARGET_IDENTIFIER: self.targetIdentifier,
+            TARGET_IDENTIFIER: self.remoteIdentifier,
             LINK_NONCE: self.linkNonce,
             SIGNATURE: self.signature
         }
@@ -151,8 +137,8 @@ class Link:
             optional[SIGNER_VER_KEY] = self.signerVerKey
         if self.targetVerkey:
             optional[TARGET_VER_KEY] = self.targetVerkey
-        if self.targetEndPoint:
-            optional[TARGET_END_POINT] = self.targetEndPoint
+        if self.remoteEndPoint:
+            optional[TARGET_END_POINT] = self.remoteEndPoint
         if self.linkStatus:
             optional[LINK_STATUS] = self.linkStatus
         if self.linkLastSynced:
@@ -225,7 +211,7 @@ class Link:
     def getLinkInfoStr(self) -> str:
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = UNKNOWN_WAITING_FOR_SYNC
-        targetEndPoint = self.targetEndPoint or UNKNOWN_WAITING_FOR_SYNC
+        targetEndPoint = self.remoteEndPoint or UNKNOWN_WAITING_FOR_SYNC
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = LinkInvitation.prettyDate(self.linkLastSynced)
 
@@ -249,11 +235,11 @@ class Link:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
-            'Identifier: ' + self.signerIdentifier + '\n' \
+            'Identifier: ' + self.localIdentifier + '\n' \
             'Trust anchor: ' + self.trustAnchor + ' ' + trustAnchorStatus + '\n' \
             'Verification key: ' + verKey + '\n' \
             'Signing key: <hidden>' '\n' \
-            'Target: ' + self.targetIdentifier + '\n' \
+            'Target: ' + self.remoteIdentifier + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
             'Invitation nonce: ' + self.nonce + '\n' \
