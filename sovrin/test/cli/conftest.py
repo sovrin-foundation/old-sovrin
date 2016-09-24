@@ -313,16 +313,16 @@ def showClaimOut():
     return ["Found claim {name} in link {inviter}",
             "Name: {name}",
             "Status: {status}",
-            "Version: {version}"
-            # "Definition:",
-            # "Attributes:",
-            # "student_name: {attr-student_name}",
-            # "ssn: {attr-ssn}",
-            # "degree: {attr-degree}",
-            # "year: {attr-year}",
-            # "status: {attr-status}",
-            # "Usage",
-            # "request claim {name}"
+            "Version: {version}",
+            "Definition:",
+            "Attributes:",
+            "student_name: {attr-student_name}",
+            "ssn: {attr-ssn}",
+            "degree: {attr-degree}",
+            "year: {attr-year}",
+            "status: {attr-status}",
+            "Usage",
+            "request claim {name}"
     ]
 
 @pytest.fixture(scope="module")

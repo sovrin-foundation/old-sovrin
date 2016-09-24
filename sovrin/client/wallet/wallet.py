@@ -13,7 +13,7 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
-from sovrin.client.wallet.claim import Claim
+from sovrin.client.wallet.claim import Claim, ClaimDefKey, ClaimDef
 from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
@@ -64,6 +64,7 @@ class Wallet(PWallet, Sponsoring):
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
+        self._claimDefs = {}         # type: Dict[ClaimDefKey, ClaimDef]
         # transactions not yet submitted
         self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
@@ -84,12 +85,22 @@ class Wallet(PWallet, Sponsoring):
     def pendingCount(self):
         return len(self._pending)
 
+    @staticmethod
+    def _isMatchingName(source, target):
+        return source == target or source.lower() in target.lower()
+
+    def addClaimDef(self, cd: ClaimDef):
+        self._claimDefs[(cd.key.name, cd.key.version, cd.key.defProviderIdr)] = cd
+
+    def getClaimDefByKey(self, key: ClaimDefKey):
+        return self._claimDefs.get((key.name, key.version, key.defProviderIdr), None)
+
     def getMatchingLinksWithClaim(self, claimName):
         matchingLinkAndClaim = []
         for k, v in self._linkInvitations.items():
             li = LinkInvitation.getFromDict(k, v)
             for ac in li.availableClaims:
-                if ac.name == claimName or ac.name.lower() in claimName.lower():
+                if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
                     matchingLinkAndClaim.append((li, ac))
         return matchingLinkAndClaim
 

@@ -1,5 +1,7 @@
 import datetime
 
+from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey
+
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
 SIGNER_VER_KEY = "Verification Key"
@@ -35,34 +37,6 @@ class ClaimRequest:
             "name": self.name,
             "version" : self.version
         }
-
-
-AVAILABLE_BUT_NOT_ISSUED_STATUS = "available (not yet issued)"
-
-
-class AvailableClaimData:
-    def __init__(self, name, version, defIdr, issuerIdr, dateOfIssue):
-        self.name = name
-        self.version = version
-        self.defIdr = defIdr
-        self.issuerIdr = issuerIdr
-        self.dateOfIssue = dateOfIssue or AVAILABLE_BUT_NOT_ISSUED_STATUS
-
-    def getDictToBeStored(self):
-        return {
-            "name": self.name,
-            "version" : self.version,
-            "defIdr": self.defIdr,
-            "issuerIdr": self.issuerIdr,
-            "dateOfIssue": self.dateOfIssue
-        }
-
-    def getClaimInfoStr(self) -> str:
-        fixedInfo = \
-            'Name: ' + self.name + '\n' \
-            'Version: ' + self.version + '\n' \
-            'Status: ' + self.dateOfIssue
-        return fixedInfo
 
 
 class LinkInvitation:
@@ -133,8 +107,8 @@ class LinkInvitation:
             for ac in availableClaimsJson:
                 availableClaims.append(
                     AvailableClaimData(
-                        ac.get("name"), ac.get("version"),
-                        ac.get("defIdr"), ac.get("issuerIdr"),
+                        ClaimDefKey(ac.get("name"), ac.get("version"),
+                        ac.get("defProviderIdr")), ac.get("issuerIdr"),
                         ac.get("dateOfIssue")))
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
@@ -280,7 +254,8 @@ class LinkInvitation:
 
         if len(self.availableClaims) > 0:
             optionalLinkItems = "Available claims: {}".\
-                format(",".join([cl.name for cl in self.availableClaims]))
+                format(",".join([ac.claimDefKey.name
+                                 for ac in self.availableClaims]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo

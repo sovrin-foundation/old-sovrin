@@ -33,7 +33,7 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import Claim
+from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
@@ -202,7 +202,7 @@ class SovrinCli(PlenumCli):
         return vr.verify(sig, msg)
 
     def _printShowAndReqClaimUsage(self, availableClaims):
-        claimName = "|".join([cl.name for cl in availableClaims])
+        claimName = "|".join([cl.claimDefKey.name for cl in availableClaims])
         msgs = ['show claim {}'.format(claimName),
                 'request claim {}'.format(claimName)]
         self.printUsage(msgs)
@@ -239,10 +239,13 @@ class SovrinCli(PlenumCli):
                     name, version, defIdr, issuerIdr = \
                         cl['name'], cl['version'],\
                         cl['defIdr'], cl["issuerIdr"]
-
+                    claimDefKey = ClaimDefKey(name, version, defIdr)
                     availableClaims.append(
-                        AvailableClaimData(name, version,
-                                           defIdr, issuerIdr, dateOfIssue=None))
+                        AvailableClaimData(claimDefKey, issuerIdr, dateOfIssue=None))
+                    if cl.get('definition', None):
+                        self.activeWallet.addClaimDef(
+                            ClaimDef(claimDefKey, cl['definition']))
+
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
                 li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
                 li.updateAvailableClaims(availableClaims)
@@ -250,7 +253,8 @@ class SovrinCli(PlenumCli):
 
                 if len(availableClaims) > 0:
                     self.print("Available claims: {}".
-                               format(",".join([cl.name for cl in availableClaims])))
+                               format(",".join([cl.claimDefKey.name
+                                                for cl in availableClaims])))
                     self._printShowAndReqClaimUsage(availableClaims)
             else:
                 self.print("No matching invitation found")
@@ -1133,7 +1137,17 @@ class SovrinCli(PlenumCli):
             if matchingLink:
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
-                # TODO: request claim from target
+                cd = self.activeWallet.getClaimDefByKey(claim.claimDefKey)
+                if not cd:
+                    if self._isConnectedToAnyEnv():
+                        self.print("Getting Claim Definition from Sovrin...")
+                        # TODO: cd = Get claim def from sovrin and store it in wallet
+                    else:
+                        self._printNotConnectedEnvMessage()
+                # TODO: get keys from sovrin
+                # TODO: request claim
+                msgs = ['request claim {}'.format(claimName)]
+                self.printUsage(msgs)
             else:
                 self.print("Claim not found in any link")
             return True
@@ -1147,6 +1161,16 @@ class SovrinCli(PlenumCli):
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
                 self.print(claim.getClaimInfoStr())
+                cd = self.activeWallet.getClaimDefByKey(claim.claimDefKey)
+                if cd:
+                    self.print(cd.getClaimDefInfoStr())
+                else:
+                    if self._isConnectedToAnyEnv():
+                        self.print("Getting Claim Definition from Sovrin...")
+                        # TODO: cd = Get claim def from sovrin and store it in wallet
+                        # self.print(cd.getClaimDefInfoStr())
+                    else:
+                        self._printNotConnectedEnvMessage()
                 msgs = ['request claim {}'.format(claimName)]
                 self.printUsage(msgs)
             else:

@@ -290,9 +290,11 @@ def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
         "claimsList": [ {
             "name": "Transcript",
             "version": "1.2",
+            "defIdr":"<DefID>",
+            "issuerIdr": "<IssuerID>",
             "definition": {
                 "attributes": {
-                    "studentName": "string",
+                    "student_name": "string",
                     "ssn": "int",
                     "degree": "string",
                     "year": "string",
@@ -323,7 +325,16 @@ def faberRespondedToAcceptInvite(faberInviteSyncedWithEndpoint,
             "name": "Transcript",
             "version": "1.2",
             "defIdr":"<DefID>",
-            "issuerIdr": "<IssuerID>"
+            "issuerIdr": "<IssuerID>",
+            "definition": {
+                "attributes": {
+                    "student_name": "string",
+                    "ssn": "int",
+                    "degree": "string",
+                    "year": "string",
+                    "status": "string"
+                }
+            }
         } ]
       }""".replace("<identifier>", faberCli.activeWallet.defaultId)
 
