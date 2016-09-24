@@ -22,7 +22,7 @@ if __name__ == "__main__":
         exit()
     else:
 
-        RAETVerbosity = getRAETLogLevelFromConfig("RAETLogLevelCli",
+        RAETVerbosity = getRAETLogLevelFromConfig("RAETLogLevel",
                                                   Console.Wordage.mute)
 
         selfName = sys.argv[1]
