@@ -5,7 +5,7 @@ from sovrin.common.util import getConfig
 
 def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
     config = getConfig()
-    pluginsPath = os.path.expanduser(os.path.join(baseDir, config.PluginsDir))
+    pluginsPath = os.path.join(baseDir, config.PluginsDir)
 
     if not os.path.exists(pluginsPath):
         os.makedirs(pluginsPath)

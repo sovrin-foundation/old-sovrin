@@ -8,7 +8,7 @@ from sovrin.client.client import Client
 looper = Looper(debug=True)
 
 config = getConfig()
-basedirpath = os.path.expanduser(config.baseDir)
+basedirpath = config.baseDir
 
 # Steward that will be used to create a new steward by submitting a
 # NYM transaction
