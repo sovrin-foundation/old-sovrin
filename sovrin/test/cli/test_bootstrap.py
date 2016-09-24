@@ -299,7 +299,8 @@ def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint,
                                  faberKeyCreated):
     aliceCLI = faberInviteSyncedWithEndpoint
     faberCLI = faberKeyCreated
-    signer = SimpleSigner(identifier=faberCLI.activeWallet.defaultId)
+    # signer = SimpleSigner(identifier=faberCLI.activeWallet.defaultId)
+    signer = faberCLI.activeWallet._getIdData(faberCLI.activeWallet.defaultId).signer
     msg = """{
         "type":"AVAIL_CLAIM_LIST",
         "identifier": "<identifier>",
@@ -316,7 +317,7 @@ def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint,
                 }
             }
         } ]
-      }""".replace("<identifier>", signer.verkey.decode())
+      }""".replace("<identifier>", faberCLI.activeWallet.defaultId)
 
     acceptInviteResp = json.loads(msg)
     signature = signer.sign(acceptInviteResp)
