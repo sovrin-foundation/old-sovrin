@@ -65,6 +65,7 @@ RAETLogLevel = "concise"
 RAETLogLevelCli = "mute"
 RAETLogFilePath = None
 RAETLogFilePathCli = None
+RAETMessageTimeout = 180
 
 
 PluginsToLoad = ["anoncreds"]
