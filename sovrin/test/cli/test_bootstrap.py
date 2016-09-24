@@ -1,6 +1,8 @@
 import json
+from binascii import hexlify
 
 import pytest
+from libnacl.encode import base64_decode
 from plenum.client.signer import SimpleSigner
 from sovrin.agent.faber import FaberAgent
 from sovrin.test.cli.helper import getFileLines
@@ -24,163 +26,151 @@ def faberCLI(CliBuilder):
 def poolNodesStarted(be, do, poolCLI):
     be(poolCLI)
 
-    do('new node all', within=10,
-       expect=['Alpha now connected to Beta',
-               'Alpha now connected to Gamma',
-               'Alpha now connected to Delta',
-               'Beta now connected to Alpha',
-               'Beta now connected to Gamma',
-               'Beta now connected to Delta',
-               'Gamma now connected to Alpha',
-               'Gamma now connected to Beta',
-               'Gamma now connected to Delta',
-               'Delta now connected to Alpha',
-               'Delta now connected to Beta',
-               'Delta now connected to Gamma'])
+    do('new node all',                  within=6,
+                                        expect=['Alpha now connected to Beta',
+                                                'Alpha now connected to Gamma',
+                                                'Alpha now connected to Delta',
+                                                'Beta now connected to Alpha',
+                                                'Beta now connected to Gamma',
+                                                'Beta now connected to Delta',
+                                                'Gamma now connected to Alpha',
+                                                'Gamma now connected to Beta',
+                                                'Gamma now connected to Delta',
+                                                'Delta now connected to Alpha',
+                                                'Delta now connected to Beta',
+                                                'Delta now connected to Gamma'])
     return poolCLI
 
 
 @pytest.fixture(scope="module")
-def faberKeyCreated(be, do, faberCLI):
+def faberCli(be, do, faberCLI):
     be(faberCLI)
 
-    do('prompt FABER', expect=prompt_is('FABER'))
+    do('prompt FABER',                  expect=prompt_is('FABER'))
 
-    do('new keyring Faber', expect=['New keyring Faber created',
-                                    'Active keyring set to "Faber"'
-                                    ])
+    do('new keyring Faber',             expect=['New keyring Faber created',
+                                                'Active keyring set to "Faber"'
+                                                ])
     faberSeed = 'Faber000000000000000000000000000'
     faberIdr = '3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4='
 
-    do('new key with seed ' + faberSeed, expect=['Key created in keyring Faber',
-                                                 'Identifier for key is ' +
-                                                 faberIdr,
-                                                 'Current identifier set to ' +
-                                                 faberIdr])
+    do('new key with seed ' + faberSeed,expect=['Key created in keyring Faber',
+                                                'Identifier for key is ' +
+                                                faberIdr,
+                                                'Current identifier set to ' +
+                                                faberIdr])
     return faberCLI
 
 
-
 @pytest.fixture(scope="module")
-def philKeyCreated(be, do, philCLI):
+def philCli(be, do, philCLI):
     be(philCLI)
-    do('prompt Phil', expect=prompt_is('Phil'))
+    do('prompt Phil',                   expect=prompt_is('Phil'))
 
-    do('new keyring Phil', expect=['New keyring Phil created',
-                                   'Active keyring set to "Phil"'])
+    do('new keyring Phil',              expect=['New keyring Phil created',
+                                                'Active keyring set to "Phil"'])
 
     mapper = {
         'seed': '11111111111111111111111111111111',
         'idr': 'SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0='}
-    do('new key with seed {seed}', expect=['Key created in keyring Phil',
-                                           'Identifier for key is {idr}',
-                                           'Current identifier set to {idr}'],
+    do('new key with seed {seed}',      expect=['Key created in keyring Phil',
+                                                'Identifier for key is {idr}',
+                                                'Current identifier set to '
+                                                '{idr}'],
        mapper=mapper)
 
     return philCLI
 
 
 @pytest.fixture(scope="module")
-def faberAddedByPhil(be, do, poolNodesStarted, philKeyCreated,
-                     connectedToTest, nymAddedOut, faberMap):
-    philCLI = philKeyCreated
-    be(philCLI)
-    do('connect test',          within=3,
-                                expect=connectedToTest, mapper=faberMap)
+def faberAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
+                     nymAddedOut, faberMap):
+    be(philCli)
+    do('connect test',                  within=3,
+                                        expect=connectedToTest, mapper=faberMap)
 
     do('send NYM dest={target} role=SPONSOR',
-       within=2,
-       expect=nymAddedOut, mapper=faberMap)
-    return philCLI
+                                        within=2,
+                                        expect=nymAddedOut, mapper=faberMap)
+    return philCli
 
 
 @pytest.fixture(scope="module")
-def aliceWithKeyring(be, do, aliceCli, newKeyringOut, aliceMap):
-    be(aliceCli)
+def aliceCli(be, do, aliceCLI, newKeyringOut, aliceMap):
+    be(aliceCLI)
 
     do('prompt ALICE', expect=prompt_is('ALICE'))
 
-    do('new keyring Alice', expect=newKeyringOut, mapper=aliceMap)
-    return aliceCli
+    do('new keyring Alice',             expect=newKeyringOut, mapper=aliceMap)
+    return aliceCLI
 
 
-def testNotConnected(be, do, aliceWithKeyring, notConnectedStatus):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
+def testNotConnected(be, do, aliceCli, notConnectedStatus):
+    be(aliceCli)
     do('status',                        expect=notConnectedStatus)
 
 
-def testShowInviteNotExists(be, do, aliceWithKeyring, fileNotExists, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('show {invite-not-exists}', expect=fileNotExists, mapper=faberMap)
+def testShowInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
+    be(aliceCli)
+    do('show {invite-not-exists}',      expect=fileNotExists, mapper=faberMap)
 
 
-def testShowInviteExists(be, do, aliceWithKeyring, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
+def testShowInviteExists(be, do, aliceCli, faberMap):
+    be(aliceCli)
     faberInviteContents = getFileLines(faberMap.get("invite"))
-    do('show {invite}', expect=faberInviteContents,
-       mapper=faberMap)
+
+    do('show {invite}',                 expect=faberInviteContents,
+                                        mapper=faberMap)
 
 
-def testLoadInviteNotExists(be, do, aliceWithKeyring, fileNotExists, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('load {invite-not-exists}', expect=fileNotExists, mapper=faberMap)
+def testLoadInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
+    be(aliceCli)
+    do('load {invite-not-exists}',      expect=fileNotExists, mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
-def faberInviteLoadedByAlice(be, do, aliceWithKeyring, loadInviteOut,
-                              faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('load {invite}', expect=loadInviteOut, mapper=faberMap)
-    return aliceCLI
+def faberInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, faberMap):
+    be(aliceCli)
+    do('load {invite}',                 expect=loadInviteOut, mapper=faberMap)
+    return aliceCli
 
 
 def testLoadInviteExists(faberInviteLoadedByAlice):
     pass
 
 
-def testShowLinkNotExists(be, do, aliceWithKeyring, linkNotExists, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
+def testShowLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
+    be(aliceCli)
     do('show link {inviter-not-exists}',
                                         expect=linkNotExists,
                                         mapper=faberMap)
 
 
-def testShowLinkExists(be, do, aliceWithKeyring, showUnSyncedLinkOut, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('show link {inviter}', expect=showUnSyncedLinkOut,
-       mapper=faberMap)
+def testShowLinkExists(be, do, aliceCli, showUnSyncedLinkOut, faberMap):
+    be(aliceCli)
+    do('show link {inviter}',           expect=showUnSyncedLinkOut,
+                                        mapper=faberMap)
 
 
-def testSyncLinkNotExists(be, do, aliceWithKeyring, linkNotExists, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('sync {inviter-not-exists}', expect=linkNotExists, mapper=faberMap)
+def testSyncLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
+    be(aliceCli)
+    do('sync {inviter-not-exists}',     expect=linkNotExists, mapper=faberMap)
 
 
-def testFaberInviteSyncWhenNotConnected(be, do, aliceWithKeyring,
+def testSyncWhenNotConnected(be, do, aliceCli, faberMap,
                                         faberInviteLoadedByAlice,
-                                        syncWhenNotConnected,
-                                        faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('sync {inviter}', expect=syncWhenNotConnected,
-       mapper=faberMap)
+                                        syncWhenNotConnected):
+    be(aliceCli)
+    do('sync {inviter}',                expect=syncWhenNotConnected,
+                                        mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
-def faberInviteSyncedWithoutEndpoint(be, do, aliceWithKeyring, faberMap,
+def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
                                      faberInviteLoadedByAlice, poolNodesStarted,
                                      connectedToTest,
                                      syncLinkOutWithoutEndpoint):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
+    be(aliceCli)
 
     do('connect test',                  within=3,
                                         expect=connectedToTest,
@@ -189,37 +179,35 @@ def faberInviteSyncedWithoutEndpoint(be, do, aliceWithKeyring, faberMap,
     do('sync {inviter}',                within=2,
                                         expect=syncLinkOutWithoutEndpoint,
                                         mapper=faberMap)
-    return aliceCLI
+    return aliceCli
 
 
 def testSyncFaberInvite(faberInviteSyncedWithoutEndpoint):
     pass
 
 
-def testShowSyncedInvite(be, do, aliceWithKeyring, faberInviteSyncedWithoutEndpoint,
-                         linkNotYetSynced, showSyncedLinkWithoutEndpointOut,
-                         faberMap):
+def testShowSyncedInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap,
+                         linkNotYetSynced, showSyncedLinkWithoutEndpointOut):
     aliceCLI = faberInviteSyncedWithoutEndpoint
 
     be(aliceCLI)
 
-    do('show link {inviter}', expect=showSyncedLinkWithoutEndpointOut,
-       not_expect=linkNotYetSynced,
-       mapper=faberMap)
+    do('show link {inviter}',           expect=showSyncedLinkWithoutEndpointOut,
+                                        not_expect=linkNotYetSynced,
+                                        mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
-def faberWithEndpointAdded(be, do, faberAddedByPhil,
-                           faberMap, attrAddedOut):
-    philCLI = faberAddedByPhil
-    be(philCLI)
+def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut):
+    philCli = faberAddedByPhil
+    be(philCli)
     # I had to give two open/close curly braces in raw data
     # to avoid issue in mapping
     do('send ATTRIB dest={target} raw={{"endpoint": "0.0.0.0:1212"}}',
-                                        within=2,
+                                        within=3,
                                         expect=attrAddedOut,
                                         mapper=faberMap)
-    return philCLI
+    return philCli
 
 
 def testEndpointAddedForFaber(faberWithEndpointAdded):
@@ -227,7 +215,7 @@ def testEndpointAddedForFaber(faberWithEndpointAdded):
 
 
 @pytest.fixture(scope="module")
-def faberInviteSyncedWithEndpoint(be, do, aliceWithKeyring, faberMap,
+def faberInviteSyncedWithEndpoint(be, do, faberMap,
                                   faberInviteSyncedWithoutEndpoint,
                                   faberWithEndpointAdded,
                                   syncLinkOutWithEndpoint,
@@ -250,56 +238,55 @@ def testShowSyncedInviteWithEndpoint(be, do, faberInviteSyncedWithEndpoint,
     aliceCLI = faberInviteSyncedWithEndpoint
     be(aliceCLI)
     do('show link {inviter}',           expect=showSyncedLinkWithEndpointOut,
-                                             mapper=faberMap)
+                                        mapper=faberMap)
 
 
-def testAcceptNotExistsLink(be, do, aliceWithKeyring, linkNotExists, faberMap):
-    aliceCLI = aliceWithKeyring
-    be(aliceCLI)
-    do('accept invitation {inviter-not-exists}', expect=linkNotExists,
-       mapper=faberMap)
+def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
+    be(aliceCli)
+    do('accept invitation {inviter-not-exists}',
+                                        expect=linkNotExists, mapper=faberMap)
+
+
+@pytest.fixture(scope="module")
+def faberAgentStarted(faberInviteLoadedByAlice):
+    faberCli = faberInviteLoadedByAlice
+    return FaberAgent(name="faber", client=faberCli.activeClient,
+                      port=FABER_ENDPOINT_PORT)
 
 
 # TODO: Below tests works fine individually, when run inside whole suite,
 # then, it fails (seems, cli state doesn't get clear)
 def testAcceptUnSyncedInviteWhenNotConnected(be, do,
                                              faberInviteLoadedByAlice,
-                                             acceptUnSyncedLinkWhenNotConnected,
+                                             acceptUnSyncedWhenNotConnected,
                                              faberMap):
-    aliceCLI = faberInviteLoadedByAlice
-    be(aliceCLI)
-    do('accept invitation {inviter}', expect=acceptUnSyncedLinkWhenNotConnected,
-                                      mapper=faberMap)
-
-
-@pytest.fixture(scope="module")
-def faberAgentStarted(faberInviteLoadedByAlice):
-    faberCLI = faberInviteLoadedByAlice
-    return FaberAgent(name="faber", client=faberCLI.activeClient,
-                      port=FABER_ENDPOINT_PORT)
+    aliceCli = faberInviteLoadedByAlice
+    be(aliceCli)
+    do('accept invitation {inviter}',   expect=acceptUnSyncedWhenNotConnected,
+                                        mapper=faberMap)
 
 
 def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
                                           acceptUnSyncedWhenConnected,
                                           faberMap, connectedToTest,
                                           poolNodesStarted, faberAgentStarted):
-    aliceCLI = faberInviteLoadedByAlice
-    be(aliceCLI)
-    if not aliceCLI._isConnectedToAnyEnv():
-        do('connect test',                  within=3,
-                                            expect=connectedToTest,
-                                            mapper=faberMap)
+    aliceCli = faberInviteLoadedByAlice
+    be(aliceCli)
+    if not aliceCli ._isConnectedToAnyEnv():
+        do('connect test',              within=3,
+                                        expect=connectedToTest,
+                                        mapper=faberMap)
 
     do('accept invitation {inviter}',   within=3,
                                         expect=acceptUnSyncedWhenConnected,
                                         mapper=faberMap)
 
 
-def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint,
-                                 faberKeyCreated):
-    aliceCLI = faberInviteSyncedWithEndpoint
-    faberCLI = faberKeyCreated
-    signer = SimpleSigner(identifier=faberCLI.activeWallet.defaultId)
+def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
+                                 faberCli):
+    aliceCli = faberInviteSyncedWithEndpoint
+    aliceSigner = SimpleSigner(identifier=aliceCli.activeWallet.defaultId)
+    faberSigner = SimpleSigner(identifier=faberCli.activeWallet.defaultId)
     msg = """{
         "type":"AVAIL_CLAIM_LIST",
         "identifier": "<identifier>",
@@ -316,10 +303,45 @@ def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint,
                 }
             }
         } ]
-      }""".replace("<identifier>", signer.verkey.decode())
+      }""".replace("<identifier>", faberSigner.verkey.decode())
 
     acceptInviteResp = json.loads(msg)
-    signature = signer.sign(acceptInviteResp)
+    signature = aliceSigner.sign(acceptInviteResp)
     acceptInviteResp["signature"] = signature
 
-    aliceCLI._handleAcceptInviteResponse(acceptInviteResp)
+    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
+    assert "Signature rejected" in aliceCli.lastCmdOutput
+
+
+def testAcceptInvitationResponseWithValidSig(faberInviteSyncedWithEndpoint,
+                                 faberCli):
+    aliceCli = faberInviteSyncedWithEndpoint
+    faberSigner = SimpleSigner(seed=b'Faber000000000000000000000000000')
+    # verkey = hexlify(
+    #     base64_decode(faberCli.activeWallet.defaultId.encode())).decode()
+    msg = """{
+        "type":"AVAIL_CLAIM_LIST",
+        "identifier": "<identifier>",
+        "claimsList": [ {
+            "name": "Transcript",
+            "version": "1.2",
+            "definition": {
+                "attributes": {
+                    "studentName": "string",
+                    "ssn": "int",
+                    "degree": "string",
+                    "year": "string",
+                    "status": "string"
+                }
+            }
+        } ]
+      }""".replace("<identifier>", faberCli.activeWallet.defaultId)
+
+    acceptInviteResp = json.loads(msg)
+    signature = faberSigner.sign(acceptInviteResp)
+    acceptInviteResp["signature"] = signature
+
+    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
+    assert "Signature accepted." in aliceCli.lastCmdOutput
+    assert "Trust established." in aliceCli.lastCmdOutput
+    assert "Identifier created in Sovrin." in aliceCli.lastCmdOutput

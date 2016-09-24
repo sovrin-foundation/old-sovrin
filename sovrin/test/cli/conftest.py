@@ -151,7 +151,7 @@ def commonAcceptInvitationMsgs():
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedLinkWhenNotConnected(commonAcceptInvitationMsgs,
+def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
                                        canNotSyncMsg, connectUsage):
     return commonAcceptInvitationMsgs + \
             ["Invitation acceptance aborted."] + \
@@ -301,7 +301,7 @@ def poolCLI_baby(CliBuilder):
 
 
 @pytest.yield_fixture(scope="module")
-def aliceCli(CliBuilder):
+def aliceCLI(CliBuilder):
     yield from CliBuilder("alice")
 
 

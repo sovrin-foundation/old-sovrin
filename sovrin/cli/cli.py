@@ -201,16 +201,17 @@ class SovrinCli(PlenumCli):
         isVerified = SovrinCli.verifySig(identifier, signature, ser)
         if isVerified:
             msg["signature"] = signature
-            self.print("Signature accepted")
+            self.print("Signature accepted.")
             self.print("Trust established.")
             # Not sure how to know if the responder is a trust anchor or not
             self.print("Identifier created in Sovrin.")
-            li = self._getLinkByTarget(identifier)
+            signer = SimpleSigner(identifier=identifier)
+            li = self._getLinkByTarget(signer.verstr)
             if li:
                 availableClaims = []
-                for cl in msg['claims_list']:
+                for cl in msg['claimsList']:
                     name, version, attributes = cl['name'], cl['version'], \
-                                                cl['attributes']
+                                                cl['definition']['attributes']
                     availableClaims.append(AvailableClaimData(name, version))
                     self.activeWallet.addClaim(name, version, attributes)
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
