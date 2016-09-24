@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 import os
 from hashlib import sha256
+from plenum.common.signing import serializeForSig
 from raet.nacling import Verifier as SigVerifier
 from base64 import b64decode
 
@@ -18,7 +19,8 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
     PORT, IP
 from plenum.common.txn_util import createGenesisTxnFile
-from plenum.common.util import randomString, cleanSeed, getCryptonym
+from plenum.common.util import randomString, cleanSeed, getCryptonym, isHex, \
+    cryptonymToHex
 from sovrin.agent.endpoint import Endpoint
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
@@ -88,11 +90,6 @@ class SovrinCli(PlenumCli):
         _, port = self.nextAvailableClientAddr()
         self.endpoint = Endpoint(port, self.handleEndpointMsg)
 
-    def handleEndpointMsg(self, msg):
-        pass
-
-    def sendToEndpoint(self, msg: Any):
-        pass
 
     @property
     def lexers(self):
@@ -201,19 +198,22 @@ class SovrinCli(PlenumCli):
         signature = msg.get("signature")
         identifier = msg.get("identifier")
         del msg["signature"]
-        isVerified = SovrinCli.verifySig(identifier, signature, msg)
+        ser = serializeForSig(msg)
+        key = cryptonymToHex(identifier) if not isHex(identifier) else identifier
+        isVerified = SovrinCli.verifySig(key, signature, ser)
         if isVerified:
             msg["signature"] = signature
-            self.print("Signature accepted")
+            self.print("Signature accepted.")
             self.print("Trust established.")
             # Not sure how to know if the responder is a trust anchor or not
             self.print("Identifier created in Sovrin.")
-            li = self._getLinkByTarget(identifier)
+            signer = SimpleSigner(identifier=identifier)
+            li = self._getLinkByTarget(signer.verstr)
             if li:
                 availableClaims = []
-                for cl in msg['claims_list']:
+                for cl in msg['claimsList']:
                     name, version, attributes = cl['name'], cl['version'], \
-                                                cl['attributes']
+                                                cl['definition']['attributes']
                     availableClaims.append(AvailableClaimData(name, version))
                     self.activeWallet.addClaim(name, version, attributes)
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
@@ -927,6 +927,7 @@ class SovrinCli(PlenumCli):
         }
         signedNonce = self.activeWallet.signOp(op, self.activeWallet.defaultId)
         op["signedInvitationNonce"] = signedNonce
+        self.sendToEndpoint(op, link.targetEndPoint)
 
 
     def _acceptLinkPostSync(self, link: LinkInvitation):

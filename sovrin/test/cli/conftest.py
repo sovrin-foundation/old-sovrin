@@ -151,7 +151,7 @@ def commonAcceptInvitationMsgs():
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedLinkWhenNotConnected(commonAcceptInvitationMsgs,
+def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
                                        canNotSyncMsg, connectUsage):
     return commonAcceptInvitationMsgs + \
             ["Invitation acceptance aborted."] + \
@@ -188,8 +188,8 @@ def linkNotExists():
 
 
 @pytest.fixture(scope="module")
-def faberInviteLoaded(aliceCli, be, do, faberMap, loadInviteOut):
-    be(aliceCli)
+def faberInviteLoaded(aliceCLI, be, do, faberMap, loadInviteOut):
+    be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=faberMap)
 
 
@@ -203,8 +203,8 @@ def acmeMap():
 
 
 @pytest.fixture(scope="module")
-def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
-    be(aliceCli)
+def acmeInviteLoaded(aliceCLI, be, do, acmeMap, loadInviteOut):
+    be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
 
 
@@ -301,7 +301,7 @@ def poolCLI_baby(CliBuilder):
 
 
 @pytest.yield_fixture(scope="module")
-def aliceCli(CliBuilder):
+def aliceCLI(CliBuilder):
     yield from CliBuilder("alice")
 
 
