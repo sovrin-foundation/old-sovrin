@@ -52,7 +52,7 @@ def addNym(client, wallet, nym, role=USER):
 
 def addFabersEndpoint(looper, client, wallet, nym, attrName, attrValue):
     val = json.dumps({attrName: attrValue})
-    attrib = Attribute(name='Faber Endpoint',
+    attrib = Attribute(name=attrName,
                        origin=wallet.defaultId,
                        value=val,
                        dest=nym,

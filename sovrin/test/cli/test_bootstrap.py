@@ -2,7 +2,11 @@ import json
 
 import pytest
 from plenum.client.signer import SimpleSigner
+from sovrin.agent.faber import FaberAgent
 from sovrin.test.cli.helper import getFileLines
+
+
+FABER_ENDPOINT_PORT = 1212
 
 
 def prompt_is(prompt):
@@ -268,10 +272,17 @@ def testAcceptUnSyncedInviteWhenNotConnected(be, do,
                                       mapper=faberMap)
 
 
+@pytest.fixture(scope="module")
+def faberAgentStarted(faberInviteLoadedByAlice):
+    faberCLI = faberInviteLoadedByAlice
+    return FaberAgent(name="faber", client=faberCLI.activeClient,
+                      port=FABER_ENDPOINT_PORT)
+
+
 def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
                                           acceptUnSyncedWhenConnected,
                                           faberMap, connectedToTest,
-                                          poolNodesStarted):
+                                          poolNodesStarted, faberAgentStarted):
     aliceCLI = faberInviteLoadedByAlice
     be(aliceCLI)
     if not aliceCLI._isConnectedToAnyEnv():
@@ -284,7 +295,8 @@ def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
                                         mapper=faberMap)
 
 
-def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint, faberKeyCreated):
+def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint,
+                                 faberKeyCreated):
     aliceCLI = faberInviteSyncedWithEndpoint
     faberCLI = faberKeyCreated
     signer = SimpleSigner(identifier=faberCLI.activeWallet.defaultId)
@@ -304,10 +316,10 @@ def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint, faberKeyCreated)
                 }
             }
         } ]
-      }""".replace("<identifier>", str(faberCLI.activeWallet.defaultId))
+      }""".replace("<identifier>", str(signer.verkey))
 
     acceptInviteResp = json.loads(msg)
-
     signature = signer.sign(acceptInviteResp)
     acceptInviteResp["signature"] = signature
+
     aliceCLI._handleAcceptInviteResponse(acceptInviteResp)
