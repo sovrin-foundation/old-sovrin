@@ -283,8 +283,9 @@ class Wallet(PWallet, Sponsoring):
         self._pending.appendleft((req, key))
 
     def addLinkInvitation(self, linkInvitation):
-        self._linkInvitations[linkInvitation.name] = linkInvitation.\
-            getDictToBeStored()
+        # self._linkInvitations[linkInvitation.name] = linkInvitation.\
+        #     getDictToBeStored()
+        self._linkInvitations[linkInvitation.name] = linkInvitation
 
     def getLinkInvitationByTarget(self, target: str):
         for k, v in self._linkInvitations.items():
@@ -297,20 +298,20 @@ class Wallet(PWallet, Sponsoring):
         for k, v in self._linkInvitations.items():
             if name == k or name.lower() in k.lower():
                 # liValues = v
-                li = LinkInvitation.getFromDict(k, v)
-                allMatched.append(li)
+                # li = LinkInvitation.getFromDict(k, v)
+                allMatched.append(v)
         return allMatched
 
     # TODO: Is `requestAttribute` a better name?
-    def makeGetAttributeRequest(self, attrName: str, origin=None, dest=None):
-        # # TODO: How do i move this to Attribute
-        op = {
-            TARGET_NYM: dest,
-            TXN_TYPE: GET_ATTR,
-            RAW: attrName
-        }
-        req = self.signOp(op)
-        return self.prepReq(req)
+    # def makeGetAttributeRequest(self, attrName: str, origin=None, dest=None):
+    #     # # TODO: How do i move this to Attribute
+    #     op = {
+    #         TARGET_NYM: dest,
+    #         TXN_TYPE: GET_ATTR,
+    #         RAW: attrName
+    #     }
+    #     req = self.signOp(op)
+    #     return self.prepReq(req)
 
     def requestAttribute(self, attrib: Attribute, sender):
         """
@@ -323,20 +324,12 @@ class Wallet(PWallet, Sponsoring):
             return self.prepReq(req, key=attrib.key())
 
     def requestIdentity(self, identity: Identity, sender):
-        """
-        :param attrib: attribute to add
-        :return: number of pending txns
-        """
         self.knownIds[identity.identifier] = identity
         req = identity.getRequest(sender)
         if req:
             return self.prepReq(req)
 
     def requestCredDef(self, credefKey: CredDefKey, sender):
-        """
-        :param attrib: attribute to add
-        :return: number of pending txns
-        """
         credDef = CredDef(*credefKey.key())
         self._credDefs[credefKey.key()] = credDef
         req = credDef.getRequest(sender)

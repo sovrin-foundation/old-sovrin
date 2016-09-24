@@ -11,10 +11,6 @@ class Prover:
         pass
 
     @abstractmethod
-    def getPk(*args, **kwargs) -> CredDefPublicKey:
-        pass
-
-    @abstractmethod
     def createProofBuilder(self, *args, **kwargs) -> ProofBuilder:
         pass
 

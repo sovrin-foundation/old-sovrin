@@ -37,8 +37,6 @@ from sovrin.persistence.identity_graph import getEdgeByTxnType, IdentityGraph
 logger = getlogger()
 
 
-# DEPR
-# class Client(PlenumClient, Issuer, Prover, Verifier):
 class Client(PlenumClient):
     def __init__(self,
                  name: str,
@@ -88,14 +86,6 @@ class Client(PlenumClient):
             self.peerInbox = deque()
         self._observers = {}  # type Dict[str, Callable]
 
-    #DEPR
-    # def setupWallet_DEPRECATED(self, wallet=None):
-    #     if wallet:
-    #         self.wallet = wallet
-    #     else:
-    #         storage = WalletStorageFile.fromName(self.name, self.basedirpath)
-    #         self.wallet = Wallet(self.name, storage)
-
     def handlePeerMessage(self, msg):
         """
         Use the peerMsgRouter to pass the messages to the correct
@@ -104,19 +94,6 @@ class Client(PlenumClient):
         :param msg: the P2P client message.
         """
         return self.peerMsgRouter.handle(msg)
-
-    # DEPR
-    # def sign_DEPRECATED(self, msg: Dict, signer: Signer) -> Dict:
-    #     if msg[OPERATION].get(TXN_TYPE) == ATTRIB:
-    #         msgCopy = deepcopy(msg)
-    #         keyName = {RAW, ENC, HASH}.intersection(
-    #             set(msgCopy[OPERATION].keys())).pop()
-    #         msgCopy[OPERATION][keyName] = sha256(msgCopy[OPERATION][keyName]
-    #                                                .encode()).hexdigest()
-    #         msg[f.SIG.nm] = signer.sign(msgCopy)
-    #         return msg
-    #     else:
-    #         return super().sign(msg, signer)
 
     def _getOrientDbStore(self):
         return OrientDbStore(user=self.config.OrientDB["user"],
@@ -193,7 +170,6 @@ class Client(PlenumClient):
 
     def postReplyRecvd(self, reqId, frm, result, numReplies):
         reply = super().postReplyRecvd(reqId, frm, result, numReplies)
-        # TODO: Use callback here
         if reply:
             for name in self._observers:
                 try:
@@ -229,7 +205,6 @@ class Client(PlenumClient):
                                         "An exception was raised while adding "
                                         "attribute {}".format(ex))
 
-
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:
                     self.graphStore.addCredDefTxnToGraph(result)
@@ -250,10 +225,6 @@ class Client(PlenumClient):
                         logger.error("{} cannot be converted to JSON"
                                      .format(data))
                 else:
-                    # DEPR
-                    # self.wallet.addCredDef(data[NAME], data[VERSION],
-                    #                        result[TARGET_NYM], data[TYPE],
-                    #                        data[IP], data[PORT], keys)
                     pass
 
     def requestConfirmed(self, reqId: int) -> bool:
@@ -364,22 +335,6 @@ class Client(PlenumClient):
                 elif HASH in walletAttribute:
                     if walletAttribute[NAME] == attrName:
                         return {walletAttribute[NAME]: walletAttribute[HASH]}
-
-    # DEPR
-    # def getAllAttributesForNym_DEPRECATED(self, nym, identifier=None):
-    #     # TODO: Does this need to get attributes from the nodes?
-    #     walletAttributes = self.wallet.attributes
-    #     attributes = []
-    #     for attr in walletAttributes:
-    #         if TARGET_NYM in attr and attr[TARGET_NYM] == nym:
-    #             if RAW in attr:
-    #                 attributes.append({attr[NAME]: attr[RAW]})
-    #             elif ENC in attr:
-    #                 attributes.append(self._getDecryptedData(attr[ENC],
-    #                                                          attr[SKEY]))
-    #             elif HASH in attr:
-    #                 attributes.append({attr[NAME]: attr[HASH]})
-    #     return attributes
 
     # DEPR
     def doGetNym_DEPRECATED(self, nym, identifier=None):

@@ -752,13 +752,12 @@ class SovrinCli(PlenumCli):
         targetEndPoint = linkInviation.get("endpoint", None)
         linkNonce = linkInviation["nonce"]
         claimRequestsJson = invitationData.get("claim-requests", None)
+        signature = invitationData["sig"]
         claimRequests = []
         if claimRequestsJson:
             for cr in claimRequestsJson:
                 claimRequests.append(
                     ClaimRequest(cr["name"], cr["version"]))
-
-        signature = invitationData["sig"]
 
         self.print("1 link invitation found for {}.".format(linkInvitationName))
         cseed = cleanSeed(None)
@@ -773,7 +772,7 @@ class SovrinCli(PlenumCli):
                             signer.alias + ":" + signer.identifier, None,
                             linkInvitationName,
                             targetIdentifier, targetEndPoint, linkNonce,
-                            claimRequests, signature)
+                            claimRequests)
         self.activeWallet.addLinkInvitation(li)
 
     def _loadFile(self, matchedVars):

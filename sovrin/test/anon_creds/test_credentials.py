@@ -46,8 +46,6 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     reqs = userWalletA.preparePending()
     user.submitReqs(*reqs)
 
-    # req, = user.submit(op, identifier=userSignerA.verstr)
-
     looper.run(eventually(checkSufficientRepliesRecvd, user.inBox,
                           req.reqId, nodeSet.f,
                           retryWait=1, timeout=5))

@@ -1,5 +1,7 @@
 import datetime
 
+from sovrin.common.util import getNonce
+
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
 SIGNER_VER_KEY = "Verification Key"
@@ -49,22 +51,24 @@ class AvailableClaimData:
         }
 
 
-class LinkInvitation:
-
-    def __init__(self, name, signerIdentifier, signerVerKey, trustAnchor,
-                 targetIdentifier, targetEndPoint, linkNonce, claimRequests,
-                 signature):
+# TODO: Rename to Link
+class Link:
+    # Rename `signerIdentifier`,
+    def __init__(self, name, signerIdentifier, trustAnchor=None,
+                 targetIdentifier=None, targetEndPoint=None, linkNonce=None,
+                 claimRequests=None):
         self.name = name
         self.signerIdentifier = signerIdentifier
 
         self.trustAnchor = trustAnchor
         self.targetIdentifier = targetIdentifier
         self.targetEndPoint = targetEndPoint
-        self.nonce = linkNonce
-        self.signature = signature
+        self.linkNonce = linkNonce or getNonce()
+        # TODO: Keep the whole invitation data, including signature
+        # self.signature = signature
         self.claimRequests = claimRequests
 
-        self.signerVerKey = signerVerKey
+        # self.signerVerKey = signerVerKey
 
         self.availableClaims = None
         self.targetVerkey = None
@@ -102,7 +106,7 @@ class LinkInvitation:
         trustAnchor = values[TRUST_ANCHOR]
         targetIdentifier = values[TARGET_IDENTIFIER]
         linkNonce = values[LINK_NONCE]
-        signature = values[SIGNATURE]
+        # signature = values[SIGNATURE]
 
         claimRequestJson = values.get(CLAIM_REQUESTS, None)
         claimRequests = []
@@ -128,7 +132,7 @@ class LinkInvitation:
 
         li = LinkInvitation(name, signerIdentifier, signerVerKey, trustAnchor,
                             targetIdentifier, targetEndPoint, linkNonce,
-                            claimRequests, signature)
+                            claimRequests)
         li.updateState(targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
         li.updateAvailableClaims(availableClaims)
 
@@ -139,7 +143,7 @@ class LinkInvitation:
             SIGNER_IDENTIFIER: self.signerIdentifier,
             TRUST_ANCHOR: self.trustAnchor,
             TARGET_IDENTIFIER: self.targetIdentifier,
-            LINK_NONCE: self.nonce,
+            LINK_NONCE: self.linkNonce,
             SIGNATURE: self.signature
         }
         optional = {}
@@ -183,11 +187,13 @@ class LinkInvitation:
         if time is None:
             return LINK_NOT_SYNCHRONIZED
 
-        if type(time) is int:
+        if not isinstance(time, (int, datetime)):
+            raise RuntimeError("Cannot parse time")
+        if isinstance(time,int):
             diff = now - datetime.fromtimestamp(time)
         elif isinstance(time, datetime):
             diff = now - time
-        elif not time:
+        else:
             diff = now - now
         second_diff = diff.seconds
         day_diff = diff.days

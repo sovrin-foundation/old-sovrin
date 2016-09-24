@@ -1,14 +1,6 @@
-from pytest import fixture, yield_fixture
-
-from plenum.common.looper import Looper
 from plenum.common.startable import Status
+from pytest import fixture
 from sovrin.agent.agent import Agent
-
-
-@yield_fixture(scope="module")
-def emptyLooper():
-    with Looper() as l:
-        yield l
 
 
 @fixture(scope="module")
