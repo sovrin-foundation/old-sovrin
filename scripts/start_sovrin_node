@@ -12,7 +12,7 @@ from plenum.common.util import setupLogging, TRACE_LOG_LEVEL, getRAETLogLevelFro
 from sovrin.common.util import getConfig
 
 config = getConfig()
-keepDir = os.path.expanduser(config.baseDir)
+keepDir = config.baseDir
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
