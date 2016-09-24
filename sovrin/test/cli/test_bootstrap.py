@@ -316,7 +316,7 @@ def testAcceptInvitationResponse(faberInviteSyncedWithEndpoint,
                 }
             }
         } ]
-      }""".replace("<identifier>", str(signer.verkey))
+      }""".replace("<identifier>", signer.verkey.decode())
 
     acceptInviteResp = json.loads(msg)
     signature = signer.sign(acceptInviteResp)

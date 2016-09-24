@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 import os
 from hashlib import sha256
+from plenum.common.signing import serializeForSig
 from raet.nacling import Verifier as SigVerifier
 from base64 import b64decode
 
@@ -196,7 +197,8 @@ class SovrinCli(PlenumCli):
         signature = msg.get("signature")
         identifier = msg.get("identifier")
         del msg["signature"]
-        isVerified = SovrinCli.verifySig(identifier, signature, msg)
+        ser = serializeForSig(msg)
+        isVerified = SovrinCli.verifySig(identifier, signature, ser)
         if isVerified:
             msg["signature"] = signature
             self.print("Signature accepted")
