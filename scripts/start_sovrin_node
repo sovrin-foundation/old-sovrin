@@ -5,12 +5,11 @@ import sys
 
 from plenum.common.types import HA
 
-from plenum.common.looper import Looper
+
 from plenum.common.raet import initRemoteKeep
 from ioflo.aid.consoling import Console
 from plenum.common.util import setupLogging, TRACE_LOG_LEVEL, getRAETLogLevelFromConfig
 from sovrin.common.util import getConfig
-from sovrin.server.node import Node
 
 config = getConfig()
 keepDir = os.path.expanduser(config.baseDir)
@@ -31,11 +30,14 @@ if __name__ == "__main__":
         cliha = HA("0.0.0.0", int(sys.argv[3]))
 
         logFileName = os.path.join(config.baseDir, selfName + ".log")
-        print("You can find logs in {}".format(logFileName))
+
         setupLogging(TRACE_LOG_LEVEL,
                      RAETVerbosity,
                      filename=logFileName)
+        print("You can find logs in {}".format(logFileName))
 
+        from plenum.common.looper import Looper
+        from sovrin.server.node import Node
         with Looper(debug=True) as looper:
             node = Node(selfName, nodeRegistry=None, basedirpath=keepDir, ha=ha,
                         cliha=cliha)
