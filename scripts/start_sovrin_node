@@ -23,7 +23,8 @@ if __name__ == "__main__":
     else:
 
         RAETVerbosity = getRAETLogLevelFromConfig("RAETLogLevel",
-                                                  Console.Wordage.mute)
+                                                  Console.Wordage.mute,
+                                                  config)
 
         selfName = sys.argv[1]
         ha = HA("0.0.0.0", int(sys.argv[2]))
