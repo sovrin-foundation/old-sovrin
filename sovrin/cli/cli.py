@@ -38,7 +38,7 @@ from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import LinkInvitation, \
     TARGET_VER_KEY_SAME_AS_ID, LINK_STATUS_ACCEPTED, AvailableClaimData, \
-    LINK_ITEM_PREFIX
+    LINK_ITEM_PREFIX, ClaimRequest
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
@@ -194,6 +194,12 @@ class SovrinCli(PlenumCli):
         vr = SigVerifier(identifier)
         return vr.verify(sig, msg)
 
+    def _printShowAndReqClaimUsage(self, availableClaims):
+        claimName = "|".join([cl.name for cl in availableClaims])
+        msgs = ['show claim {}'.format(claimName),
+                'request claim {}'.format(claimName)]
+        self.printUsage(msgs)
+
     def _handleAcceptInviteResponse(self, msg: dict):
         signature = msg.get("signature")
         identifier = msg.get("identifier")
@@ -218,10 +224,12 @@ class SovrinCli(PlenumCli):
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
                 li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
                 li.updateAvailableClaims(availableClaims)
+                self.activeWallet.addLinkInvitation(li)
+
                 if len(availableClaims) > 0:
                     self.print("Available claims: {}".
                                format(",".join([cl.name for cl in availableClaims])))
-
+                    self._printShowAndReqClaimUsage(availableClaims)
             else:
                 self.print("No matching invitation found")
         else:
@@ -737,7 +745,13 @@ class SovrinCli(PlenumCli):
         targetIdentifier = linkInviation["identifier"]
         targetEndPoint = linkInviation.get("endpoint", None)
         linkNonce = linkInviation["nonce"]
-        claimRequests = invitationData.get("claim-requests", None)
+        claimRequestsJson = invitationData.get("claim-requests", None)
+        claimRequests = []
+        if claimRequestsJson:
+            for cr in claimRequestsJson:
+                claimRequests.append(
+                    ClaimRequest(cr["name"], cr["version"]))
+
         signature = invitationData["sig"]
 
         self.print("1 link invitation found for {}.".format(linkInvitationName))
@@ -769,7 +783,7 @@ class SovrinCli(PlenumCli):
             with open(filePath) as data_file:
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
-            try:
+            #try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -783,9 +797,9 @@ class SovrinCli(PlenumCli):
                         self._loadInvitation(invitationData)
 
                     self._printShowAndAcceptLinkUsage(linkName)
-            except Exception as e:
-                self.print('Error occurred during processing link '
-                           'invitation: {}'.format(e))
+            # except Exception as e:
+            #     self.print('Error occurred during processing link '
+            #                'invitation: {}'.format(e))
 
             return True
 
@@ -1055,7 +1069,10 @@ class SovrinCli(PlenumCli):
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
                 self.print("{}".format(li.getLinkInfoStr()))
-                self._printSyncAndAcceptUsage(li.name)
+                if li.isAccepted():
+                    self._printShowAndReqClaimUsage(li.availableClaims)
+                else:
+                    self._printSyncAndAcceptUsage(li.name)
             else:
                 self._printMoreThanOneLinkFoundMsg(linkName,
                                                    exactlyMatchedLinks,

@@ -30,11 +30,23 @@ class ClaimRequest:
         self.name = name
         self.version = version
 
+    def getDictToBeStored(self):
+        return {
+            "name": self.name,
+            "version" : self.version
+        }
+
 
 class AvailableClaimData:
     def __init__(self, name, version=None):
         self.name = name
         self.version = version
+
+    def getDictToBeStored(self):
+        return {
+            "name": self.name,
+            "version" : self.version
+        }
 
 
 class LinkInvitation:
@@ -51,6 +63,7 @@ class LinkInvitation:
         self.nonce = linkNonce
         self.signature = signature
         self.claimRequests = claimRequests
+
         self.signerVerKey = signerVerKey
 
         self.availableClaims = None
@@ -146,13 +159,13 @@ class LinkInvitation:
         if self.claimRequests:
             claimRequests = []
             for cr in self.claimRequests:
-                claimRequests.append(dict(cr))
+                claimRequests.append(cr.getDictToBeStored())
             optional[CLAIM_REQUESTS] = claimRequests
 
         if self.availableClaims:
             availableClaims = []
             for ac in self.availableClaims:
-                availableClaims.append(dict(ac))
+                availableClaims.append(ac.getDictToBeStored())
             optional[AVAILABLE_CLAIMS] = availableClaims
 
         fixed.update(optional)
@@ -241,18 +254,14 @@ class LinkInvitation:
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
-
-
         optionalLinkItems = ""
-        if self.claimRequests:
-            optionalLinkItems = 'Claim Requests: '
-            for cr in self.claimRequests:
-                optionalLinkItems += '\n    ' + cr.name
+        if len(self.claimRequests) > 0:
+            optionalLinkItems = "Claim Requests: {}". \
+                format(",".join([cr.name for cr in self.claimRequests]))
 
-        if self.availableClaims:
-            optionalLinkItems = 'Available Claims: '
-            for ac in self.availableClaims:
-                optionalLinkItems += '\n    ' + ac.name
+        if len(self.availableClaims) > 0:
+            optionalLinkItems = "Available claims: {}".\
+                format(",".join([cl.name for cl in self.availableClaims]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo

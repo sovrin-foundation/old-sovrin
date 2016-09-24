@@ -113,8 +113,7 @@ def testShowFaberLink(aliceCLI, faberInviteLoaded, be, do, faberMap, showLinkOut
 
 def testShowAcmeLink(aliceCLI, acmeInviteLoaded, be, do, acmeMap, showLinkOut):
     be(aliceCLI)
-    expected = showLinkOut + ["Claim Requests: ",
-                              "Job Application"]
+    expected = showLinkOut + ["Claim Requests: {claim-requests}"]
     do("show link {inviter}", expect=expected, mapper=acmeMap)
 
 

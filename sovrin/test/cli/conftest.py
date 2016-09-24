@@ -92,7 +92,8 @@ def faberMap():
             'inviter-not-exists': "non-existing-inviter",
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
             "nonce": "b1134a647eb818069c089e7694f63e6d",
-            "endpoint": "0.0.0.0:1212"
+            "endpoint": "0.0.0.0:1212",
+            "claims" : "Transcript"
             }
 
 
@@ -198,7 +199,8 @@ def acmeMap():
     return {'inviter': 'Acme Corp',
             'invite': "sample/acme-job-application.sovrin",
             "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
-            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c"
+            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
+            "claim-requests" : "Job Application"
             }
 
 
@@ -286,10 +288,32 @@ def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
 
 
 @pytest.fixture(scope="module")
-def showLinkOut():
-    return ["Name: {inviter}",
+def showAcceptedLinkOut():
+    return [
+            "Link",
+            "Name: {inviter}",
             "Target: {target}",
+            "Target Verification key: <same as target>",
+            "Trust anchor: {inviter} (confirmed)",
             "Invitation nonce: {nonce}",
+            "Invitation status: Accepted",
+            "Available claims: {claims}",
+            "Usage",
+            'show claim {claims}',
+            'request claim {claims}'
+    ]
+
+
+@pytest.fixture(scope="module")
+def showLinkOut():
+    return [
+            "Link (not yet accepted)",
+            "Name: {inviter}",
+            "Target: {target}",
+            "Target Verification key: <unknown, waiting for sync>",
+            "Trust anchor: {inviter} (not yet written to Sovrin)",
+            "Invitation nonce: {nonce}",
+            "Invitation status: not verified, target verkey unknown",
             "Usage",
             'accept invitation "{inviter}"',
             'sync "{inviter}"']

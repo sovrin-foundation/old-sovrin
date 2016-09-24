@@ -163,6 +163,15 @@ def testSyncWhenNotConnected(be, do, aliceCli, faberMap,
                                         mapper=faberMap)
 
 
+def testAcceptUnSyncedInviteWhenNotConnected(be, do,
+                                             faberInviteLoadedByAlice,
+                                             acceptUnSyncedWhenNotConnected,
+                                             faberMap):
+    aliceCli = faberInviteLoadedByAlice
+    be(aliceCli)
+    do('accept invitation {inviter}',   expect=acceptUnSyncedWhenNotConnected,
+                                        mapper=faberMap)
+
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
                                      faberInviteLoadedByAlice, poolNodesStarted,
@@ -254,16 +263,6 @@ def faberAgentStarted(faberInviteLoadedByAlice):
 
 # TODO: Below tests works fine individually, when run inside whole suite,
 # then, it fails (seems, cli state doesn't get clear)
-def testAcceptUnSyncedInviteWhenNotConnected(be, do,
-                                             faberInviteLoadedByAlice,
-                                             acceptUnSyncedWhenNotConnected,
-                                             faberMap):
-    aliceCli = faberInviteLoadedByAlice
-    be(aliceCli)
-    do('accept invitation {inviter}',   expect=acceptUnSyncedWhenNotConnected,
-                                        mapper=faberMap)
-
-
 def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
                                           acceptUnSyncedWhenConnected,
                                           faberMap, connectedToTest,
@@ -311,7 +310,8 @@ def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
-def testAcceptInvitationResponseWithValidSig(faberInviteSyncedWithEndpoint,
+@pytest.fixture(scope="module")
+def faberRespondedToAcceptInvite(faberInviteSyncedWithEndpoint,
                                  faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
     faberSigner = faberCli.activeWallet._getIdData(
@@ -343,3 +343,19 @@ def testAcceptInvitationResponseWithValidSig(faberInviteSyncedWithEndpoint,
     assert "Trust established." in aliceCli.lastCmdOutput
     assert "Identifier created in Sovrin." in aliceCli.lastCmdOutput
     assert "Available claims: Transcript" in aliceCli.lastCmdOutput
+    return aliceCli
+
+
+def testFaberRespondsToAcceptInvite(faberRespondedToAcceptInvite):
+    pass
+
+
+def testShowLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
+                                  faberRespondedToAcceptInvite):
+    aliceCli = faberRespondedToAcceptInvite
+
+    be(aliceCli)
+
+    do("show link {inviter}",           expect=showAcceptedLinkOut,
+                                        not_expect="Link (not yet accepted)",
+                                        mapper=faberMap)
