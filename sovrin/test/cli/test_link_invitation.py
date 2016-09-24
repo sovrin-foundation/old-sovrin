@@ -35,15 +35,15 @@ def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
 
 
 @pytest.fixture(scope="module")
-def aliceConnected(aliceCli, be, do, poolNodesCreated):
+def aliceConnected(aliceCLI, be, do, poolNodesCreated):
 
     # Done to initialise a wallet.
     # TODO: a wallet should not be required for connecting, right?
-    be(aliceCli)
+    be(aliceCLI)
     do("new key")
 
-    ensureConnectedToTestEnv(aliceCli)
-    return aliceCli
+    ensureConnectedToTestEnv(aliceCLI)
+    return aliceCLI
 
 
 def addNym(client, wallet, nym, role=USER):
@@ -70,20 +70,20 @@ def checkIfEndpointReceived(aCli, linkName, expStr):
         assert li.targetEndPoint is not None
 
 
-def testShowFileNotExists(aliceCli, be, do, fileNotExists, faberMap):
-    be(aliceCli)
+def testShowFileNotExists(aliceCLI, be, do, fileNotExists, faberMap):
+    be(aliceCLI)
     do("show {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
 
-def testShowFile(aliceCli, be, do, faberMap):
-    be(aliceCli)
+def testShowFile(aliceCLI, be, do, faberMap):
+    be(aliceCLI)
     do("show {invite}", expect="link-invitation",
                         not_expect="Given file does not exist",
                         mapper=faberMap)
 
 
-def testLoadFileNotExists(aliceCli, be, do, fileNotExists, faberMap):
-    be(aliceCli)
+def testLoadFileNotExists(aliceCLI, be, do, fileNotExists, faberMap):
+    be(aliceCLI)
     do("load {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
 
@@ -95,31 +95,31 @@ def testLoadSecondFile(faberInviteLoaded, acmeInviteLoaded):
     pass
 
 
-def testLoadExistingLink(aliceCli, be, do, faberInviteLoaded,
+def testLoadExistingLink(aliceCLI, be, do, faberInviteLoaded,
                          linkAlreadyExists, faberMap):
-    be(aliceCli)
+    be(aliceCLI)
     do("load {invite}", expect=linkAlreadyExists, mapper=faberMap)
 
 
-def testShowLinkNotExists(aliceCli, be, do, linkNotExists, faberMap):
-    be(aliceCli)
+def testShowLinkNotExists(aliceCLI, be, do, linkNotExists, faberMap):
+    be(aliceCLI)
     do("show link {inviter-not-exists}", expect=linkNotExists, mapper=faberMap)
 
 
-def testShowFaberLink(aliceCli, faberInviteLoaded, be, do, faberMap, showLinkOut):
-    be(aliceCli)
+def testShowFaberLink(aliceCLI, faberInviteLoaded, be, do, faberMap, showLinkOut):
+    be(aliceCLI)
     do("show link {inviter}", expect=showLinkOut, mapper=faberMap)
 
 
-def testShowAcmeLink(aliceCli, acmeInviteLoaded, be, do, acmeMap, showLinkOut):
-    be(aliceCli)
+def testShowAcmeLink(aliceCLI, acmeInviteLoaded, be, do, acmeMap, showLinkOut):
+    be(aliceCLI)
     expected = showLinkOut + ["Claim Requests: ",
                               "Job Application"]
     do("show link {inviter}", expect=expected, mapper=acmeMap)
 
 
-def testSyncLinkNotExists(aliceCli, be, do, linkNotExists, faberMap):
-    be(aliceCli)
+def testSyncLinkNotExists(aliceCLI, be, do, linkNotExists, faberMap):
+    be(aliceCLI)
     do("sync {inviter-not-exists}", expect=linkNotExists, mapper=faberMap)
 
 
@@ -130,39 +130,39 @@ def testAliceConnect(aliceConnected):
 @pytest.fixture(scope="module")
 def faberAdded(poolNodesCreated,
              looper,
-             aliceCli,
+             aliceCLI,
              faberInviteLoaded,
              aliceConnected,
              stewardClientAndWallet):
     client, wallet = stewardClientAndWallet
-    li = getLinkInvitation("Faber", aliceCli)
+    li = getLinkInvitation("Faber", aliceCLI)
     createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
 
 
 def testSyncLinkWhenEndpointNotAvailable(faberAdded,
                                          looper,
-                                         aliceCli,
+                                         aliceCLI,
                                          stewardClientAndWallet):
-    li = getLinkInvitation("Faber", aliceCli)
-    aliceCli.enterCmd("sync Faber")
-    looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
+    li = getLinkInvitation("Faber", aliceCLI)
+    aliceCLI.enterCmd("sync Faber")
+    looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,
                           "Endpoint not available",
                           retryWait=1,
                           timeout=10))
 
 
 def testSyncLinkWhenEndpointIsAvailable(looper,
-                                        aliceCli,
+                                        aliceCLI,
                                         stewardClientAndWallet,
                                         faberAdded):
     client, wallet = stewardClientAndWallet
-    li = getLinkInvitation("Faber", aliceCli)
+    li = getLinkInvitation("Faber", aliceCLI)
     assert li.targetEndPoint is None
     endpointValue = "0.0.0.0:0000"
     addFabersEndpoint(looper, client, wallet, li.targetIdentifier,
                       ENDPOINT, endpointValue)
-    aliceCli.enterCmd("sync Faber")
-    looper.run(eventually(checkIfEndpointReceived, aliceCli, li.name,
+    aliceCLI.enterCmd("sync Faber")
+    looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,
                           "Endpoint received: {}".format(endpointValue),
                           retryWait=1,
                           timeout=10))
