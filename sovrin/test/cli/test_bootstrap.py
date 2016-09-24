@@ -342,3 +342,4 @@ def testAcceptInvitationResponseWithValidSig(faberInviteSyncedWithEndpoint,
     assert "Signature accepted." in aliceCli.lastCmdOutput
     assert "Trust established." in aliceCli.lastCmdOutput
     assert "Identifier created in Sovrin." in aliceCli.lastCmdOutput
+    assert "Available claims: Transcript" in aliceCli.lastCmdOutput

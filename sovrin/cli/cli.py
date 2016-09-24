@@ -207,8 +207,7 @@ class SovrinCli(PlenumCli):
             self.print("Trust established.")
             # Not sure how to know if the responder is a trust anchor or not
             self.print("Identifier created in Sovrin.")
-            signer = SimpleSigner(identifier=identifier)
-            li = self._getLinkByTarget(signer.verstr)
+            li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 availableClaims = []
                 for cl in msg['claimsList']:
