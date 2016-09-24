@@ -1,8 +1,6 @@
 import json
-from binascii import hexlify
 
 import pytest
-from libnacl.encode import base64_decode
 from plenum.client.signer import SimpleSigner
 from sovrin.agent.faber import FaberAgent
 from sovrin.test.cli.helper import getFileLines
@@ -285,8 +283,8 @@ def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
 def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
                                  faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
-    aliceSigner = SimpleSigner(identifier=aliceCli.activeWallet.defaultId)
-    faberSigner = SimpleSigner(identifier=faberCli.activeWallet.defaultId)
+    aliceSigner = aliceCli.activeWallet._getIdData(
+        aliceCli.activeWallet.defaultId).signer
     msg = """{
         "type":"AVAIL_CLAIM_LIST",
         "identifier": "<identifier>",
@@ -303,7 +301,7 @@ def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
                 }
             }
         } ]
-      }""".replace("<identifier>", faberSigner.verkey.decode())
+      }""".replace("<identifier>", faberCli.activeWallet.defaultId)
 
     acceptInviteResp = json.loads(msg)
     signature = aliceSigner.sign(acceptInviteResp)
@@ -316,9 +314,8 @@ def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
 def testAcceptInvitationResponseWithValidSig(faberInviteSyncedWithEndpoint,
                                  faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
-    faberSigner = SimpleSigner(seed=b'Faber000000000000000000000000000')
-    # verkey = hexlify(
-    #     base64_decode(faberCli.activeWallet.defaultId.encode())).decode()
+    faberSigner = faberCli.activeWallet._getIdData(
+        faberCli.activeWallet.defaultId).signer
     msg = """{
         "type":"AVAIL_CLAIM_LIST",
         "identifier": "<identifier>",
