@@ -271,6 +271,7 @@ class IdentityGraph(OrientDbGraphStore):
         return result
 
     def getCredDef(self, frm, name, version):
+        # TODO: Can this query be made similar to get attribute?
         cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {} where " \
               "name = '{}' and version = '{}'".format(Vertices.Nym, NYM, frm,
                                                  Vertices.CredDef,

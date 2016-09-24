@@ -377,19 +377,6 @@ class Node(PlenumNode):
         operation = req.operation
         txnId = self.genTxnId(req.identifier, req.reqId)
         result = {TXN_ID: txnId, TXN_TIME: ppTime}
-        # if operation[TXN_TYPE] == GET_ATTR:
-        #     # TODO: Very inefficient, queries all transactions and looks for the
-        #     # DISCLOSE for the clients and returns all. We probably change the
-        #     # transaction schema or have some way to zero in on the DISCLOSE for
-        #     # the attribute that is being looked for
-        #     attrs = []
-        #     for txn in self.primaryStorage.getAllTxn().values():
-        #         if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
-        #                 DISCLOSE:
-        #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
-        #     if attrs:
-        #         result[ATTRIBUTES] = attrs
-        #
         result.update(operation)
         result.update({
             f.IDENTIFIER.nm: req.identifier,
