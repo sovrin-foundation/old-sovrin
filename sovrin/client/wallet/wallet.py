@@ -94,14 +94,14 @@ class Wallet(PWallet, Sponsoring):
                     matchingLinks.append(li)
         return matchingLinks
 
-    def _buildClaimKey(self, linkName, claimName):
-        return linkName + ":" + claimName
+    def _buildClaimKey(self, providerIdr, claimName):
+        return providerIdr + ":" + claimName
 
-    def addClaim(self, linkName, cl):
-        self._claims[self._buildClaimKey(linkName, cl.name)] = cl
+    def addClaim(self, cl, providerIdr):
+        self._claims[self._buildClaimKey(providerIdr, cl.name)] = cl
 
-    def getClaimByLinkAndClaimName(self, linkName, claimName):
-        return self._claims[self._buildClaimKey(linkName, claimName)]
+    def getClaimByNameAndProvider(self, claimName, providerIdr):
+        return self._claims[self._buildClaimKey(providerIdr, claimName)]
 
     def addAttribute(self, attrib: Attribute):
         """

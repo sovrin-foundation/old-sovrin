@@ -224,7 +224,8 @@ class SovrinCli(PlenumCli):
                     name, version, definition = cl['name'], cl['version'], \
                                                 cl['definition']
                     availableClaims.append(AvailableClaimData(name, version))
-                    self.activeWallet.addClaim(li.name, Claim(name, version, definition))
+                    self.activeWallet.addClaim(Claim(name, version, definition),
+                                               li.targetIdentifier)
                 li.updateAcceptanceStatus(LINK_STATUS_ACCEPTED)
                 li.updateTargetVerKey(TARGET_VER_KEY_SAME_AS_ID)
                 li.updateAvailableClaims(availableClaims)
@@ -1094,7 +1095,7 @@ class SovrinCli(PlenumCli):
             self.print("{}".format(li.name))
         # TODO: Any suggestion in more than one link?
 
-    def _getOneLinkAssociatedWithClaim(self, claimName):
+    def _getOneLinkAssociatedWithClaim(self, claimName) -> LinkInvitation:
         matchingLinks = self.activeWallet.getMatchingLinksByClaimName(claimName)
 
         if len(matchingLinks) == 0:
@@ -1115,7 +1116,8 @@ class SovrinCli(PlenumCli):
             if matchingLink:
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
-                cl = self.activeWallet.getClaimByLinkAndClaimName(matchingLink.name, claimName)
+                cl = self.activeWallet.getClaimByNameAndProvider(
+                    claimName, matchingLink.targetIdentifier)
                 self.print(cl.getClaimInfoStr())
                 msgs = ['request claim {}'.format(claimName)]
                 self.printUsage(msgs)
