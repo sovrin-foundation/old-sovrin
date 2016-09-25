@@ -1271,9 +1271,13 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Claim not found in any link")
 
-    def _showMatchingClaimProof(self, matchingLink: Link,
-                                claimReq: ClaimRequest):
-        pass
+    def _showMatchingClaimProof(self, claimReq: ClaimRequest):
+        matchingLinkAndRcvdClaims = \
+            self.activeWallet.getMachingRcvdClaims(claimReq.attributes)
+        self.print("temp")
+        for ml, rc, commonAttrs in matchingLinkAndRcvdClaims:
+            self.print("Claim proof ({} v{} from {})".format(
+                rc.defKey.name, rc.defKey.version, ml.name))
 
     def _showClaimReq(self, matchedVars):
         if matchedVars.get('show_claim_req') == 'show claim request':
@@ -1285,7 +1289,7 @@ class SovrinCli(PlenumCli):
                 self.print("Found claim request {} in link {}".
                            format(claimReq.name, matchingLink.name))
                 self.print(claimReq.getClaimReqInfoStr())
-                self._showMatchingClaimProof(matchingLink, claimReq)
+                self._showMatchingClaimProof(claimReq)
             return True
 
     def _showClaim(self, matchedVars):

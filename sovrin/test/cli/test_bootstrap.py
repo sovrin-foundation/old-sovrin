@@ -530,7 +530,7 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                                         expect=connectedToTest, mapper=acmeMap)
 
     do('send NYM dest={target} role=SPONSOR',
-                                        within=2,
+                                        within=3,
                                         expect=nymAddedOut, mapper=acmeMap)
     return philCli
 

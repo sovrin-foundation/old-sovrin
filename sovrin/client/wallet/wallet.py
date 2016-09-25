@@ -97,11 +97,21 @@ class Wallet(PWallet, Sponsoring):
         return self._claimDefs.get(
             (key.name, key.version, key.claimDefSeqNo), None)
 
-    # TODO: Below two methods have duplicate code, need to refactor it
+    def getMachingRcvdClaims(self, attributes):
+        matchingLinkAndRcvdClaim = []
+        for k, li in self._linkInvitations.items():
+            for rc in li.receivedClaims.values():
+                commonAttr = set(attributes.keys()).intersection(rc.values.keys())
+                if commonAttr:
+                    matchingLinkAndRcvdClaim.append((li, rc, commonAttr))
+                    for ca in commonAttr:
+                        del attributes[ca]
+        return matchingLinkAndRcvdClaim
+
+    # TODO: Few of the below methods have duplicate code, need to refactor it
     def getMatchingLinksWithAvailableClaim(self, claimName):
         matchingLinkAndAvailableClaim = []
         for k, li in self._linkInvitations.items():
-            # li = Link.getFromDict(k, v)
             for ac in li.availableClaims.values():
                 if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
                     matchingLinkAndAvailableClaim.append((li, ac))
@@ -110,7 +120,6 @@ class Wallet(PWallet, Sponsoring):
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
         for k, li in self._linkInvitations.items():
-            # li = Link.getFromDict(k, v)
             for rc in li.receivedClaims.values():
                 if Wallet._isMatchingName(rc.defKey.name, claimName):
                     matchingLinkAndReceivedClaim.append((li, rc))
