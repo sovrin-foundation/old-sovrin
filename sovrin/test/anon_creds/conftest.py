@@ -8,6 +8,9 @@ from sovrin.client.wallet.cred_def import CredDefKey
 from sovrin.common.util import getConfig
 from sovrin.test.helper import createNym, _newWallet
 
+# noinspection PyUnresolvedReferences
+from anoncreds.test.conftest import staticPrimes
+
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
 
