@@ -13,10 +13,10 @@ logger = getlogger()
 class Endpoint(AgentNet, SimpleStack):
     def __init__(self, port: int, msgHandler: Callable,
                  name: str=None, basedirpath: str=None):
-        # if basedirpath:
-        #     ha = getHaFromLocalEstate(name, basedirpath)
-        #     if ha[1] != port:
-        #         port = ha[1]
+        if basedirpath:
+            ha = getHaFromLocalEstate(name, basedirpath)
+            if ha and ha[1] != port:
+                port = ha[1]
 
         stackParams = {
             "name": name or randomString(8),
@@ -57,9 +57,3 @@ class Endpoint(AgentNet, SimpleStack):
     def baseMsgHandler(self, msg):
         logger.debug("Got {}".format(msg))
         self.msgHandler(msg)
-
-    def start(self):
-        try:
-            super().start()
-        except Exception as ex:
-            pass

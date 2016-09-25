@@ -4,7 +4,7 @@ from typing import Dict
 import os
 from plenum.common.looper import Looper
 from plenum.common.txn import TYPE
-from plenum.common.util import getlogger
+from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
 from sovrin.agent.helper import processInvAccept
@@ -76,7 +76,7 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
     basedirpath = basedirpath or os.path.expanduser(config.baseDir)
     _, port = genHa()
     _, clientPort = genHa()
-    client = Client(name=name, ha=("0.0.0.0", clientPort), basedirpath=basedirpath)
+    client = Client(randomString(6), ha=("0.0.0.0", clientPort), basedirpath=basedirpath)
 
     # def f1():
     #     doSomethingWithWallet(wallet, action)
