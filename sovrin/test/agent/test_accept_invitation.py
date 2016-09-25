@@ -41,6 +41,7 @@ def testAcceptInvitation(faberIsRunning, faberLinkAdded, faberAdded,
 
     def chk():
         assert faberLinkAdded.remoteIdentifier == awallet.defaultId
+        assert faberLinkAdded.remoteEndPoint[1] == alice.endpoint.ha[1]
         # TODO: need to check remote identifier
 
     emptyLooper.run(eventually(chk))

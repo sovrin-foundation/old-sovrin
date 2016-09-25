@@ -66,7 +66,8 @@ class FaberAgent(Agent):
         typ = body.get(TYPE)
         handler = self.handlers.get(typ)
         if handler:
-            handler(msg)
+            frmHa = self.endpoint.getRemote(frm).ha
+            handler((body, (frm, frmHa)))
         else:
             logger.debug("no handler found for type {}".format(typ))
 
@@ -93,7 +94,7 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
     # }
 
     def acceptInvite(msg):
-        body, frm = msg
+        body, (frm, ha) = msg
         """
         body = {
             "type": <some type>,
@@ -105,10 +106,10 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
         # TODO: Need to do nonce verification here
         nonce = body.get("nonce")
         link = wallet.getLinkByNonce(nonce)
-        link.remoteIdentifier = body.get(f.IDENTIFIER.nm)
-        # TODO: need to set remote identifier
-        # wallet.knownIds[data['identifier']] =
-        # TODO: Send claims
+        if link:
+            link.remoteIdentifier = body.get(f.IDENTIFIER.nm)
+            link.remoteEndPoint = ha
+            # TODO: Send claims
 
     handlers = {
         ACCEPT_INVITE: acceptInvite

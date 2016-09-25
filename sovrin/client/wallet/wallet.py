@@ -371,7 +371,7 @@ class Wallet(PWallet, Sponsoring):
         self.pendRequest(req, key=key)
         return self.preparePending()[0]
 
-    def getLinkByNonce(self, nonce):
+    def getLinkByNonce(self, nonce) -> Optional[Link]:
         for _, li in self._linkInvitations.items():
             if li.nonce == nonce:
                 return li
