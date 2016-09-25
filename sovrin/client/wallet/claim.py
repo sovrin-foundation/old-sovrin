@@ -2,6 +2,20 @@
 AVAILABLE_BUT_NOT_ISSUED_STATUS = "available (not yet issued)"
 
 
+class ClaimRequest:
+    def __init__(self, name, version, attributes):
+        self.name = name
+        self.version = version
+        self.attributes = attributes
+
+    def getDictToBeStored(self):
+        return {
+            "name": self.name,
+            "version" : self.version,
+            "attributes": self.attributes
+        }
+
+
 class ClaimDefKey:
     def __init__(self, name, version, claimDefSeqNo):
         self.name = name

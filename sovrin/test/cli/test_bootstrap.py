@@ -380,7 +380,7 @@ def testFaberRespondsToAcceptInvite(faberRespondedToAcceptInvite):
     pass
 
 
-def testShowLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
+def testShowFaberLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
                                   faberRespondedToAcceptInvite):
     aliceCli = faberRespondedToAcceptInvite
     be(aliceCli)
@@ -512,6 +512,15 @@ def testLoadAcmeInvite(acmeInviteLoadedByAlice):
     pass
 
 
+def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
+                       showUnSyncedLinkOut, acmeMap):
+    showUnSyncedLinkWithClaimReqs = \
+        showUnSyncedLinkOut + ["Claim Requests: Job Application"]
+    be(aliceCli)
+    do('show link {inviter}',           expect=showUnSyncedLinkWithClaimReqs,
+                                        mapper=acmeMap)
+
+
 @pytest.fixture(scope="module")
 def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                      nymAddedOut, acmeMap):
@@ -558,25 +567,41 @@ def acmeRespondedToAcceptInvite(be, do, faberRespondedToReqClaim,
     acceptInviteResp = getSignedRespMsg(getAcmeAcceptInviteRespMsg(),
                                         acmeCli.activeWallet.defaultId,
                                         acmeSigner)
-    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
 
     be(aliceCli)
-    do(None,                    within=3,
-                                expect=[
-                                    "1 link invitation found for {inviter}.",
-                                    "Creating Link for {inviter}.",
-                                    "Generating Identifier and Signing key.",
-                                    "Signature accepted.",
-                                    "Trust established.",
-                                    "Identifier created in Sovrin.",
-                                    "Available claims: {claims}"
-                                    "Synchronizing...",
-                                    # Once faber starts writing identifier
-                                    # to Sovrin, need to uncomment below line
-                                    # "Confirmed identifier written to Sovrin."
-                                ],
-                                mapper=acmeMap)
+    do("accept invitation from {inviter}",
+                                        expect=[
+                                            "Invitation not yet verified.",
+                                            "Starting communication with {inviter}"
+                                        ],
+                                        mapper=acmeMap)
+
+    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
+    do(None,                            within=3,
+                                        expect=[
+                                            "Signature accepted.",
+                                            "Trust established.",
+                                            "Identifier created in Sovrin.",
+                                            "Available claims: {claims}"
+                                            "Synchronizing...",
+                                            # Once acme starts writing identifier
+                                            # to Sovrin, need to uncomment below line
+                                            # "Confirmed identifier written to Sovrin."
+                                        ],
+                                        mapper=acmeMap)
+    return aliceCli
 
 
 def testAcmeRespondsToAcceptInvite(acmeRespondedToAcceptInvite):
     pass
+
+
+def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap, showAcceptedLinkOut,
+                                      acmeRespondedToAcceptInvite):
+    aliceCli = acmeRespondedToAcceptInvite
+    be(aliceCli)
+
+    do("show link {inviter}",           expect=showAcceptedLinkOut,
+                                        not_expect="Link (not yet accepted)",
+                                        mapper=acmeMap)
+

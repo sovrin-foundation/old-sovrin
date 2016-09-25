@@ -7,7 +7,15 @@
   },
   "claim-requests": [{
     "name": "Job Application",
-    "version": 0.2
+    "version": 0.2,
+    "attributes": {
+        "first_name": "string",
+        "last_name": "string",
+        "phone_number": "string",
+        "degree": "string",
+        "status": "string",
+        "ssn": "string"
+    }
   }],
   "sig": "KDkI4XUePwEu1K01u0DpDsbeEfBnnBfwuw8e4DEPK+MdYXvVsXdSmBJ7yEfQBm8bSJuj6/4CRNI39fFul6DcDA=="
 }

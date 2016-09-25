@@ -244,7 +244,8 @@ class SovrinCli(PlenumCli):
             else:
                 self.print("No matching link found")
 
-    def _checkIfLinkIdentifierWrittenToSovrin(self, li: LinkInvitation, availableClaims):
+    def _checkIfLinkIdentifierWrittenToSovrin(self, li: LinkInvitation,
+                                              availableClaims):
         identity = Identity(identifier=li.signerIdentifier)
         # req = self.activeWallet.requestIdentity(identity,
         #                                         sender=self.activeWallet.defaultId)
@@ -816,7 +817,7 @@ class SovrinCli(PlenumCli):
         if claimRequestsJson:
             for cr in claimRequestsJson:
                 claimRequests.append(
-                    ClaimRequest(cr["name"], cr["version"]))
+                    ClaimRequest(cr["name"], cr["version"], cr["attributes"]))
 
         signature = invitationData["sig"]
 
@@ -849,7 +850,7 @@ class SovrinCli(PlenumCli):
             with open(filePath) as data_file:
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
-            try:
+            # try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -863,9 +864,9 @@ class SovrinCli(PlenumCli):
                         self._loadInvitation(invitationData)
 
                     self._printShowAndAcceptLinkUsage(linkName)
-            except Exception as e:
-                self.print('Error occurred during processing link '
-                           'invitation: {}'.format(e))
+            # except Exception as e:
+            #     self.print('Error occurred during processing link '
+            #                'invitation: {}'.format(e))
 
             return True
 

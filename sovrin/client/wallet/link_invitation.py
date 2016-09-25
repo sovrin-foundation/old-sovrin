@@ -2,7 +2,7 @@ import datetime
 from typing import Dict
 
 from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey, \
-    ReceivedClaim
+    ReceivedClaim, ClaimRequest
 
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
@@ -28,18 +28,6 @@ LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
 UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
 LINK_ITEM_PREFIX = '\n\t'
-
-
-class ClaimRequest:
-    def __init__(self, name, version):
-        self.name = name
-        self.version = version
-
-    def getDictToBeStored(self):
-        return {
-            "name": self.name,
-            "version" : self.version
-        }
 
 
 class LinkInvitation:
@@ -114,7 +102,8 @@ class LinkInvitation:
         if claimRequestJson:
             for cr in claimRequestJson:
                 claimRequests.append(
-                    ClaimRequest(cr.get("name"), cr.get("version")))
+                    ClaimRequest(cr.get("name"), cr.get("version"),
+                                 cr.get("attributes")))
 
         availableClaimsJson = values.get(AVAILABLE_CLAIMS, None)
         availableClaims = []
