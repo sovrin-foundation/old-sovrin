@@ -3,6 +3,8 @@ from typing import Dict
 
 from sovrin.common.util import getNonce
 
+from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey
+
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
 SIGNER_VER_KEY = "Verification Key"
@@ -36,7 +38,7 @@ class ClaimRequest:
     def getDictToBeStored(self):
         return {
             "name": self.name,
-            "version" : self.version
+            "version": self.version
         }
 
 
@@ -53,10 +55,10 @@ class AvailableClaimData:
 
 
 # TODO: Rename to Link
-class LinkInvitation:
+class Link:
     # Rename `signerIdentifier`,
     def __init__(self, name, localIdentifier, trustAnchor=None,
-                 remoteIdentifier=None, remoteEndPoint=None, linkNonce=None,
+                 remoteIdentifier=None, remoteEndPoint=None, nonce=None,
                  claimRequests=None, invitationData: Dict=None):
         self.name = name
         self.localIdentifier = localIdentifier
@@ -64,7 +66,7 @@ class LinkInvitation:
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
-        self.linkNonce = linkNonce or getNonce()
+        self.nonce = nonce or getNonce()
         # TODO: Keep the whole invitation data, including signature
         # self.signature = signature
         self.claimRequests = claimRequests
@@ -107,7 +109,10 @@ class LinkInvitation:
         if availableClaimsJson:
             for ac in availableClaimsJson:
                 availableClaims.append(
-                    AvailableClaimData(ac.get("name"), ac.get("version", None)))
+                    AvailableClaimData(
+                        ClaimDefKey(ac.get("name"), ac.get("version"),
+                        ac.get("defProviderIdr")), ac.get("issuerIdr"),
+                        ac.get("dateOfIssue")))
 
         localVerKey = values.get(SIGNER_VER_KEY, None)
         remoteEndPoint = values.get(TARGET_END_POINT, None)
@@ -117,9 +122,9 @@ class LinkInvitation:
         linkLastSynced = values.get(LINK_LAST_SYNCED, None)
         linkLastSyncNo = values.get(LINK_LAST_SEQ_NO, None)
 
-        li = LinkInvitation(name, localIdentifier, localVerKey, trustAnchor,
-                            remoteIdentifier, remoteEndPoint, linkNonce,
-                            claimRequests)
+        li = Link(name, localIdentifier, localVerKey, trustAnchor,
+                  remoteIdentifier, remoteEndPoint, linkNonce,
+                  claimRequests)
         li.updateState(remoteVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
         li.availableClaims = availableClaims
 
@@ -130,7 +135,7 @@ class LinkInvitation:
             SIGNER_IDENTIFIER: self.localIdentifier,
             TRUST_ANCHOR: self.trustAnchor,
             TARGET_IDENTIFIER: self.remoteIdentifier,
-            LINK_NONCE: self.linkNonce,
+            LINK_NONCE: self.nonce,
             SIGNATURE: self.signature
         }
         optional = {}
@@ -215,7 +220,7 @@ class LinkInvitation:
         targetVerKey = UNKNOWN_WAITING_FOR_SYNC
         targetEndPoint = self.remoteEndPoint or UNKNOWN_WAITING_FOR_SYNC
         linkStatus = 'not verified, target verkey unknown'
-        linkLastSynced = LinkInvitation.prettyDate(self.linkLastSynced)
+        linkLastSynced = Link.prettyDate(self.linkLastSynced)
 
         if linkLastSynced != LINK_NOT_SYNCHRONIZED and \
                         targetEndPoint == UNKNOWN_WAITING_FOR_SYNC:
@@ -248,7 +253,7 @@ class LinkInvitation:
             'Target: ' + self.remoteIdentifier + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.linkNonce + '\n' \
+            'Invitation nonce: ' + self.nonce + '\n' \
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
@@ -259,7 +264,8 @@ class LinkInvitation:
 
         if len(self.availableClaims) > 0:
             optionalLinkItems = "Available claims: {}".\
-                format(",".join([cl.name for cl in self.availableClaims]))
+                format(",".join([ac.claimDefKey.name
+                                 for ac in self.availableClaims]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo

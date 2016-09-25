@@ -15,7 +15,7 @@ def emptyLooper():
 
 @pytest.fixture(scope="module")
 def faberWallet():
-    name = "Faber College"
+    name = "FaberCollege"
     wallet = Wallet(name)
     return wallet
 

@@ -117,3 +117,7 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
             looper.run()
     else:
         return faber
+
+
+if __name__ == "__main__":
+    runFaber()

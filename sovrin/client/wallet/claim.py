@@ -1,36 +1,88 @@
-from typing import Dict
+
+AVAILABLE_BUT_NOT_ISSUED_STATUS = "available (not yet issued)"
 
 
-class Claim:
-
-    def __init__(self, name: str, version: str,
-                 definition: Dict[str, str]):
+class ClaimDefKey:
+    def __init__(self, name, version, defProviderIdr):
         self.name = name
         self.version = version
-        self.definition = definition
-        self.status = "available (not yet issued)"
+        self.defProviderIdr = defProviderIdr
 
-    def updateStatus(self, newStatus):
-        self.status = newStatus
+
+class AvailableClaimData:
+    def __init__(self, claimDefKey: ClaimDefKey, issuerIdr, dateOfIssue):
+        self.claimDefKey = claimDefKey
+        self.issuerIdr = issuerIdr
+        self.dateOfIssue = dateOfIssue or AVAILABLE_BUT_NOT_ISSUED_STATUS
 
     def getDictToBeStored(self):
         return {
-            "status": self.status,
-            "definition": self.definition
+            "name": self.claimDefKey.name,
+            "version" : self.claimDefKey.version,
+            "defProviderIdr": self.claimDefKey.defProviderIdr,
+            "issuerIdr": self.issuerIdr,
+            "dateOfIssue": self.dateOfIssue
         }
 
+    def getClaimInfoStr(self) -> str:
+        fixedInfo = \
+            'Name: ' + self.claimDefKey.name + '\n' \
+            'Version: ' + self.claimDefKey.version + '\n' \
+            'Status: ' + self.dateOfIssue
+        return fixedInfo
+
+
+class ClaimDef:
+    def __init__(self, key: ClaimDefKey, definition):
+        self.key = key
+        self.definition = definition
+
+    def getAttributeValue(self):
+        return format("\n      ".join(
+            ['{}: {}'.format(k, v)
+             for k, v in self.definition["attributes"].items()]))
+
+    def getClaimDefInfoStr(self) -> str:
+        fixedClaimDefItems = \
+            '\n' \
+            'Name: ' + self.key.name + '\n' \
+            'Version: ' + self.key.version + '\n' \
+            'Definition:' + '\n' \
+            '   Attributes:' + '\n'
+
+        return fixedClaimDefItems + self.getAttributeValue()
+
+
+class Claim:
+    def __init__(self, defKey: ClaimDefKey, issuerIdr, issuerKeys, value):
+        self.defKey = defKey
+        self.issuerIdr = issuerIdr
+        self.issuerKeys = issuerKeys
+        self.value = value
+
+    def updateDateOfIssue(self, doi):
+        self.dateOfIssue = doi
+
+    def getDictToBeStored(self):
+        return {
+            "name": self.defKey.name,
+            "version": self.defKey.version,
+            "defProviderIdr": self.defKey.defProviderIdr,
+            "issuerKeys": self.issuerKeys,
+            "value": self.value,
+            "dateOfIssuer": self.dateOfIssue
+        }
+
+    def getAttributeWithValue(self):
+        return "<TBD>"
 
     def getClaimInfoStr(self) -> str:
         fixedClaimItems = \
             '\n' \
-            'Name: ' + self.name + '\n' \
-            'Status: ' + self.status + '\n' \
-            'Version: ' + self.version + '\n' \
+            'Name: ' + self.defKey.name + '\n' \
+            'Version: ' + self.defKey.version + '\n' \
+            'Status: ' + self.dateOfIssue + '\n' \
             'Definition: ' + '\n' \
             '   Attributes: ' + '\n'
-        attributes = format("\n      ".join(
-            ['{}: {}'.format(k, v)
-             for k,v in self.definition["attributes"].items()]))
 
-
-        return fixedClaimItems + attributes
+        return fixedClaimItems + self.getAttributeWithValue()

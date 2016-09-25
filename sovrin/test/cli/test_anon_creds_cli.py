@@ -121,10 +121,8 @@ def trusteeCreated(poolCLI, trusteePubKey):
 
 
 @pytest.fixture(scope="module")
-def philConnected(philCreated, philCLI, nodesSetup, nodeNames):
-    philCLI.looper.run(eventually(checkClientConnected, philCLI, nodeNames,
-                                  philCLI.activeClient.name, retryWait=1,
-                                  timeout=5))
+def philConnected(philCreated, philCLI, nodesSetup):
+    ensureConnectedToTestEnv(philCLI)
 
 
 @pytest.fixture(scope="module")
@@ -134,13 +132,8 @@ def bookStoreCreated(bookStorePubKey, trusteeCreated, trusteeCLI,
 
 
 @pytest.fixture(scope="module")
-def bookStoreConnected(bookStoreCreated, bookStoreCLI, nodesSetup,
-                       nodeNames):
+def bookStoreConnected(bookStoreCreated, bookStoreCLI, nodesSetup):
     ensureConnectedToTestEnv(bookStoreCLI)
-    bookStoreCLI.looper.run(eventually(checkClientConnected, bookStoreCLI,
-                                       nodeNames,
-                                       bookStoreCLI.activeClient.name,
-                                       retryWait=1, timeout=5))
     bookStoreCLI.logger.debug("Book store connected")
 
 
@@ -150,7 +143,7 @@ def byuCreated(byuPubKey, philCreated, philCLI, nodesSetup):
 
 
 @pytest.fixture(scope="module")
-def tylerCreated(byuCreated, tylerPubKey, byuCLI, nodesSetup, nodeNames):
+def tylerCreated(byuCreated, tylerPubKey, byuCLI, nodesSetup):
     ensureNymAdded(byuCLI, tylerPubKey)
 
 

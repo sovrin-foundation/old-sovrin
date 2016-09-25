@@ -1,11 +1,11 @@
-from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.client.wallet.link_invitation import Link
 
 
 def testFaberCreateLink(faberIsRunning):
     faber, wallet = faberIsRunning
     idr = wallet.defaultId
     # TODO rename to Link
-    link = LinkInvitation("Alice", idr, wallet._getIdData().signer.verkey)
+    link = Link("Alice", idr, wallet._getIdData().signer.verkey)
     wallet.addLinkInvitation(link)
     assert wallet.getMatchingLinkInvitations("Alice")
 

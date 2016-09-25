@@ -13,11 +13,11 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
-from sovrin.client.wallet.claim import Claim
+from sovrin.client.wallet.claim import Claim, ClaimDefKey, ClaimDef
 from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
 from sovrin.client.wallet.credential import Credential
-from sovrin.client.wallet.link import Link
-from sovrin.client.wallet.link_invitation import LinkInvitation
+# from sovrin.client.wallet.link import Link
+from sovrin.client.wallet.link_invitation import Link
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
     GET_NYM, SPONSOR
 from sovrin.common.identity import Identity
@@ -64,7 +64,7 @@ class Wallet(PWallet, Sponsoring):
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
-        self._claims = {}            # type: Dict[str, Claim]
+        self._claimDefs = {}         # type: Dict[ClaimDefKey, ClaimDef]
         # transactions not yet submitted
         self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
@@ -85,23 +85,27 @@ class Wallet(PWallet, Sponsoring):
     def pendingCount(self):
         return len(self._pending)
 
-    def getMatchingLinksByClaimName(self, claimName):
-        matchingLinks = []
+    @staticmethod
+    def _isMatchingName(source, target):
+        return source == target or source.lower() in target.lower()
+
+    def addClaimDef(self, cd: ClaimDef):
+        self._claimDefs[(cd.key.name, cd.key.version, cd.key.defProviderIdr)] = cd
+
+    def getClaimDefByKey(self, key: ClaimDefKey):
+        return self._claimDefs.get((key.name, key.version, key.defProviderIdr), None)
+
+    def getMatchingLinksWithClaim(self, claimName):
+        matchingLinkAndClaim = []
         for k, v in self._linkInvitations.items():
-            li = LinkInvitation.getFromDict(k, v)
+            li = Link.getFromDict(k, v)
             for ac in li.availableClaims:
-                if ac.name == claimName or ac.name.lower() in claimName.lower():
-                    matchingLinks.append(li)
-        return matchingLinks
+                if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
+                    matchingLinkAndClaim.append((li, ac))
+        return matchingLinkAndClaim
 
     def _buildClaimKey(self, providerIdr, claimName):
         return providerIdr + ":" + claimName
-
-    def addClaim(self, cl, providerIdr):
-        self._claims[self._buildClaimKey(providerIdr, cl.name)] = cl
-
-    def getClaimByNameAndProvider(self, claimName, providerIdr):
-        return self._claims[self._buildClaimKey(providerIdr, claimName)]
 
     def addAttribute(self, attrib: Attribute):
         """
@@ -285,9 +289,9 @@ class Wallet(PWallet, Sponsoring):
         self._linkInvitations[linkInvitation.name] = linkInvitation
 
     def getLinkInvitationByTarget(self, target: str):
-        for k, v in self._linkInvitations.items():
-            li = LinkInvitation.getFromDict(k, v)
-            if li.targetIdentifier == target:
+        for k, li in self._linkInvitations.items():
+            # li = Link.getFromDict(k, v)
+            if li.remoteIdentifier == target:
                 return li
 
     def getMatchingLinkInvitations(self, name: str):
