@@ -62,7 +62,8 @@ class Wallet(PWallet, Sponsoring):
         self._credentials = {}      # type: Dict[str, Credential]
         # self._links = {}            # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        self._linkInvitations = {}  # type: Dict[str, Link]  # TODO should DEPRECATE in favor of link
+        # TODO Rename to `_links`
+        self._linkInvitations = {}  # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
         # transactions not yet submitted
@@ -369,3 +370,8 @@ class Wallet(PWallet, Sponsoring):
     def prepReq(self, req, key=None):
         self.pendRequest(req, key=key)
         return self.preparePending()[0]
+
+    def getLinkByNonce(self, nonce):
+        for _, li in self._linkInvitations.items():
+            if li.nonce == nonce:
+                return li

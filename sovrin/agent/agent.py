@@ -1,5 +1,7 @@
 from typing import Dict
 
+from plenum.common.error import fault
+from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
 from plenum.common.types import Identifier
@@ -77,3 +79,11 @@ class Agent(Motor, AgentNet):
 
     def handleEndpointMessage(self, msg):
         pass
+
+    def sendMessage(self, msg, to: str):
+        try:
+            remote = self.endpoint.getRemote(to)
+        except RemoteNotFound as ex:
+            fault(ex, "Do not know {}".format(to))
+            return
+        self.endpoint.transmit(msg, remote.uid)

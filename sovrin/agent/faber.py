@@ -4,6 +4,7 @@ from typing import Dict
 import os
 from plenum.common.looper import Looper
 from plenum.common.txn import TYPE
+from plenum.common.types import f
 from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
@@ -61,12 +62,13 @@ class FaberAgent(Agent):
         self._activeWallet = wallet
 
     def handleEndpointMessage(self, msg):
-        typ = msg.get(TYPE)
+        body, frm = msg
+        typ = body.get(TYPE)
         handler = self.handlers.get(typ)
-        if not handler:
+        if handler:
             handler(msg)
         else:
-            logger.debug("no handler found for type")
+            logger.debug("no handler found for type {}".format(typ))
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
@@ -101,8 +103,10 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
         }
         """
         # TODO: Need to do nonce verification here
-        data = json.loads(body)
-        print(data)
+        nonce = body.get("nonce")
+        link = wallet.getLinkByNonce(nonce)
+        link.remoteIdentifier = body.get(f.IDENTIFIER.nm)
+        # TODO: need to set remote identifier
         # wallet.knownIds[data['identifier']] =
         # TODO: Send claims
 

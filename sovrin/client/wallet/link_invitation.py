@@ -136,6 +136,7 @@ class Link:
             self.availableClaims[
                 self._getClaimDefKeyTuple(ac.claimDefKey)] = ac
 
+    # TODO: THis method is not used any more. We should remove it
     def getDictToBeStored(self) -> dict:
         fixed = {
             SIGNER_IDENTIFIER: self.localIdentifier,

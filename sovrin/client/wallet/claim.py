@@ -8,6 +8,7 @@ class ClaimRequest:
         self.version = version
         self.attributes = attributes
 
+    # TODO: Rename to `toDict` and make property
     def getDictToBeStored(self):
         return {
             "name": self.name,
@@ -20,6 +21,7 @@ class ClaimRequest:
             ['{}'.format(attr)
              for attr in self.attributes]))
 
+    # TODO: Rename to `serToStr` and make property
     def getClaimReqInfoStr(self) -> str:
 
         fixedInfo = \
@@ -43,6 +45,7 @@ class AvailableClaimData:
     def __init__(self, claimDefKey: ClaimDefKey):
         self.claimDefKey = claimDefKey
 
+    # TODO: Rename to `toDict` and make property
     def getDictToBeStored(self):
         return {
             "name": self.claimDefKey.name,
@@ -68,6 +71,7 @@ class ClaimDef:
             ['{}: {}'.format(k, v)
              for k, v in self.definition["attributes"].items()]))
 
+    # TODO: Rename to `serToStr` and make property
     def getClaimDefInfoStr(self) -> str:
         fixedClaimDefItems = \
             'Definition:' + '\n' \
@@ -88,6 +92,7 @@ class ReceivedClaim:
     def updateDateOfIssue(self, doi):
         self.dateOfIssue = doi
 
+    # TODO: Rename to `toDict` and make property
     def getDictToBeStored(self):
         return {
             "name": self.defKey.name,
@@ -103,6 +108,7 @@ class ReceivedClaim:
             ['{}: {}'.format(k, v)
              for k, v in self.values.items()]))
 
+    # TODO: Rename to `serToStr` and make property
     def getClaimInfoStr(self) -> str:
         fixedClaimItems = \
             '\n' \
