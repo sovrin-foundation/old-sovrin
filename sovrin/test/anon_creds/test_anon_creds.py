@@ -1,23 +1,6 @@
-import logging
-import pprint
-
-from ioflo.aid.consoling import Console
 # The following setup of logging needs to happen before everything else
-# from sovrin.anon_creds.issuer import AttribDef, AttribType, InMemoryAttrRepo
-from functools import partial
-
-
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
-from plenum.common.txn import DATA, TXN_TYPE
-from plenum.test.helper import genHa
-
-
-import sovrin.anon_creds.issuer as IssuerModule
-import sovrin.anon_creds.prover as ProverModule
-import sovrin.anon_creds.proof_builder as ProofBuilderModule
-import sovrin.anon_creds.verifier as VerifierModule
-
 
 def out(logger, record, extra_cli_value=None):
     """
@@ -29,6 +12,16 @@ def out(logger, record, extra_cli_value=None):
     """
     logger.display(record.msg)
 
+import logging
+import pprint
+
+from ioflo.aid.consoling import Console
+from functools import partial
+
+import sovrin.anon_creds.issuer as IssuerModule
+import sovrin.anon_creds.prover as ProverModule
+import sovrin.anon_creds.proof_builder as ProofBuilderModule
+import sovrin.anon_creds.verifier as VerifierModule
 
 from plenum.common.txn import DATA, TXN_TYPE
 from plenum.test.helper import genHa
@@ -36,8 +29,12 @@ from sovrin.common.txn import CRED_DEF
 from sovrin.common.util import getCredDefTxnData
 from sovrin.test.helper import submitAndCheck, makePendingTxnsRequest
 
+from sovrin.client.wallet.wallet import Wallet
 
-def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerWallet, proverWallet,
+
+def testAnonCredFlow(genned, looper, tdir, nodeSet,
+                     issuerWallet: Wallet,
+                     proverWallet: Wallet,
                      verifierWallet, addedIPV):
     # Don't move below import outside of this method
     # else that client class doesn't gets reloaded
@@ -127,7 +124,8 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet, issuerWallet, proverWallet,
                    " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
-    op = {TXN_TYPE: CRED_DEF, DATA: getCredDefTxnData(credDef)}
+    op = {TXN_TYPE: CRED_DEF,
+          DATA: getCredDefTxnData(credDef)}
     logger.display("Issuer: Writing credential definition to "
                    "Sovrin Ledger...")
 

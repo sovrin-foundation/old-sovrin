@@ -485,11 +485,9 @@ def submitAndCheck(looper, client, wallet, op, identifier=None):
 
 
 def makePendingTxnsRequest(client, wallet):
-    pendingTxnsReqs = wallet.getPendingTxnRequests()
-    for req in pendingTxnsReqs:
-        wallet.pendRequest(req)
-    reqs = wallet.preparePending()
-    client.submitReqs(*reqs)
+    wallet.pendSyncRequests()
+    prepared = wallet.preparePending()
+    client.submitReqs(*prepared)
 
 
 def makeNymRequest(client, wallet, nym, role):
