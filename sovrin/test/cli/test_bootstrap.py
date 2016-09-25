@@ -112,11 +112,11 @@ def testShowInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
     do('show {invite-not-exists}',      expect=fileNotExists, mapper=faberMap)
 
 
-def testShowInviteExists(be, do, aliceCli, faberMap):
+def testShowFaberInvite(be, do, aliceCli, faberMap):
     be(aliceCli)
-    faberInviteContents = getFileLines(faberMap.get("invite"))
+    inviteContents = getFileLines(faberMap.get("invite"))
 
-    do('show {invite}',                 expect=faberInviteContents,
+    do('show {invite}',                 expect=inviteContents,
                                         mapper=faberMap)
 
 
@@ -132,7 +132,7 @@ def faberInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, faberMap):
     return aliceCli
 
 
-def testLoadInviteExists(faberInviteLoadedByAlice):
+def testLoadFaberInvite(faberInviteLoadedByAlice):
     pass
 
 
@@ -143,7 +143,7 @@ def testShowLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
                                         mapper=faberMap)
 
 
-def testShowLinkExists(be, do, aliceCli, faberInviteLoadedByAlice,
+def testShowFaberLink(be, do, aliceCli, faberInviteLoadedByAlice,
                        showUnSyncedLinkOut, faberMap):
     be(aliceCli)
     do('show link {inviter}',           expect=showUnSyncedLinkOut,
@@ -155,7 +155,7 @@ def testSyncLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
     do('sync {inviter-not-exists}',     expect=linkNotExists, mapper=faberMap)
 
 
-def testSyncWhenNotConnected(be, do, aliceCli, faberMap,
+def testSyncFaberWhenNotConnected(be, do, aliceCli, faberMap,
                                         faberInviteLoadedByAlice,
                                         syncWhenNotConnected):
     be(aliceCli)
@@ -163,20 +163,21 @@ def testSyncWhenNotConnected(be, do, aliceCli, faberMap,
                                         mapper=faberMap)
 
 
-def testAcceptUnSyncedInviteWhenNotConnected(be, do,
+def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do,
                                              faberInviteLoadedByAlice,
                                              acceptUnSyncedWhenNotConnected,
                                              faberMap):
     aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
-    do('accept invitation {inviter}',   expect=acceptUnSyncedWhenNotConnected,
+    do('accept invitation from {inviter}',
+                                        expect=acceptUnSyncedWhenNotConnected,
                                         mapper=faberMap)
 
 
-def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
+def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
                                           acceptUnSyncedWhenConnected,
                                           faberMap, connectedToTest,
-                                          poolNodesStarted, faberAgentStarted):
+                                          poolNodesStarted):
     aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
     if not aliceCli ._isConnectedToAnyEnv():
@@ -184,7 +185,7 @@ def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
                                         expect=connectedToTest,
                                         mapper=faberMap)
 
-    do('accept invitation {inviter}',   within=3,
+    do('accept invitation from {inviter}',   within=3,
                                         expect=acceptUnSyncedWhenConnected,
                                         mapper=faberMap)
 
@@ -206,11 +207,11 @@ def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
     return aliceCli
 
 
-def testSyncFaberInvite(faberInviteSyncedWithoutEndpoint):
+def testSyncFaberInviteWithoutEndpoint(faberInviteSyncedWithoutEndpoint):
     pass
 
 
-def testShowSyncedInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap,
+def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap,
                          linkNotYetSynced, showSyncedLinkWithoutEndpointOut):
     aliceCLI = faberInviteSyncedWithoutEndpoint
 
@@ -253,11 +254,11 @@ def faberInviteSyncedWithEndpoint(be, do, faberMap,
     return aliceCLI
 
 
-def testFaberInviteSyncWithEndpoint(faberInviteSyncedWithEndpoint):
+def testSyncFaberInvite(faberInviteSyncedWithEndpoint):
     pass
 
 
-def testShowSyncedInviteWithEndpoint(be, do, faberInviteSyncedWithEndpoint,
+def testShowSyncedFaberInviteWithEndpoint(be, do, faberInviteSyncedWithEndpoint,
                                      showSyncedLinkWithEndpointOut, faberMap):
     aliceCLI = faberInviteSyncedWithEndpoint
     be(aliceCLI)
@@ -267,16 +268,8 @@ def testShowSyncedInviteWithEndpoint(be, do, faberInviteSyncedWithEndpoint,
 
 def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
     be(aliceCli)
-    do('accept invitation {inviter-not-exists}',
+    do('accept invitation from {inviter-not-exists}',
                                         expect=linkNotExists, mapper=faberMap)
-
-
-@pytest.fixture(scope="module")
-def faberAgentStarted(faberInviteLoadedByAlice):
-    faberCli = faberInviteLoadedByAlice
-    return FaberAgent(name="faber", client=faberCli.activeClient,
-                      port=FABER_ENDPOINT_PORT)
-
 
 def getAcceptInviteRespMsg():
     return """{
@@ -362,7 +355,7 @@ def testShowClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
                                         mapper=faberMap)
 
 
-def testShowClaimExists(be, do, transcriptClaimMap, showClaimOut,
+def testShowTranscriptClaim(be, do, transcriptClaimMap, showClaimOut,
                                    faberRespondedToAcceptInvite):
     aliceCli = faberRespondedToAcceptInvite
     be(aliceCli)
@@ -382,7 +375,7 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
                                         mapper=faberMap)
 
 
-def testReqClaimExists(be, do, transcriptClaimMap, reqClaimOut,
+def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
                                    faberRespondedToAcceptInvite):
     aliceCli = faberRespondedToAcceptInvite
     be(aliceCli)
@@ -443,11 +436,31 @@ def testFaberRespondsToReqClaim(faberRespondedToReqClaim):
     pass
 
 
-def testShowClaimPostReqClaim(be, do, transcriptClaimValueMap, rcvdClaimOut,
-                              faberRespondedToReqClaim):
+def testShowFaberClaimPostReqClaim(be, do, faberRespondedToReqClaim,
+                                   transcriptClaimValueMap, rcvdClaimOut):
     aliceCli = faberRespondedToReqClaim
     be(aliceCli)
 
     do("show claim {name}",
                                         expect=rcvdClaimOut,
                                         mapper=transcriptClaimValueMap)
+
+
+def testShowAcmeInvite(be, do, aliceCli, acmeMap):
+    be(aliceCli)
+    inviteContents = getFileLines(acmeMap.get("invite"))
+
+    do('show {invite}',                 expect=inviteContents,
+                                        mapper=acmeMap)
+
+
+@pytest.fixture(scope="module")
+def acmeInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, acmeMap):
+    be(aliceCli)
+    do('load {invite}',                 expect=loadInviteOut, mapper=acmeMap)
+    return aliceCli
+
+
+def testLoadAcmeInvite(acmeInviteLoadedByAlice):
+    pass
+
