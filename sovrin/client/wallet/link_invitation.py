@@ -68,6 +68,7 @@ class Link:
             if linkLastSynced else None
         self.linkLastSyncNo = linkLastSyncNo
 
+    # TODO: THis method is not used any more. We should remove it
     @staticmethod
     def getFromDict(name, values):
         localIdentifier = values[SIGNER_IDENTIFIER]
