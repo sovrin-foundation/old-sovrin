@@ -244,16 +244,36 @@ class SovrinCli(PlenumCli):
             else:
                 self.print("No matching link found")
 
+    def _checkIfLinkIdentifierWrittenToSovrin(self, li: LinkInvitation, availableClaims):
+        identity = Identity(identifier=li.signerIdentifier)
+        # req = self.activeWallet.requestIdentity(identity,
+        #                                         sender=self.activeWallet.defaultId)
+        # self.activeClient.submitReqs(req)
+        self.print("Synchronizing...")
+
+        def getNymReply(reply, err, availableClaims, li):
+            self.print("Confirmed identifier written to Sovrin.")
+            self._printShowAndReqClaimUsage(availableClaims)
+
+        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        #                             req.reqId, self.activeClient, getNymReply,
+        #                             availableClaims, li)
+
+    def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
+        self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
+
     def _handleAcceptInviteResponse(self, msg: Dict):
         isVerified = self._isVerified(msg)
         if isVerified:
             identifier = msg.get("identifier")
-            self.print("Signature accepted.")
-            self.print("Trust established.")
-            # Not sure how to know if the responder is a trust anchor or not
-            self.print("Identifier created in Sovrin.")
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
+                # TODO: Show seconds took to respond
+                self.print("Response from {}:".format(li.name))
+                self.print("    Signature accepted.")
+                self.print("    Trust established.")
+                # Not sure how to know if the responder is a trust anchor or not
+                self.print("    Identifier created in Sovrin.")
                 availableClaims = []
                 for cl in msg['claimsList']:
                     name, version, claimDefSeqNo = \
@@ -275,10 +295,10 @@ class SovrinCli(PlenumCli):
                 self.activeWallet.addLinkInvitation(li)
 
                 if len(availableClaims) > 0:
-                    self.print("Available claims: {}".
+                    self.print("    Available claims: {}".
                                format(",".join([cl.claimDefKey.name
                                                 for cl in availableClaims])))
-                    self._printShowAndReqClaimUsage(availableClaims)
+                    self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
             else:
                 self.print("No matching link found")
 

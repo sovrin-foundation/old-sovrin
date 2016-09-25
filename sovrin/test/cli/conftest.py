@@ -100,6 +100,20 @@ def faberMap():
 
 
 @pytest.fixture(scope="module")
+def acmeMap():
+    return {'inviter': 'Acme Corp',
+            'invite': "sample/acme-job-application.sovrin",
+            'invite-not-exists': "sample/acme-job-application.sovrin.not.exists",
+            'inviter-not-exists': "non-existing-inviter",
+            "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
+            "endpoint": "0.0.0.0:1213",
+            "claim-requests" : "Job Application",
+            "claims": "Job-Certificate"
+            }
+
+
+@pytest.fixture(scope="module")
 def loadInviteOut():
     return ["1 link invitation found for {inviter}.",
             "Creating Link for {inviter}.",
@@ -197,16 +211,6 @@ def faberInviteLoaded(aliceCLI, be, do, faberMap, loadInviteOut):
 
 
 @pytest.fixture(scope="module")
-def acmeMap():
-    return {'inviter': 'Acme Corp',
-            'invite': "sample/acme-job-application.sovrin",
-            "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
-            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
-            "claim-requests" : "Job Application"
-            }
-
-
-@pytest.fixture(scope="module")
 def acmeInviteLoaded(aliceCLI, be, do, acmeMap, loadInviteOut):
     be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
@@ -297,29 +301,56 @@ def showClaimNotFoundOut():
 @pytest.fixture(scope="module")
 def transcriptClaimValueMap():
     return {
-            'inviter' : 'Faber College',
-            'name': 'Transcript',
-            "version": "1.2",
-            'status': "available (not yet issued)",
-            "attr-student_name": "Alice",
-            "attr-ssn": "123456789",
-            "attr-degree": "Bachelor of Science, Marketing",
-            "attr-year": "2015",
-            "attr-status": "graduated"
+        'inviter': 'Faber College',
+        'name': 'Transcript',
+        "version": "1.2",
+        'status': "available (not yet issued)",
+        "attr-student_name": "Alice",
+        "attr-ssn": "123456789",
+        "attr-degree": "Bachelor of Science, Marketing",
+        "attr-year": "2015",
+        "attr-status": "graduated"
     }
 
 @pytest.fixture(scope="module")
 def transcriptClaimMap():
     return {
-            'inviter' : 'Faber College',
-            'name': 'Transcript',
-            'status': "available (not yet issued)",
-            "version": "1.2",
-            "attr-student_name": "string",
-            "attr-ssn": "int",
-            "attr-degree": "string",
-            "attr-year": "string",
-            "attr-status": "string"
+        'inviter': 'Faber College',
+        'name': 'Transcript',
+        'status': "available (not yet issued)",
+        "version": "1.2",
+        "attr-student_name": "string",
+        "attr-ssn": "int",
+        "attr-degree": "string",
+        "attr-year": "string",
+        "attr-status": "string"
+    }
+
+
+@pytest.fixture(scope="module")
+def jobCertificateClaimValueMap():
+    return {
+        'inviter': 'Acme Corp',
+        'name': 'Job-Certificate',
+        'status': "available (not yet issued)",
+        "version": "1.1",
+        "attr-employee_name": "Alice",
+        "attr-employee_status": "Permanent",
+        "attr-experience": "3 years",
+        "attr-salary_bracket": "between $50,000 to $100,000"
+    }
+
+@pytest.fixture(scope="module")
+def jobCertificateClaimMap():
+    return {
+        'inviter': 'Acme Corp',
+        'name': 'Job-Certificate',
+        'status': "available (not yet issued)",
+        "version": "1.1",
+        "attr-employee_name": "string",
+        "attr-employee_status": "string",
+        "attr-experience": "string",
+        "attr-salary_bracket": "string"
     }
 
 
@@ -454,8 +485,15 @@ def do(ctx):
     """
     def _(attempt, expect=None, within=None, mapper=None, not_expect=None):
         cli = ctx['current_cli']
-        attempt = attempt.format(**mapper) if mapper else attempt
-        checkCmdValid(cli, attempt)
+
+        # This if was not there earlier, but I felt a need to reuse this
+        # feature (be, do, expect ...) without attempting anything
+        # mostly because there will be something async which will do something,
+        # hence I added the below if check
+
+        if attempt:
+            attempt = attempt.format(**mapper) if mapper else attempt
+            checkCmdValid(cli, attempt)
 
         def check():
             nonlocal expect
