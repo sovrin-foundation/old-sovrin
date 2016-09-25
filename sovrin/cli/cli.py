@@ -33,7 +33,7 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
+from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
@@ -213,39 +213,82 @@ class SovrinCli(PlenumCli):
         ser = serializeForSig(msg)
         key = cryptonymToHex(identifier) if not isHex(
             identifier) else identifier
-        isVerified =  SovrinCli.verifySig(key, signature, ser)
+        isVerified = SovrinCli.verifySig(key, signature, ser)
         if not isVerified:
             self.print("Signature rejected")
         return isVerified
 
-    def _handleRequestClaimResponse(self, msg: Dict[str, str]):
+    def _handleRequestClaimResponse(self, msg: Dict):
         isVerified = self._isVerified(msg)
         if isVerified:
             pass
 
-    def _handleAcceptInviteResponse(self, msg: Dict[str, str]):
+    def _handleReqClaimResponse(self, msg: Dict):
+        isVerified = self._isVerified(msg)
+        if isVerified:
+            self.print("Signature accepted.")
+            self.print("Received {}.".format(msg['name']))
+            identifier = msg.get("identifier")
+            li = self._getLinkByTarget(getCryptonym(identifier))
+            if li:
+                name, version, claimDefSeqNo = \
+                    msg['name'], msg['version'], \
+                    msg['claimDefSeqNo']
+                issuerKeys = {}  # TODO: Need to decide how/where to get it
+                values = msg['values']  # TODO: Need to finalize this
+                rc = ReceivedClaim(ClaimDefKey(name, version, claimDefSeqNo),
+                              issuerKeys, values)
+                li.updateReceivedClaims([rc])
+                self.activeWallet.addLinkInvitation(li)
+            else:
+                self.print("No matching link found")
+
+    def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
+                                              availableClaims):
+        # identity = Identity(identifier=li.localIdentifier)
+        # req = self.activeWallet.requestIdentity(identity,
+        #                                         sender=self.activeWallet.defaultId)
+        # self.activeClient.submitReqs(req)
+        self.print("Synchronizing...")
+
+        def getNymReply(reply, err, availableClaims, li):
+            self.print("Confirmed identifier written to Sovrin.")
+            self._printShowAndReqClaimUsage(availableClaims)
+
+        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        #                             req.reqId, self.activeClient, getNymReply,
+        #                             availableClaims, li)
+
+    def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
+        self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
+
+    def _handleAcceptInviteResponse(self, msg: Dict):
         isVerified = self._isVerified(msg)
         if isVerified:
             identifier = msg.get("identifier")
-            self.print("Signature accepted.")
-            self.print("Trust established.")
-            # Not sure how to know if the responder is a trust anchor or not
-            self.print("Identifier created in Sovrin.")
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
+                # TODO: Show seconds took to respond
+                self.print("Response from {}:".format(li.name))
+                self.print("    Signature accepted.")
+                self.print("    Trust established.")
+                # Not sure how to know if the responder is a trust anchor or not
+                self.print("    Identifier created in Sovrin.")
                 availableClaims = []
                 for cl in msg['claimsList']:
-                    for cl in msg['claimsList']:
-                        name, version, defIdr, issuerIdr = \
-                            cl['name'], cl['version'], \
-                            cl['defIdr'], cl["issuerIdr"]
-                        claimDefKey = ClaimDefKey(name, version, defIdr)
-                        availableClaims.append(
-                            AvailableClaimData(claimDefKey, issuerIdr,
-                                               dateOfIssue=None))
-                        if cl.get('definition', None):
-                            self.activeWallet.addClaimDef(
-                                ClaimDef(claimDefKey, cl['definition']))
+                    name, version, claimDefSeqNo = \
+                        cl['name'], cl['version'], \
+                        cl['claimDefSeqNo']
+                    claimDefKey = ClaimDefKey(name, version, claimDefSeqNo)
+                    availableClaims.append(AvailableClaimData(claimDefKey))
+
+                    if cl.get('definition', None):
+                        self.activeWallet.addClaimDef(
+                            ClaimDef(claimDefKey, cl['definition']))
+                    else:
+                        # TODO: Go and get definition from Sovrin and store
+                        # it in wallet's claim def store
+                        pass
 
                 li.linkStatus = LINK_STATUS_ACCEPTED
                 li.targetVerkey = TARGET_VER_KEY_SAME_AS_ID
@@ -254,12 +297,12 @@ class SovrinCli(PlenumCli):
                 self.activeWallet.addLinkInvitation(li)
 
                 if len(availableClaims) > 0:
-                    self.print("Available claims: {}".
+                    self.print("    Available claims: {}".
                                format(",".join([cl.claimDefKey.name
                                                 for cl in availableClaims])))
-                    self._printShowAndReqClaimUsage(availableClaims)
+                    self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
             else:
-                self.print("No matching invitation found")
+                self.print("No matching link found")
 
     def handleEndpointMsg(self, msg):
         if msg["type"] == "AVAIL_CLAIM_LIST":
@@ -267,7 +310,6 @@ class SovrinCli(PlenumCli):
 
     def sendToEndpoint(self, msg: Any, endpoint: str):
         pass
-
 
     def _buildWalletClass(self, nm):
         # DEPR
@@ -773,7 +815,7 @@ class SovrinCli(PlenumCli):
         if claimRequestsJson:
             for cr in claimRequestsJson:
                 claimRequests.append(
-                    ClaimRequest(cr["name"], cr["version"]))
+                    ClaimRequest(cr["name"], cr["version"], cr["attributes"]))
 
         self.print("1 link invitation found for {}.".format(linkInvitationName))
         alias = "cid-" + str(len(self.activeWallet.identifiers) + 1)
@@ -804,7 +846,7 @@ class SovrinCli(PlenumCli):
             with open(filePath) as data_file:
                 # TODO: What if it not JSON? Try Catch?
                 invitationData = json.load(data_file)
-            try:
+            # try:
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -818,9 +860,9 @@ class SovrinCli(PlenumCli):
                         self._loadInvitation(invitationData)
 
                     self._printShowAndAcceptLinkUsage(linkName)
-            except Exception as e:
-                self.print('Error occurred during processing link '
-                           'invitation: {}'.format(e))
+            # except Exception as e:
+            #     self.print('Error occurred during processing link '
+            #                'invitation: {}'.format(e))
 
             return True
 
@@ -1092,7 +1134,7 @@ class SovrinCli(PlenumCli):
 
                 self.print("{}".format(li.getLinkInfoStr()))
                 if li.isAccepted():
-                    self._printShowAndReqClaimUsage(li.availableClaims)
+                    self._printShowAndReqClaimUsage(li.availableClaims.values())
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:
@@ -1105,74 +1147,111 @@ class SovrinCli(PlenumCli):
     def _printNoClaimFoundMsg(self):
         self.print("No matching claim(s) found in any links in current keyring")
 
-    def _printMoreThanOneClaimFoundMsg(self, claimName, matchingLinksWithClaim):
+    def _printMoreThanOneClaimFoundMsg(self, claimName,
+                                       linkNames):
         self.print('More than one link matches "{}"'.format(claimName))
-        for li in matchingLinksWithClaim.items():
-            self.print("{}".format(li.name))
+        for li in linkNames:
+            self.print("{}".format(li))
         # TODO: Any suggestion in more than one link?
 
     def _getOneLinkAndClaim(self, claimName) -> \
             (Link, AvailableClaimData):
-        matchingLinksWithClaim = self.activeWallet.\
+        matchingLinksWithAvailableClaim = self.activeWallet.\
             getMatchingLinksWithClaim(claimName)
 
-        if len(matchingLinksWithClaim) == 0:
+        if len(matchingLinksWithAvailableClaim) == 0:
             self._printNoClaimFoundMsg()
             return None, None
 
-        if len(matchingLinksWithClaim) > 1:
-            self._printMoreThanOneClaimFoundMsg(claimName,
-                                                matchingLinksWithClaim)
+        if len(matchingLinksWithAvailableClaim) > 1:
+            linkNames = [ml.name for ml, cl in matchingLinksWithAvailableClaim]
+            self._printMoreThanOneClaimFoundMsg(claimName, linkNames)
             return None, None
 
-        return matchingLinksWithClaim[0]
+        return matchingLinksWithAvailableClaim[0]
+
+    def _getOneLinkAndReceivedClaim(self, claimName) -> \
+            (Link, ReceivedClaim):
+        matchingLinksWithRcvdClaim = self.activeWallet. \
+            getMatchingLinksWithReceivedClaim(claimName)
+
+        if len(matchingLinksWithRcvdClaim) == 0:
+            self._printNoClaimFoundMsg()
+            return None, None
+
+        if len(matchingLinksWithRcvdClaim) > 1:
+            linkNames = [ml.name for ml, cl in matchingLinksWithRcvdClaim]
+            self._printMoreThanOneClaimFoundMsg(claimName, linkNames)
+            return None, None
+
+        return matchingLinksWithRcvdClaim[0]
 
     def _reqClaim(self, matchedVars):
         if matchedVars.get('req_claim') == 'request claim':
             claimName = SovrinCli.removeDoubleQuotes(
                 matchedVars.get('claim_name'))
-            matchingLink, claim = self._getOneLinkAndClaim(claimName)
+            matchingLink, availableClaim = \
+                self._getOneLinkAndAvailableClaim(claimName)
             if matchingLink:
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
-                cd = self.activeWallet.getClaimDefByKey(claim.claimDefKey)
+                cd = self.activeWallet.getClaimDefByKey(
+                    availableClaim.claimDefKey)
                 if not cd:
                     if self._isConnectedToAnyEnv():
                         self.print("Getting Claim Definition from Sovrin...")
-                        # TODO: cd = Get claim def from sovrin and store it in wallet
+                        # TODO: Get claim def from sovrin and store it in wallet
                     else:
                         self._printNotConnectedEnvMessage()
                 # TODO: get keys from sovrin
                 # TODO: request claim
+                self.print("Requesting claim {} from {}...".format(
+                    claimName, matchingLink.name))
                 msgs = ['request claim {}'.format(claimName)]
                 self.printUsage(msgs)
             else:
                 self.print("Claim not found in any link")
             return True
 
+    def _showReceivedOrAvailableClaim(self, claimName):
+        self._showReceivedClaimIfExists(claimName) or \
+            self._showAvailableClaimIfExists(claimName)
+
+    def _showReceivedClaimIfExists(self, claimName):
+        matchingLink, rcvdClaim = \
+            self._getOneLinkAndReceivedClaim(claimName)
+        if matchingLink:
+            self.print("Found claim {} in link {}".
+                       format(claimName, matchingLink.name))
+            self.print(rcvdClaim.getClaimInfoStr())
+            msgs = ['request claim {}'.format(claimName)]
+            self.printUsage(msgs)
+            return rcvdClaim
+
+    def _showAvailableClaimIfExists(self, claimName):
+        matchingLink, availableClaim = \
+            self._getOneLinkAndAvailableClaim(claimName)
+        if matchingLink:
+            self.print("Found claim {} in link {}".
+                       format(claimName, matchingLink.name))
+            self.print(availableClaim.getClaimInfoStr())
+            cd = self.activeWallet.getClaimDefByKey(availableClaim.claimDefKey)
+            if cd:
+                self.print(cd.getClaimDefInfoStr())
+            else:
+                # TODO: get claim def and store it in wallet and show it
+                pass
+            msgs = ['request claim {}'.format(claimName)]
+            self.printUsage(msgs)
+            return availableClaim
+        else:
+            self.print("Claim not found in any link")
+
     def _showClaim(self, matchedVars):
         if matchedVars.get('show_claim') == 'show claim':
             claimName = SovrinCli.removeDoubleQuotes(
                 matchedVars.get('claim_name'))
-            matchingLink, claim = self._getOneLinkAndClaim(claimName)
-            if matchingLink:
-                self.print("Found claim {} in link {}".
-                           format(claimName, matchingLink.name))
-                self.print(claim.getClaimInfoStr())
-                cd = self.activeWallet.getClaimDefByKey(claim.claimDefKey)
-                if cd:
-                    self.print(cd.getClaimDefInfoStr())
-                else:
-                    if self._isConnectedToAnyEnv():
-                        self.print("Getting Claim Definition from Sovrin...")
-                        # TODO: cd = Get claim def from sovrin and store it in wallet
-                        # self.print(cd.getClaimDefInfoStr())
-                    else:
-                        self._printNotConnectedEnvMessage()
-                msgs = ['request claim {}'.format(claimName)]
-                self.printUsage(msgs)
-            else:
-                self.print("Claim not found in any link")
+            self._showReceivedOrAvailableClaim(claimName)
             return True
 
     def _showFile(self, matchedVars):

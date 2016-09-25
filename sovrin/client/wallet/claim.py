@@ -2,33 +2,43 @@
 AVAILABLE_BUT_NOT_ISSUED_STATUS = "available (not yet issued)"
 
 
-class ClaimDefKey:
-    def __init__(self, name, version, defProviderIdr):
+class ClaimRequest:
+    def __init__(self, name, version, attributes):
         self.name = name
         self.version = version
-        self.defProviderIdr = defProviderIdr
+        self.attributes = attributes
+
+    def getDictToBeStored(self):
+        return {
+            "name": self.name,
+            "version" : self.version,
+            "attributes": self.attributes
+        }
+
+
+class ClaimDefKey:
+    def __init__(self, name, version, claimDefSeqNo):
+        self.name = name
+        self.version = version
+        self.claimDefSeqNo = claimDefSeqNo
 
 
 class AvailableClaimData:
-    def __init__(self, claimDefKey: ClaimDefKey, issuerIdr, dateOfIssue):
+    def __init__(self, claimDefKey: ClaimDefKey):
         self.claimDefKey = claimDefKey
-        self.issuerIdr = issuerIdr
-        self.dateOfIssue = dateOfIssue or AVAILABLE_BUT_NOT_ISSUED_STATUS
 
     def getDictToBeStored(self):
         return {
             "name": self.claimDefKey.name,
-            "version" : self.claimDefKey.version,
-            "defProviderIdr": self.claimDefKey.defProviderIdr,
-            "issuerIdr": self.issuerIdr,
-            "dateOfIssue": self.dateOfIssue
+            "version": self.claimDefKey.version,
+            "claimDefSeqNo": self.claimDefKey.claimDefSeqNo,
         }
 
     def getClaimInfoStr(self) -> str:
         fixedInfo = \
             'Name: ' + self.claimDefKey.name + '\n' \
             'Version: ' + self.claimDefKey.version + '\n' \
-            'Status: ' + self.dateOfIssue
+            'Status: ' + AVAILABLE_BUT_NOT_ISSUED_STATUS
         return fixedInfo
 
 
@@ -44,21 +54,20 @@ class ClaimDef:
 
     def getClaimDefInfoStr(self) -> str:
         fixedClaimDefItems = \
-            '\n' \
-            'Name: ' + self.key.name + '\n' \
-            'Version: ' + self.key.version + '\n' \
             'Definition:' + '\n' \
             '   Attributes:' + '\n'
 
         return fixedClaimDefItems + self.getAttributeValue()
 
 
-class Claim:
-    def __init__(self, defKey: ClaimDefKey, issuerIdr, issuerKeys, value):
+class ReceivedClaim:
+
+    def __init__(self, defKey: ClaimDefKey, issuerKeys, values):
         self.defKey = defKey
-        self.issuerIdr = issuerIdr
         self.issuerKeys = issuerKeys
-        self.value = value
+        self.values = values
+
+        self.dateOfIssue = AVAILABLE_BUT_NOT_ISSUED_STATUS
 
     def updateDateOfIssue(self, doi):
         self.dateOfIssue = doi
@@ -67,14 +76,16 @@ class Claim:
         return {
             "name": self.defKey.name,
             "version": self.defKey.version,
-            "defProviderIdr": self.defKey.defProviderIdr,
+            "claimDefSeqNo": self.defKey.claimDefSeqNo,
             "issuerKeys": self.issuerKeys,
-            "value": self.value,
-            "dateOfIssuer": self.dateOfIssue
+            "values": self.values,
+            "dateOfIssue": self.dateOfIssue
         }
 
-    def getAttributeWithValue(self):
-        return "<TBD>"
+    def getAttributeValue(self):
+        return format("\n      ".join(
+            ['{}: {}'.format(k, v)
+             for k, v in self.values.items()]))
 
     def getClaimInfoStr(self) -> str:
         fixedClaimItems = \
@@ -85,4 +96,4 @@ class Claim:
             'Definition: ' + '\n' \
             '   Attributes: ' + '\n'
 
-        return fixedClaimItems + self.getAttributeWithValue()
+        return fixedClaimItems + self.getAttributeValue()

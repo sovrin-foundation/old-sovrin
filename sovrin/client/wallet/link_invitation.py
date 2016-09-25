@@ -3,7 +3,8 @@ from typing import Dict
 
 from sovrin.common.util import getNonce
 
-from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey
+from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey, \
+    ReceivedClaim, ClaimRequest
 
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
@@ -17,6 +18,7 @@ TARGET_END_POINT = "Target endpoint"
 SIGNATURE = "Signature"
 CLAIM_REQUESTS = "Claim Requests"
 AVAILABLE_CLAIMS = "Available Claims"
+RECEIVED_CLAIMS = "Received Claims"
 
 LINK_NONCE = "Nonce"
 LINK_STATUS = "Invitation status"
@@ -28,30 +30,6 @@ LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
 UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
 LINK_ITEM_PREFIX = '\n\t'
-
-
-class ClaimRequest:
-    def __init__(self, name, version):
-        self.name = name
-        self.version = version
-
-    def getDictToBeStored(self):
-        return {
-            "name": self.name,
-            "version": self.version
-        }
-
-
-class AvailableClaimData:
-    def __init__(self, name, version=None):
-        self.name = name
-        self.version = version
-
-    def getDictToBeStored(self):
-        return {
-            "name": self.name,
-            "version": self.version
-        }
 
 
 # TODO: Rename to Link
@@ -75,6 +53,7 @@ class Link:
         # self.signerVerKey = signerVerKey
 
         self.availableClaims = []
+        self.receivedClaims = {}
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
@@ -102,7 +81,8 @@ class Link:
         if claimRequestJson:
             for cr in claimRequestJson:
                 claimRequests.append(
-                    ClaimRequest(cr.get("name"), cr.get("version")))
+                    ClaimRequest(cr.get("name"), cr.get("version"),
+                                 cr.get("attributes")))
 
         availableClaimsJson = values.get(AVAILABLE_CLAIMS, None)
         availableClaims = []
@@ -111,8 +91,18 @@ class Link:
                 availableClaims.append(
                     AvailableClaimData(
                         ClaimDefKey(ac.get("name"), ac.get("version"),
-                        ac.get("defProviderIdr")), ac.get("issuerIdr"),
-                        ac.get("dateOfIssue")))
+                        ac.get("claimDefSeqNo"))))
+
+        receivedClaimsJson = values.get(RECEIVED_CLAIMS, None)
+        receivedClaims = []
+        if receivedClaimsJson:
+            for ac in receivedClaimsJson:
+                rc = ReceivedClaim(
+                        ClaimDefKey(ac.get("name"), ac.get("version"),
+                                    ac.get("claimDefSeqNo")),
+                        ac.get('issuerKeys'), ac.get('values'))
+                rc.updateDateOfIssue(ac.get('dateOfIssue'))
+                receivedClaims.append(rc)
 
         localVerKey = values.get(SIGNER_VER_KEY, None)
         remoteEndPoint = values.get(TARGET_END_POINT, None)
@@ -160,9 +150,15 @@ class Link:
 
         if self.availableClaims:
             availableClaims = []
-            for ac in self.availableClaims:
+            for ac in self.availableClaims.values():
                 availableClaims.append(ac.getDictToBeStored())
             optional[AVAILABLE_CLAIMS] = availableClaims
+
+        if self.receivedClaims:
+            receivedClaims = []
+            for rc in self.receivedClaims.values():
+                receivedClaims.append(rc.getDictToBeStored())
+            optional[RECEIVED_CLAIMS] = receivedClaims
 
         fixed.update(optional)
         return fixed
@@ -265,7 +261,7 @@ class Link:
         if len(self.availableClaims) > 0:
             optionalLinkItems = "Available claims: {}".\
                 format(",".join([ac.claimDefKey.name
-                                 for ac in self.availableClaims]))
+                                 for ac in self.availableClaims.values()]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo

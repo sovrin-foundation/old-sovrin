@@ -108,7 +108,7 @@ SYNC_LINK_REG_EX = '(\s*(?P<sync_link>sync) ' \
                    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
 ACCEPT_LINK_REG_EX = '(\s*(?P<accept_link_invite>accept \s+ invitation) ' \
-                   '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+                   '\s+from\s+(?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
 SHOW_CLAIM_REG_EX = '(\s*(?P<show_claim>show \s+ claim) ' \
                     '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
