@@ -14,12 +14,13 @@ def testMakeResultTxnTimeString():
 
 def testMakeResultTxnTimeDatetime():
     from datetime import datetime
+    import time
     dt = datetime.now()
     oRecordData = {
         F.seqNo.name: 1,
         TXN_TIME: dt
     }
-    assert IdentityGraph.makeResult(0, oRecordData)[TXN_TIME] == dt.isoformat()
+    assert IdentityGraph.makeResult(0, oRecordData)[TXN_TIME] == int(time.mktime(dt.timetuple()))
 
 
 def testMakeResultTxnTimeNone():

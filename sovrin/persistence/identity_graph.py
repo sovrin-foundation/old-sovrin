@@ -14,6 +14,8 @@ from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
     STEWARD, ROLE, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF, isValidRole
+import datetime
+import time
 
 logger = getlogger()
 
@@ -550,7 +552,7 @@ class IdentityGraph(OrientDbGraphStore):
 
         if TXN_TIME in oRecordData:
             txnTime = oRecordData.get(TXN_TIME)
-            result[TXN_TIME] = txnTime.isoformat() if 'isoformat' in dir(txnTime) else txnTime
+            result[TXN_TIME] = int(time.mktime(txnTime.timetuple())) if isinstance(txnTime, datetime.datetime) else txnTime
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
