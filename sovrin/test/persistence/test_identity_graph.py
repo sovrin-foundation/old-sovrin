@@ -1,6 +1,6 @@
 from ledger.util import F
 from plenum.common.txn import TXN_TIME
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 
 from sovrin.persistence.identity_graph import IdentityGraph
@@ -21,6 +21,24 @@ def testMakeResultTxnTimeDatetime():
         TXN_TIME: dt
     }
     assert IdentityGraph.makeResult(0, oRecordData)[TXN_TIME] == int(time.mktime(dt.timetuple()))
+
+
+def testMakeResultTxnTimeDatetimeInvalidPast():
+    dt = datetime(1999, 1, 1)
+    oRecordData = {
+        F.seqNo.name: 1,
+        TXN_TIME: dt
+    }
+    assert TXN_TIME not in IdentityGraph.makeResult(0, oRecordData)
+
+
+def testMakeResultTxnTimeDatetimeInvalidFuture():
+    dt = datetime.now() + timedelta(1)
+    oRecordData = {
+        F.seqNo.name: 1,
+        TXN_TIME: dt
+    }
+    assert TXN_TIME not in IdentityGraph.makeResult(0, oRecordData)
 
 
 def testMakeResultTxnTimeNone():

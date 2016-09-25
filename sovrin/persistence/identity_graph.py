@@ -19,6 +19,8 @@ import time
 
 logger = getlogger()
 
+MIN_TXN_TIME = time.mktime(datetime.datetime(2000, 1, 1).timetuple())
+
 
 class Vertices:
     Nym = NYM
@@ -554,9 +556,12 @@ class IdentityGraph(OrientDbGraphStore):
             txnTime = oRecordData.get(TXN_TIME)
             if isinstance(txnTime, datetime.datetime):
                 try:
-                    result[TXN_TIME] = int(time.mktime(txnTime.timetuple()))
+                    txnTimeStamp = int(time.mktime(txnTime.timetuple()))
                 except (OverflowError, ValueError) as ex:
                     logger.warn("cannot convert datetime '{}' to timestamp".format(txnTime))
+                else:
+                    if MIN_TXN_TIME < txnTimeStamp < time.time():
+                        result[TXN_TIME] = txnTimeStamp
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
