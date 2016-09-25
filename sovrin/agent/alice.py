@@ -8,7 +8,7 @@ from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
 from sovrin.agent.helper import processInvAccept
-from sovrin.agent.msg_types import ACCEPT_INVITE
+from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
@@ -46,8 +46,8 @@ logger = getlogger()
 # }
 
 
-class FaberAgent(Agent):
-    def __init__(self, name: str="agent1", client: Client=None, port: int=None,
+class AliceAgent(Agent):
+    def __init__(self, name: str="agent2", client: Client=None, port: int=None,
                  handlers: Dict=None):
         super().__init__(name, client, port)
         self.handlers = handlers
@@ -69,8 +69,9 @@ class FaberAgent(Agent):
             logger.debug("no handler found for type")
 
 
-def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
-    name = name or 'Faber College'
+def runAlice(name=None, wallet=None, basedirpath=None, startRunning=True):
+    # TODO: Copied code from `runFaber`, need to refactor
+    name = name or 'Alice Jones'
     wallet = wallet or Wallet(name)
     config = getConfig()
     basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -90,7 +91,7 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
     #     acd: f2
     # }
 
-    def acceptInvite(msg):
+    def listClaims(msg):
         body, frm = msg
         """
         body = {
@@ -107,18 +108,18 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
         # TODO: Send claims
 
     handlers = {
-        ACCEPT_INVITE: acceptInvite
+        AVAIL_CLAIM_LIST: listClaims
     }
 
-    faber = FaberAgent(name, client=client, port=port, handlers=handlers)
+    alice = AliceAgent(name, client=client, port=port, handlers=handlers)
     if startRunning:
         with Looper(debug=True) as looper:
-            looper.add(faber)
+            looper.add(alice)
             logger.debug("Running Faber now...")
             looper.run()
     else:
-        return faber
+        return alice
 
 
 if __name__ == "__main__":
-    runFaber()
+    runAlice()

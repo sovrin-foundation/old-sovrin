@@ -1,6 +1,7 @@
 import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
+from sovrin.agent.alice import runAlice
 from sovrin.agent.faber import runFaber
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR
@@ -21,9 +22,25 @@ def faberWallet():
 
 
 @pytest.fixture(scope="module")
-def faberAdded(genned, looper, steward, stewardWallet):
+def aliceWallet():
+    name = "Alice"
+    wallet = Wallet(name)
+    return wallet
+
+
+@pytest.fixture(scope="module")
+def faberAdded(genned, looper, steward, stewardWallet, faberWallet):
     createNym(looper, faberWallet.defaultId, steward, stewardWallet,
               role=SPONSOR)
+
+
+@pytest.fixture(scope="module")
+def aliceIsRunning(emptyLooper, tdirWithPoolTxns, aliceWallet):
+    aliceWallet.addSigner(signer=SimpleSigner())
+    alice = runAlice(aliceWallet.name, aliceWallet,
+                     basedirpath=tdirWithPoolTxns, startRunning=False)
+    emptyLooper.add(alice)
+    return alice, aliceWallet
 
 
 @pytest.fixture(scope="module")
