@@ -14,8 +14,12 @@ from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
     STEWARD, ROLE, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF, isValidRole
+import datetime
+import time
 
 logger = getlogger()
+
+MIN_TXN_TIME = time.mktime(datetime.datetime(2000, 1, 1).timetuple())
 
 
 class Vertices:
@@ -544,10 +548,25 @@ class IdentityGraph(OrientDbGraphStore):
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
             TXN_ID: oRecordData.get(TXN_ID),
-            TXN_TIME: oRecordData.get(TXN_TIME),
             f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
             f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
         }
+
+        if TXN_TIME in oRecordData:
+            txnTime = oRecordData.get(TXN_TIME)
+            if isinstance(txnTime, datetime.datetime):
+                try:
+                    txnTimeStamp = int(time.mktime(txnTime.timetuple()))
+                except (OverflowError, ValueError) as ex:
+                    logger.warn("TXN_TIME cannot convert datetime '{}' to timestamp, reject it".format(txnTime))
+                else:
+                    # TODO The right thing to do is check the time of the PRE-PREPARE.
+                    # https://github.com/evernym/sovrin-priv/pull/20#discussion_r80387554
+                    if MIN_TXN_TIME < txnTimeStamp < time.time():
+                        result[TXN_TIME] = txnTimeStamp
+                    else:
+                        logger.warn("TXN_TIME {} is not in the range ({}, {}), "
+                                    "reject it".format(txnTimeStamp, MIN_TXN_TIME, time.time()))
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
