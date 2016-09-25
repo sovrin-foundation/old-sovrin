@@ -1,4 +1,7 @@
 import datetime
+import random
+from uuid import uuid4, uuid1
+
 import importlib
 import importlib.util
 import json
@@ -94,3 +97,8 @@ def getCredDefTxnData(credDef):
     }
     credDef[KEYS] = json.dumps(keys)
     return credDef
+
+
+def getNonce(length=32):
+    hexChars = [hex(i)[2:] for i in range(0, 16)]
+    return "".join([random.choice(hexChars) for i in range(length)])

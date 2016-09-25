@@ -1,22 +1,21 @@
 import traceback
 
-import pytest
-
 import plenum
+import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-from sovrin.client.wallet.link_invitation import LinkInvitation
+from sovrin.common.txn import SPONSOR
+from sovrin.test.helper import createNym
 
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
-from plenum.test.cli.conftest import nodeNames
+from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.util import getConfig
-from sovrin.test.cli.helper import newCLI, ensureNodesCreated
-
+from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 
 config = getConfig()
 
@@ -71,12 +70,6 @@ def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
             with Looper(debug=False) as looper:
                 yield new()
     return _
-
-
-def getLinkInvitation(name, cli) -> LinkInvitation:
-    existingLinkInvites = cli.activeWallet.getMatchingLinkInvitations(name)
-    li = existingLinkInvites[0]
-    return li
 
 
 @pytest.fixture(scope="module")
@@ -585,3 +578,13 @@ def do(ctx):
     return _
 
 
+@pytest.fixture(scope="module")
+def faberAdded(poolNodesCreated,
+             looper,
+             aliceCLI,
+             faberInviteLoaded,
+             aliceConnected,
+             stewardClientAndWallet):
+    client, wallet = stewardClientAndWallet
+    li = getLinkInvitation("Faber", aliceCLI.activeWallet)
+    createNym(looper, li.remoteIdentifier, client, wallet, role=SPONSOR)

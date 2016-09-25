@@ -1,17 +1,19 @@
 import json
+from typing import Dict
 
+import os
 from plenum.common.looper import Looper
 from plenum.common.txn import TYPE
 from plenum.common.util import getlogger
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
+from sovrin.agent.helper import processInvAccept
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
-
+from sovrin.common.util import getConfig
 
 logger = getlogger()
-
 
 
 # def msgHandler(msg):
@@ -44,16 +46,19 @@ logger = getlogger()
 # }
 
 
-name = "Faber College"
-wallet = Wallet(name)
-
-
 class FaberAgent(Agent):
-    def __init__(self, name: str="agent1", client: Client=None, port: int=None):
+    def __init__(self, name: str="agent1", client: Client=None, port: int=None,
+                 handlers: Dict=None):
         super().__init__(name, client, port)
-        self.handlers = {
-            ACCEPT_INVITE: self.acceptInvite
-        }
+        self.handlers = handlers
+
+    @property
+    def activeWallet(self):
+        return self._activeWallet
+
+    @activeWallet.setter
+    def activeWallet(self, wallet):
+        self._activeWallet = wallet
 
     def handleEndpointMessage(self, msg):
         typ = msg.get(TYPE)
@@ -63,7 +68,28 @@ class FaberAgent(Agent):
         else:
             logger.debug("no handler found for type")
 
-    def acceptInvite(self, msg):
+
+def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
+    name = name or 'Faber College'
+    wallet = wallet or Wallet(name)
+    config = getConfig()
+    basedirpath = basedirpath or os.path.expanduser(config.baseDir)
+    _, port = genHa()
+    _, clientPort = genHa()
+    client = Client(name=name, ha=("0.0.0.0", clientPort), basedirpath=basedirpath)
+
+    # def f1():
+    #     doSomethingWithWallet(wallet, action)
+    #
+    # def f2():
+    #     doSomethingElseWithWallet(wallet, action2)
+    #
+    # handlers = {
+    #     acc: f1,
+    #     acd: f2
+    # }
+
+    def acceptInvite(msg):
         body, frm = msg
         """
         body = {
@@ -73,19 +99,25 @@ class FaberAgent(Agent):
             "signature" : <sig>
         }
         """
-        # TODO: Need to nonce verification here
+        # TODO: Need to do nonce verification here
         data = json.loads(body)
+        print(data)
         # wallet.knownIds[data['identifier']] =
         # TODO: Send claims
 
+    handlers = {
+        ACCEPT_INVITE: acceptInvite
+    }
+
+    faber = FaberAgent(name, client=client, port=port, handlers=handlers)
+    if startRunning:
+        with Looper(debug=True) as looper:
+            looper.add(faber)
+            logger.debug("Running Faber now...")
+            looper.run()
+    else:
+        return faber
 
 
-def runFaber():
-    _, port = genHa()
-    client = Client(name=name)
-    faber = FaberAgent(name, client=client, port=port)
-
-    with Looper(debug=True) as looper:
-        looper.add(faber)
-        logger.debug("Running Faber now...")
-        looper.run()
+if __name__ == "__main__":
+    runFaber()

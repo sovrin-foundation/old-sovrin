@@ -3,6 +3,7 @@ import json
 import os
 from plenum.test.cli.test_cli_client_port import initDirWithGenesisTxns
 from plenum.test.eventually import eventually
+from sovrin.client.wallet.link_invitation import Link
 
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.common.txn import USER, ROLE
@@ -94,10 +95,15 @@ def ensureNodesCreated(cli, nodeNames):
 
 def getFileLines(path):
     filePath = SovrinCli._getFilePath(path)
-    lines = []
     with open(filePath, 'r') as fin:
         lines = fin.readlines()
     alteredLines = []
     for line in lines:
         alteredLines.append(line.replace('{', '{{').replace('}', '}}'))
     return alteredLines
+
+
+def getLinkInvitation(name, wallet) -> Link:
+    existingLinkInvites = wallet.getMatchingLinkInvitations(name)
+    li = existingLinkInvites[0]
+    return li

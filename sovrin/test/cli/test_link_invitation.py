@@ -1,22 +1,11 @@
-import json
-
 import pytest
-
 from plenum.test.eventually import eventually
 from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
-from sovrin.client.wallet.attribute import Attribute
-from sovrin.client.wallet.attribute import LedgerStore
-from sovrin.client.wallet.link_invitation import LinkInvitation
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import USER, ATTRIB, ENDPOINT, SPONSOR
-from sovrin.test.cli.helper import ensureConnectedToTestEnv
-from sovrin.test.cli.conftest import getLinkInvitation
-from sovrin.test.helper import genTestClient, makeNymRequest, makeAttribRequest, \
-    makePendingTxnsRequest, createNym, TestClient
-
-# noinspection PyUnresolvedReferences
-from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
-from sovrin.test.test_client import addAttributeAndCheck
+from sovrin.common.txn import USER, ENDPOINT
+from sovrin.test.cli.helper import ensureConnectedToTestEnv, getLinkInvitation
+from sovrin.test.helper import makeNymRequest, makePendingTxnsRequest, \
+    TestClient, addRawAttribute
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +25,6 @@ def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
 
 @pytest.fixture(scope="module")
 def aliceConnected(aliceCLI, be, do, poolNodesCreated):
-
     # Done to initialise a wallet.
     # TODO: a wallet should not be required for connecting, right?
     be(aliceCLI)
@@ -50,24 +38,14 @@ def addNym(client, wallet, nym, role=USER):
     return makeNymRequest(client, wallet, nym, role)
 
 
-def addFabersEndpoint(looper, client, wallet, nym, attrName, attrValue):
-    val = json.dumps({attrName: attrValue})
-    attrib = Attribute(name=attrName,
-                       origin=wallet.defaultId,
-                       value=val,
-                       dest=nym,
-                       ledgerStore=LedgerStore.RAW)
-    addAttributeAndCheck(looper, client, wallet, attrib)
-
-
 def checkIfEndpointReceived(aCli, linkName, expStr):
     assert expStr in aCli.lastCmdOutput
     assert "Usage" in aCli.lastCmdOutput
     assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
     assert 'accept invitation "{}"'.format(linkName) in aCli.lastCmdOutput
     if "Endpoint received" in expStr:
-        li = getLinkInvitation("Faber", aCli)
-        assert li.targetEndPoint is not None
+        li = getLinkInvitation("Faber", aCli.activeWallet)
+        assert li.remoteEndPoint is not None
 
 
 def testShowFileNotExists(aliceCLI, be, do, fileNotExists, faberMap):
@@ -126,23 +104,11 @@ def testAliceConnect(aliceConnected):
     pass
 
 
-@pytest.fixture(scope="module")
-def faberAdded(poolNodesCreated,
-             looper,
-             aliceCLI,
-             faberInviteLoaded,
-             aliceConnected,
-             stewardClientAndWallet):
-    client, wallet = stewardClientAndWallet
-    li = getLinkInvitation("Faber", aliceCLI)
-    createNym(looper, li.targetIdentifier, client, wallet, role=SPONSOR)
-
-
 def testSyncLinkWhenEndpointNotAvailable(faberAdded,
                                          looper,
                                          aliceCLI,
                                          stewardClientAndWallet):
-    li = getLinkInvitation("Faber", aliceCLI)
+    li = getLinkInvitation("Faber", aliceCLI.activeWallet)
     aliceCLI.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,
                           "Endpoint not available",
@@ -155,11 +121,11 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
                                         stewardClientAndWallet,
                                         faberAdded):
     client, wallet = stewardClientAndWallet
-    li = getLinkInvitation("Faber", aliceCLI)
-    assert li.targetEndPoint is None
+    li = getLinkInvitation("Faber", aliceCLI.activeWallet)
+    assert li.remoteEndPoint is None
     endpointValue = "0.0.0.0:0000"
-    addFabersEndpoint(looper, client, wallet, li.targetIdentifier,
-                      ENDPOINT, endpointValue)
+    addRawAttribute(looper, client, wallet, ENDPOINT, endpointValue,
+                    dest=li.remoteIdentifier)
     aliceCLI.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,
                           "Endpoint received: {}".format(endpointValue),

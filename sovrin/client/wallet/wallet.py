@@ -16,8 +16,8 @@ from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim import ClaimDefKey, ClaimDef
 from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
 from sovrin.client.wallet.credential import Credential
-from sovrin.client.wallet.link import Link
-from sovrin.client.wallet.link_invitation import LinkInvitation
+# from sovrin.client.wallet.link import Link
+from sovrin.client.wallet.link_invitation import Link
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
     GET_NYM, SPONSOR
 from sovrin.common.identity import Identity
@@ -62,7 +62,7 @@ class Wallet(PWallet, Sponsoring):
         self._credentials = {}      # type: Dict[str, Credential]
         self._links = {}            # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
+        self._linkInvitations = {}  # type: Dict[str, Link]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
         # transactions not yet submitted
@@ -100,8 +100,8 @@ class Wallet(PWallet, Sponsoring):
     # TODO: Below two methods have duplicate code, need to refactor it
     def getMatchingLinksWithAvailableClaim(self, claimName):
         matchingLinkAndAvailableClaim = []
-        for k, v in self._linkInvitations.items():
-            li = LinkInvitation.getFromDict(k, v)
+        for k, li in self._linkInvitations.items():
+            # li = Link.getFromDict(k, v)
             for ac in li.availableClaims.values():
                 if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
                     matchingLinkAndAvailableClaim.append((li, ac))
@@ -109,8 +109,8 @@ class Wallet(PWallet, Sponsoring):
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
-        for k, v in self._linkInvitations.items():
-            li = LinkInvitation.getFromDict(k, v)
+        for k, li in self._linkInvitations.items():
+            # li = Link.getFromDict(k, v)
             for rc in li.receivedClaims.values():
                 if Wallet._isMatchingName(rc.defKey.name, claimName):
                     matchingLinkAndReceivedClaim.append((li, rc))
@@ -118,8 +118,7 @@ class Wallet(PWallet, Sponsoring):
 
     def getMatchingLinksWithClaimReq(self, claimReqName):
         matchingLinkAndClaimReq = []
-        for k, v in self._linkInvitations.items():
-            li = LinkInvitation.getFromDict(k, v)
+        for k, li in self._linkInvitations.items():
             for cr in li.claimRequests:
                 if Wallet._isMatchingName(cr.name, claimReqName):
                     matchingLinkAndClaimReq.append((li, cr))
@@ -163,9 +162,6 @@ class Wallet(PWallet, Sponsoring):
         if req:
             self._pending.appendleft((req, credDef.key()))
         return len(self._pending)
-
-    # def addCredDef(self, credDef: CredDef):
-    #     self._credDefs[credDef.key()] = credDef
 
     def getCredDef(self, key: CredDefKey):
         return self._credDefs[key.key()]
@@ -308,13 +304,14 @@ class Wallet(PWallet, Sponsoring):
         self._pending.appendleft((req, key))
 
     def addLinkInvitation(self, linkInvitation):
-        self._linkInvitations[linkInvitation.name] = linkInvitation.\
-            getDictToBeStored()
+        # self._linkInvitations[linkInvitation.name] = linkInvitation.\
+        #     getDictToBeStored()
+        self._linkInvitations[linkInvitation.name] = linkInvitation
 
     def getLinkInvitationByTarget(self, target: str):
-        for k, v in self._linkInvitations.items():
-            li = LinkInvitation.getFromDict(k, v)
-            if li.targetIdentifier == target:
+        for k, li in self._linkInvitations.items():
+            # li = Link.getFromDict(k, v)
+            if li.remoteIdentifier == target:
                 return li
 
     def getMatchingLinkInvitations(self, name: str):
@@ -322,20 +319,20 @@ class Wallet(PWallet, Sponsoring):
         for k, v in self._linkInvitations.items():
             if name == k or name.lower() in k.lower():
                 # liValues = v
-                li = LinkInvitation.getFromDict(k, v)
-                allMatched.append(li)
+                # li = LinkInvitation.getFromDict(k, v)
+                allMatched.append(v)
         return allMatched
 
     # TODO: Is `requestAttribute` a better name?
-    def makeGetAttributeRequest(self, attrName: str, origin=None, dest=None):
-        # # TODO: How do i move this to Attribute
-        op = {
-            TARGET_NYM: dest,
-            TXN_TYPE: GET_ATTR,
-            RAW: attrName
-        }
-        req = self.signOp(op)
-        return self.prepReq(req)
+    # def makeGetAttributeRequest(self, attrName: str, origin=None, dest=None):
+    #     # # TODO: How do i move this to Attribute
+    #     op = {
+    #         TARGET_NYM: dest,
+    #         TXN_TYPE: GET_ATTR,
+    #         RAW: attrName
+    #     }
+    #     req = self.signOp(op)
+    #     return self.prepReq(req)
 
     def requestAttribute(self, attrib: Attribute, sender):
         """
@@ -348,20 +345,12 @@ class Wallet(PWallet, Sponsoring):
             return self.prepReq(req, key=attrib.key())
 
     def requestIdentity(self, identity: Identity, sender):
-        """
-        :param attrib: attribute to add
-        :return: number of pending txns
-        """
         self.knownIds[identity.identifier] = identity
         req = identity.getRequest(sender)
         if req:
             return self.prepReq(req)
 
     def requestCredDef(self, credefKey: CredDefKey, sender):
-        """
-        :param attrib: attribute to add
-        :return: number of pending txns
-        """
         credDef = CredDef(*credefKey.key())
         self._credDefs[credefKey.key()] = credDef
         req = credDef.getRequest(sender)
