@@ -552,7 +552,11 @@ class IdentityGraph(OrientDbGraphStore):
 
         if TXN_TIME in oRecordData:
             txnTime = oRecordData.get(TXN_TIME)
-            result[TXN_TIME] = int(time.mktime(txnTime.timetuple())) if isinstance(txnTime, datetime.datetime) else txnTime
+            if isinstance(txnTime, datetime.datetime):
+                try:
+                    result[TXN_TIME] = int(time.mktime(txnTime.timetuple()))
+                except (OverflowError, ValueError) as ex:
+                    logger.warn("cannot convert datetime '{}' to timestamp".format(txnTime))
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
