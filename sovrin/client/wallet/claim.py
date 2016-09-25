@@ -17,6 +17,7 @@ class ClaimRequest:
 
 
 class ClaimDefKey:
+    # TODO: Create a key property for ClaimDefKey
     def __init__(self, name, version, claimDefSeqNo):
         self.name = name
         self.version = version

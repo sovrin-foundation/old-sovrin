@@ -52,7 +52,7 @@ class Link:
         self.verkey = self.localIdentifier.split(":")[-1]
         # self.signerVerKey = signerVerKey
 
-        self.availableClaims = []
+        self.availableClaims = {}
         self.receivedClaims = {}
         self.targetVerkey = None
         self.linkStatus = None
@@ -116,9 +116,24 @@ class Link:
                   remoteIdentifier, remoteEndPoint, linkNonce,
                   claimRequests)
         li.updateState(remoteVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
-        li.availableClaims = availableClaims
+        li.updateAvailableClaims(availableClaims)
 
         return li
+
+    @staticmethod
+    # TODO: Create a key property for ClaimDefKey
+    def _getClaimDefKeyTuple(claimDefKey: ClaimDefKey):
+        return claimDefKey.name, claimDefKey.version, claimDefKey.claimDefSeqNo
+
+    def updateReceivedClaims(self, rcvdClaims):
+        for rc in rcvdClaims:
+            self.receivedClaims[
+                self._getClaimDefKeyTuple(rc.defKey)] = rc
+
+    def updateAvailableClaims(self, availableClaims):
+        for ac in availableClaims:
+            self.availableClaims[
+                self._getClaimDefKeyTuple(ac.claimDefKey)] = ac
 
     def getDictToBeStored(self) -> dict:
         fixed = {

@@ -62,7 +62,7 @@ class Wallet(PWallet, Sponsoring):
         self._credentials = {}      # type: Dict[str, Credential]
         self._links = {}            # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        self._linkInvitations = {}  # type: Dict[str, dict]  # TODO should DEPRECATE in favor of link
+        self._linkInvitations = {}  # type: Dict[str, Link]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
         # transactions not yet submitted
@@ -100,17 +100,17 @@ class Wallet(PWallet, Sponsoring):
     # TODO: Below two methods have duplicate code, need to refactor it
     def getMatchingLinksWithAvailableClaim(self, claimName):
         matchingLinkAndAvailableClaim = []
-        for k, v in self._linkInvitations.items():
-            li = Link.getFromDict(k, v)
-            for ac in li.availableClaims:
+        for k, li in self._linkInvitations.items():
+            # li = Link.getFromDict(k, v)
+            for ac in li.availableClaims.values():
                 if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
                     matchingLinkAndAvailableClaim.append((li, ac))
         return matchingLinkAndAvailableClaim
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
-        for k, v in self._linkInvitations.items():
-            li = Link.getFromDict(k, v)
+        for k, li in self._linkInvitations.items():
+            # li = Link.getFromDict(k, v)
             for rc in li.receivedClaims.values():
                 if Wallet._isMatchingName(rc.defKey.name, claimName):
                     matchingLinkAndReceivedClaim.append((li, rc))

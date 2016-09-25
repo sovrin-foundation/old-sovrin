@@ -292,7 +292,7 @@ class SovrinCli(PlenumCli):
 
                 li.linkStatus = LINK_STATUS_ACCEPTED
                 li.targetVerkey = TARGET_VER_KEY_SAME_AS_ID
-                li.availableClaims = availableClaims
+                li.updateAvailableClaims(availableClaims)
 
                 self.activeWallet.addLinkInvitation(li)
 
@@ -1227,6 +1227,22 @@ class SovrinCli(PlenumCli):
             msgs = ['request claim {}'.format(claimName)]
             self.printUsage(msgs)
             return rcvdClaim
+
+    def _getOneLinkAndAvailableClaim(self, claimName) -> \
+            (Link, AvailableClaimData):
+        matchingLinksWithAvailableClaim = self.activeWallet. \
+            getMatchingLinksWithAvailableClaim(claimName)
+
+        if len(matchingLinksWithAvailableClaim) == 0:
+            self._printNoClaimFoundMsg()
+            return None, None
+
+        if len(matchingLinksWithAvailableClaim) > 1:
+            linkNames = [ml.name for ml, cl in matchingLinksWithAvailableClaim]
+            self._printMoreThanOneClaimFoundMsg(claimName, linkNames)
+            return None, None
+
+        return matchingLinksWithAvailableClaim[0]
 
     def _showAvailableClaimIfExists(self, claimName):
         matchingLink, availableClaim = \

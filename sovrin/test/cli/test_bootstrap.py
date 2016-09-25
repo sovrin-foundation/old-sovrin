@@ -74,7 +74,7 @@ def acmeCli(be, do, acmeCLI):
     seed = 'Acme0000000000000000000000000000'
     idr = 'YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4='
 
-    do('new key with seed ' + seed,expect=['Key created in keyring Acme',
+    do('new key with seed ' + seed, expect=['Key created in keyring Acme',
                                            'Identifier for key is ' + idr,
                                            'Current identifier set to ' +
                                            idr])
