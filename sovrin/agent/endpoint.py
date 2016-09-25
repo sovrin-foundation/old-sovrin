@@ -1,5 +1,6 @@
 from typing import Callable, Any, List, Dict
 
+from plenum.common.raet import getHaFromLocalEstate
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
 from plenum.common.util import getlogger, randomString
@@ -11,15 +12,24 @@ logger = getlogger()
 
 class Endpoint(AgentNet, SimpleStack):
     def __init__(self, port: int, msgHandler: Callable,
-                 name: str=None):
+                 name: str=None, basedirpath: str=None):
+        # if basedirpath:
+        #     ha = getHaFromLocalEstate(name, basedirpath)
+        #     if ha[1] != port:
+        #         port = ha[1]
+
         stackParams = {
             "name": name or randomString(8),
-            "ha": HA("127.0.0.1", port),
+            "ha": HA("0.0.0.0", port),
             "main": True,
             "auto": AutoMode.always,
-            "mutable": "mutable",
+            "mutable": "mutable"
         }
+        if basedirpath:
+            stackParams["basedirpath"] = basedirpath
+
         SimpleStack.__init__(self, stackParams, self.baseMsgHandler)
+
         self.msgHandler = msgHandler
 
     def transmitToClient(self, msg: Any, remoteName: str):
@@ -48,3 +58,8 @@ class Endpoint(AgentNet, SimpleStack):
         logger.debug("Got {}".format(msg))
         self.msgHandler(msg)
 
+    def start(self):
+        try:
+            super().start()
+        except Exception as ex:
+            pass

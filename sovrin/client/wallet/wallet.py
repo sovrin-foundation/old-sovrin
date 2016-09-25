@@ -60,7 +60,7 @@ class Wallet(PWallet, Sponsoring):
         self._credDefs = {}         # type: Dict[(str, str, str), CredDef]
         self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
-        self._links = {}            # type: Dict[str, Link]
+        # self._links = {}            # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._linkInvitations = {}  # type: Dict[str, Link]  # TODO should DEPRECATE in favor of link
         self.knownIds = {}          # type: Dict[str, Identifier]
