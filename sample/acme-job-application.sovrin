@@ -7,7 +7,7 @@
   },
   "claim-requests": [{
     "name": "Job Application",
-    "version": 0.2,
+    "version": "0.2",
     "attributes": {
         "first_name": "string",
         "last_name": "string",

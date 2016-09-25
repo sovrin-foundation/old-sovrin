@@ -605,3 +605,26 @@ def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap, showAcceptedLinkOut,
                                         not_expect="Link (not yet accepted)",
                                         mapper=acmeMap)
 
+
+def testShowClaimReqNotExists(be, do, acmeMap, claimReqNotExists,
+                              acmeRespondedToAcceptInvite):
+    aliceCli = acmeRespondedToAcceptInvite
+    be(aliceCli)
+    do("show claim request claim-req-to-show-not-exists",
+                                        expect=claimReqNotExists,
+                                        mapper=acmeMap)
+
+
+def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
+                                   jobApplicationClaimReqMap,
+                                   acmeRespondedToAcceptInvite):
+    aliceCli = acmeRespondedToAcceptInvite
+    be(aliceCli)
+
+    mapping = {}
+    mapping.update(acmeMap)
+    mapping.update(jobApplicationClaimReqMap)
+
+    do("show claim request {claim-req-to-show}",
+                                        expect=showJobAppClaimReqOut,
+                                        mapper=mapping)

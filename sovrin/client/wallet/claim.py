@@ -11,9 +11,24 @@ class ClaimRequest:
     def getDictToBeStored(self):
         return {
             "name": self.name,
-            "version" : self.version,
+            "version": self.version,
             "attributes": self.attributes
         }
+
+    def getAttributeValue(self):
+        return format("\n      ".join(
+            ['{}'.format(attr)
+             for attr in self.attributes]))
+
+    def getClaimReqInfoStr(self) -> str:
+
+        fixedInfo = \
+            'Name: ' + self.name + '\n' \
+            'Version: ' + self.version + '\n' \
+            'Status: Requested' + '\n' \
+            'Attributes:' + '\n'
+
+        return fixedInfo + self.getAttributeValue()
 
 
 class ClaimDefKey:

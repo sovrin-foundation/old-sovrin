@@ -116,6 +116,7 @@ class SovrinCli(PlenumCli):
             'show_link',
             'sync_link',
             'show_claim',
+            'show_claim_req',
             'req_claim',
             'accept_link_invite'
         ]
@@ -154,6 +155,7 @@ class SovrinCli(PlenumCli):
         completers["env_name"] = WordCompleter(list(self.envs.keys()))
         completers["sync_link"] = WordCompleter(["sync"])
         completers["show_claim"] = WordCompleter(["show", "claim"])
+        completers["show_claim_req"] = WordCompleter(["show", "claim", "request"])
         completers["req_claim"] = WordCompleter(["request", "claim"])
         completers["accept_link_invite"] = WordCompleter(["accept",
                                                           "invitation"])
@@ -190,6 +192,7 @@ class SovrinCli(PlenumCli):
                         self._syncLink,
                         self._showClaim,
                         self._reqClaim,
+                        self._showClaimReq,
                         self._acceptInvitationLink
                         ])
         return actions
@@ -1147,15 +1150,36 @@ class SovrinCli(PlenumCli):
 
             return True
 
+    def _printNoClaimReqFoundMsg(self):
+        self.print("No matching claim request(s) found in current keyring")
+
     def _printNoClaimFoundMsg(self):
         self.print("No matching claim(s) found in any links in current keyring")
 
-    def _printMoreThanOneClaimFoundMsg(self, claimName,
-                                       linkNames):
-        self.print('More than one link matches "{}"'.format(claimName))
+    def _printMoreThanOneLinkFoundForRequest(self, requestedName, linkNames):
+        self.print('More than one link matches "{}"'.format(requestedName))
         for li in linkNames:
             self.print("{}".format(li))
         # TODO: Any suggestion in more than one link?
+
+    # TODO: Refactore following three methods
+    # as most of the pattern looks similar
+
+    def _getOneLinkAndClaimReq(self, claimReqName) -> \
+            (LinkInvitation, ClaimRequest):
+        matchingLinksWithClaimReq = self.activeWallet. \
+            getMatchingLinksWithClaimReq(claimReqName)
+
+        if len(matchingLinksWithClaimReq) == 0:
+            self._printNoClaimReqFoundMsg()
+            return None, None
+
+        if len(matchingLinksWithClaimReq) > 1:
+            linkNames = [ml.name for ml, cr in matchingLinksWithClaimReq]
+            self._printMoreThanOneLinkFoundForRequest(claimReqName, linkNames)
+            return None, None
+
+        return matchingLinksWithClaimReq[0]
 
     def _getOneLinkAndAvailableClaim(self, claimName) -> \
             (LinkInvitation, AvailableClaimData):
@@ -1168,7 +1192,7 @@ class SovrinCli(PlenumCli):
 
         if len(matchingLinksWithAvailableClaim) > 1:
             linkNames = [ml.name for ml, cl in matchingLinksWithAvailableClaim]
-            self._printMoreThanOneClaimFoundMsg(claimName, linkNames)
+            self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
             return None, None
 
         return matchingLinksWithAvailableClaim[0]
@@ -1184,7 +1208,7 @@ class SovrinCli(PlenumCli):
 
         if len(matchingLinksWithRcvdClaim) > 1:
             linkNames = [ml.name for ml, cl in matchingLinksWithRcvdClaim]
-            self._printMoreThanOneClaimFoundMsg(claimName, linkNames)
+            self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
             return None, None
 
         return matchingLinksWithRcvdClaim[0]
@@ -1249,6 +1273,23 @@ class SovrinCli(PlenumCli):
             return availableClaim
         else:
             self.print("Claim not found in any link")
+
+    def _showMatchingClaimProof(self, matchingLink: LinkInvitation,
+                                claimReq: ClaimRequest):
+        pass
+
+    def _showClaimReq(self, matchedVars):
+        if matchedVars.get('show_claim_req') == 'show claim request':
+            claimReqName = SovrinCli.removeDoubleQuotes(
+                matchedVars.get('claim_req_name'))
+            matchingLink, claimReq = \
+                self._getOneLinkAndClaimReq(claimReqName)
+            if matchingLink:
+                self.print("Found claim request {} in link {}".
+                           format(claimReq.name, matchingLink.name))
+                self.print(claimReq.getClaimReqInfoStr())
+                self._showMatchingClaimProof(matchingLink, claimReq)
+            return True
 
     def _showClaim(self, matchedVars):
         if matchedVars.get('show_claim') == 'show claim':

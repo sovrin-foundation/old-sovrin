@@ -81,8 +81,9 @@ def getLinkInvitation(name, cli) -> LinkInvitation:
 
 @pytest.fixture(scope="module")
 def aliceMap():
-    return {'keyring-name': 'Alice',
-            }
+    return {
+        'keyring-name': 'Alice',
+    }
 
 
 @pytest.fixture(scope="module")
@@ -109,7 +110,11 @@ def acmeMap():
             "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
             "endpoint": "0.0.0.0:1213",
             "claim-requests" : "Job Application",
-            "claims": "Job-Certificate"
+            "claim-req-to-show": "Job Application",
+            "claims": "Job-Certificate",
+            "rcvd-claim-transcript-provider": "Faber College",
+            "rcvd-claim-transcript-name": "Transcript",
+            "rcvd-claim-transcript-version": "1.2",
             }
 
 
@@ -197,6 +202,48 @@ def newKeyringOut():
 @pytest.fixture(scope="module")
 def linkAlreadyExists():
     return ["Link already exists"]
+
+
+@pytest.fixture(scope="module")
+def jobApplicationClaimReqMap():
+    return {
+        'claim-req-version': '0.2',
+        'claim-req-attr-first_name': 'first_name',
+        'claim-req-attr-last_name': 'last_name',
+        'claim-req-attr-phone_number': 'phone_number',
+        'claim-req-attr-degree': 'degree',
+        'claim-req-attr-status': 'status',
+        'claim-req-attr-ssn': 'ssn'
+    }
+
+@pytest.fixture(scope="module")
+def showTranscriptClaimProofOut():
+    return [
+        "Claim proof ({rcvd-claim-transcript-name} "
+        "v{rcvd-claim-transcript-version} "
+        "from {rcvd-claim-transcript-provider})"
+    ]
+
+@pytest.fixture(scope="module")
+def showJobAppClaimReqOut(showTranscriptClaimProofOut):
+    return [
+        "Found claim request {claim-req-to-show} in link {inviter}",
+        "Name: {claim-req-to-show}",
+        "Version: {claim-req-version}",
+        "Status: Requested",
+        "Attributes:",
+        "{claim-req-attr-first_name}",
+        "{claim-req-attr-last_name}",
+        "{claim-req-attr-phone_number}",
+        "{claim-req-attr-degree}",
+        "{claim-req-attr-status}",
+        "{claim-req-attr-ssn}"
+    ] + showTranscriptClaimProofOut
+
+
+@pytest.fixture(scope="module")
+def claimReqNotExists():
+    return ["No matching claim request(s) found in current keyring"]
 
 
 @pytest.fixture(scope="module")
@@ -297,6 +344,7 @@ def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
 def showClaimNotFoundOut():
     return [ "No matching claim(s) found in any links in current keyring"
     ]
+
 
 @pytest.fixture(scope="module")
 def transcriptClaimValueMap():

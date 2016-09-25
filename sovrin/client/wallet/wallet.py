@@ -116,6 +116,15 @@ class Wallet(PWallet, Sponsoring):
                     matchingLinkAndReceivedClaim.append((li, rc))
         return matchingLinkAndReceivedClaim
 
+    def getMatchingLinksWithClaimReq(self, claimReqName):
+        matchingLinkAndClaimReq = []
+        for k, v in self._linkInvitations.items():
+            li = LinkInvitation.getFromDict(k, v)
+            for cr in li.claimRequests:
+                if Wallet._isMatchingName(cr.name, claimReqName):
+                    matchingLinkAndClaimReq.append((li, cr))
+        return matchingLinkAndClaimReq
+
     def _buildClaimKey(self, providerIdr, claimName):
         return providerIdr + ":" + claimName
 
