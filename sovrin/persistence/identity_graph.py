@@ -558,10 +558,15 @@ class IdentityGraph(OrientDbGraphStore):
                 try:
                     txnTimeStamp = int(time.mktime(txnTime.timetuple()))
                 except (OverflowError, ValueError) as ex:
-                    logger.warn("cannot convert datetime '{}' to timestamp".format(txnTime))
+                    logger.warn("TXN_TIME cannot convert datetime '{}' to timestamp, reject it".format(txnTime))
                 else:
+                    # TODO The right thing to do is check the time of the PRE-PREPARE.
+                    # https://github.com/evernym/sovrin-priv/pull/20#discussion_r80387554
                     if MIN_TXN_TIME < txnTimeStamp < time.time():
                         result[TXN_TIME] = txnTimeStamp
+                    else:
+                        logger.warn("TXN_TIME {} is not in the range ({}, {}), "
+                                    "reject it".format(txnTimeStamp, MIN_TXN_TIME, time.time()))
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
