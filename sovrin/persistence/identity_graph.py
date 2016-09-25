@@ -544,10 +544,13 @@ class IdentityGraph(OrientDbGraphStore):
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
             TXN_ID: oRecordData.get(TXN_ID),
-            TXN_TIME: oRecordData.get(TXN_TIME),
             f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
             f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
         }
+
+        if TXN_TIME in oRecordData:
+            txnTime = oRecordData.get(TXN_TIME)
+            result[TXN_TIME] = txnTime.isoformat() if 'isoformat' in dir(txnTime) else txnTime
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
