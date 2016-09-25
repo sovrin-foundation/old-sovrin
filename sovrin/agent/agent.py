@@ -20,7 +20,8 @@ class Agent(Motor, AgentNet):
         # known identifiers of this agent's owner
         self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
         self.endpoint = Endpoint(port, self.handleEndpointMessage,
-                                 name=self._name) if port else None
+                                 name=self._name,
+                                 basedirpath=client.basedirpath) if port else None
 
     def name(self):
         pass
