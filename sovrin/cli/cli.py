@@ -610,10 +610,6 @@ class SovrinCli(PlenumCli):
                               data[IP], data[PORT], data[KEYS])
             self.activeWallet.addCredDef(cd)
             reqs = self.activeWallet.preparePending()
-
-            # op = {TXN_TYPE: CRED_DEF, DATA: credDef.get(serFmt=SerFmt.base58)}
-            # req, = self.activeClient.submit(
-            #     op, identifier=self.activeSigner.identifier)
             self.activeClient.submitReqs(*reqs)
             self.print("The following credential definition is published to the"
                        " Sovrin distributed ledger\n", Token.BoldBlue,
@@ -765,11 +761,12 @@ class SovrinCli(PlenumCli):
 
         self.print("Creating Link for {}.".format(linkInvitationName))
         self.print("Generating Identifier and Signing key.")
-
+        # TODO: Would we always have a trust anchor corresponding ot a link?
+        trustAnchor = linkInvitationName
         li = LinkInvitation(linkInvitationName,
-                            signer.alias + ":" + signer.identifier, None,
-                            linkInvitationName,
-                            targetIdentifier, targetEndPoint, linkNonce,
+                            signer.alias + ":" + signer.identifier,
+                            trustAnchor, targetIdentifier,
+                            targetEndPoint, linkNonce,
                             claimRequests, invitationData=invitationData)
         self.activeWallet.addLinkInvitation(li)
 
@@ -1071,6 +1068,7 @@ class SovrinCli(PlenumCli):
 
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
+
                 self.print("{}".format(li.getLinkInfoStr()))
                 if li.isAccepted():
                     self._printShowAndReqClaimUsage(li.availableClaims)

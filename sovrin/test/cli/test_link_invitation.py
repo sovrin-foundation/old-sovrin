@@ -38,16 +38,6 @@ def addNym(client, wallet, nym, role=USER):
     return makeNymRequest(client, wallet, nym, role)
 
 
-# def addFabersEndpoint(looper, client, wallet, nym, attrName, attrValue):
-#     val = json.dumps({attrName: attrValue})
-#     attrib = Attribute(name=attrName,
-#                        origin=wallet.defaultId,
-#                        value=val,
-#                        dest=nym,
-#                        ledgerStore=LedgerStore.RAW)
-#     addAttributeAndCheck(looper, client, wallet, attrib)
-
-
 def checkIfEndpointReceived(aCli, linkName, expStr):
     assert expStr in aCli.lastCmdOutput
     assert "Usage" in aCli.lastCmdOutput
@@ -75,7 +65,7 @@ def testLoadFileNotExists(aliceCLI, be, do, fileNotExists, faberMap):
     do("load {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
 
-def testLoadFile(F):
+def testLoadFile(faberInviteLoaded):
     pass
 
 
@@ -134,8 +124,6 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
     assert li.remoteEndPoint is None
     endpointValue = "0.0.0.0:0000"
-    # addFabersEndpoint(looper, client, wallet, li.remoteIdentifier,
-    #                   ENDPOINT, endpointValue)
     addRawAttribute(looper, client, wallet, ENDPOINT, endpointValue,
                     dest=li.remoteIdentifier)
     aliceCLI.enterCmd("sync Faber")

@@ -68,10 +68,11 @@ class LinkInvitation:
         # TODO: Keep the whole invitation data, including signature
         # self.signature = signature
         self.claimRequests = claimRequests
-
+        self.invitationData = invitationData
+        self.verkey = self.localIdentifier.split(":")[-1]
         # self.signerVerKey = signerVerKey
 
-        self.availableClaims = None
+        self.availableClaims = []
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
@@ -133,8 +134,8 @@ class LinkInvitation:
             SIGNATURE: self.signature
         }
         optional = {}
-        if self.signerVerKey:
-            optional[SIGNER_VER_KEY] = self.signerVerKey
+        if self.verkey:
+            optional[SIGNER_VER_KEY] = self.verkey
         if self.targetVerkey:
             optional[TARGET_VER_KEY] = self.targetVerkey
         if self.remoteEndPoint:
@@ -209,6 +210,7 @@ class LinkInvitation:
         return self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED
 
     def getLinkInfoStr(self) -> str:
+        trustAnchor = self.trustAnchor or ""
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = UNKNOWN_WAITING_FOR_SYNC
         targetEndPoint = self.remoteEndPoint or UNKNOWN_WAITING_FOR_SYNC
@@ -224,25 +226,29 @@ class LinkInvitation:
             targetVerKey = TARGET_VER_KEY_SAME_AS_ID
             linkStatus = self.linkStatus
 
+        # TODO: The verkey would be same as the local identifier until we
+        # support key rotation
         verKey = SIGNER_VER_KEY_SAME_AS_ID
-        if self.signerVerKey:
-            verKey = self.signerVerKey
+        # if self.signerVerKey:
+        #     verKey = self.signerVerKey
 
         fixedLinkHeading = "Link "
         if not self.isAccepted():
             fixedLinkHeading += "(not yet accepted)"
 
+        # TODO: Refactor to use string interpolation
+
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
             'Identifier: ' + self.localIdentifier + '\n' \
-            'Trust anchor: ' + self.trustAnchor + ' ' + trustAnchorStatus + '\n' \
+            'Trust anchor: ' + trustAnchor + ' ' + trustAnchorStatus + '\n' \
             'Verification key: ' + verKey + '\n' \
             'Signing key: <hidden>' '\n' \
             'Target: ' + self.remoteIdentifier + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.nonce + '\n' \
+            'Invitation nonce: ' + self.linkNonce + '\n' \
             'Invitation status: ' + linkStatus + '\n' \
             'Last synced: ' + linkLastSynced + '\n'
 
