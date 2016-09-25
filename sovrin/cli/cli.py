@@ -743,8 +743,8 @@ class SovrinCli(PlenumCli):
         # keys. Let have a link file validation method
         linkInviation = invitationData["link-invitation"]
         linkInvitationName = linkInviation["name"]
-        targetIdentifier = linkInviation["identifier"]
-        targetEndPoint = linkInviation.get("endpoint", None)
+        remoteIdentifier = linkInviation["identifier"]
+        remoteEndPoint = linkInviation.get("endpoint", None)
         linkNonce = linkInviation["nonce"]
         claimRequestsJson = invitationData.get("claim-requests", None)
         signature = invitationData["sig"]
@@ -765,8 +765,8 @@ class SovrinCli(PlenumCli):
         trustAnchor = linkInvitationName
         li = LinkInvitation(linkInvitationName,
                             signer.alias + ":" + signer.identifier,
-                            trustAnchor, targetIdentifier,
-                            targetEndPoint, linkNonce,
+                            trustAnchor, remoteIdentifier,
+                            remoteEndPoint, linkNonce,
                             claimRequests, invitationData=invitationData)
         self.activeWallet.addLinkInvitation(li)
 
@@ -860,7 +860,7 @@ class SovrinCli(PlenumCli):
         data = json.loads(reply.get(DATA))
         endPoint = data.get('endpoint')
         if endPoint:
-            link.targetEndPoint = endPoint
+            link.remoteEndPoint = endPoint
             self.print('Endpoint received: {}'.format(endPoint))
             self._pingToEndpoint(endPoint)
         else:
@@ -885,7 +885,7 @@ class SovrinCli(PlenumCli):
     def _getTargetEndpoint(self, li, postSync):
         if self._isConnectedToAnyEnv():
             self.print("Synchronizing...")
-            nym = getCryptonym(li.targetIdentifier)
+            nym = getCryptonym(li.remoteIdentifier)
             # req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
             attrib = Attribute(name=ENDPOINT,
                                value=None,
