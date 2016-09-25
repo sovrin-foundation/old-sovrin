@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from plenum.client.signer import SimpleSigner
 from sovrin.agent.faber import FaberAgent
 from sovrin.test.cli.helper import getFileLines
 
@@ -144,7 +143,8 @@ def testShowLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
                                         mapper=faberMap)
 
 
-def testShowLinkExists(be, do, aliceCli, showUnSyncedLinkOut, faberMap):
+def testShowLinkExists(be, do, aliceCli, faberInviteLoadedByAlice,
+                       showUnSyncedLinkOut, faberMap):
     be(aliceCli)
     do('show link {inviter}',           expect=showUnSyncedLinkOut,
                                         mapper=faberMap)
@@ -172,14 +172,31 @@ def testAcceptUnSyncedInviteWhenNotConnected(be, do,
     do('accept invitation {inviter}',   expect=acceptUnSyncedWhenNotConnected,
                                         mapper=faberMap)
 
+
+def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
+                                          acceptUnSyncedWhenConnected,
+                                          faberMap, connectedToTest,
+                                          poolNodesStarted, faberAgentStarted):
+    aliceCli = faberInviteLoadedByAlice
+    be(aliceCli)
+    if not aliceCli ._isConnectedToAnyEnv():
+        do('connect test',              within=3,
+                                        expect=connectedToTest,
+                                        mapper=faberMap)
+
+    do('accept invitation {inviter}',   within=3,
+                                        expect=acceptUnSyncedWhenConnected,
+                                        mapper=faberMap)
+
+
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
                                      faberInviteLoadedByAlice, poolNodesStarted,
                                      connectedToTest,
                                      syncLinkOutWithoutEndpoint):
     be(aliceCli)
-
-    do('connect test',                  within=3,
+    if not aliceCli._isConnectedToAnyEnv():
+        do('connect test',              within=3,
                                         expect=connectedToTest,
                                         mapper=faberMap)
 
@@ -259,24 +276,6 @@ def faberAgentStarted(faberInviteLoadedByAlice):
     faberCli = faberInviteLoadedByAlice
     return FaberAgent(name="faber", client=faberCli.activeClient,
                       port=FABER_ENDPOINT_PORT)
-
-
-# TODO: Below tests works fine individually, when run inside whole suite,
-# then, it fails (seems, cli state doesn't get clear)
-def testAcceptUnSyncedInviteWhenConnected(be, do, faberInviteLoadedByAlice,
-                                          acceptUnSyncedWhenConnected,
-                                          faberMap, connectedToTest,
-                                          poolNodesStarted, faberAgentStarted):
-    aliceCli = faberInviteLoadedByAlice
-    be(aliceCli)
-    if not aliceCli ._isConnectedToAnyEnv():
-        do('connect test',              within=3,
-                                        expect=connectedToTest,
-                                        mapper=faberMap)
-
-    do('accept invitation {inviter}',   within=3,
-                                        expect=acceptUnSyncedWhenConnected,
-                                        mapper=faberMap)
 
 
 def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
