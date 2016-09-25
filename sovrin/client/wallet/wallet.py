@@ -44,7 +44,7 @@ class Sponsoring:
         if req:
             if not req.identifier:
                 req.identifier = self.defaultId
-            self._pending.appendleft((req, idy.identifier))
+            self.pendRequest(req, idy.identifier)
         return len(self._pending)
 
 
@@ -144,7 +144,7 @@ class Wallet(PWallet, Sponsoring):
         self._attributes[attrib.key()] = attrib
         req = attrib.ledgerRequest()
         if req:
-            self._pending.appendleft((req, attrib.key()))
+            self.pendRequest(req, attrib.key())
         return len(self._pending)
 
     def hasAttribute(self, key: AttributeKey) -> bool:
@@ -169,7 +169,7 @@ class Wallet(PWallet, Sponsoring):
         self._credDefs[credDef.key()] = credDef
         req = credDef.request
         if req:
-            self._pending.appendleft((req, credDef.key()))
+            self.pendRequest(req, credDef.key())
         return len(self._pending)
 
     def getCredDef(self, key: CredDefKey):
@@ -226,6 +226,11 @@ class Wallet(PWallet, Sponsoring):
                 op[DATA] = lastTxn
             requests.append(self.signOp(op, identifier=identifier))
         return requests
+
+    def pendSyncRequests(self):
+        pendingTxnsReqs = self.getPendingTxnRequests()
+        for req in pendingTxnsReqs:
+            self.pendRequest(req)
 
     def preparePending(self):
         new = {}

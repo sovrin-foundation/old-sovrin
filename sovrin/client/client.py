@@ -85,6 +85,7 @@ class Client(PlenumClient):
             self.peerStack.sign = self.sign
             self.peerInbox = deque()
         self._observers = {}  # type Dict[str, Callable]
+        self._observerSet = set()  # makes it easier to guard against duplicates
 
     def handlePeerMessage(self, msg):
         """
@@ -405,11 +406,14 @@ class Client(PlenumClient):
     def registerObserver(self, observer: Callable, name=None):
         if not name:
             name = uuid.uuid4()
-        if name in self._observers:
+        if name in self._observers or observer in self._observerSet:
             raise RuntimeError("Observer {} already registered".format(name))
         self._observers[name] = observer
+        self._observerSet.add(observer)
 
     def deregisterObserver(self, name):
         if name not in self._observers:
             raise RuntimeError("Observer {} not registered".format(name))
+        self._observerSet.remove(self._observers[name])
         del self._observers[name]
+

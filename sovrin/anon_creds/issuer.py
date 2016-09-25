@@ -80,8 +80,3 @@ class Issuer:
     @abstractmethod
     def createCred(self, *args, **kwargs):
         pass
-
-    @abstractmethod
-    def generateCredential(cls, *args, **kwargs):
-        pass
-

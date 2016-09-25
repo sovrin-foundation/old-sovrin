@@ -362,11 +362,9 @@ class SovrinCli(PlenumCli):
         client = super().newClient(clientName, config=config)
         if self.activeWallet:
             client.registerObserver(self.activeWallet.handleIncomingReply)
-            pendingTxnsReqs = self.activeWallet.getPendingTxnRequests()
-            for req in pendingTxnsReqs:
-                self.activeWallet.pendRequest(req)
-            reqs = self.activeWallet.preparePending()
-            client.submitReqs(*reqs)
+            self.activeWallet.pendSyncRequests()
+            prepared = self.activeWallet.preparePending()
+            client.submitReqs(*prepared)
         return client
 
     @staticmethod
