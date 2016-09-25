@@ -295,6 +295,20 @@ def showClaimNotFoundOut():
     ]
 
 @pytest.fixture(scope="module")
+def transcriptClaimValueMap():
+    return {
+            'inviter' : 'Faber College',
+            'name': 'Transcript',
+            "version": "1.2",
+            'status': "available (not yet issued)",
+            "attr-student_name": "Alice",
+            "attr-ssn": "123456789",
+            "attr-degree": "Bachelor of Science, Marketing",
+            "attr-year": "2015",
+            "attr-status": "graduated"
+    }
+
+@pytest.fixture(scope="module")
 def transcriptClaimMap():
     return {
             'inviter' : 'Faber College',
@@ -307,6 +321,30 @@ def transcriptClaimMap():
             "attr-year": "string",
             "attr-status": "string"
     }
+
+
+@pytest.fixture(scope="module")
+def reqClaimOut():
+    return ["Found claim {name} in link {inviter}",
+            "Requesting claim {name} from {inviter}..."]
+
+
+@pytest.fixture(scope="module")
+def rcvdClaimOut():
+    return ["Found claim {name} in link {inviter}",
+            "Name: {name}",
+            "Status: {status}",
+            "Version: {version}",
+            "Definition:",
+            "Attributes:",
+            "student_name: {attr-student_name}",
+            "ssn: {attr-ssn}",
+            "degree: {attr-degree}",
+            "year: {attr-year}",
+            "status: {attr-status}",
+            "Usage",
+            "request claim {name}"
+    ]
 
 @pytest.fixture(scope="module")
 def showClaimOut():

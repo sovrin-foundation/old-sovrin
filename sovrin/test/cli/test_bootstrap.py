@@ -278,35 +278,44 @@ def faberAgentStarted(faberInviteLoadedByAlice):
                       port=FABER_ENDPOINT_PORT)
 
 
+def getAcceptInviteRespMsg():
+    return """{
+                "type":"AVAIL_CLAIM_LIST",
+                "identifier": "<identifier>",
+                "claimsList": [ {
+                    "name": "Transcript",
+                    "version": "1.2",
+                    "claimDefSeqNo":"<claimDefSeqNo>",
+                    "definition": {
+                        "attributes": {
+                            "student_name": "string",
+                            "ssn": "int",
+                            "degree": "string",
+                            "year": "string",
+                            "status": "string"
+                        }
+                    }
+                } ]
+              }"""
+
+
+def getSignedRespMsg(msgToSign, identifier, signer):
+    msg = msgToSign.replace("<identifier>", identifier)
+    acceptInviteResp = json.loads(msg)
+    signature = signer.sign(acceptInviteResp)
+    acceptInviteResp["signature"] = signature
+    return acceptInviteResp
+
+
 def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
                                  faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
-    msg = """{
-        "type":"AVAIL_CLAIM_LIST",
-        "identifier": "<identifier>",
-        "claimsList": [ {
-            "name": "Transcript",
-            "version": "1.2",
-            "defIdr":"<DefID>",
-            "issuerIdr": "<IssuerID>",
-            "definition": {
-                "attributes": {
-                    "student_name": "string",
-                    "ssn": "int",
-                    "degree": "string",
-                    "year": "string",
-                    "status": "string"
-                }
-            }
-        } ]
-      }""".replace("<identifier>", faberCli.activeWallet.defaultId)
 
-    acceptInviteResp = json.loads(msg)
-    signature = aliceSigner.sign(acceptInviteResp)
-    acceptInviteResp["signature"] = signature
-
+    acceptInviteResp = getSignedRespMsg(getAcceptInviteRespMsg(),
+                                        faberCli.activeWallet.defaultId,
+                                        aliceSigner)
     aliceCli._handleAcceptInviteResponse(acceptInviteResp)
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
@@ -317,30 +326,10 @@ def faberRespondedToAcceptInvite(faberInviteSyncedWithEndpoint,
     aliceCli = faberInviteSyncedWithEndpoint
     faberSigner = faberCli.activeWallet._getIdData(
         faberCli.activeWallet.defaultId).signer
-    msg = """{
-        "type":"AVAIL_CLAIM_LIST",
-        "identifier": "<identifier>",
-        "claimsList": [ {
-            "name": "Transcript",
-            "version": "1.2",
-            "defIdr":"<DefID>",
-            "issuerIdr": "<IssuerID>",
-            "definition": {
-                "attributes": {
-                    "student_name": "string",
-                    "ssn": "int",
-                    "degree": "string",
-                    "year": "string",
-                    "status": "string"
-                }
-            }
-        } ]
-      }""".replace("<identifier>", faberCli.activeWallet.defaultId)
 
-    acceptInviteResp = json.loads(msg)
-    signature = faberSigner.sign(acceptInviteResp)
-    acceptInviteResp["signature"] = signature
-
+    acceptInviteResp = getSignedRespMsg(getAcceptInviteRespMsg(),
+                                        faberCli.activeWallet.defaultId,
+                                        faberSigner)
     aliceCli._handleAcceptInviteResponse(acceptInviteResp)
     assert "Signature accepted." in aliceCli.lastCmdOutput
     assert "Trust established." in aliceCli.lastCmdOutput
@@ -383,11 +372,82 @@ def testShowClaimExists(be, do, transcriptClaimMap, showClaimOut,
                                         mapper=transcriptClaimMap)
 
 
-def testRequestClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
+def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
                                    faberRespondedToAcceptInvite):
     aliceCli = faberRespondedToAcceptInvite
     be(aliceCli)
 
-    do("request claim claim-to-show-not-exists",
+    do("request claim claim-to-req-not-exists",
                                         expect=showClaimNotFoundOut,
                                         mapper=faberMap)
+
+
+def testReqClaimExists(be, do, transcriptClaimMap, reqClaimOut,
+                                   faberRespondedToAcceptInvite):
+    aliceCli = faberRespondedToAcceptInvite
+    be(aliceCli)
+
+    do("request claim {name}",
+                                        expect=reqClaimOut,
+                                        mapper=transcriptClaimMap)
+
+
+def getReqClaimRespMsg():
+    return """{
+                "type":"CLAIM",
+                "identifier": "<identifier>",
+                "name": "Transcript",
+                "version": "1.2",
+                "claimDefSeqNo":"<claimDefSeqNo>",
+                "values": {
+                    "student_name": "Alice",
+                    "ssn": "123456789",
+                    "degree": "Bachelor of Science, Marketing",
+                    "year": "2015",
+                    "status": "graduated"
+                }
+              }"""
+
+
+def testReqClaimResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
+                                 faberCli):
+    aliceCli = faberInviteSyncedWithEndpoint
+    aliceSigner = aliceCli.activeWallet._getIdData(
+        aliceCli.activeWallet.defaultId).signer
+
+    reqClaimResp = getSignedRespMsg(getReqClaimRespMsg(),
+                                    faberCli.activeWallet.defaultId,
+                                    aliceSigner)
+    aliceCli._handleReqClaimResponse(reqClaimResp)
+    assert "Signature rejected" in aliceCli.lastCmdOutput
+
+
+@pytest.fixture(scope="module")
+def faberRespondedToReqClaim(faberRespondedToAcceptInvite,
+                                 faberCli):
+    aliceCli = faberRespondedToAcceptInvite
+    faberSigner = faberCli.activeWallet._getIdData(
+        faberCli.activeWallet.defaultId).signer
+    reqClaimResp = getSignedRespMsg(getReqClaimRespMsg(),
+                                    faberCli.activeWallet.defaultId,
+                                    faberSigner)
+
+
+    aliceCli._handleReqClaimResponse(reqClaimResp)
+    assert "Signature accepted." in aliceCli.lastCmdOutput
+    assert "Received Transcript." in aliceCli.lastCmdOutput
+    return aliceCli
+
+
+def testFaberRespondsToReqClaim(faberRespondedToReqClaim):
+    pass
+
+
+def testShowClaimPostReqClaim(be, do, transcriptClaimValueMap, rcvdClaimOut,
+                              faberRespondedToReqClaim):
+    aliceCli = faberRespondedToReqClaim
+    be(aliceCli)
+
+    do("show claim {name}",
+                                        expect=rcvdClaimOut,
+                                        mapper=transcriptClaimValueMap)

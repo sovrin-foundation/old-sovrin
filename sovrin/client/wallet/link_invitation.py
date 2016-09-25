@@ -1,6 +1,8 @@
 import datetime
+from typing import Dict
 
-from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey
+from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey, \
+    ReceivedClaim
 
 TRUST_ANCHOR = "Trust Anchor"
 SIGNER_IDENTIFIER = "Identifier"
@@ -14,6 +16,7 @@ TARGET_END_POINT = "Target endpoint"
 SIGNATURE = "Signature"
 CLAIM_REQUESTS = "Claim Requests"
 AVAILABLE_CLAIMS = "Available Claims"
+RECEIVED_CLAIMS = "Received Claims"
 
 LINK_NONCE = "Nonce"
 LINK_STATUS = "Invitation status"
@@ -56,14 +59,26 @@ class LinkInvitation:
 
         self.signerVerKey = signerVerKey
 
-        self.availableClaims = None
+        self.availableClaims = {}
+        self.receivedClaims = {}
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
         self.linkLastSyncNo = None
 
-    def updateAvailableClaims(self, claims):
-        self.availableClaims = claims
+    @staticmethod
+    def _getClaimDefKeyTuple(claimDefKey: ClaimDefKey):
+        return claimDefKey.name, claimDefKey.version, claimDefKey.claimDefSeqNo
+
+    def updateReceivedClaims(self, rcvdClaims):
+        for rc in rcvdClaims:
+            self.receivedClaims[
+                LinkInvitation._getClaimDefKeyTuple(rc.defKey)] = rc
+
+    def updateAvailableClaims(self, availableClaims):
+        for ac in availableClaims:
+            self.availableClaims[
+                LinkInvitation._getClaimDefKeyTuple(ac.claimDefKey)] = ac
 
     def updateSyncInfo(self, linkLastSynced):
         self.linkLastSynced = linkLastSynced
@@ -108,8 +123,18 @@ class LinkInvitation:
                 availableClaims.append(
                     AvailableClaimData(
                         ClaimDefKey(ac.get("name"), ac.get("version"),
-                        ac.get("defProviderIdr")), ac.get("issuerIdr"),
-                        ac.get("dateOfIssue")))
+                        ac.get("claimDefSeqNo"))))
+
+        receivedClaimsJson = values.get(RECEIVED_CLAIMS, None)
+        receivedClaims = []
+        if receivedClaimsJson:
+            for ac in receivedClaimsJson:
+                rc = ReceivedClaim(
+                        ClaimDefKey(ac.get("name"), ac.get("version"),
+                                    ac.get("claimDefSeqNo")),
+                        ac.get('issuerKeys'), ac.get('values'))
+                rc.updateDateOfIssue(ac.get('dateOfIssue'))
+                receivedClaims.append(rc)
 
         signerVerKey = values.get(SIGNER_VER_KEY, None)
         targetEndPoint = values.get(TARGET_END_POINT, None)
@@ -124,6 +149,7 @@ class LinkInvitation:
                             claimRequests, signature)
         li.updateState(targetVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
         li.updateAvailableClaims(availableClaims)
+        li.updateReceivedClaims(receivedClaims)
 
         return li
 
@@ -157,9 +183,15 @@ class LinkInvitation:
 
         if self.availableClaims:
             availableClaims = []
-            for ac in self.availableClaims:
+            for ac in self.availableClaims.values():
                 availableClaims.append(ac.getDictToBeStored())
             optional[AVAILABLE_CLAIMS] = availableClaims
+
+        if self.receivedClaims:
+            receivedClaims = []
+            for rc in self.receivedClaims.values():
+                receivedClaims.append(rc.getDictToBeStored())
+            optional[RECEIVED_CLAIMS] = receivedClaims
 
         fixed.update(optional)
         return fixed
@@ -255,7 +287,7 @@ class LinkInvitation:
         if len(self.availableClaims) > 0:
             optionalLinkItems = "Available claims: {}".\
                 format(",".join([ac.claimDefKey.name
-                                 for ac in self.availableClaims]))
+                                 for ac in self.availableClaims.values()]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
