@@ -137,9 +137,10 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
                           timeout=10))
 
 
-def testSigning():
-    signer = SimpleSigner(seed=b'Acme0000000000000000000000000000')
-    filePath = "/home/rkalaria/dev/evernym/sovrin-priv/sample/acme-req-job-cert-claim-response.sovrin"
-    with open(os.path.join(filePath)) as data_file:
-        msg = json.load(data_file)
-        print(signer.sign(msg))
+# Temporary
+# def testSigning():
+#     signer = SimpleSigner(seed=b'Acme0000000000000000000000000000')
+#     filePath = "/home/rkalaria/dev/evernym/sovrin-priv/sample/acme-req-job-cert-claim-response.sovrin"
+#     with open(os.path.join(filePath)) as data_file:
+#         msg = json.load(data_file)
+#         print(signer.sign(msg))
