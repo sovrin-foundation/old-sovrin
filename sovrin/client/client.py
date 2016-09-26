@@ -224,8 +224,6 @@ class Client(PlenumClient):
                     else:
                         logger.error("{} cannot be converted to JSON"
                                      .format(data))
-                else:
-                    pass
 
     def requestConfirmed(self, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
