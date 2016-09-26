@@ -1,18 +1,21 @@
-import pytest
+import traceback
 
 import plenum
+import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-from sovrin.client.link_invitation import LinkInvitation
+from sovrin.common.txn import SPONSOR
+from sovrin.test.helper import createNym
 
 plenum.common.util.loggingConfigured = False
 
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
+from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.util import getConfig
-from sovrin.test.cli.helper import newCLI, ensureNodesCreated
+from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 
 config = getConfig()
 
@@ -69,16 +72,12 @@ def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
     return _
 
 
-def getLinkInvitation(name, cli) -> LinkInvitation:
-    existingLinkInvites = cli.activeWallet.getMatchingLinkInvitations(name)
-    li = existingLinkInvites[0]
-    return li
-
-
 @pytest.fixture(scope="module")
 def aliceMap():
-    return {'keyring-name': 'Alice',
-            }
+    return {
+        'keyring-name': 'Alice',
+    }
+
 
 @pytest.fixture(scope="module")
 def faberMap():
@@ -88,7 +87,27 @@ def faberMap():
             'inviter-not-exists': "non-existing-inviter",
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
             "nonce": "b1134a647eb818069c089e7694f63e6d",
-            "endpoint": "0.0.0.0:1212"
+            "endpoint": "0.0.0.0:1212",
+            "claims": "Transcript",
+            "claim-to-show": "Transcript"
+            }
+
+
+@pytest.fixture(scope="module")
+def acmeMap():
+    return {'inviter': 'Acme Corp',
+            'invite': "sample/acme-job-application.sovrin",
+            'invite-not-exists': "sample/acme-job-application.sovrin.not.exists",
+            'inviter-not-exists': "non-existing-inviter",
+            "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
+            "endpoint": "0.0.0.0:1213",
+            "claim-requests" : "Job Application",
+            "claim-req-to-show": "Job Application",
+            "claims": "Job-Certificate",
+            "rcvd-claim-transcript-provider": "Faber College",
+            "rcvd-claim-transcript-name": "Transcript",
+            "rcvd-claim-transcript-version": "1.2",
             }
 
 
@@ -113,15 +132,57 @@ def connectedToTest():
 
 
 @pytest.fixture(scope="module")
-def syncWhenNotConnectedStatus(notConnectedStatus):
-    return ["Cannot sync because not connected"] + notConnectedStatus
+def canNotSyncMsg():
+    return ["Cannot sync because not connected"]
 
 
 @pytest.fixture(scope="module")
-def notConnectedStatus():
-    return ['Not connected to any environment. Please connect first.',
-            "Usage:",
+def syncWhenNotConnected(canNotSyncMsg, connectUsage):
+    return canNotSyncMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def canNotAcceptMsg():
+    return ["Cannot accept because not connected"]
+
+
+@pytest.fixture(scope="module")
+def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
+    return canNotAcceptMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedWhenConnected(commonAcceptInvitationMsgs):
+    return commonAcceptInvitationMsgs + \
+            ["Link {inviter} synced",
+             "Starting communication with {inviter}"]
+
+
+@pytest.fixture(scope="module")
+def commonAcceptInvitationMsgs():
+    return ["Invitation not yet verified",
+            "Link not yet synchronized. Attempting to sync...",
+            ]
+
+
+@pytest.fixture(scope="module")
+def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
+                                       canNotSyncMsg, connectUsage):
+    return commonAcceptInvitationMsgs + \
+            ["Invitation acceptance aborted."] + \
+            canNotSyncMsg + connectUsage
+
+
+@pytest.fixture(scope="module")
+def connectUsage():
+    return ["Usage:",
             "  connect (live|test)"]
+
+
+@pytest.fixture(scope="module")
+def notConnectedStatus(connectUsage):
+    return ['Not connected to any environment. Please connect first.'] +\
+            connectUsage
 
 
 @pytest.fixture(scope="module")
@@ -137,28 +198,61 @@ def linkAlreadyExists():
 
 
 @pytest.fixture(scope="module")
+def jobApplicationClaimReqMap():
+    return {
+        'claim-req-version': '0.2',
+        'claim-req-attr-first_name': 'first_name',
+        'claim-req-attr-last_name': 'last_name',
+        'claim-req-attr-phone_number': 'phone_number',
+        'claim-req-attr-degree': 'degree',
+        'claim-req-attr-status': 'status',
+        'claim-req-attr-ssn': 'ssn'
+    }
+
+@pytest.fixture(scope="module")
+def showTranscriptClaimProofOut():
+    return [
+        "Claim proof ({rcvd-claim-transcript-name} "
+        "v{rcvd-claim-transcript-version} "
+        "from {rcvd-claim-transcript-provider})"
+    ]
+
+@pytest.fixture(scope="module")
+def showJobAppClaimReqOut(showTranscriptClaimProofOut):
+    return [
+        "Found claim request {claim-req-to-show} in link {inviter}",
+        "Name: {claim-req-to-show}",
+        "Version: {claim-req-version}",
+        "Status: Requested",
+        "Attributes:",
+        "{claim-req-attr-first_name}",
+        "{claim-req-attr-last_name}",
+        "{claim-req-attr-phone_number}",
+        "{claim-req-attr-degree}",
+        "{claim-req-attr-status}",
+        "{claim-req-attr-ssn}"
+    ] + showTranscriptClaimProofOut
+
+
+@pytest.fixture(scope="module")
+def claimReqNotExists():
+    return ["No matching claim request(s) found in current keyring"]
+
+
+@pytest.fixture(scope="module")
 def linkNotExists():
     return ["No matching link invitation(s) found in current keyring"]
 
 
 @pytest.fixture(scope="module")
-def faberInviteLoaded(aliceCli, be, do, faberMap, loadInviteOut):
-    be(aliceCli)
+def faberInviteLoaded(aliceCLI, be, do, faberMap, loadInviteOut):
+    be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
-def acmeMap():
-    return {'inviter': 'Acme Corp',
-            'invite': "sample/acme-job-application.sovrin",
-            "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
-            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c"
-            }
-
-
-@pytest.fixture(scope="module")
-def acmeInviteLoaded(aliceCli, be, do, acmeMap, loadInviteOut):
-    be(aliceCli)
+def acmeInviteLoaded(aliceCLI, be, do, acmeMap, loadInviteOut):
+    be(aliceCLI)
     do("load {invite}", expect=loadInviteOut, mapper=acmeMap)
 
 
@@ -192,19 +286,27 @@ def endpointNotAvailable():
     return ["Endpoint not available"]
 
 
+
 @pytest.fixture(scope="module")
-def syncLinkOut():
+def syncLinkOutEndsWith():
+    return ["Link {inviter} synced"]
+
+
+@pytest.fixture(scope="module")
+def syncLinkOutStartsWith():
     return ["Synchronizing..."]
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithEndpoint(syncLinkOut, endpointReceived):
-    return syncLinkOut + endpointReceived
+def syncLinkOutWithEndpoint(syncLinkOutStartsWith, endpointReceived,
+                            syncLinkOutEndsWith):
+    return syncLinkOutStartsWith + endpointReceived + syncLinkOutEndsWith
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithoutEndpoint(syncLinkOut, endpointNotAvailable):
-    return syncLinkOut + endpointNotAvailable
+def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith, endpointNotAvailable,
+                               syncLinkOutEndsWith):
+    return syncLinkOutStartsWith + endpointNotAvailable + syncLinkOutEndsWith
 
 
 @pytest.fixture(scope="module")
@@ -232,10 +334,134 @@ def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
 
 
 @pytest.fixture(scope="module")
-def showLinkOut():
-    return ["Name: {inviter}",
+def showClaimNotFoundOut():
+    return [ "No matching claim(s) found in any links in current keyring"
+    ]
+
+
+@pytest.fixture(scope="module")
+def transcriptClaimValueMap():
+    return {
+        'inviter': 'Faber College',
+        'name': 'Transcript',
+        "version": "1.2",
+        'status': "available (not yet issued)",
+        "attr-student_name": "Alice",
+        "attr-ssn": "123456789",
+        "attr-degree": "Bachelor of Science, Marketing",
+        "attr-year": "2015",
+        "attr-status": "graduated"
+    }
+
+@pytest.fixture(scope="module")
+def transcriptClaimMap():
+    return {
+        'inviter': 'Faber College',
+        'name': 'Transcript',
+        'status': "available (not yet issued)",
+        "version": "1.2",
+        "attr-student_name": "string",
+        "attr-ssn": "int",
+        "attr-degree": "string",
+        "attr-year": "string",
+        "attr-status": "string"
+    }
+
+
+@pytest.fixture(scope="module")
+def jobCertificateClaimValueMap():
+    return {
+        'inviter': 'Acme Corp',
+        'name': 'Job-Certificate',
+        'status': "available (not yet issued)",
+        "version": "1.1",
+        "attr-employee_name": "Alice",
+        "attr-employee_status": "Permanent",
+        "attr-experience": "3 years",
+        "attr-salary_bracket": "between $50,000 to $100,000"
+    }
+
+@pytest.fixture(scope="module")
+def jobCertificateClaimMap():
+    return {
+        'inviter': 'Acme Corp',
+        'name': 'Job-Certificate',
+        'status': "available (not yet issued)",
+        "version": "1.1",
+        "attr-employee_name": "string",
+        "attr-employee_status": "string",
+        "attr-experience": "string",
+        "attr-salary_bracket": "string"
+    }
+
+
+@pytest.fixture(scope="module")
+def reqClaimOut():
+    return ["Found claim {name} in link {inviter}",
+            "Requesting claim {name} from {inviter}..."]
+
+
+@pytest.fixture(scope="module")
+def rcvdClaimOut():
+    return ["Found claim {name} in link {inviter}",
+            "Name: {name}",
+            "Status: {status}",
+            "Version: {version}",
+            "Definition:",
+            "Attributes:",
+            "student_name: {attr-student_name}",
+            "ssn: {attr-ssn}",
+            "degree: {attr-degree}",
+            "year: {attr-year}",
+            "status: {attr-status}",
+            "Usage",
+            "request claim {name}"
+    ]
+
+@pytest.fixture(scope="module")
+def showClaimOut():
+    return ["Found claim {name} in link {inviter}",
+            "Name: {name}",
+            "Status: {status}",
+            "Version: {version}",
+            "Definition:",
+            "Attributes:",
+            "student_name: {attr-student_name}",
+            "ssn: {attr-ssn}",
+            "degree: {attr-degree}",
+            "year: {attr-year}",
+            "status: {attr-status}",
+            "Usage",
+            "request claim {name}"
+    ]
+
+@pytest.fixture(scope="module")
+def showAcceptedLinkOut():
+    return [
+            "Link",
+            "Name: {inviter}",
             "Target: {target}",
+            "Target Verification key: <same as target>",
+            "Trust anchor: {inviter} (confirmed)",
             "Invitation nonce: {nonce}",
+            "Invitation status: Accepted",
+            "Available claims: {claims}",
+            "Usage",
+            'show claim {claims}',
+            'request claim {claims}'
+    ]
+
+
+@pytest.fixture(scope="module")
+def showLinkOut():
+    return [
+            "Link (not yet accepted)",
+            "Name: {inviter}",
+            "Target: {target}",
+            "Target Verification key: <unknown, waiting for sync>",
+            "Trust anchor: {inviter} (not yet written to Sovrin)",
+            "Invitation nonce: {nonce}",
+            "Invitation status: not verified, target verkey unknown",
             "Usage",
             'accept invitation "{inviter}"',
             'sync "{inviter}"']
@@ -247,7 +473,7 @@ def poolCLI_baby(CliBuilder):
 
 
 @pytest.yield_fixture(scope="module")
-def aliceCli(CliBuilder):
+def aliceCLI(CliBuilder):
     yield from CliBuilder("alice")
 
 
@@ -300,8 +526,15 @@ def do(ctx):
     """
     def _(attempt, expect=None, within=None, mapper=None, not_expect=None):
         cli = ctx['current_cli']
-        attempt = attempt.format(**mapper) if mapper else attempt
-        checkCmdValid(cli, attempt)
+
+        # This if was not there earlier, but I felt a need to reuse this
+        # feature (be, do, expect ...) without attempting anything
+        # mostly because there will be something async which will do something,
+        # hence I added the below if check
+
+        if attempt:
+            attempt = attempt.format(**mapper) if mapper else attempt
+            checkCmdValid(cli, attempt)
 
         def check():
             nonlocal expect
@@ -327,6 +560,9 @@ def do(ctx):
                             try:
                                 e(cli)
                             except:
+                                # Since its a test so not using logger is not
+                                # a big deal
+                                traceback.print_exc()
                                 continue
                             raise RuntimeError("did not expect success")
                     else:
@@ -342,3 +578,13 @@ def do(ctx):
     return _
 
 
+@pytest.fixture(scope="module")
+def faberAdded(poolNodesCreated,
+             looper,
+             aliceCLI,
+             faberInviteLoaded,
+             aliceConnected,
+             stewardClientAndWallet):
+    client, wallet = stewardClientAndWallet
+    li = getLinkInvitation("Faber", aliceCLI.activeWallet)
+    createNym(looper, li.remoteIdentifier, client, wallet, role=SPONSOR)

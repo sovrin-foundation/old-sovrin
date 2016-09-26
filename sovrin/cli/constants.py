@@ -18,8 +18,8 @@ CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(
 
 # TODO we can genericize the other TXN types in the same way
 TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=) " \
-          "\s* (?P<dest_id>[A-Za-z0-9+=/]*) \s+ (?P<role_key>role=) " \
-          "\s* (?P<role>USER|SPONSOR|STEWARD))"
+          "\s* (?P<dest_id>[A-Za-z0-9+=/]*) (\s+ (?P<role_key>role=) " \
+          "\s* (?P<role>USER|SPONSOR|STEWARD))?)"
 SEND_NYM_REG_EX = TXN_NYM.format(cmdName='send_nym', cmd='send')
 ADD_GENESIS_NYM_REG_EX = TXN_NYM.format(cmdName='add_genesis',
                                         cmd='add \s+ genesis \s+ transaction')
@@ -75,9 +75,9 @@ GEN_CRED_REG_EX = \
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-"\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
-"\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
-"\s*)"
+    "\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+    "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
+    "\s*)"
 
 ADD_ATTRS_PROVER_REG_EX = "(\s*(?P<add_attrs>attribute \s+ known \s+ to) " \
                           "\s+ (?P<issuer_id>[A-Za-z0-9+=/]+) " \
@@ -107,6 +107,21 @@ SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) ' \
 SYNC_LINK_REG_EX = '(\s*(?P<sync_link>sync) ' \
                    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
+ACCEPT_LINK_REG_EX = '(\s*(?P<accept_link_invite>accept \s+ invitation) ' \
+                   '\s+from\s+(?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+
+SHOW_CLAIM_REG_EX = '(\s*(?P<show_claim>show \s+ claim) ' \
+                    '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
+                    '\s*)'
+
+REQUEST_CLAIM_REG_EX = '(\s*(?P<req_claim>request \s+ claim) ' \
+                    '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
+                    '\s*)'
+
+SHOW_CLAIM_REQ_REG_EX = '(\s*(?P<show_claim_req>show \s+ claim \s+ request) ' \
+                    '\s+ (?P<claim_req_name>[A-Za-z0-9-" ]+) ' \
+                    '\s*)'
+
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -128,3 +143,8 @@ SHOW_LINK_FORMATTED_REG_EX = getPipedRegEx(SHOW_LINK_REG_EX)
 ADD_ATTRS_PROVER_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRS_PROVER_REG_EX)
 CONNECT_FORMATTED_REG_EX = getPipedRegEx(CONNECT_REG_EX)
 SYNC_LINK_FORMATTED_REG_EX = getPipedRegEx(SYNC_LINK_REG_EX)
+ACCEPT_LINK_FORMATTED_REG_EX = getPipedRegEx(ACCEPT_LINK_REG_EX)
+SHOW_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REG_EX)
+REQUEST_CLAIM_FORMATTED_REG_EX = getPipedRegEx(REQUEST_CLAIM_REG_EX)
+SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
+

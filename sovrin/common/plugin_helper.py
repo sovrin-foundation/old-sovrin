@@ -5,7 +5,7 @@ from sovrin.common.util import getConfig
 
 def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
     config = getConfig()
-    pluginsPath = os.path.expanduser(os.path.join(baseDir, config.PluginsDir))
+    pluginsPath = os.path.join(baseDir, config.PluginsDir)
 
     if not os.path.exists(pluginsPath):
         os.makedirs(pluginsPath)
@@ -43,11 +43,12 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
                         "sovrin.anon_creds.proof_builder.Proof = anoncreds.protocol.types.Proof\n" \
                         "sovrin.anon_creds.cred_def.CredDef = anoncreds.protocol.credential_definition.CredentialDefinition\n" \
 
-    modules_to_reload = ["sovrin.client.client", "sovrin.cli.cli"]
+    modules_to_reload = ["sovrin.cli.cli"]
     test_modules_to_reload = [
         "sovrin.test.helper", "sovrin.test.cli.helper",
         "sovrin.test.anon_creds.conftest",
-        "sovrin.test.anon_creds.test_anon_creds"
+        "sovrin.test.anon_creds.test_anon_creds",
+        # "sovrin.test.anon_creds.anon_creds_demo"
     ]
 
     if reloadTestModules:

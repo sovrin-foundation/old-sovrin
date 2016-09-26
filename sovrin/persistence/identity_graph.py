@@ -6,15 +6,20 @@ from functools import reduce
 from typing import Dict, Optional
 
 from ledger.util import F
+from plenum.common.error import fault
 from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
     DATA, RAW, ENC, HASH
-from plenum.common.types import f, Reply
+from plenum.common.types import f
 from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
     STEWARD, ROLE, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF, isValidRole
+import datetime
+import time
 
 logger = getlogger()
+
+MIN_TXN_TIME = time.mktime(datetime.datetime(2000, 1, 1).timetuple())
 
 
 class Vertices:
@@ -256,7 +261,7 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
 
-    def getAttrs(self, frm, *attrNames):
+    def getRawAttrs(self, frm, *attrNames):
         cmd = 'select expand(outE("{}").inV("{}")) from {} where {}="{}"'.\
             format(Edges.HasAttribute, Vertices.Attribute, Vertices.Nym,
                    NYM, frm)
@@ -270,6 +275,7 @@ class IdentityGraph(OrientDbGraphStore):
         return result
 
     def getCredDef(self, frm, name, version):
+        # TODO: Can this query be made similar to get attribute?
         cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {} where " \
               "name = '{}' and version = '{}'".format(Vertices.Nym, NYM, frm,
                                                  Vertices.CredDef,
@@ -472,11 +478,11 @@ class IdentityGraph(OrientDbGraphStore):
                             seqNo=txn.get(F.seqNo.name))
                 self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
             except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The nym {} was already added to graph".format(
-                    nym))
+                logger.debug("The nym {} was already added to graph".
+                             format(nym))
             except pyorient.PyOrientCommandException as ex:
-                    logger.error("An exception was raised while adding "
-                                 "nym {}: {}".format(nym, ex))
+                fault(ex, "An exception was raised while adding "
+                          "nym {}: {}".format(nym, ex))
 
     def addAttribTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
@@ -487,8 +493,8 @@ class IdentityGraph(OrientDbGraphStore):
                               to=txn.get(TARGET_NYM))
             self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsAttribute, txn)
         except pyorient.PyOrientCommandException as ex:
-            logger.error(
-                "An exception was raised while adding attribute: {}".format(ex))
+            fault(ex, "An exception was raised while adding attribute: {}".
+                  format(ex))
 
     def addCredDefTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
@@ -542,10 +548,25 @@ class IdentityGraph(OrientDbGraphStore):
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
             TXN_ID: oRecordData.get(TXN_ID),
-            TXN_TIME: oRecordData.get(TXN_TIME),
             f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
             f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
         }
+
+        if TXN_TIME in oRecordData:
+            txnTime = oRecordData.get(TXN_TIME)
+            if isinstance(txnTime, datetime.datetime):
+                try:
+                    txnTimeStamp = int(time.mktime(txnTime.timetuple()))
+                except (OverflowError, ValueError) as ex:
+                    logger.warn("TXN_TIME cannot convert datetime '{}' to timestamp, reject it".format(txnTime))
+                else:
+                    # TODO The right thing to do is check the time of the PRE-PREPARE.
+                    # https://github.com/evernym/sovrin-priv/pull/20#discussion_r80387554
+                    if MIN_TXN_TIME < txnTimeStamp < time.time():
+                        result[TXN_TIME] = txnTimeStamp
+                    else:
+                        logger.warn("TXN_TIME {} is not in the range ({}, {}), "
+                                    "reject it".format(txnTimeStamp, MIN_TXN_TIME, time.time()))
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]

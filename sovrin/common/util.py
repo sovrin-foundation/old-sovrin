@@ -1,4 +1,7 @@
 import datetime
+import random
+from uuid import uuid4, uuid1
+
 import importlib
 import importlib.util
 import json
@@ -59,18 +62,19 @@ def getInstalledConfig(installDir, configFile):
                                 format(configPath))
 
 
-def getConfig():
-    plenumConfig = PlenumConfig()
+def getConfig(homeDir=None):
+    plenumConfig = PlenumConfig(homeDir)
     sovrinConfig = importlib.import_module("sovrin.config")
     refConfig = plenumConfig
     refConfig.__dict__.update(sovrinConfig.__dict__)
     try:
-        homeDir = os.path.expanduser("~")
+        homeDir = os.path.expanduser(homeDir or "~")
         configDir = os.path.join(homeDir, ".sovrin")
         config = getInstalledConfig(configDir, "sovrin_config.py")
         refConfig.__dict__.update(config.__dict__)
     except FileNotFoundError:
         pass
+    refConfig.baseDir = os.path.expanduser(refConfig.baseDir)
     return refConfig
 
 
@@ -93,3 +97,8 @@ def getCredDefTxnData(credDef):
     }
     credDef[KEYS] = json.dumps(keys)
     return credDef
+
+
+def getNonce(length=32):
+    hexChars = [hex(i)[2:] for i in range(0, 16)]
+    return "".join([random.choice(hexChars) for i in range(length)])

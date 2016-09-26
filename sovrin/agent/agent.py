@@ -1,48 +1,50 @@
 from typing import Dict
 
+from plenum.common.error import fault
+from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
+from plenum.common.types import Identifier
 from sovrin.agent.agent_net import AgentNet
+from sovrin.agent.endpoint import Endpoint
 from sovrin.client.client import Client
-
-
-Identifier = str
-
-
-class SyncedKey:
-    def __init__(self, verkey=None, last_synced=None, seqNo=None):
-
-        # None indicates the identifier is a cryptonym
-        self.verkey = verkey
-
-        # timestamp for when the ledger was last checked for key replacement or
-        # revocation
-        self.last_synced = last_synced
-
-        # seqence number of the latest key management transaction for this
-        # identifier
-        self.seqNo = seqNo
+from sovrin.common.identity import Identity
 
 
 class Agent(Motor, AgentNet):
-    def __init__(self, name: str="agent1", client: Client=None):
-        super().__init__()
+    def __init__(self, name: str="agent1", client: Client=None, port: int=None):
+        Motor.__init__(self)
         self._name = name
 
         # Client used to connect to Sovrin and forward on owner's txns
         self.client = client
 
         # known identifiers of this agent's owner
-        self.ownerIdentifiers = {}  # type: Dict[Identifier, SyncedKey]
+        self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
+        self.endpoint = Endpoint(port, self.handleEndpointMessage,
+                                 name=self._name,
+                                 basedirpath=client.basedirpath) if port else None
 
     def name(self):
         pass
 
     async def prod(self, limit) -> int:
+        c = 0
         if self.get_status() == Status.starting:
             self.status = Status.started
-            return 1
-        return 0
+            c += 1
+        if self.client:
+            c += await self.client.prod(limit)
+        if self.endpoint:
+            c += await self.endpoint.service(limit)
+        return c
+
+    def start(self, loop):
+        super().start(loop)
+        if self.client:
+            self.client.start(loop)
+        if self.endpoint:
+            self.endpoint.start()
 
     def _statusChanged(self, old, new):
         pass
@@ -74,3 +76,14 @@ class Agent(Motor, AgentNet):
         :return:
         """
         raise NotImplementedError
+
+    def handleEndpointMessage(self, msg):
+        pass
+
+    def sendMessage(self, msg, to: str):
+        try:
+            remote = self.endpoint.getRemote(to)
+        except RemoteNotFound as ex:
+            fault(ex, "Do not know {}".format(to))
+            return
+        self.endpoint.transmit(msg, remote.uid)

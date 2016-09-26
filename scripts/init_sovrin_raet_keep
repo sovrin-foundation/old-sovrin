@@ -12,7 +12,7 @@ from sovrin.common.util import getConfig
 
 
 config = getConfig()
-keepDir = os.path.expanduser(config.baseDir)
+keepDir = config.baseDir
 
 
 def initKeep(name, baseDir, sigseed, override=False):

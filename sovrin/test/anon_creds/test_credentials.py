@@ -16,8 +16,8 @@ def testIssuerWritesCredDef(credentialDefinitionAdded):
     pass
 
 
-def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
-                          nodeSet, looper, sponsorSigner, credDef):
+def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
+                          nodeSet, looper, sponsorWallet, credDef):
     """
     A credential definition is received
     """
@@ -28,19 +28,24 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     # and it gives error (for permanent solution bug is created: #130181205).
     from sovrin.test.helper import genTestClient
 
-    user = genTestClient(nodeSet, signer=userSignerA, tmpdir=tdir)
+    user, _ = genTestClient(nodeSet, tmpdir=tdir)
+    user.registerObserver(userWalletA.handleIncomingReply)
     looper.add(user)
     looper.run(user.ensureConnectedToNodes())
     definition = credDef.get(serFmt=SerFmt.base58)
     op = {
-        TARGET_NYM: sponsorSigner.verstr,
+        TARGET_NYM: sponsorWallet.defaultId,
         TXN_TYPE: GET_CRED_DEF,
         DATA: {
             NAME: definition[NAME],
             VERSION: definition[VERSION]
         }
     }
-    req, = user.submit(op, identifier=userSignerA.verstr)
+    req = userWalletA.signOp(op)
+    userWalletA.pendRequest(req)
+    reqs = userWalletA.preparePending()
+    user.submitReqs(*reqs)
+
     looper.run(eventually(checkSufficientRepliesRecvd, user.inBox,
                           req.reqId, nodeSet.f,
                           retryWait=1, timeout=5))

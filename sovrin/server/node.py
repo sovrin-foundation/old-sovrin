@@ -13,7 +13,8 @@ from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION
-from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
+from sovrin.common.types import Request
+from plenum.common.types import Reply, RequestAck, RequestNack, f, \
     NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
 from plenum.common.util import getlogger, error
 from plenum.persistence.storage import initStorage
@@ -263,7 +264,7 @@ class Node(PlenumNode):
         self.transmitToClient(RequestAck(request.reqId), frm)
         attrNames = request.operation[RAW]
         nym = request.operation[TARGET_NYM]
-        attrs = self.graphStore.getAttrs(nym, attrNames)
+        attrs = self.graphStore.getRawAttrs(nym, attrNames)
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)
@@ -376,19 +377,6 @@ class Node(PlenumNode):
         operation = req.operation
         txnId = self.genTxnId(req.identifier, req.reqId)
         result = {TXN_ID: txnId, TXN_TIME: ppTime}
-        # if operation[TXN_TYPE] == GET_ATTR:
-        #     # TODO: Very inefficient, queries all transactions and looks for the
-        #     # DISCLOSE for the clients and returns all. We probably change the
-        #     # transaction schema or have some way to zero in on the DISCLOSE for
-        #     # the attribute that is being looked for
-        #     attrs = []
-        #     for txn in self.primaryStorage.getAllTxn().values():
-        #         if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
-        #                 DISCLOSE:
-        #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
-        #     if attrs:
-        #         result[ATTRIBUTES] = attrs
-        #
         result.update(operation)
         result.update({
             f.IDENTIFIER.nm: req.identifier,
