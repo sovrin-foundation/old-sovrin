@@ -92,6 +92,7 @@ class SovrinCli(PlenumCli):
         self.verifier = Verifier(randomString())
         _, port = self.nextAvailableClientAddr()
         self.endpoint = Endpoint(port, self.handleEndpointMsg)
+        self.curContext = (None, None)  # Current Link, Current Claim Req
 
     @property
     def lexers(self):
@@ -120,7 +121,8 @@ class SovrinCli(PlenumCli):
             'show_claim',
             'show_claim_req',
             'req_claim',
-            'accept_link_invite'
+            'accept_link_invite',
+            'set_attr'
         ]
         lexers = {n: SimpleLexer(Token.Keyword) for n in lexerNames}
         # Add more lexers to base class lexers
@@ -163,6 +165,7 @@ class SovrinCli(PlenumCli):
         completers["accept_link_invite"] = WordCompleter(["accept",
                                                           "invitation", "from"])
 
+        completers["set_attr"] = WordCompleter(["set"])
         return {**super().completers, **completers}
 
     def initializeGrammar(self):
@@ -197,7 +200,8 @@ class SovrinCli(PlenumCli):
                         self._showClaim,
                         self._reqClaim,
                         self._showClaimReq,
-                        self._acceptInvitationLink
+                        self._acceptInvitationLink,
+                        self._setAttr
                         ])
         return actions
 
@@ -207,6 +211,10 @@ class SovrinCli(PlenumCli):
         sig = b64decode(b64sig)
         vr = SigVerifier(identifier)
         return vr.verify(sig, msg)
+
+    def _printShowClaimReqUsage(self):
+        msgs = ['show claim request <claim-request-name>']
+        self.printUsage(msgs)
 
     def _printShowAndReqClaimUsage(self, availableClaims):
         claimName = "|".join([cl.claimDefKey.name for cl in availableClaims])
@@ -1240,6 +1248,19 @@ class SovrinCli(PlenumCli):
 
         return matchingLinksWithRcvdClaim[0]
 
+    def _setAttr(self, matchedVars):
+        if matchedVars.get('set_attr') == 'set':
+            attrName = matchedVars.get('attr_name')
+            attrValue = matchedVars.get('attr_value')
+            curLink, curClaimReq = self.curContext
+            if curClaimReq:
+                curClaimReq.attributes[attrName] = attrValue
+            else:
+                self.print("No context, use below command to set the context")
+                self._printShowClaimReqUsage()
+
+            return True
+
     def _reqClaim(self, matchedVars):
         if matchedVars.get('req_claim') == 'request claim':
             claimName = SovrinCli.removeDoubleQuotes(
@@ -1311,7 +1332,7 @@ class SovrinCli(PlenumCli):
                 if k in commonAttrs:
                     attributesWithValue[k] = rc.values[k]
                 else:
-                    attributesWithValue[k] = ''
+                    attributesWithValue[k] = v or ''
 
         claimReq.attributes = attributesWithValue
         self.print(claimReq.getClaimReqInfoStr())
@@ -1329,6 +1350,7 @@ class SovrinCli(PlenumCli):
             matchingLink, claimReq = \
                 self._getOneLinkAndClaimReq(claimReqName)
             if matchingLink:
+                self.curContext = matchingLink, claimReq
                 self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
                 self._showMatchingClaimProof(claimReq)

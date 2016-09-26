@@ -127,6 +127,12 @@ LOAD_RESPONSE_FILE_REG_EX = '(\s*(?P<load_resp_file>load \s+ response) ' \
                     '\s+ (?P<file_path>[A-Za-z0-9+-.=/]+) ' \
                     '\s*)'
 
+SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
+                    '\s+ (?P<attr_name>[A-Za-z-_]+) '\
+                    '\s+ to \s+ (?P<attr_value>[A-Za-z-_]+)' \
+                    '\s*)'
+
+
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
 ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
@@ -152,4 +158,4 @@ SHOW_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REG_EX)
 REQUEST_CLAIM_FORMATTED_REG_EX = getPipedRegEx(REQUEST_CLAIM_REG_EX)
 SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
 LOAD_RESPONSE_FILE_FORMATTED_REG_EX = getPipedRegEx(LOAD_RESPONSE_FILE_REG_EX)
-
+SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)

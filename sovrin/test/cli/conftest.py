@@ -230,9 +230,9 @@ def showJobAppClaimReqOut(showTranscriptClaimProofOut):
         "Version: {claim-req-version}",
         "Status: Requested",
         "Attributes:",
-        "{claim-req-attr-first_name}:",
-        "{claim-req-attr-last_name}:",
-        "{claim-req-attr-phone_number}:",
+        "{claim-req-attr-first_name}: {set-attr-first_name}",
+        "{claim-req-attr-last_name}: {set-attr-last_name}",
+        "{claim-req-attr-phone_number}: {set-attr-phone_number}",
         "{claim-req-attr-degree}: {attr-degree}",
         "{claim-req-attr-status}: {attr-status}",
         "{claim-req-attr-ssn}: {attr-ssn}"

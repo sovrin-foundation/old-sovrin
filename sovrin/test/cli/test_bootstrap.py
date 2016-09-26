@@ -622,10 +622,50 @@ def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
     aliceCli = acmeRespondedToAcceptInvite
     be(aliceCli)
 
-    mapping = {}
+    mapping = {
+        "set-attr-first_name": "",
+        "set-attr-last_name": "",
+        "set-attr-phone_number": ""
+    }
     mapping.update(acmeMap)
     mapping.update(jobApplicationClaimReqMap)
     mapping.update(transcriptClaimAttrValueMap)
+    do("show claim request {claim-req-to-show}",
+                                        expect=showJobAppClaimReqOut,
+                                        mapper=mapping)
+
+
+def testSetAttrWithoutContext(be, do, faberCli):
+    be(faberCli)
+    do("set first_name to Alice",       expect=[
+                                            "No context, "
+                                            "use below command to "
+                                            "set the context"])
+
+
+def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
+                                               showJobAppClaimReqOut,
+                                               jobApplicationClaimReqMap,
+                                               transcriptClaimAttrValueMap,
+                                               acmeRespondedToAcceptInvite):
+    aliceCli = acmeRespondedToAcceptInvite
+    be(aliceCli)
+
+    mapping = {
+        "set-attr-first_name": "",
+        "set-attr-last_name": "",
+        "set-attr-phone_number": ""
+    }
+    mapping.update(acmeMap)
+    mapping.update(jobApplicationClaimReqMap)
+    mapping.update(transcriptClaimAttrValueMap)
+    do("show claim request {claim-req-to-show}",
+                                        expect=showJobAppClaimReqOut,
+                                        mapper=mapping)
+    do("set first_name to Alice")
+    mapping.update({
+        "set-attr-first_name": "Alice"
+    })
     do("show claim request {claim-req-to-show}",
                                         expect=showJobAppClaimReqOut,
                                         mapper=mapping)

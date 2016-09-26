@@ -170,9 +170,17 @@ def testClaimReqRegEx(grammar):
     assertCliTokens(matchedVars, {"show_claim_req": "show claim request",
                                   "claim_req_name": "Job Application "})
 
+
 def testLoadRespFileCommandRegEx(grammar):
     matchedVars = getMatchedVariables(
         grammar, "load response sample/faber-accept-invite-response.sovrin")
     assertCliTokens(matchedVars, {
         "load_resp_file": "load response",
         "file_path": "sample/faber-accept-invite-response.sovrin"})
+
+
+def testSetAttribute(grammar):
+    matchedVars = getMatchedVariables(
+        grammar, "set first_name to Alice")
+    assertCliTokens(matchedVars, {
+        "set_attr": "set", "attr_name": "first_name", "attr_value": "Alice"})
