@@ -211,9 +211,9 @@ def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do,
 
 
 def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
-                                          acceptUnSyncedWhenConnected,
-                                          faberMap, connectedToTest,
-                                          poolNodesStarted):
+                                  acceptUnSyncedWithoutEndpointWhenConnected,
+                                  faberMap, connectedToTest,
+                                  poolNodesStarted):
     aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
     if not aliceCli ._isConnectedToAnyEnv():
@@ -221,8 +221,9 @@ def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
                                         expect=connectedToTest,
                                         mapper=faberMap)
 
-    do('accept invitation from {inviter}',   within=3,
-                                        expect=acceptUnSyncedWhenConnected,
+    do('accept invitation from {inviter}',
+                                        within=3,
+                                        expect=acceptUnSyncedWithoutEndpointWhenConnected,
                                         mapper=faberMap)
 
 
