@@ -12,6 +12,15 @@ from sovrin.test.helper import makeNymRequest, makePendingTxnsRequest, \
     TestClient, addRawAttribute
 
 
+# Temporary
+# def testSigning():
+#     signer = SimpleSigner(seed=b'Acme0000000000000000000000000000')
+#     filePath = "/home/rkalaria/dev/evernym/sovrin-priv/sample/acme-req-job-cert-claim-response.sovrin"
+#     with open(os.path.join(filePath)) as data_file:
+#         msg = json.load(data_file)
+#         print(signer.sign(msg))
+
+
 @pytest.fixture(scope="module")
 def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
                            poolTxnStewardData):
@@ -136,11 +145,3 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
                           retryWait=1,
                           timeout=10))
 
-
-# Temporary
-# def testSigning():
-#     signer = SimpleSigner(seed=b'Acme0000000000000000000000000000')
-#     filePath = "/home/rkalaria/dev/evernym/sovrin-priv/sample/acme-req-job-cert-claim-response.sovrin"
-#     with open(os.path.join(filePath)) as data_file:
-#         msg = json.load(data_file)
-#         print(signer.sign(msg))
