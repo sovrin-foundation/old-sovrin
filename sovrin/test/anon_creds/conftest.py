@@ -152,4 +152,4 @@ def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
 def issuerPublicKeysAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir, nodeSet,
                           staticPrimes, issuerSecretKeyAdded):
-
+    pass
