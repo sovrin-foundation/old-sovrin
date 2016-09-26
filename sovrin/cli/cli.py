@@ -329,10 +329,11 @@ class SovrinCli(PlenumCli):
                 self.print("No matching link found")
 
     def handleEndpointMsg(self, msg):
-        if msg["type"] == "AVAIL_CLAIM_LIST":
-            self._handleAcceptInviteResponse(msg)
-        if msg["type"] == "CLAIM":
-            self._handleReqClaimResponse(msg)
+        body, frm = msg
+        if body["type"] == "AVAIL_CLAIM_LIST":
+            self._handleAcceptInviteResponse(body)
+        if body["type"] == "CLAIM":
+            self._handleReqClaimResponse(body)
 
     # TODO: Rename as sendToAgent
     def sendToEndpoint(self, msg: Any, endpoint: Tuple):
