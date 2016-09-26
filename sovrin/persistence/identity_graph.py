@@ -242,14 +242,9 @@ class IdentityGraph(OrientDbGraphStore):
             }
             self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
-    def addCredDef(self, frm, txnId, name, version, keys: Dict,
-                   typ: Optional[str]=None, ip: Optional[str]=None,
-                   port: Optional[int]=None):
+    def addCredDef(self, frm, txnId, name, version, typ: Optional[str]=None):
         kwargs = {
-            TYPE: typ,
-            IP: ip,
-            PORT: port,
-            KEYS: json.dumps(keys)
+            TYPE: typ
         }
         vertex = self.createVertex(Vertices.CredDef, **kwargs)
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
@@ -506,15 +501,10 @@ class IdentityGraph(OrientDbGraphStore):
                 txnId=txnId,
                 name=data.get(NAME),
                 version=data.get(VERSION),
-                keys=data.get(KEYS),
-                typ=data.get(TYPE),
-                ip=data.get(IP),
-                port=data.get(PORT)
-            )
+                typ=data.get(TYPE))
             self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsCredDef, txn)
-        except pyorient.PyOrientCommandException as ex:
-            logger.error(
-                "An exception was raised while adding cred def: {}".format(ex))
+        except Exception as ex:
+            fault(ex, "Error adding cred def to orientdb")
 
     def countTxns(self):
         seqNos = set()

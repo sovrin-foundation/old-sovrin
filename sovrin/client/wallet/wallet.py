@@ -279,15 +279,17 @@ class Wallet(PWallet, Sponsoring):
         # TODO: Duplicate code from _attribReply, abstract this behavior,
         # Have a mixin like `HasSeqNo`
         _, key = preparedReq
-        credDef = self.getCredDef(CredDefKey(*key))
+        credDef = self.getCredDef(key)
         credDef.seqNo = result[F.seqNo.name]
 
     def _getCredDefReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
-        keys = json.loads(data[KEYS])
-        credDef = CredDef(data[NAME], data[VERSION],
-                          result[TARGET_NYM], data[TYPE],
-                          data[IP], data[PORT], keys)
+        credDef = CredDef(seqNo=?,  # TODO
+                          attrNames=?,  # TODO
+                          name=data[NAME],
+                          version=data[VERSION],
+                          origin=result[TARGET_NYM],  # TODO should
+                          typ=data[TYPE])
         self.addCredDef(credDef)
 
     def _nymReply(self, result, preparedReq):
