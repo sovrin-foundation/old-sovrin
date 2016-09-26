@@ -85,7 +85,7 @@ class Agent(Motor, AgentNet):
         try:
             remote = self.endpoint.getRemote(name=destName, ha=destHa)
         except RemoteNotFound as ex:
-            fault(ex, "Do not know {}".format(destName))
+            fault(ex, "Do not know {} {}".format(destName, destHa))
             return
         self.endpoint.transmit(msg, remote.uid)
 
