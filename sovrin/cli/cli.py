@@ -26,7 +26,7 @@ from plenum.common.util import randomString, cleanSeed, getCryptonym, isHex, \
     cryptonymToHex
 from sovrin.agent.agent import Agent
 from sovrin.agent.endpoint import Endpoint
-from sovrin.agent.msg_types import ACCEPT_INVITE
+from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST, CLAIMS
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import SerFmt
@@ -329,9 +329,9 @@ class SovrinCli(PlenumCli):
                 self.print("No matching link found")
 
     def handleEndpointMsg(self, msg):
-        if msg["type"] == "AVAIL_CLAIM_LIST":
+        if msg["type"] == AVAIL_CLAIM_LIST:
             self._handleAcceptInviteResponse(msg)
-        if msg["type"] == "CLAIM":
+        if msg["type"] == CLAIMS:
             self._handleReqClaimResponse(msg)
 
     # TODO: Rename as sendToAgent
@@ -1056,8 +1056,8 @@ class SovrinCli(PlenumCli):
         self.print("Starting communication with {}".format(link.name))
         op = {
             f.IDENTIFIER.nm: self.activeWallet.defaultId,
-            "nonce": link.nonce,
-            'type': ACCEPT_INVITE
+            NONCE: link.nonce,
+            TYPE: ACCEPT_INVITE
         }
         signedNonce = self.activeWallet.signOp(op, self.activeWallet.defaultId)
         op["signedInvitationNonce"] = signedNonce
