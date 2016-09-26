@@ -6,11 +6,12 @@ from raet.road.estating import RemoteEstate
 def connectAgents(agent1, agent2):
     e1 = agent1.endpoint
     e2 = agent2.endpoint
-    remote = RemoteEstate(stack=e1, ha=e2.ha)
-    e1.addRemote(remote)
-    # updates the store time so the join timer is accurate
-    e1.updateStamp()
-    e1.join(uid=remote.uid, cascade=True, timeout=30)
+    # remote = RemoteEstate(stack=e1, ha=e2.ha)
+    # e1.addRemote(remote)
+    # # updates the store time so the join timer is accurate
+    # e1.updateStamp()
+    # e1.join(uid=remote.uid, cascade=True, timeout=30)
+    e1.connectTo(e2.ha)
 
 
 def ensureAgentsConnected(looper, agent1, agent2):

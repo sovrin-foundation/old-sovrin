@@ -1,0 +1,15 @@
+{
+    "type":"CLAIM",
+    "identifier": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
+    "name": "Transcript",
+    "version": "1.2",
+    "claimDefSeqNo":"123",
+    "values": {
+        "student_name": "Alice Garcia",
+        "ssn": "123456789",
+        "degree": "Bachelor of Science, Marketing",
+        "year": "2015",
+        "status": "graduated"
+    },
+    "signature": "HPMjHvga5I5DSzbZxscQk9aaIq2LaxyqsOi9jaYsJPVEJDylY0fVuvXpSGTLA1x0bCnVzB2rxOtC6XLO2N04Dw=="
+}
