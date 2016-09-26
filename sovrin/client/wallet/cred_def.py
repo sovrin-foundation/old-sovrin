@@ -115,12 +115,19 @@ class CredDef(CredentialDefinition, HasSeqNo):
 
 
 class IssuerPubKey(IssuerKey, HasSeqNo):
-    def __init__(self, N, R, S, Z, claimDefSeqNo: int,
-                 secretKeyUid, origin, seqNo: Optional[int]=None):
-        super().__init__(seqNo, N, R, S, Z)
+    def __init__(self, claimDefSeqNo: int,
+                 origin, N=None, R=None, S=None, Z=None, secretKeyUid=None,
+                 seqNo: Optional[int]=None):
+        if all([x is not None for x in (N, R, S, Z)]):
+            self.initPubKey(seqNo, N, R, S, Z)
+        else:
+            self.uid = seqNo
         self.claimDefSeqNo = claimDefSeqNo
         self.secretKeyUid = secretKeyUid
         self.origin = origin
+
+    def initPubKey(self, seqNo, N, R, S, Z):
+        IssuerKey.__init__(self, seqNo, N, R, S, Z)
 
     # @property
     # def seqNo(self):
@@ -129,6 +136,10 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     # @seqNo.setter
     # def seqNo(self, value):
     #     self.uid = value
+
+    @property
+    def key(self):
+        return self.origin, self.claimDefSeqNo
 
     @property
     def request(self):

@@ -330,6 +330,35 @@ class IdentityGraph(OrientDbGraphStore):
                 ORIGIN: frm,
                 # KEYS: credDef.get(KEYS)
             }
+        return None
+
+    def getIssuerKeys(self, frm, ref):
+        cmd = "select expand(outE('{}').inV('{}')) from {} where " \
+              "{} = '{}'".format(Edges.HasIssuerKey,
+                                                      Vertices.IssuerKey,
+                                                      Vertices.Nym, NYM,
+                                                      frm)
+        haystack = self.client.command(cmd)
+        needle = None
+        if haystack:
+            for rec in haystack:
+                if rec.oRecordData.get(REFERENCE) == str(ref):
+                    needle = rec
+                    break
+            edgeData = self.client.command(
+                "select expand(inE('{}')) from {}"
+                    .format(Edges.HasIssuerKey, needle._rid))[0].oRecordData
+            return {
+                ORIGIN: frm,
+                REFERENCE: ref,
+                F.seqNo.name: edgeData.get(F.seqNo.name),
+                DATA: json.loads(needle.oRecordData.get(DATA))
+                # IP: credDef.get(IP),
+                # PORT: credDef.get(PORT),
+
+                # KEYS: credDef.get(KEYS)
+            }
+        return None
 
     def getNym(self, nym, role=None):
         """
