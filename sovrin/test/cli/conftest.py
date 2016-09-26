@@ -415,6 +415,11 @@ def reqClaimOut():
 
 
 @pytest.fixture(scope="module")
+def reqClaimUsage():
+    return ["Usage",
+            "request claim {name}"]
+
+@pytest.fixture(scope="module")
 def rcvdClaimOut():
     return ["Found claim {name} in link {inviter}",
             "Name: {name}",
@@ -425,9 +430,7 @@ def rcvdClaimOut():
             "ssn: {attr-ssn}",
             "degree: {attr-degree}",
             "year: {attr-year}",
-            "status: {attr-status}",
-            "Usage",
-            "request claim {name}"
+            "status: {attr-status}"
     ]
 
 @pytest.fixture(scope="module")

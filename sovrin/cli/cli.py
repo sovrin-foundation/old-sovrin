@@ -1281,15 +1281,18 @@ class SovrinCli(PlenumCli):
                 # TODO: request claim
                 self.print("Requesting claim {} from {}...".format(
                     claimName, matchingLink.name))
-                msgs = ['request claim {}'.format(claimName)]
-                self.printUsage(msgs)
             else:
-                self.print("No matching claim(s) found in any links in current keyring")
+                self.print("No matching claim(s) found "
+                           "in any links in current keyring")
             return True
 
     def _showReceivedOrAvailableClaim(self, claimName):
         self._showReceivedClaimIfExists(claimName) or \
             self._showAvailableClaimIfExists(claimName)
+
+    def _printRequestClaimMsg(self, claimName):
+        msgs = ['request claim {}'.format(claimName)]
+        self.printUsage(msgs)
 
     def _showReceivedClaimIfExists(self, claimName):
         matchingLink, rcvdClaim = \
@@ -1298,8 +1301,6 @@ class SovrinCli(PlenumCli):
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
             self.print(rcvdClaim.getClaimInfoStr())
-            msgs = ['request claim {}'.format(claimName)]
-            self.printUsage(msgs)
             return rcvdClaim
 
     def _showAvailableClaimIfExists(self, claimName):
@@ -1315,11 +1316,11 @@ class SovrinCli(PlenumCli):
             else:
                 # TODO: get claim def and store it in wallet and show it
                 pass
-            msgs = ['request claim {}'.format(claimName)]
-            self.printUsage(msgs)
+            self._printRequestClaimMsg(claimName)
             return availableClaim
         else:
-            self.print("No matching claim(s) found in any links in current keyring")
+            self.print("No matching claim(s) found "
+                       "in any links in current keyring")
 
     def _showMatchingClaimProof(self, claimReq: ClaimRequest):
         matchingLinkAndRcvdClaims = \
