@@ -129,7 +129,7 @@ LOAD_RESPONSE_FILE_REG_EX = '(\s*(?P<load_resp_file>load \s+ response) ' \
 
 SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
                     '\s+ (?P<attr_name>[A-Za-z-_]+) '\
-                    '\s+ to \s+ (?P<attr_value>[A-Za-z-_]+)' \
+                    '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_./]+)' \
                     '\s*)'
 
 
