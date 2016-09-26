@@ -4,12 +4,14 @@ from typing import Dict
 import os
 from plenum.common.looper import Looper
 from plenum.common.txn import TYPE
+from plenum.common.types import f
 from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
 from sovrin.agent.helper import processInvAccept
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.client import Client
+from sovrin.client.wallet.helper import createAvailClaimListMsg
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
@@ -49,7 +51,7 @@ logger = getlogger()
 class FaberAgent(Agent):
     def __init__(self, name: str="agent1", client: Client=None, port: int=None,
                  handlers: Dict=None):
-        super().__init__(name, client, port)
+        super().__init__(name, client, port, msgHandler=self.handleEndpointMessage)
         self.handlers = handlers
 
     @property
@@ -61,12 +63,14 @@ class FaberAgent(Agent):
         self._activeWallet = wallet
 
     def handleEndpointMessage(self, msg):
-        typ = msg.get(TYPE)
+        body, frm = msg
+        typ = body.get(TYPE)
         handler = self.handlers.get(typ)
-        if not handler:
-            handler(msg)
+        if handler:
+            frmHa = self.endpoint.getRemote(frm).ha
+            handler((body, (frm, frmHa)))
         else:
-            logger.debug("no handler found for type")
+            logger.debug("no handler found for type {}".format(typ))
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
@@ -91,7 +95,7 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
     # }
 
     def acceptInvite(msg):
-        body, frm = msg
+        body, (frm, ha) = msg
         """
         body = {
             "type": <some type>,
@@ -101,10 +105,14 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
         }
         """
         # TODO: Need to do nonce verification here
-        data = json.loads(body)
-        print(data)
-        # wallet.knownIds[data['identifier']] =
-        # TODO: Send claims
+        nonce = body.get("nonce")
+        link = wallet.getLinkByNonce(nonce)
+        if link:
+            link.remoteIdentifier = body.get(f.IDENTIFIER.nm)
+            link.remoteEndPoint = ha
+            # TODO: Send claims
+            resp = createAvailClaimListMsg(link.remoteIdentifier)
+            faber.sendMessage(resp, destName=frm)
 
     handlers = {
         ACCEPT_INVITE: acceptInvite

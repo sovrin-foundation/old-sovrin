@@ -49,7 +49,7 @@ logger = getlogger()
 class AliceAgent(Agent):
     def __init__(self, name: str="agent2", client: Client=None, port: int=None,
                  handlers: Dict=None):
-        super().__init__(name, client, port)
+        super().__init__(name, client, port, msgHandler=self.handleEndpointMessage)
         self.handlers = handlers
 
     @property
@@ -61,10 +61,11 @@ class AliceAgent(Agent):
         self._activeWallet = wallet
 
     def handleEndpointMessage(self, msg):
-        typ = msg.get(TYPE)
+        body, frm = msg
+        typ = body.get(TYPE)
         handler = self.handlers.get(typ)
         if not handler:
-            handler(msg)
+            handler(body)
         else:
             logger.debug("no handler found for type")
 

@@ -3,6 +3,7 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from sovrin.agent.alice import runAlice
 from sovrin.agent.faber import runFaber
+from sovrin.client.wallet.link_invitation import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR
 from sovrin.test.helper import createNym
@@ -50,3 +51,14 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet):
                      basedirpath=tdirWithPoolTxns, startRunning=False)
     emptyLooper.add(faber)
     return faber, faberWallet
+
+
+@pytest.fixture(scope="module")
+def faberLinkAdded(faberIsRunning):
+    faber, wallet = faberIsRunning
+    idr = wallet.defaultId
+    link = Link("Alice", idr, nonce="b1134a647eb818069c089e7694f63e6d")
+    # TODO rename to addLink
+    wallet.addLinkInvitation(link)
+    assert wallet.getMatchingLinkInvitations("Alice")
+    return link
