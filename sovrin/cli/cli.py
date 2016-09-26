@@ -1065,7 +1065,11 @@ class SovrinCli(PlenumCli):
         self.sendToEndpoint(op, (ip, int(port)))
 
     def _acceptLinkPostSync(self, link: Link):
-        self._sendAcceptInviteToTargetEndpoint(link)
+        if link.remoteEndPoint:
+            self._sendAcceptInviteToTargetEndpoint(link)
+        else:
+            self.print("Remote endpoint not found, "
+                       "can not connect to {}".format(link.name))
 
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
