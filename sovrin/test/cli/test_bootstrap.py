@@ -312,7 +312,7 @@ def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
 
 
 def testAliceAcceptInvitation(be, do, aliceCli, faberInviteSyncedWithEndpoint,
-                              linkNotExists, faberMap):
+                              linkNotExists, faberMap, faberLinkAdded):
     be(aliceCli)
     do('accept invitation from {inviter}', within=1,
                                 expect=[

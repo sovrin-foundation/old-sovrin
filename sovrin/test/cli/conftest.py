@@ -17,7 +17,8 @@ from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
-from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, faberWallet
+from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, \
+    faberWallet, faberLinkAdded
 
 
 config = getConfig()
