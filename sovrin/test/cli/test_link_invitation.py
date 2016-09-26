@@ -1,4 +1,8 @@
+import json
+import os
+
 import pytest
+from plenum.client.signer import SimpleSigner
 from plenum.test.eventually import eventually
 from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 from sovrin.client.wallet.wallet import Wallet
@@ -42,7 +46,7 @@ def checkIfEndpointReceived(aCli, linkName, expStr):
     assert expStr in aCli.lastCmdOutput
     assert "Usage" in aCli.lastCmdOutput
     assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
-    assert 'accept invitation "{}"'.format(linkName) in aCli.lastCmdOutput
+    assert 'accept invitation from "{}"'.format(linkName) in aCli.lastCmdOutput
     if "Endpoint received" in expStr:
         li = getLinkInvitation("Faber", aCli.activeWallet)
         assert li.remoteEndPoint is not None
@@ -131,3 +135,11 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
                           "Endpoint received: {}".format(endpointValue),
                           retryWait=1,
                           timeout=10))
+
+
+def testSigning():
+    signer = SimpleSigner(seed=b'Acme0000000000000000000000000000')
+    filePath = "/home/rkalaria/dev/evernym/sovrin-priv/sample/acme-req-job-cert-claim-response.sovrin"
+    with open(os.path.join(filePath)) as data_file:
+        msg = json.load(data_file)
+        print(signer.sign(msg))

@@ -107,8 +107,9 @@ SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) ' \
 SYNC_LINK_REG_EX = '(\s*(?P<sync_link>sync) ' \
                    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
-ACCEPT_LINK_REG_EX = '(\s*(?P<accept_link_invite>accept \s+ invitation) ' \
-                   '\s+from\s+(?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+ACCEPT_LINK_REG_EX = \
+    '(\s*(?P<accept_link_invite>accept \s+ invitation \s+ from) ' \
+    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
 SHOW_CLAIM_REG_EX = '(\s*(?P<show_claim>show \s+ claim) ' \
                     '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
@@ -122,6 +123,9 @@ SHOW_CLAIM_REQ_REG_EX = '(\s*(?P<show_claim_req>show \s+ claim \s+ request) ' \
                     '\s+ (?P<claim_req_name>[A-Za-z0-9-" ]+) ' \
                     '\s*)'
 
+LOAD_RESPONSE_FILE_REG_EX = '(\s*(?P<load_resp_file>load \s+ response) ' \
+                    '\s+ (?P<file_path>[A-Za-z0-9+-.=/]+) ' \
+                    '\s*)'
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -147,4 +151,5 @@ ACCEPT_LINK_FORMATTED_REG_EX = getPipedRegEx(ACCEPT_LINK_REG_EX)
 SHOW_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REG_EX)
 REQUEST_CLAIM_FORMATTED_REG_EX = getPipedRegEx(REQUEST_CLAIM_REG_EX)
 SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
+LOAD_RESPONSE_FILE_FORMATTED_REG_EX = getPipedRegEx(LOAD_RESPONSE_FILE_REG_EX)
 

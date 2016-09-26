@@ -60,38 +60,52 @@ def test_gen_verif_nonce_reg_ex(grammar):
 
 
 def test_prep_proof_reg_ex(grammar):
-    getMatchedVariables(grammar, "prepare proof of degree using nonce mynonce for undergrad")
+    getMatchedVariables(grammar,
+                        "prepare proof of degree using nonce "
+                        "mynonce for undergrad")
 
 
 def test_verify_proof_reg_ex(grammar):
-    getMatchedVariables(grammar, "verify status is undergrad in proof degreeproof")
+    getMatchedVariables(grammar,
+                        "verify status is undergrad in proof degreeproof")
 
 
 def testShowFileCommandRegEx(grammar):
-    matchedVars = getMatchedVariables(grammar, "show sample/faber-invitation.sovrin")
-    assertCliTokens(matchedVars, {"show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
+    matchedVars = getMatchedVariables(grammar,
+                                      "show sample/faber-invitation.sovrin")
+    assertCliTokens(matchedVars, {
+        "show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
 
-    matchedVars = getMatchedVariables(grammar, "show sample/faber-invitation.sovrin ")
-    assertCliTokens(matchedVars, {"show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
+    matchedVars = getMatchedVariables(grammar,
+                                      "show sample/faber-invitation.sovrin ")
+    assertCliTokens(matchedVars, {
+        "show_file": "show", "file_path": "sample/faber-invitation.sovrin"})
 
 
 def testLoadFileCommandRegEx(grammar):
-    matchedVars = getMatchedVariables(grammar, "load sample/faber-invitation.sovrin")
-    assertCliTokens(matchedVars, {"load_file": "load", "file_path": "sample/faber-invitation.sovrin"})
+    matchedVars = getMatchedVariables(grammar,
+                                      "load sample/faber-invitation.sovrin")
+    assertCliTokens(matchedVars, {
+        "load_file": "load", "file_path": "sample/faber-invitation.sovrin"})
 
-    matchedVars = getMatchedVariables(grammar, "load sample/faber-invitation.sovrin ")
-    assertCliTokens(matchedVars, {"load_file": "load", "file_path": "sample/faber-invitation.sovrin"})
+    matchedVars = getMatchedVariables(grammar,
+                                      "load sample/faber-invitation.sovrin ")
+    assertCliTokens(matchedVars, {
+        "load_file": "load", "file_path": "sample/faber-invitation.sovrin"})
 
 
 def testShowLinkRegEx(grammar):
     matchedVars = getMatchedVariables(grammar, "show link faber")
-    assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber"})
+    assertCliTokens(matchedVars, {"show_link": "show link",
+                                  "link_name": "faber"})
 
     matchedVars = getMatchedVariables(grammar, "show link faber college")
-    assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber college"})
+    assertCliTokens(matchedVars, {"show_link": "show link",
+                                  "link_name": "faber college"})
 
     matchedVars = getMatchedVariables(grammar, "show link faber college ")
-    assertCliTokens(matchedVars, {"show_link": "show link", "link_name": "faber college "})
+    assertCliTokens(matchedVars, {"show_link": "show link",
+                                  "link_name": "faber college "})
 
 
 def test_connect_reg_ex(grammar):
@@ -113,15 +127,15 @@ def testSyncLinkRegEx(grammar):
 
 def testAcceptInvitationLinkRegEx(grammar):
     matchedVars = getMatchedVariables(grammar, "accept invitation from faber")
-    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation",
+    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation from",
                                   "link_name": "faber"})
 
     matchedVars = getMatchedVariables(grammar, 'accept invitation from "faber"')
-    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation",
+    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation from",
                                   "link_name": '"faber"'})
 
     matchedVars = getMatchedVariables(grammar, 'accept invitation from "faber" ')
-    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation",
+    assertCliTokens(matchedVars, {"accept_link_invite": "accept invitation from",
                                   "link_name": '"faber" '})
 
 
@@ -155,3 +169,10 @@ def testClaimReqRegEx(grammar):
                                       "show claim request Job Application ")
     assertCliTokens(matchedVars, {"show_claim_req": "show claim request",
                                   "claim_req_name": "Job Application "})
+
+def testLoadRespFileCommandRegEx(grammar):
+    matchedVars = getMatchedVariables(
+        grammar, "load response sample/faber-accept-invite-response.sovrin")
+    assertCliTokens(matchedVars, {
+        "load_resp_file": "load response",
+        "file_path": "sample/faber-accept-invite-response.sovrin"})

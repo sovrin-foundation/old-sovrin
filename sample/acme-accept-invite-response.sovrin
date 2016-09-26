@@ -1,0 +1,18 @@
+{
+    "type":"AVAIL_CLAIM_LIST",
+    "identifier": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+    "claimsList": [ {
+        "name": "Job-Certificate",
+        "version": "1.2",
+        "claimDefSeqNo":"134",
+        "definition": {
+            "attributes": {
+                "employee_name": "string",
+                "employee_status": "string",
+                "experience": "string",
+                "salary_bracket": "string"
+            }
+        }
+    } ],
+    "signature": "cjtNOQ8vTPfGwhNmco8z6mmpItMlpHV++Qauuq6q+/unyFa6neyb6hCKwo7atQvMs/V0d2Pz0K+fD9gsmC5SAQ=="
+}

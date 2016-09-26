@@ -438,7 +438,7 @@ def getReqTranscriptClaimRespMsg():
                 "version": "1.2",
                 "claimDefSeqNo":"<claimDefSeqNo>",
                 "values": {
-                    "student_name": "Alice",
+                    "student_name": "Alice Garcia",
                     "ssn": "123456789",
                     "degree": "Bachelor of Science, Marketing",
                     "year": "2015",
@@ -617,6 +617,7 @@ def testShowClaimReqNotExists(be, do, acmeMap, claimReqNotExists,
 
 def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
                                    jobApplicationClaimReqMap,
+                                   transcriptClaimAttrValueMap,
                                    acmeRespondedToAcceptInvite):
     aliceCli = acmeRespondedToAcceptInvite
     be(aliceCli)
@@ -624,7 +625,7 @@ def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
     mapping = {}
     mapping.update(acmeMap)
     mapping.update(jobApplicationClaimReqMap)
-
+    mapping.update(transcriptClaimAttrValueMap)
     do("show claim request {claim-req-to-show}",
                                         expect=showJobAppClaimReqOut,
                                         mapper=mapping)

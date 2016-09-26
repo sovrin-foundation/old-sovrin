@@ -117,7 +117,7 @@ def loadInviteOut():
             "Creating Link for {inviter}.",
             "Generating Identifier and Signing key.",
             "Usage",
-            'accept invitation "{inviter}"',
+            'accept invitation from "{inviter}"',
             'show link "{inviter}"']
 
 
@@ -214,23 +214,28 @@ def showTranscriptClaimProofOut():
     return [
         "Claim proof ({rcvd-claim-transcript-name} "
         "v{rcvd-claim-transcript-version} "
-        "from {rcvd-claim-transcript-provider})"
+        "from {rcvd-claim-transcript-provider})",
+        "student_name: {attr-student_name}",
+        "ssn: {attr-ssn}",
+        "degree: {attr-degree}",
+        "year: {attr-year}",
+        "status: {attr-status}",
     ]
 
 @pytest.fixture(scope="module")
 def showJobAppClaimReqOut(showTranscriptClaimProofOut):
     return [
-        "Found claim request {claim-req-to-show} in link {inviter}",
+        'Found claim request "{claim-req-to-show}" in link "{inviter}"',
         "Name: {claim-req-to-show}",
         "Version: {claim-req-version}",
         "Status: Requested",
         "Attributes:",
-        "{claim-req-attr-first_name}",
-        "{claim-req-attr-last_name}",
-        "{claim-req-attr-phone_number}",
-        "{claim-req-attr-degree}",
-        "{claim-req-attr-status}",
-        "{claim-req-attr-ssn}"
+        "{claim-req-attr-first_name}:",
+        "{claim-req-attr-last_name}:",
+        "{claim-req-attr-phone_number}:",
+        "{claim-req-attr-degree}: {attr-degree}",
+        "{claim-req-attr-status}: {attr-status}",
+        "{claim-req-attr-ssn}: {attr-ssn}"
     ] + showTranscriptClaimProofOut
 
 
@@ -340,18 +345,26 @@ def showClaimNotFoundOut():
 
 
 @pytest.fixture(scope="module")
-def transcriptClaimValueMap():
+def transcriptClaimAttrValueMap():
     return {
-        'inviter': 'Faber College',
-        'name': 'Transcript',
-        "version": "1.2",
-        'status': "available (not yet issued)",
-        "attr-student_name": "Alice",
+        "attr-student_name": "Alice Garcia",
         "attr-ssn": "123456789",
         "attr-degree": "Bachelor of Science, Marketing",
         "attr-year": "2015",
         "attr-status": "graduated"
     }
+
+@pytest.fixture(scope="module")
+def transcriptClaimValueMap(transcriptClaimAttrValueMap):
+    basic = {
+        'inviter': 'Faber College',
+        'name': 'Transcript',
+        "version": "1.2",
+        'status': "available (not yet issued)"
+    }
+    basic.update(transcriptClaimAttrValueMap)
+    return basic
+
 
 @pytest.fixture(scope="module")
 def transcriptClaimMap():
@@ -375,7 +388,7 @@ def jobCertificateClaimValueMap():
         'name': 'Job-Certificate',
         'status': "available (not yet issued)",
         "version": "1.1",
-        "attr-employee_name": "Alice",
+        "attr-employee_name": "Alice Garcia",
         "attr-employee_status": "Permanent",
         "attr-experience": "3 years",
         "attr-salary_bracket": "between $50,000 to $100,000"
@@ -405,9 +418,8 @@ def reqClaimOut():
 def rcvdClaimOut():
     return ["Found claim {name} in link {inviter}",
             "Name: {name}",
-            "Status: {status}",
+            "Status: ",
             "Version: {version}",
-            "Definition:",
             "Attributes:",
             "student_name: {attr-student_name}",
             "ssn: {attr-ssn}",
@@ -463,7 +475,7 @@ def showLinkOut():
             "Invitation nonce: {nonce}",
             "Invitation status: not verified, target verkey unknown",
             "Usage",
-            'accept invitation "{inviter}"',
+            'accept invitation from "{inviter}"',
             'sync "{inviter}"']
 
 

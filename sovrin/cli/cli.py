@@ -5,6 +5,8 @@ from typing import Dict, Any
 
 import os
 from hashlib import sha256
+
+import collections
 from plenum.common.signing import serializeForSig
 from raet.nacling import Verifier as SigVerifier
 from base64 import b64decode
@@ -112,6 +114,7 @@ class SovrinCli(PlenumCli):
             'show_file',
             'conn'
             'load_file',
+            'load_resp_file',  # TODO: temporary until agent thing is working
             'show_link',
             'sync_link',
             'show_claim',
@@ -154,10 +157,11 @@ class SovrinCli(PlenumCli):
         completers["env_name"] = WordCompleter(list(self.envs.keys()))
         completers["sync_link"] = WordCompleter(["sync"])
         completers["show_claim"] = WordCompleter(["show", "claim"])
-        completers["show_claim_req"] = WordCompleter(["show", "claim", "request"])
+        completers["show_claim_req"] = WordCompleter(["show",
+                                                      "claim", "request"])
         completers["req_claim"] = WordCompleter(["request", "claim"])
         completers["accept_link_invite"] = WordCompleter(["accept",
-                                                          "invitation"])
+                                                          "invitation", "from"])
 
         return {**super().completers, **completers}
 
@@ -186,6 +190,7 @@ class SovrinCli(PlenumCli):
                         self._genCredAction,
                         self._showFile,
                         self._loadFile,
+                        self._loadResponseFile,
                         self._showLink,
                         self._connectTo,
                         self._syncLink,
@@ -212,8 +217,12 @@ class SovrinCli(PlenumCli):
     def _isVerified(self, msg: Dict[str, str]):
         signature = msg.get("signature")
         identifier = msg.get("identifier")
-        del msg["signature"]
-        ser = serializeForSig(msg)
+        msgWithoutSig = {}
+        for k, v in msg.items():
+            if k != "signature":
+                msgWithoutSig[k] = v
+
+        ser = serializeForSig(msgWithoutSig)
         key = cryptonymToHex(identifier) if not isHex(
             identifier) else identifier
         isVerified = SovrinCli.verifySig(key, signature, ser)
@@ -241,6 +250,7 @@ class SovrinCli(PlenumCli):
                 values = msg['values']  # TODO: Need to finalize this
                 rc = ReceivedClaim(ClaimDefKey(name, version, claimDefSeqNo),
                               issuerKeys, values)
+                rc.dateOfIssue = datetime.datetime.now()
                 li.updateReceivedClaims([rc])
                 self.activeWallet.addLinkInvitation(li)
             else:
@@ -250,7 +260,7 @@ class SovrinCli(PlenumCli):
                                               availableClaims):
         # identity = Identity(identifier=li.localIdentifier)
         # req = self.activeWallet.requestIdentity(identity,
-        #                                         sender=self.activeWallet.defaultId)
+        #                                 sender=self.activeWallet.defaultId)
         # self.activeClient.submitReqs(req)
         self.print("Synchronizing...")
 
@@ -310,6 +320,8 @@ class SovrinCli(PlenumCli):
     def handleEndpointMsg(self, msg):
         if msg["type"] == "AVAIL_CLAIM_LIST":
             self._handleAcceptInviteResponse(msg)
+        if msg["type"] == "CLAIM":
+            self._handleReqClaimResponse(msg)
 
     def sendToEndpoint(self, msg: Any, endpoint: str):
         pass
@@ -836,6 +848,23 @@ class SovrinCli(PlenumCli):
                   claimRequests, invitationData=invitationData)
         self.activeWallet.addLinkInvitation(li)
 
+    # TODO: This is tempoary, until agent is working
+    def _loadResponseFile(self, matchedVars):
+        if matchedVars.get('load_resp_file') == 'load response':
+            givenFilePath = matchedVars.get('file_path')
+            filePath = SovrinCli._getFilePath(givenFilePath)
+            if not filePath:
+                self.print("Given file does not exist")
+                msgs = ['load response <file path>']
+                self.printUsage(msgs)
+                return True
+
+            with open(filePath) as data_file:
+                respData = json.load(
+                    data_file, object_pairs_hook=collections.OrderedDict)
+                self.handleEndpointMsg(respData)
+            return True
+
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
             givenFilePath = matchedVars.get('file_path')
@@ -848,8 +877,8 @@ class SovrinCli(PlenumCli):
 
             with open(filePath) as data_file:
                 # TODO: What if it not JSON? Try Catch?
-                invitationData = json.load(data_file)
-            # try:
+                invitationData = json.load(
+                    data_file, object_pairs_hook=collections.OrderedDict)
                 linkInvitation = invitationData["link-invitation"]
                 # TODO: This check is not needed if while loading the file
                 # its made sure that `linkInvitation` is JSON.
@@ -863,9 +892,6 @@ class SovrinCli(PlenumCli):
                         self._loadInvitation(invitationData)
 
                     self._printShowAndAcceptLinkUsage(linkName)
-            # except Exception as e:
-            #     self.print('Error occurred during processing link '
-            #                'invitation: {}'.format(e))
 
             return True
 
@@ -922,7 +948,7 @@ class SovrinCli(PlenumCli):
         self.print("Ping to target endpoint: {} [Not Yet Implemented]".
                    format(endPoint))
 
-    def _updateLinkWithLatestInfo(self, link, reply):
+    def _updateLinkWithLatestInfo(self, link: Link, reply):
         data = json.loads(reply.get(DATA))
         endPoint = data.get('endpoint')
         if endPoint:
@@ -972,7 +998,7 @@ class SovrinCli(PlenumCli):
 
             if not self.activeEnv:
                 self.print("Cannot sync because not connected.")
-                self._printNotConnectedEnvMessage()
+                # self._printNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")
@@ -1053,15 +1079,15 @@ class SovrinCli(PlenumCli):
 
     def _printSyncAndAcceptUsage(self, linkName):
         msgs = ['sync "{}"'.format(linkName),
-                'accept invitation "{}"'.format(linkName)]
+                'accept invitation from "{}"'.format(linkName)]
         self.printUsage(msgs)
 
     def _printLinkAlreadyExcepted(self, linkName):
-        self.print("Link {} is already accepted")
+        self.print("Link {} is already accepted".format(linkName))
 
     def _printShowAndAcceptLinkUsage(self, linkName):
         msgs = ['show link "{}"'.format(linkName),
-                'accept invitation "{}"'.format(linkName)]
+                'accept invitation from "{}"'.format(linkName)]
         self.printUsage(msgs)
 
     def _printShowAndLoadFileUsage(self):
@@ -1076,7 +1102,7 @@ class SovrinCli(PlenumCli):
         return self.activeEnv and self.activeClient.hasSufficientConnections
 
     def _acceptInvitationLink(self, matchedVars):
-        if matchedVars.get('accept_link_invite') == 'accept invitation':
+        if matchedVars.get('accept_link_invite') == 'accept invitation from':
             linkName = SovrinCli.removeDoubleQuotes(matchedVars.get('link_name'))
             self._acceptLinkInvitation(linkName)
             return True
@@ -1178,34 +1204,38 @@ class SovrinCli(PlenumCli):
 
         return matchingLinksWithClaimReq[0]
 
-    def _getOneLinkAndAvailableClaim(self, claimName) -> \
+    def _getOneLinkAndAvailableClaim(self, claimName, printMsgs:bool=True) -> \
             (Link, AvailableClaimData):
         matchingLinksWithAvailableClaim = self.activeWallet. \
             getMatchingLinksWithAvailableClaim(claimName)
 
         if len(matchingLinksWithAvailableClaim) == 0:
-            self._printNoClaimFoundMsg()
+            if printMsgs:
+                self._printNoClaimFoundMsg()
             return None, None
 
         if len(matchingLinksWithAvailableClaim) > 1:
             linkNames = [ml.name for ml, cl in matchingLinksWithAvailableClaim]
-            self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
+            if printMsgs:
+                self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
             return None, None
 
         return matchingLinksWithAvailableClaim[0]
 
-    def _getOneLinkAndReceivedClaim(self, claimName) -> \
+    def _getOneLinkAndReceivedClaim(self, claimName, printMsgs:bool=True) -> \
             (Link, ReceivedClaim):
         matchingLinksWithRcvdClaim = self.activeWallet. \
             getMatchingLinksWithReceivedClaim(claimName)
 
         if len(matchingLinksWithRcvdClaim) == 0:
-            self._printNoClaimFoundMsg()
+            if printMsgs:
+                self._printNoClaimFoundMsg()
             return None, None
 
         if len(matchingLinksWithRcvdClaim) > 1:
             linkNames = [ml.name for ml, cl in matchingLinksWithRcvdClaim]
-            self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
+            if printMsgs:
+                self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
             return None, None
 
         return matchingLinksWithRcvdClaim[0]
@@ -1234,7 +1264,7 @@ class SovrinCli(PlenumCli):
                 msgs = ['request claim {}'.format(claimName)]
                 self.printUsage(msgs)
             else:
-                self.print("Claim not found in any link")
+                self.print("No matching claim(s) found in any links in current keyring")
             return True
 
     def _showReceivedOrAvailableClaim(self, claimName):
@@ -1243,7 +1273,7 @@ class SovrinCli(PlenumCli):
 
     def _showReceivedClaimIfExists(self, claimName):
         matchingLink, rcvdClaim = \
-            self._getOneLinkAndReceivedClaim(claimName)
+            self._getOneLinkAndReceivedClaim(claimName, printMsgs=False)
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
@@ -1254,7 +1284,7 @@ class SovrinCli(PlenumCli):
 
     def _showAvailableClaimIfExists(self, claimName):
         matchingLink, availableClaim = \
-            self._getOneLinkAndAvailableClaim(claimName)
+            self._getOneLinkAndAvailableClaim(claimName, printMsgs=False)
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
@@ -1269,15 +1299,28 @@ class SovrinCli(PlenumCli):
             self.printUsage(msgs)
             return availableClaim
         else:
-            self.print("Claim not found in any link")
+            self.print("No matching claim(s) found in any links in current keyring")
 
     def _showMatchingClaimProof(self, claimReq: ClaimRequest):
         matchingLinkAndRcvdClaims = \
             self.activeWallet.getMachingRcvdClaims(claimReq.attributes)
-        self.print("temp")
+
+        attributesWithValue = {}
+        for k, v in claimReq.attributes.items():
+            for ml, rc, commonAttrs in matchingLinkAndRcvdClaims:
+                if k in commonAttrs:
+                    attributesWithValue[k] = rc.values[k]
+                else:
+                    attributesWithValue[k] = ''
+
+        claimReq.attributes = attributesWithValue
+        self.print(claimReq.getClaimReqInfoStr())
+
         for ml, rc, commonAttrs in matchingLinkAndRcvdClaims:
-            self.print("Claim proof ({} v{} from {})".format(
+            self.print('\n      Claim proof ({} v{} from {})'.format(
                 rc.defKey.name, rc.defKey.version, ml.name))
+            for k, v in rc.values.items():
+                self.print('        ' + k + ': ' + v + ' (verifiable)')
 
     def _showClaimReq(self, matchedVars):
         if matchedVars.get('show_claim_req') == 'show claim request':
@@ -1286,9 +1329,8 @@ class SovrinCli(PlenumCli):
             matchingLink, claimReq = \
                 self._getOneLinkAndClaimReq(claimReqName)
             if matchingLink:
-                self.print("Found claim request {} in link {}".
+                self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
-                self.print(claimReq.getClaimReqInfoStr())
                 self._showMatchingClaimProof(claimReq)
             return True
 
