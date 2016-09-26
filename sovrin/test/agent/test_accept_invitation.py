@@ -1,6 +1,6 @@
 from plenum.common.types import f
 from plenum.test.eventually import eventually
-from sovrin.agent.msg_types import MSG_TYPE_ACCEPT_INVITE
+from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.test.agent.helper import ensureAgentsConnected
 
 
@@ -19,7 +19,7 @@ def testAcceptInvitation(faberIsRunning, faberLinkAdded, faberAdded,
     alice, awallet = aliceIsRunning
     ensureAgentsConnected(emptyLooper, alice, faber)
     msg = {
-        'type': MSG_TYPE_ACCEPT_INVITE,
+        'type': ACCEPT_INVITE,
         f.IDENTIFIER.nm: awallet.defaultId,
         'nonce': faberLinkAdded.nonce,
         f.SIG.nm: 'dsd'
