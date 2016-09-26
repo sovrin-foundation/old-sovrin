@@ -1,21 +1,7 @@
-import pytest
 from plenum.common.types import f
 from plenum.test.eventually import eventually
 from sovrin.agent.msg_types import ACCEPT_INVITE
-from sovrin.client.wallet.link_invitation import Link
-from sovrin.common.util import getNonce
-from sovrin.test.agent.helper import connectAgents, ensureAgentsConnected
-
-
-@pytest.fixture(scope="module")
-def faberLinkAdded(faberIsRunning):
-    faber, wallet = faberIsRunning
-    idr = wallet.defaultId
-    link = Link("Alice", idr, nonce=getNonce(7))
-    # TODO rename to addLink
-    wallet.addLinkInvitation(link)
-    assert wallet.getMatchingLinkInvitations("Alice")
-    return link
+from sovrin.test.agent.helper import ensureAgentsConnected
 
 
 def testFaberCreateLink(faberLinkAdded):
