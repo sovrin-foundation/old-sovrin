@@ -1,10 +1,10 @@
 import pytest
 import sovrin.anon_creds.cred_def as CredDefModule
+from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa
 from sovrin.client.wallet.cred_def import CredDef
-from sovrin.client.wallet.cred_def import CredDefKey
 from sovrin.common.util import getConfig
 from sovrin.test.helper import createNym, _newWallet
 
@@ -85,31 +85,32 @@ def attrNames():
 @pytest.fixture(scope="module")
 def credDef(attrNames):
     ip, port = genHa()
-    return CredDefModule.CredDef(attrNames, 'name1', 'version1',
-                                 p_prime="prime1", q_prime="prime1",
-                                 ip=ip, port=port)
+    return CredDefModule.CredDef(attrNames, 'name1', 'version1')
 
 
 @pytest.fixture(scope="module")
 def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir, nodeSet, credDef):
     old = sponsorWallet.pendingCount
-    data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
-    credDef = CredDef(data[NAME], data[VERSION],
-                      sponsorWallet.defaultId, data[TYPE],
-                      data[IP], data[PORT], data[KEYS])
+    data = credDef.get(serFmt=SerFmt.base58)
+    credDef = CredDef(seqNo=None,
+                      attrNames=None,
+                      name=data[NAME],
+                      version=data[VERSION],
+                      origin=sponsorWallet.defaultId,
+                      typ=data[TYPE])
     pending = sponsorWallet.addCredDef(credDef)
     assert pending == old + 1
     reqs = sponsorWallet.preparePending()
     # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
     sponsor.submitReqs(*reqs)
 
-    key = CredDefKey(*credDef.key())
+    key = credDef.key()
 
     def chk():
         assert sponsorWallet.getCredDef(key).seqNo is not None
 
-    looper.run(eventually(chk, retryWait=1, timeout=15))
+    looper.run(eventually(chk, retryWait=.1, timeout=60))
     return sponsorWallet.getCredDef(key).seqNo
 
     # DEPR

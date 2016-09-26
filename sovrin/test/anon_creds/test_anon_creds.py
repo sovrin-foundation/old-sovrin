@@ -32,14 +32,19 @@ from sovrin.test.helper import submitAndCheck, makePendingTxnsRequest
 from sovrin.client.wallet.wallet import Wallet
 
 
-def testAnonCredFlow(genned, looper, tdir, nodeSet,
+def testAnonCredFlow(genned,
+                     looper,
+                     tdir,
+                     nodeSet,
                      issuerWallet: Wallet,
                      proverWallet: Wallet,
-                     verifierWallet, addedIPV):
-    # Don't move below import outside of this method
-    # else that client class doesn't gets reloaded
-    # and hence it doesn't get updated with correct plugin class/methods
-    # and it gives error (for permanent solution bug is created: #130181205)
+                     verifierWallet,
+                     addedIPV):
+
+    # Don't move the following import outside of this method, otherwise that
+    # client class doesn't gets reloaded and it doesn't get updated with the
+    # correct plugin class/methods and it gives an error.
+    # (for permanent solution bug is created: #130181205)
     from sovrin.test.helper import genTestClient
 
     BYU = IssuerModule.AttribDef('BYU',
@@ -116,6 +121,7 @@ def testAnonCredFlow(genned, looper, tdir, nodeSet,
     issuer = IssuerModule.Issuer(issuerId, attrRepo)
     # issuer.attributeRepo = attrRepo
     # Issuer publishes credential definition to Sovrin ledger
+
     credDef = issuer.addNewCredDef(attrNames, name1, version1,
                                    p_prime="prime1", q_prime="prime1", ip=ip,
                                    port=port)

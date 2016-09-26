@@ -14,7 +14,7 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim import ClaimDefKey, ClaimDef
-from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
+from sovrin.client.wallet.cred_def import CredDef
 from sovrin.client.wallet.credential import Credential
 # from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.link_invitation import Link
@@ -172,14 +172,14 @@ class Wallet(PWallet, Sponsoring):
             self.pendRequest(req, credDef.key())
         return len(self._pending)
 
-    def getCredDef(self, key: CredDefKey):
-        return self._credDefs[key.key()]
+    def getCredDef(self, key):
+        return self._credDefs[key]
 
-    def addCredDefSk(self, credDefSk: CredDefSk):
+    def addCredDefSk(self, credDefSk):
         self._credDefSks[credDefSk.key()] = credDefSk
 
-    def getCredDefSk(self, key: CredDefKey):
-        return self._credDefSks.get(key.key())
+    def getCredDefSk(self, key):
+        return self._credDefSks.get(key)
 
     def addCredential(self, cred: Credential):
         self._credentials[cred.key()] = cred
@@ -364,7 +364,7 @@ class Wallet(PWallet, Sponsoring):
         if req:
             return self.prepReq(req)
 
-    def requestCredDef(self, credefKey: CredDefKey, sender):
+    def requestCredDef(self, credefKey, sender):
         credDef = CredDef(*credefKey.key())
         self._credDefs[credefKey.key()] = credDef
         req = credDef.getRequest(sender)

@@ -2,12 +2,6 @@ from abc import abstractmethod, abstractproperty
 from enum import Enum
 
 
-class SerFmt(Enum):
-    default = 1
-    py3Int = 2
-    base58 = 3
-
-
 class CredDefPublicKey:
     @abstractmethod
     def __init__(self, *args, **kwargs):

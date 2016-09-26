@@ -1,7 +1,6 @@
 import json
 
-from sovrin.anon_creds.cred_def import SerFmt
-
+from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
     KEYS
 from plenum.test.eventually import eventually
@@ -15,6 +14,12 @@ def testIssuerWritesCredDef(credentialDefinitionAdded):
     """
     pass
 
+
+def testIssuerWritesPublicKey():
+    """
+    An issuer key is added
+    """
+    pass
 
 def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
                           nodeSet, looper, sponsorWallet, credDef):

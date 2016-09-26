@@ -24,7 +24,6 @@ from plenum.common.util import randomString, cleanSeed, getCryptonym, isHex, \
 from sovrin.agent.endpoint import Endpoint
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
-from sovrin.anon_creds.cred_def import SerFmt
 from sovrin.anon_creds.issuer import AttrRepo
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
@@ -34,7 +33,7 @@ from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
-from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
+from sovrin.client.wallet.cred_def import CredDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, \
@@ -87,7 +86,8 @@ class SovrinCli(PlenumCli):
         super().__init__(*args, **kwargs)
         self.attributeRepo = None   # type: AttrRepo
         self.proofBuilders = {}
-        self.verifier = Verifier(randomString())
+        # DEPR JAL removed following because it doesn't seem right, testing now
+        # self.verifier = Verifier(randomString())
         _, port = self.nextAvailableClientAddr()
         self.endpoint = Endpoint(port, self.handleEndpointMsg)
 
