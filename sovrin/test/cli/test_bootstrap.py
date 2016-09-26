@@ -1,6 +1,8 @@
 import json
 
 import pytest
+from sovrin.agent.faber import FaberAgent
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
 
 
@@ -257,12 +259,14 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap
 
 
 @pytest.fixture(scope="module")
-def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut):
+def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut,
+                           faberIsRunning):
     philCli = faberAddedByPhil
     be(philCli)
     # I had to give two open/close curly braces in raw data
     # to avoid issue in mapping
-    do('send ATTRIB dest={target} raw={{"endpoint": "0.0.0.0:1212"}}',
+    do('send ATTRIB dest={target} raw={endpointAttr}',
+    # do('send ATTRIB dest={target} raw={{"endpoint": "127.0.0.1:1212"}}',
                                         within=3,
                                         expect=attrAddedOut,
                                         mapper=faberMap)
@@ -303,6 +307,13 @@ def testShowSyncedFaberInviteWithEndpoint(be, do, faberInviteSyncedWithEndpoint,
 def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
     be(aliceCli)
     do('accept invitation from {inviter-not-exists}',
+                                        expect=linkNotExists, mapper=faberMap)
+
+
+def testAliceAcceptInvitation(be, do, aliceCli, faberInviteSyncedWithEndpoint,
+                              linkNotExists, faberMap):
+    be(aliceCli)
+    do('accept invitation from {inviter}',
                                         expect=linkNotExists, mapper=faberMap)
 
 

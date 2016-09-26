@@ -49,7 +49,7 @@ logger = getlogger()
 class AliceAgent(Agent):
     def __init__(self, name: str="agent2", client: Client=None, port: int=None,
                  handlers: Dict=None):
-        super().__init__(name, client, port)
+        super().__init__(name, client, port, msgHandler=self.handleEndpointMessage)
         self.handlers = handlers
 
     @property

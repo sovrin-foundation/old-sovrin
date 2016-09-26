@@ -1,6 +1,7 @@
 import pytest
 from plenum.common.types import f
 from plenum.test.eventually import eventually
+from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.wallet.link_invitation import Link
 from sovrin.common.util import getNonce
 from sovrin.test.agent.helper import connectAgents, ensureAgentsConnected
@@ -32,9 +33,9 @@ def testAcceptInvitation(faberIsRunning, faberLinkAdded, faberAdded,
     alice, awallet = aliceIsRunning
     ensureAgentsConnected(emptyLooper, alice, faber)
     msg = {
-        "type": 'ACCEPT_INVITE',
+        'type': ACCEPT_INVITE,
         f.IDENTIFIER.nm: awallet.defaultId,
-        "nonce": faberLinkAdded.nonce,
+        'nonce': faberLinkAdded.nonce,
         f.SIG.nm: 'dsd'
     }
     alice.sendMessage(msg, faber.endpoint.name)

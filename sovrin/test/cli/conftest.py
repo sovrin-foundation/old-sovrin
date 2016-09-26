@@ -1,10 +1,11 @@
+import json
 import traceback
 
 import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR
+from sovrin.common.txn import SPONSOR, ENDPOINT
 from sovrin.test.helper import createNym
 
 plenum.common.util.loggingConfigured = False
@@ -16,6 +17,8 @@ from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
+from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, faberWallet
+
 
 config = getConfig()
 
@@ -80,14 +83,16 @@ def aliceMap():
 
 
 @pytest.fixture(scope="module")
-def faberMap():
+def faberMap(faberIsRunning):
+    endpoint = "127.0.0.1:{}".format(faberIsRunning[0].endpoint.ha[1])
     return {'inviter': 'Faber College',
             'invite': "sample/faber-invitation.sovrin",
             'invite-not-exists': "sample/faber-invitation.sovrin.not.exists",
             'inviter-not-exists': "non-existing-inviter",
             "target": "3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=",
             "nonce": "b1134a647eb818069c089e7694f63e6d",
-            "endpoint": "0.0.0.0:1212",
+            ENDPOINT: endpoint,
+            "endpointAttr": json.dumps({ENDPOINT: endpoint}),
             "claims": "Transcript",
             "claim-to-show": "Transcript"
             }
