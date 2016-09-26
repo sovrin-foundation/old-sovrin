@@ -9,6 +9,7 @@ from plenum.common.types import f
 ROLE = 'role'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
+ATTR_NAMES = "attr_names"
 
 LAST_TXN = "lastTxn"
 TXNS = "Txns"
