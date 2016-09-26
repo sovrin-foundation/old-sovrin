@@ -450,6 +450,17 @@ def showClaimOut():
             "request claim {name}"
     ]
 
+
+@pytest.fixture(scope="module")
+def showLinkWithClaimReqOut():
+    return ["Claim Requests: {claim-requests}"]
+
+@pytest.fixture(scope="module")
+def showAcceptedLinkWithClaimReqsOut(showAcceptedLinkOut,
+                                     showLinkWithClaimReqOut):
+    return showAcceptedLinkOut + showLinkWithClaimReqOut
+
+
 @pytest.fixture(scope="module")
 def showAcceptedLinkOut():
     return [

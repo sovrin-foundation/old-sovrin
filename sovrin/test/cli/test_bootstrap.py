@@ -512,9 +512,9 @@ def testLoadAcmeInvite(acmeInviteLoadedByAlice):
 
 
 def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
-                       showUnSyncedLinkOut, acmeMap):
+                       showUnSyncedLinkOut, showLinkWithClaimReqOut, acmeMap):
     showUnSyncedLinkWithClaimReqs = \
-        showUnSyncedLinkOut + ["Claim Requests: Job Application"]
+        showUnSyncedLinkOut + showLinkWithClaimReqOut
     be(aliceCli)
     do('show link {inviter}',           expect=showUnSyncedLinkWithClaimReqs,
                                         mapper=acmeMap)
@@ -595,12 +595,13 @@ def testAcmeRespondsToAcceptInvite(acmeRespondedToAcceptInvite):
     pass
 
 
-def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap, showAcceptedLinkOut,
-                                      acmeRespondedToAcceptInvite):
+def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap,
+                                      acmeRespondedToAcceptInvite,
+                                      showAcceptedLinkWithClaimReqsOut):
     aliceCli = acmeRespondedToAcceptInvite
     be(aliceCli)
 
-    do("show link {inviter}",           expect=showAcceptedLinkOut,
+    do("show link {inviter}",           expect=showAcceptedLinkWithClaimReqsOut,
                                         not_expect="Link (not yet accepted)",
                                         mapper=acmeMap)
 
