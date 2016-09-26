@@ -1080,7 +1080,7 @@ class SovrinCli(PlenumCli):
                 Usage: show link <name>""")
 
         def connectHelper():
-            self.print("""Let's you connect to the respective environment
+            self.print("""Lets you connect to the respective environment
                 Usage: connect <test>|<live>""")
 
         def syncHelper():
