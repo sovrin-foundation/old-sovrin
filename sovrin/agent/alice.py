@@ -109,7 +109,7 @@ def runAlice(name=None, wallet=None, basedirpath=None, startRunning=True):
         # TODO: Send claims
 
     handlers = {
-        MST_TYPE_AVAIL_CLAIM_LIST: listClaims
+        AVAIL_CLAIM_LIST: listClaims
     }
 
     alice = AliceAgent(name, client=client, port=port, handlers=handlers)
