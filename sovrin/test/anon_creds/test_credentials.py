@@ -2,7 +2,7 @@ import json
 
 from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
-    KEYS
+    KEYS, ATTR_NAMES
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
 from sovrin.common.txn import GET_CRED_DEF
@@ -15,11 +15,12 @@ def testIssuerWritesCredDef(credentialDefinitionAdded):
     pass
 
 
-def testIssuerWritesPublicKey():
+def testIssuerWritesPublicKey(issuerPublicKeysAdded):
     """
     An issuer key is added
     """
     pass
+
 
 def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
                           nodeSet, looper, sponsorWallet, credDef):
@@ -59,6 +60,6 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     recvdCredDef = json.loads(reply[DATA])
     assert recvdCredDef[NAME] == definition[NAME]
     assert recvdCredDef[VERSION] == definition[VERSION]
-    assert json.loads(recvdCredDef[KEYS]) == definition[KEYS]
+    assert recvdCredDef[ATTR_NAMES].split(",") == definition[ATTR_NAMES]
     # TODO: Check whether cred def is added to wallet and then compare cred def
     # retrieved from wallet

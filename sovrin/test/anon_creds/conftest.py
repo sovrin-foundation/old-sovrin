@@ -1,7 +1,12 @@
+import uuid
+
 import pytest
 import sovrin.anon_creds.cred_def as CredDefModule
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
+from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa
 from sovrin.client.wallet.cred_def import CredDef
@@ -78,27 +83,38 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
 
 @pytest.fixture(scope="module")
 def attrNames():
-    return "first_name", "last_name", "birth_date", "expire_date", \
-           "undergrad", "postgrad"
+    return ["first_name", "last_name", "birth_date", "expire_date", \
+           "undergrad", "postgrad"]
 
 
 @pytest.fixture(scope="module")
 def credDef(attrNames):
-    ip, port = genHa()
-    return CredDefModule.CredDef(attrNames, 'name1', 'version1')
+    # ip, port = genHa()
+    return CredDefModule.CredDef(str(uuid.uuid4()), attrNames, name='name1',
+                                 version='version1')
+
+
+@pytest.fixture(scope="module")
+def credDefSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir, nodeSet,
+                          staticPrimes):
+    csk = CredDefSecretKey(*staticPrimes.get("prime1"))
+    return sponsorWallet.addCredDefSk(str(csk))
 
 
 @pytest.fixture(scope="module")
 def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorWallet, looper, tdir, nodeSet, credDef):
+                              sponsorWallet, looper, tdir, nodeSet, attrNames,
+                              credDef, credDefSecretKeyAdded):
     old = sponsorWallet.pendingCount
     data = credDef.get(serFmt=SerFmt.base58)
     credDef = CredDef(seqNo=None,
-                      attrNames=None,
+                      attrNames=attrNames,
                       name=data[NAME],
                       version=data[VERSION],
                       origin=sponsorWallet.defaultId,
-                      typ=data[TYPE])
+                      typ=data[TYPE],
+                      secretKey=credDefSecretKeyAdded)
     pending = sponsorWallet.addCredDef(credDef)
     assert pending == old + 1
     reqs = sponsorWallet.preparePending()
@@ -119,3 +135,21 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     #     DATA: data
     # }
     # return submitAndCheck(looper, sponsor, sponsorWallet, op)
+
+
+@pytest.fixture(scope="module")
+def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir, nodeSet,
+                          staticPrimes, credDefSecretKeyAdded,
+                         credentialDefinitionAdded):
+    csk = sponsorWallet.getCredDefSk(credDefSecretKeyAdded)
+    cd = sponsorWallet.getCredDef(seqNo=credentialDefinitionAdded)
+    isk = IssuerSecretKey(cd, csk, uid=str(uuid.uuid4()))
+    return sponsorWallet.addIssuerSecretKey(isk)
+
+
+@pytest.fixture(scope="module")
+def issuerPublicKeysAdded(genned, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir, nodeSet,
+                          staticPrimes, issuerSecretKeyAdded):
+

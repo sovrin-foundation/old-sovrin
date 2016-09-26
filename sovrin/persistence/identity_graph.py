@@ -8,7 +8,7 @@ from typing import Dict, Optional
 from ledger.util import F
 from plenum.common.error import fault
 from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
-    DATA, RAW, ENC, HASH
+    DATA, RAW, ENC, HASH, ATTR_NAMES, ORIGIN
 from plenum.common.types import f
 from plenum.common.util import getlogger, error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
@@ -242,9 +242,10 @@ class IdentityGraph(OrientDbGraphStore):
             }
             self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
-    def addCredDef(self, frm, txnId, name, version, typ: Optional[str]=None):
+    def addCredDef(self, frm, txnId, name, version, attrNames, typ: Optional[str]=None):
         kwargs = {
-            TYPE: typ
+            TYPE: typ,
+            ATTR_NAMES: attrNames
         }
         vertex = self.createVertex(Vertices.CredDef, **kwargs)
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
@@ -279,13 +280,19 @@ class IdentityGraph(OrientDbGraphStore):
         credDefs = self.client.command(cmd)
         if credDefs:
             credDef = credDefs[0].oRecordData
+            edgeData = self.client.command(
+                "select expand(inE('{}')) from {}"
+                    .format(Edges.AddsCredDef, credDefs[0]._rid))[0].oRecordData
             return {
                 NAME: name,
                 VERSION: version,
-                IP: credDef.get(IP),
-                PORT: credDef.get(PORT),
+                # IP: credDef.get(IP),
+                # PORT: credDef.get(PORT),
                 TYPE: credDef.get(TYPE),
-                KEYS: credDef.get(KEYS)
+                F.seqNo.name: edgeData.get(F.seqNo.name),
+                ATTR_NAMES: credDef.get(ATTR_NAMES),
+                ORIGIN: frm,
+                # KEYS: credDef.get(KEYS)
             }
 
     def getNym(self, nym, role=None):
@@ -501,6 +508,7 @@ class IdentityGraph(OrientDbGraphStore):
                 txnId=txnId,
                 name=data.get(NAME),
                 version=data.get(VERSION),
+                attrNames=data.get(ATTR_NAMES),
                 typ=data.get(TYPE))
             self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsCredDef, txn)
         except Exception as ex:

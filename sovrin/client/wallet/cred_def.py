@@ -2,7 +2,7 @@ from typing import Optional, Dict
 
 from anoncreds.protocol.credential_definition import CredentialDefinition
 from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, IP, PORT, KEYS, \
-    TARGET_NYM, RAW
+    TARGET_NYM, RAW, TYPE, ATTR_NAMES
 from plenum.common.types import Identifier
 from sovrin.common.txn import CRED_DEF, GET_CRED_DEF
 from sovrin.common.types import Request
@@ -25,6 +25,7 @@ class CredDef(CredentialDefinition):
                  attrNames,
                  name: str,
                  version: str,
+                 secretKey: Optional[str]=None,    # uid of the Cred Def secret key
                  origin: Optional[Identifier]=None,
                  typ: str=None,
                  # DEPR
@@ -64,6 +65,8 @@ class CredDef(CredentialDefinition):
                 DATA: {
                     NAME: self.name,
                     VERSION: self.version,
+                    TYPE: self.typ,
+                    ATTR_NAMES: ",".join(self.attrNames)
                     # DEPR
                     # IP: self.ip,
                     # PORT: self.port,

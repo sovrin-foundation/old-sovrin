@@ -38,7 +38,7 @@ from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
-from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
+from sovrin.client.wallet.cred_def import CredDef#, CredDefSk, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, \
@@ -726,7 +726,7 @@ class SovrinCli(PlenumCli):
             self.print("The following credential definition is published to the"
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
-            self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
+            self.print("{}".format(credDef.get(serFmt=CredDefModule.SerFmt.base58)))
             self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient)
             return True
