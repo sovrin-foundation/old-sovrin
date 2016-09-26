@@ -61,10 +61,11 @@ class AliceAgent(Agent):
         self._activeWallet = wallet
 
     def handleEndpointMessage(self, msg):
-        typ = msg.get(TYPE)
+        body, frm = msg
+        typ = body.get(TYPE)
         handler = self.handlers.get(typ)
         if not handler:
-            handler(msg)
+            handler(body)
         else:
             logger.debug("no handler found for type")
 
