@@ -157,10 +157,9 @@ def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedWhenConnected(commonAcceptInvitationMsgs):
+def acceptUnSyncedWithoutEndpointWhenConnected(commonAcceptInvitationMsgs):
     return commonAcceptInvitationMsgs + \
-            ["Link {inviter} synced",
-             "Starting communication with {inviter}"]
+            ["Link {inviter} synced"]
 
 
 @pytest.fixture(scope="module")
