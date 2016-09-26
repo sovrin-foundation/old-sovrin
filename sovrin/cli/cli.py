@@ -340,8 +340,8 @@ class SovrinCli(PlenumCli):
         self.agent.connectTo(endpoint)
         if not self.agent.endpoint.isConnectedTo(ha=endpoint):
             self.ensureAgentConnected(endpoint)
-        # self.agent.sendMessage(msg, destHa=endpoint)
-        # self.logger.debug("Message sent: {}".format(msg))
+        self.agent.sendMessage(msg, destHa=endpoint)
+        self.logger.debug("Message sent: {}".format(msg))
 
     def _buildWalletClass(self, nm):
         # DEPR
