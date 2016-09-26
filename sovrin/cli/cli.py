@@ -1518,8 +1518,8 @@ class SovrinCli(PlenumCli):
     def ensureAgentConnected(self, otherAgentHa):
         if self.agent.endpoint.isConnectedTo(ha=otherAgentHa):
             # TODO: Remove this print
-            self.print("Agent {} connected to {}".
-                       format(self.agent, otherAgentHa))
+            self.logger.debug("Agent {} connected to {}".
+                              format(self.agent, otherAgentHa))
         else:
             self.looper.loop.call_later(.2, self.ensureAgentConnected,
                                         otherAgentHa)

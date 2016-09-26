@@ -106,7 +106,7 @@ def acmeMap():
             'inviter-not-exists': "non-existing-inviter",
             "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
             "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
-            "endpoint": "0.0.0.0:1213",
+            "endpoint": "127.0.0.1:1213",
             "claim-requests" : "Job Application",
             "claim-req-to-show": "Job Application",
             "claims": "Job-Certificate",
