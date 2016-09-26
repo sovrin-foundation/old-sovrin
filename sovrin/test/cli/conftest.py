@@ -181,7 +181,7 @@ def connectUsage():
 
 @pytest.fixture(scope="module")
 def notConnectedStatus(connectUsage):
-    return ['Not connected to any environment. Please connect first.'] +\
+    return ['Please connect first.'] +\
             connectUsage
 
 

@@ -359,7 +359,7 @@ class SovrinCli(PlenumCli):
         return nodesAdded
 
     def _printNotConnectedEnvMessage(self):
-        self.print("Not connected to any environment. Please connect first.")
+        self.print("Please connect first.")
         self._printConnectUsage()
 
     def _printConnectUsage(self):
@@ -1006,11 +1006,10 @@ class SovrinCli(PlenumCli):
 
             if not self.activeEnv:
                 self.print("Cannot sync because not connected.")
-                # self._printNotConnectedEnvMessage()
+                self._printNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")
-            self._printConnectUsage()
 
     def _getLinkByTarget(self, target) -> Link:
         return self.activeWallet.getLinkInvitationByTarget(target)

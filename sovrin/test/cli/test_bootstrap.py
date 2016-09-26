@@ -1,7 +1,6 @@
 import json
 
 import pytest
-from sovrin.agent.faber import FaberAgent
 from sovrin.test.cli.helper import getFileLines
 
 
