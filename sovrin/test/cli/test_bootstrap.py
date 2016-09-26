@@ -314,8 +314,17 @@ def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
 def testAliceAcceptInvitation(be, do, aliceCli, faberInviteSyncedWithEndpoint,
                               linkNotExists, faberMap):
     be(aliceCli)
-    do('accept invitation from {inviter}',
-                                        expect=linkNotExists, mapper=faberMap)
+    do('accept invitation from {inviter}', within=1,
+                                expect=[
+                                    "Signature accepted.",
+                                    "Trust established.",
+                                    "Identifier created in Sovrin.",
+                                    "Available claims: Transcript"
+                                    "Synchronizing...",
+                                    # Once faber starts writing identifier
+                                    # to Sovrin, need to uncomment below line
+                                    # "Confirmed identifier written to Sovrin."
+                                ], mapper=faberMap)
 
 
 def getFaberAcceptInviteRespMsg():

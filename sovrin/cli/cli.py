@@ -1,7 +1,7 @@
 import ast
 import datetime
 import json
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Callable
 
 import os
 from hashlib import sha256
@@ -338,10 +338,16 @@ class SovrinCli(PlenumCli):
     def sendToEndpoint(self, msg: Any, endpoint: Tuple):
         # TODO: Check if already connected
         self.agent.connectTo(endpoint)
+
+        # TODO: Refactor this
+        def _send():
+            self.agent.sendMessage(msg, destHa=endpoint)
+            self.logger.debug("Message sent: {}".format(msg))
+
         if not self.agent.endpoint.isConnectedTo(ha=endpoint):
-            self.ensureAgentConnected(endpoint)
-        self.agent.sendMessage(msg, destHa=endpoint)
-        self.logger.debug("Message sent: {}".format(msg))
+            self.ensureAgentConnected(endpoint, _send)
+        else:
+            _send()
 
     def _buildWalletClass(self, nm):
         # DEPR
@@ -403,12 +409,12 @@ class SovrinCli(PlenumCli):
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
             self._agent = Agent(name=randomString(6), client=self.activeClient,
-                                port=port, msgHandler=self.handleAgentMessage)
+                                port=port, msgHandler=self.handleEndpointMsg)
             self.looper.add(self._agent)
         return self._agent
 
-    def handleAgentMessage(self, msg):
-        pass
+    # def handleAgentMessage(self, msg):
+    #     logger.debug
 
     @staticmethod
     def bootstrapClientKeys(idr, verkey, nodes):
@@ -1060,7 +1066,7 @@ class SovrinCli(PlenumCli):
             'type': ACCEPT_INVITE
         }
         signedNonce = self.activeWallet.signOp(op, self.activeWallet.defaultId)
-        op["signedInvitationNonce"] = signedNonce
+        # op["signedInvitationNonce"] = signedNonce
         ip, port = link.remoteEndPoint.split(":")
         self.sendToEndpoint(op, (ip, int(port)))
 
@@ -1515,14 +1521,16 @@ class SovrinCli(PlenumCli):
         else:
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 
-    def ensureAgentConnected(self, otherAgentHa):
+    def ensureAgentConnected(self, otherAgentHa, clbk: Callable=None, *args, **kwargs):
         if self.agent.endpoint.isConnectedTo(ha=otherAgentHa):
             # TODO: Remove this print
             self.logger.debug("Agent {} connected to {}".
                               format(self.agent, otherAgentHa))
+            if clbk:
+                clbk(*args, **kwargs)
         else:
             self.looper.loop.call_later(.2, self.ensureAgentConnected,
-                                        otherAgentHa)
+                                        otherAgentHa, clbk, *args, **kwargs)
 
     def ensureReqCompleted(self, reqId, client, clbk=None, *args):
         reply, err = client.replyIfConsensus(reqId)

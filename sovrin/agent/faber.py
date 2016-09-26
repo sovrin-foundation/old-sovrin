@@ -11,6 +11,7 @@ from sovrin.agent.agent import Agent
 from sovrin.agent.helper import processInvAccept
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.client import Client
+from sovrin.client.wallet.helper import createAvailClaimListMsg
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
@@ -110,6 +111,8 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
             link.remoteIdentifier = body.get(f.IDENTIFIER.nm)
             link.remoteEndPoint = ha
             # TODO: Send claims
+            resp = createAvailClaimListMsg(link.remoteIdentifier)
+            faber.sendMessage(resp, destName=frm)
 
     handlers = {
         ACCEPT_INVITE: acceptInvite
