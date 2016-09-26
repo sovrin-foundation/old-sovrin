@@ -23,7 +23,8 @@ from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
-    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns
+    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
+    ISSUER_KEY
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -336,6 +337,11 @@ class Node(PlenumNode):
             self.graphStore.addAttribTxnToGraph(result)
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStore.addCredDefTxnToGraph(result)
+        elif result[TXN_TYPE] == ISSUER_KEY:
+            self.graphStore.addIssuerKeyToGraph(result)
+        else:
+            logger.debug("Got an unknown type {} to process".
+                         format(result[TXN_TYPE]))
 
     def sendReplyToClient(self, reply):
         identifier = reply.result.get(f.IDENTIFIER.nm)

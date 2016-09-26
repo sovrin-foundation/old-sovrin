@@ -1,10 +1,13 @@
+import json
 from typing import Optional, Dict
 
+from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.credential_definition import CredentialDefinition
 from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, IP, PORT, KEYS, \
-    TARGET_NYM, RAW, TYPE, ATTR_NAMES
+    TARGET_NYM, RAW, TYPE, ORIGIN
 from plenum.common.types import Identifier
-from sovrin.common.txn import CRED_DEF, GET_CRED_DEF
+from sovrin.common.txn import CRED_DEF, GET_CRED_DEF, ATTR_NAMES, ISSUER_KEY, \
+    GET_ISSUER_KEY, REFERENCE
 from sovrin.common.types import Request
 
 
@@ -19,7 +22,17 @@ from sovrin.common.types import Request
 #         self.origin = origin    # author of the credential definition
 
 
-class CredDef(CredentialDefinition):
+class HasSeqNo:
+    @property
+    def seqNo(self):
+        return self.uid
+
+    @seqNo.setter
+    def seqNo(self, value):
+        self.uid = value
+
+
+class CredDef(CredentialDefinition, HasSeqNo):
     def __init__(self,
                  seqNo: Optional[int],
                  attrNames,
@@ -45,13 +58,13 @@ class CredDef(CredentialDefinition):
         # self.keys = keys
         # self.seqNo = seqNo
 
-    @property
-    def seqNo(self):
-        return self.uid
-
-    @seqNo.setter
-    def seqNo(self, value):
-        self.uid = value
+    # @property
+    # def seqNo(self):
+    #     return self.uid
+    #
+    # @seqNo.setter
+    # def seqNo(self, value):
+    #     self.uid = value
 
     def key(self):
         return self.name, self.version, self.origin
@@ -77,7 +90,7 @@ class CredDef(CredentialDefinition):
 
     def _opForGet(self):
         op = {
-            TARGET_NYM: self.origin,
+            TARGET_NYM: self.origin,    # TODO: Should be origin
             TXN_TYPE: GET_CRED_DEF,
             DATA: {
                 NAME: self.name,
@@ -99,3 +112,49 @@ class CredDef(CredentialDefinition):
 #                  dest: Optional[str]=None):
 #         super().__init__(name, version, dest)
 #         self.secretKey = secretKey
+
+
+class IssuerPubKey(IssuerKey, HasSeqNo):
+    def __init__(self, N, R, S, Z, claimDefSeqNo: int,
+                 secretKeyUid, origin, seqNo: Optional[int]=None):
+        super().__init__(seqNo, N, R, S, Z)
+        self.claimDefSeqNo = claimDefSeqNo
+        self.secretKeyUid = secretKeyUid
+        self.origin = origin
+
+    # @property
+    # def seqNo(self):
+    #     return self.uid
+    #
+    # @seqNo.setter
+    # def seqNo(self, value):
+    #     self.uid = value
+
+    @property
+    def request(self):
+        if not self.seqNo:
+            assert self.origin is not None
+            R_str = {k: str(v) for k,v in self.R.items()}
+            op = {
+                TXN_TYPE: ISSUER_KEY,
+                REFERENCE: self.claimDefSeqNo,
+                DATA: {
+                    "N": str(self.N),
+                    "R": R_str,
+                    "S": str(self.S),
+                    "Z": str(self.Z)
+                }
+            }
+            return Request(identifier=self.origin, operation=op)
+
+    def _opForGet(self):
+        op = {
+            TXN_TYPE: GET_ISSUER_KEY,
+            REFERENCE: self.claimDefSeqNo,
+            ORIGIN: self.origin
+        }
+        return op
+
+    def getRequest(self, requestAuthor: Identifier):
+        if not self.seqNo:
+            return Request(identifier=requestAuthor, operation=self._opForGet())

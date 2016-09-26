@@ -227,6 +227,7 @@ def showTranscriptClaimProofOut():
         "status: {attr-status}",
     ]
 
+
 @pytest.fixture(scope="module")
 def showJobAppClaimReqOut(showTranscriptClaimProofOut):
     return [

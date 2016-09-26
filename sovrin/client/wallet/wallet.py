@@ -11,9 +11,10 @@ from typing import Optional
 
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
+from plenum.common.error import fault
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW, \
-    ORIGIN, ATTR_NAMES
+    ORIGIN
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim import ClaimDefKey, ClaimDef
@@ -22,7 +23,7 @@ from sovrin.client.wallet.credential import Credential
 # from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.link_invitation import Link
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
-    GET_NYM, SPONSOR
+    GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
@@ -84,9 +85,10 @@ class Wallet(PWallet, Sponsoring):
             GET_CRED_DEF: self._getCredDefReply,
             NYM: self._nymReply,
             GET_NYM: self._getNymReply,
-            GET_TXNS: self._getTxnsReply
+            GET_TXNS: self._getTxnsReply,
+            ISSUER_KEY: self._issuerKeyReply,
+            GET_ISSUER_KEY: self._getIssuerKeyReply,
         }
-
 
     @property
     def pendingCount(self):
@@ -340,6 +342,32 @@ class Wallet(PWallet, Sponsoring):
         print(result)
         # for now, just print and move on
 
+    def _issuerKeyReply(self, result, preparedReq):
+        data = result.get(DATA)
+        ref = result.get(REFERENCE)
+        uid = self._getMatchingIssuerKey(data)
+        if uid and self._issuerPks[uid].claimDefSeqNo == ref:
+            self._issuerPks[uid].seqNo = result.get(F.seqNo.name)
+            return self._issuerPks[uid].seqNo
+        else:
+            raise Exception("Not found appropriate issuer key to update")
+
+    def _getIssuerKeyReply(self, result, preparedReq):
+        pass
+
+    def _getMatchingIssuerKey(self, data):
+        for uid, pk in self._issuerPks.items():
+            if str(pk.N) == data.get("N") and str(pk.S) == data.get("S") and str(pk.Z) == data.get("Z"):
+                matches = 0
+                for k, v in pk.R.items():
+                    if str(pk.R.get(k)) == data.get("R").get(k):
+                        matches += 1
+                    else:
+                        break
+                if matches == len(pk.R):
+                    return uid
+        return None
+
     def pendRequest(self, req, key=None):
         self._pending.appendleft((req, key))
 
@@ -413,7 +441,11 @@ class Wallet(PWallet, Sponsoring):
         return self._issuerSks.get(uid)
 
     def addIssuerPublicKey(self, issuerPk):
-        self._issuerpks[issuerPk.uid] = issuerPk
+        self._issuerPks[issuerPk.secretKeyUid] = issuerPk
+        req = issuerPk.request
+        if req:
+            self.pendRequest(req, None)
+        return len(self._pending)
 
     def getIssuerPublicKey(self, uid):
-        return self._issuerpks.get(uid)
+        return self._issuerPks.get(uid)
