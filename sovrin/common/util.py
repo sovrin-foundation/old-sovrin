@@ -1,6 +1,6 @@
 import datetime
 import random
-from uuid import uuid4, uuid1
+from base64 import b64decode
 
 import importlib
 import importlib.util
@@ -9,8 +9,21 @@ import os
 from typing import Tuple, Union
 
 import libnacl.secret
+from plenum.common.signing import serializeForSig
 from plenum.common.txn import KEYS
-from plenum.common.util import isHex, error, getConfig as PlenumConfig
+from plenum.common.util import isHex, error, getConfig as PlenumConfig, \
+    cryptonymToHex
+from raet.nacling import Verifier
+
+
+def verifySig(identifier, signature, msg) -> bool:
+    key = cryptonymToHex(identifier) if not isHex(
+        identifier) else identifier
+    ser = serializeForSig(msg)
+    b64sig = signature.encode('utf-8')
+    sig = b64decode(b64sig)
+    vr = Verifier(key)
+    return vr.verify(sig, ser)
 
 
 def getSymmetricallyEncryptedVal(val, secretKey: Union[str, bytes]=None) -> \

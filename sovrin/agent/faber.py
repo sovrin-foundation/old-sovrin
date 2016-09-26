@@ -1,51 +1,50 @@
-import json
 from typing import Dict
 
 import os
 from plenum.common.looper import Looper
-from plenum.common.txn import TYPE
-from plenum.common.types import f
+from plenum.common.txn import TYPE, NAME
+
 from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
-from sovrin.agent.helper import processInvAccept
-from sovrin.agent.msg_types import ACCEPT_INVITE
+from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIMS, \
+    CLAIM_NAME_FIELD
 from sovrin.client.client import Client
-from sovrin.client.wallet.helper import createAvailClaimListMsg
+from sovrin.client.wallet.helper import createAvailClaimListMsg, \
+    createClaimsMsg, signAndSendToCaller, verifyAndGetLink
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
 logger = getlogger()
 
 
-# def msgHandler(msg):
-#     typ = msg.get(TYPE)
-#     handler = handlers.get(typ)
-#     if not handler:
-#         handler(msg)
-#     else:
-#         logger.debug("no handler found for type")
-#
-#
-# def acceptInvite(msg):
-#     body, frm = msg
-#     """
-#     body = {
-#         "type": <some type>,
-#         "identifier": <id>,
-#         "nonce": <nonce>,
-#         "signature" : <sig>
-#     }
-#     """
-#     # TODO: Need to nonce verification here
-#     data = json.loads(body)
-#     wallet.knownIds[data['identifier']] =
-#     # TODO: Send claims
-#
-#
-# handlers = {
-#     ACCEPT_INVITE: acceptInvite
-# }
+CLAIMS_LIST = [{
+    "name": "Transcript",
+    "version": "1.2",
+    "claimDefSeqNo":"<claimDefSeqNo>",
+    "values": {
+        "student_name": "Alice Garcia",
+        "ssn": "123456789",
+        "degree": "Bachelor of Science, Marketing",
+        "year": "2015",
+        "status": "graduated"
+    }
+}]
+
+AVAILABLE_CLAIMS_LIST = [{
+    "name": "Transcript",
+    "version": "1.2",
+    "claimDefSeqNo":" <claimDefSeqNo>",
+    "definition": {
+        "attributes": {
+            "student_name": "string",
+            "ssn": "int",
+            "degree": "string",
+            "year": "string",
+            "status": "string"
+        }
+    }
+}]
 
 
 class FaberAgent(Agent):
@@ -83,39 +82,35 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
     client = Client(randomString(6), ha=("0.0.0.0", clientPort),
                     basedirpath=basedirpath)
 
-    # def f1():
-    #     doSomethingWithWallet(wallet, action)
-    #
-    # def f2():
-    #     doSomethingElseWithWallet(wallet, action2)
-    #
-    # handlers = {
-    #     acc: f1,
-    #     acd: f2
-    # }
+    def reqClaim(msg):
+        body, (frm, ha) = msg
+        # TODO: Should not move wallet, rather need refacto this in a way
+        # so that we can reuse code without sending wallet elsewhere
+        link = verifyAndGetLink(faber, wallet, msg)
+        if link:
+            body, (frm, ha) = msg
+            claimName = body[CLAIM_NAME_FIELD]
+            claimsToSend = []
+            for cl in CLAIMS_LIST:
+                if cl[NAME] == claimName:
+                    claimsToSend.append(cl)
+
+            resp = createClaimsMsg(link.localIdentifier, claimsToSend)
+            signAndSendToCaller(faber, wallet, resp, link.localIdentifier, frm)
 
     def acceptInvite(msg):
-        body, (frm, ha) = msg
-        """
-        body = {
-            "type": <some type>,
-            "identifier": <id>,
-            "nonce": <nonce>,
-            "signature" : <sig>
-        }
-        """
-        # TODO: Need to do nonce verification here
-        nonce = body.get("nonce")
-        link = wallet.getLinkByNonce(nonce)
+        # TODO: Should not move wallet, rather need refacto this in a way
+        # so that we can reuse code without sending wallet elsewhere
+        link = verifyAndGetLink(faber, wallet, msg)
         if link:
-            link.remoteIdentifier = body.get(f.IDENTIFIER.nm)
-            link.remoteEndPoint = ha
-            # TODO: Send claims
-            resp = createAvailClaimListMsg(link.remoteIdentifier)
-            faber.sendMessage(resp, destName=frm)
+            body, (frm, ha) = msg
+            resp = createAvailClaimListMsg(link.localIdentifier,
+                                           AVAILABLE_CLAIMS_LIST)
+            signAndSendToCaller(faber, wallet, resp, link.localIdentifier, frm)
 
     handlers = {
-        ACCEPT_INVITE: acceptInvite
+        ACCEPT_INVITE: acceptInvite,
+        REQUEST_CLAIMS: reqClaim
     }
 
     faber = FaberAgent(name, client=client, port=port, handlers=handlers)

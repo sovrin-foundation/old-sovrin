@@ -18,8 +18,7 @@ from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, \
-    faberWallet, faberLinkAdded
-
+    faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, acmeIsRunning
 
 config = getConfig()
 
@@ -100,14 +99,15 @@ def faberMap(faberIsRunning):
 
 
 @pytest.fixture(scope="module")
-def acmeMap():
+def acmeMap(acmeIsRunning):
+    endpoint = "127.0.0.1:{}".format(acmeIsRunning[0].endpoint.ha[1])
     return {'inviter': 'Acme Corp',
             'invite': "sample/acme-job-application.sovrin",
             'invite-not-exists': "sample/acme-job-application.sovrin.not.exists",
             'inviter-not-exists': "non-existing-inviter",
             "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
             "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
-            "endpoint": "127.0.0.1:1213",
+            ENDPOINT: endpoint,
             "claim-requests" : "Job Application",
             "claim-req-to-show": "Job Application",
             "claims": "Job-Certificate",
