@@ -244,7 +244,7 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
-            identifier = body.get(f.SIG.nm)
+            identifier = body.get(IDENTIFIER)
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 # TODO: Show seconds took to respond

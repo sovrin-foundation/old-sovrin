@@ -612,6 +612,7 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
                                         expect=showJobAppClaimReqOut,
                                         mapper=mapping)
 
+
 def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
                       faberInviteSyncedWithoutEndpoint):
 
