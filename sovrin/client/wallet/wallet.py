@@ -1,6 +1,8 @@
 import json
 
 import datetime
+import uuid
+
 import operator
 
 from collections import deque
@@ -9,19 +11,23 @@ from typing import Optional
 
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
+from plenum.common.error import fault
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW
+    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW, \
+    ORIGIN
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim import ClaimDefKey, ClaimDef
-from sovrin.client.wallet.cred_def import CredDefKey, CredDef, CredDefSk
+from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 # from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.link_invitation import Link
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
-    GET_NYM, SPONSOR
+    GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
+
+from anoncreds.protocol.utils import strToCharmInteger
 
 ENCODING = "utf-8"
 
@@ -44,7 +50,7 @@ class Sponsoring:
         if req:
             if not req.identifier:
                 req.identifier = self.defaultId
-            self._pending.appendleft((req, idy.identifier))
+            self.pendRequest(req, idy.identifier)
         return len(self._pending)
 
 
@@ -66,6 +72,8 @@ class Wallet(PWallet, Sponsoring):
         self._linkInvitations = {}  # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
+        self._issuerSks = {}
+        self._issuerPks = {}
         # transactions not yet submitted
         self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
 
@@ -79,7 +87,9 @@ class Wallet(PWallet, Sponsoring):
             GET_CRED_DEF: self._getCredDefReply,
             NYM: self._nymReply,
             GET_NYM: self._getNymReply,
-            GET_TXNS: self._getTxnsReply
+            GET_TXNS: self._getTxnsReply,
+            ISSUER_KEY: self._issuerKeyReply,
+            GET_ISSUER_KEY: self._getIssuerKeyReply,
         }
 
     @property
@@ -148,7 +158,7 @@ class Wallet(PWallet, Sponsoring):
         self._attributes[attrib.key()] = attrib
         req = attrib.ledgerRequest()
         if req:
-            self._pending.appendleft((req, attrib.key()))
+            self.pendRequest(req, attrib.key())
         return len(self._pending)
 
     def hasAttribute(self, key: AttributeKey) -> bool:
@@ -173,17 +183,25 @@ class Wallet(PWallet, Sponsoring):
         self._credDefs[credDef.key()] = credDef
         req = credDef.request
         if req:
-            self._pending.appendleft((req, credDef.key()))
+            self.pendRequest(req, credDef.key())
         return len(self._pending)
 
-    def getCredDef(self, key: CredDefKey):
-        return self._credDefs[key.key()]
+    def getCredDef(self, key=None, seqNo=None):
+        assert key or seqNo
+        if key:
+            return self._credDefs.get(key)
+        else:
+            for _, cd in self._credDefs.items():
+                if cd.seqNo == seqNo:
+                    return cd
 
-    def addCredDefSk(self, credDefSk: CredDefSk):
-        self._credDefSks[credDefSk.key()] = credDefSk
+    def addCredDefSk(self, credDefSk):
+        uid = str(uuid.uuid4())
+        self._credDefSks[uid] = credDefSk
+        return uid
 
-    def getCredDefSk(self, key: CredDefKey):
-        return self._credDefSks.get(key.key())
+    def getCredDefSk(self, uid):
+        return self._credDefSks.get(uid)
 
     def addCredential(self, cred: Credential):
         self._credentials[cred.key()] = cred
@@ -230,6 +248,11 @@ class Wallet(PWallet, Sponsoring):
                 op[DATA] = lastTxn
             requests.append(self.signOp(op, identifier=identifier))
         return requests
+
+    def pendSyncRequests(self):
+        pendingTxnsReqs = self.getPendingTxnRequests()
+        for req in pendingTxnsReqs:
+            self.pendRequest(req)
 
     def preparePending(self):
         new = {}
@@ -278,16 +301,24 @@ class Wallet(PWallet, Sponsoring):
         # TODO: Duplicate code from _attribReply, abstract this behavior,
         # Have a mixin like `HasSeqNo`
         _, key = preparedReq
-        credDef = self.getCredDef(CredDefKey(*key))
+        credDef = self.getCredDef(key)
         credDef.seqNo = result[F.seqNo.name]
 
     def _getCredDefReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
-        keys = json.loads(data[KEYS])
-        credDef = CredDef(data[NAME], data[VERSION],
-                          result[TARGET_NYM], data[TYPE],
-                          data[IP], data[PORT], keys)
-        self.addCredDef(credDef)
+        credDef = self.getCredDef((data.get(NAME), data.get(VERSION),
+                                   data.get(ORIGIN)))
+        if credDef:
+            if not credDef.seqNo:
+                credDef.seqNo = data.get(F.seqNo.name)
+        else:
+            credDef = CredDef(seqNo=data.get(F.seqNo.name),
+                              attrNames=data.get(ATTR_NAMES).split(","),
+                              name=data[NAME],
+                              version=data[VERSION],
+                              origin=data[ORIGIN],  # TODO should
+                              typ=data[TYPE])
+            self.addCredDef(credDef)
 
     def _nymReply(self, result, preparedReq):
         target = result[TARGET_NYM]
@@ -312,6 +343,41 @@ class Wallet(PWallet, Sponsoring):
         # TODO
         print(result)
         # for now, just print and move on
+
+    def _issuerKeyReply(self, result, preparedReq):
+        data = result.get(DATA)
+        ref = result.get(REFERENCE)
+        key = self._getMatchingIssuerKey(data)
+        if key and self._issuerPks[key].claimDefSeqNo == ref:
+            self._issuerPks[key].seqNo = result.get(F.seqNo.name)
+            return self._issuerPks[key].seqNo
+        else:
+            raise Exception("Not found appropriate issuer key to update")
+
+    def _getIssuerKeyReply(self, result, preparedReq):
+        data = json.loads(result.get(DATA))
+        key = data.get(ORIGIN), data.get(REFERENCE)
+        isPk = self.getIssuerPublicKey(key)
+        keys = data.get(DATA)
+        for k in ('N', 'S', 'Z'):
+            keys[k] = strToCharmInteger(keys[k])
+        for k in keys['R']:
+            keys['R'][k] = strToCharmInteger(keys['R'][k])
+        isPk.initPubKey(data.get(F.seqNo.name), keys['N'], keys['R'],
+                        keys['S'], keys['Z'])
+
+    def _getMatchingIssuerKey(self, data):
+        for key, pk in self._issuerPks.items():
+            if str(pk.N) == data.get("N") and str(pk.S) == data.get("S") and str(pk.Z) == data.get("Z"):
+                matches = 0
+                for k, v in pk.R.items():
+                    if str(pk.R.get(k)) == data.get("R").get(k):
+                        matches += 1
+                    else:
+                        break
+                if matches == len(pk.R):
+                    return key
+        return None
 
     def pendRequest(self, req, key=None):
         self._pending.appendleft((req, key))
@@ -362,10 +428,19 @@ class Wallet(PWallet, Sponsoring):
         if req:
             return self.prepReq(req)
 
-    def requestCredDef(self, credefKey: CredDefKey, sender):
-        credDef = CredDef(*credefKey.key())
-        self._credDefs[credefKey.key()] = credDef
+    def requestCredDef(self, credDefKey, sender):
+        name, version, origin = credDefKey
+        credDef = CredDef(name=name, version=version, origin=origin)
+        self._credDefs[credDefKey] = credDef
         req = credDef.getRequest(sender)
+        if req:
+            return self.prepReq(req)
+
+    def requestIssuerKey(self, issuerKey, sender):
+        origin, claimDefSeqNo = issuerKey
+        isPk = IssuerPubKey(origin=origin, claimDefSeqNo=claimDefSeqNo)
+        self._issuerPks[issuerKey] = isPk
+        req = isPk.getRequest(sender)
         if req:
             return self.prepReq(req)
 
@@ -377,3 +452,20 @@ class Wallet(PWallet, Sponsoring):
         for _, li in self._linkInvitations.items():
             if li.nonce == nonce:
                 return li
+
+    def addIssuerSecretKey(self, issuerSk):
+        self._issuerSks[issuerSk.uid] = issuerSk
+        return issuerSk.uid
+
+    def getIssuerSecretKey(self, uid):
+        return self._issuerSks.get(uid)
+
+    def addIssuerPublicKey(self, issuerPk):
+        self._issuerPks[issuerPk.key] = issuerPk
+        req = issuerPk.request
+        if req:
+            self.pendRequest(req, None)
+        return len(self._pending)
+
+    def getIssuerPublicKey(self, key):
+        return self._issuerPks.get(key)

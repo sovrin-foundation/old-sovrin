@@ -4,11 +4,11 @@ import re
 import sovrin.anon_creds.cred_def as cred_def
 
 from plenum.common.looper import Looper
-from plenum.common.txn import NAME, VERSION
+from plenum.common.txn import NAME, VERSION, ORIGIN
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     checkClientConnected
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR, USER, CRED_DEF
+from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REFERENCE
 from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
     ensureNymAdded
 
@@ -178,7 +178,7 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
     # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
     cmd = ("send CRED_DEF name={} version={} "
-           "type=CL ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
+           "type=CL keys=undergrad,last_name,"
            "first_name,birth_date,postgrad,expiry_date".
            format(credDefName, credDefVersion))
     checkCmdValid(byuCLI, cmd)
@@ -197,8 +197,25 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 
 
 @pytest.fixture(scope="module")
+def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
+    origin = byuAddsCredDef
+    key = (*credDefNameVersion, origin)
+    credDef = byuCLI.activeWallet.getCredDef(key=key)
+    cmd = ("send ISSUER_KEY reference={}" .format(credDef.seqNo))
+    checkCmdValid(byuCLI, cmd)
+
+    def checkIsKAdded():
+        assert byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+
+    byuCLI.looper.run(eventually(checkIsKAdded, retryWait=1, timeout=15))
+    output = byuCLI.lastCmdOutput
+    assert "issuer key is published" in output
+    return byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+
+
+@pytest.fixture(scope="module")
 def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
-                   attrAddedToRepo, byuAddsCredDef,
+                   attrAddedToRepo, byuAddsCredDef, byuAddsIssuerKey,
                    credDefNameVersion, tylerConnected,
                    tylerStoresAttributesAsKnownToBYU):
     credDefName, credDefVersion = credDefNameVersion
@@ -347,6 +364,10 @@ def testTylerCreated(tylerCreated):
 
 
 def testBYUAddsCredDef(byuAddsCredDef):
+    pass
+
+
+def testBYUAddsIssuerKey(byuAddsIssuerKey):
     pass
 
 

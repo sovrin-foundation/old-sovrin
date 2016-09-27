@@ -12,7 +12,7 @@ from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION
+from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, ORIGIN
 from sovrin.common.types import Request
 from plenum.common.types import Reply, RequestAck, RequestNack, f, \
     NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
@@ -23,7 +23,8 @@ from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
-    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns
+    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
+    ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -184,7 +185,8 @@ class Node(PlenumNode):
                         request.reqId,
                         "Only user's sponsor can add attribute for that user")
         # TODO: Just for now. Later do something meaningful here
-        elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF]:
+        elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF, ISSUER_KEY,
+                     GET_ISSUER_KEY]:
             pass
         else:
             return super().checkRequestAuthorized(request)
@@ -277,6 +279,25 @@ class Node(PlenumNode):
         })
         self.transmitToClient(Reply(result), frm)
 
+    def processGetIssuerKeyReq(self, request: Request, frm: str):
+        self.transmitToClient(RequestAck(request.reqId), frm)
+        keys = self.graphStore.getIssuerKeys(request.operation[ORIGIN],
+                                            request.operation[REFERENCE])
+        # attrNames = request.operation[RAW]
+        # nym = request.operation[TARGET_NYM]
+        # attrs = self.graphStore.getRawAttrs(nym, attrNames)
+        result = {
+            TXN_ID: self.genTxnId(
+                request.identifier, request.reqId)
+        }
+        result.update(request.operation)
+        result[DATA] = json.dumps(keys)
+        result.update({
+            f.IDENTIFIER.nm: request.identifier,
+            f.REQ_ID.nm: request.reqId,
+        })
+        self.transmitToClient(Reply(result), frm)
+
     def processRequest(self, request: Request, frm: str):
         if request.operation[TXN_TYPE] == GET_NYM:
             self.processGetNymReq(request, frm)
@@ -286,6 +307,8 @@ class Node(PlenumNode):
             self.processGetCredDefReq(request, frm)
         elif request.operation[TXN_TYPE] == GET_ATTR:
             self.processGetAttrsReq(request, frm)
+        elif request.operation[TXN_TYPE] == GET_ISSUER_KEY:
+            self.processGetIssuerKeyReq(request, frm)
         else:
             super().processRequest(request, frm)
 
@@ -336,6 +359,11 @@ class Node(PlenumNode):
             self.graphStore.addAttribTxnToGraph(result)
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStore.addCredDefTxnToGraph(result)
+        elif result[TXN_TYPE] == ISSUER_KEY:
+            self.graphStore.addIssuerKeyTxnToGraph(result)
+        else:
+            logger.debug("Got an unknown type {} to process".
+                         format(result[TXN_TYPE]))
 
     def sendReplyToClient(self, reply):
         identifier = reply.result.get(f.IDENTIFIER.nm)

@@ -1,6 +1,7 @@
 import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
+from sovrin.agent.acme import runAcme
 from sovrin.agent.alice import runAlice
 from sovrin.agent.faber import runFaber
 from sovrin.client.wallet.link_invitation import Link
@@ -30,9 +31,23 @@ def aliceWallet():
 
 
 @pytest.fixture(scope="module")
+def acmeWallet():
+    name = "Acme"
+    wallet = Wallet(name)
+    return wallet
+
+
+@pytest.fixture(scope="module")
 def faberAdded(genned, looper, steward, stewardWallet, faberWallet):
     createNym(looper, faberWallet.defaultId, steward, stewardWallet,
               role=SPONSOR)
+
+
+@pytest.fixture(scope="module")
+def acmeAdded(genned, looper, steward, stewardWallet, acmeWallet):
+    createNym(looper, acmeWallet.defaultId, steward, stewardWallet,
+              role=SPONSOR)
+
 
 
 @pytest.fixture(scope="module")
@@ -46,11 +61,22 @@ def aliceIsRunning(emptyLooper, tdirWithPoolTxns, aliceWallet):
 
 @pytest.fixture(scope="module")
 def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet):
-    faberWallet.addSigner(signer=SimpleSigner())
+    faberWallet.addSigner(signer=SimpleSigner(
+        seed=b'Faber000000000000000000000000000'))
     faber = runFaber(faberWallet.name, faberWallet,
                      basedirpath=tdirWithPoolTxns, startRunning=False)
     emptyLooper.add(faber)
     return faber, faberWallet
+
+
+@pytest.fixture(scope="module")
+def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet):
+    acmeWallet.addSigner(signer=SimpleSigner(
+        seed=b'Acme0000000000000000000000000000'))
+    acme = runAcme(acmeWallet.name, acmeWallet,
+                     basedirpath=tdirWithPoolTxns, startRunning=False)
+    emptyLooper.add(acme)
+    return acme, acmeWallet
 
 
 @pytest.fixture(scope="module")
@@ -61,4 +87,15 @@ def faberLinkAdded(faberIsRunning):
     # TODO rename to addLink
     wallet.addLinkInvitation(link)
     assert wallet.getMatchingLinkInvitations("Alice")
+    return link
+
+
+@pytest.fixture(scope="module")
+def acmeLinkAdded(acmeIsRunning):
+    acme, wallet = acmeIsRunning
+    idr = wallet.defaultId
+    link = Link("Acme", idr, nonce="57fbf9dc8c8e6acde33de98c6d747b28c")
+    # TODO rename to addLink
+    wallet.addLinkInvitation(link)
+    assert wallet.getMatchingLinkInvitations("Acme")
     return link

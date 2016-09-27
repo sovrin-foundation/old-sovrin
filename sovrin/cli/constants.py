@@ -37,9 +37,10 @@ SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)" \
                        "\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)" \
                        "\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)" \
                        "\s*(?P<type_key>type=)\s*(?P<type>[A-Z0-9]+)" \
-                       "\s*(?P<ip_key>ip=)\s*(?P<ip>[0-9.]+)" \
-                       "\s+(?P<port_key>port=)\s*(?P<port>[0-9]+)" \
                        "\s+(?P<keys_key>keys=)\s*(?P<keys>[a-zA-Z-_,\s]+)\s*)"
+
+SEND_ISSUER_KEY_REG_EX = "(\s*(?P<send_isr_key>send\s+ISSUER_KEY)" \
+                       "\s+(?P<ref_key>reference=)\s*(?P<reference>[0-9]+)\s*)"
 
 REQ_CRED_REG_EX = \
     "(\s*(?P<req_cred>request\s+credential) " \
@@ -137,6 +138,7 @@ SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
 ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
 SEND_CRED_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_DEF_REG_EX)
+SEND_ISSUER_KEY_FORMATTED_REG_EX = getPipedRegEx(SEND_ISSUER_KEY_REG_EX)
 REQ_CRED_FORMATTED_REG_EX = getPipedRegEx(REQ_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
 GEN_CRED_FORMATTED_REG_EX = getPipedRegEx(GEN_CRED_REG_EX)

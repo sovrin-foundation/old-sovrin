@@ -26,7 +26,8 @@ from plenum.common.util import getlogger, getSymmetricallyEncryptedVal, \
 from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF, \
+    GET_ISSUER_KEY, ISSUER_KEY
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
@@ -85,6 +86,7 @@ class Client(PlenumClient):
             self.peerStack.sign = self.sign
             self.peerInbox = deque()
         self._observers = {}  # type Dict[str, Callable]
+        self._observerSet = set()  # makes it easier to guard against duplicates
 
     def handlePeerMessage(self, msg):
         """
@@ -208,22 +210,30 @@ class Client(PlenumClient):
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:
                     self.graphStore.addCredDefTxnToGraph(result)
-            elif result[TXN_TYPE] == GET_CRED_DEF:
-                data = result.get(DATA)
-                try:
-                    data = json.loads(data)
-                    keys = json.loads(data[KEYS])
-                except Exception as ex:
-                    # Checking if data was converted to JSON, if it was then
-                    #  exception was raised while converting KEYS
-                    # TODO: Check fails if data was a dictionary.
-                    if isinstance(data, dict):
-                        logger.error(
-                            "Keys {} cannot be converted to JSON"
-                                .format(data[KEYS]))
-                    else:
-                        logger.error("{} cannot be converted to JSON"
-                                     .format(data))
+            elif result[TXN_TYPE] == ISSUER_KEY:
+                if self.graphStore:
+                    self.graphStore.addIssuerKeyTxnToGraph(result)
+
+            # elif result[TXN_TYPE] == GET_ISSUER_KEY:
+            #     data = result.get(DATA)
+            #     try:
+            #         data = json.loads(data)
+            #         keys = json.loads(data[KEYS])
+            #     except Exception as ex:
+            #         # Checking if data was converted to JSON, if it was then
+            #         #  exception was raised while converting KEYS
+            #         # TODO: Check fails if data was a dictionary.
+            #         if isinstance(data, dict):
+            #             logger.error(
+            #                 "Keys {} cannot be converted to JSON"
+            #                     .format(data[KEYS]))
+            #         else:
+            #             logger.error("{} cannot be converted to JSON"
+            #                          .format(data))
+            #     else:
+            #         pass
+            else:
+                logger.debug("Unknown type {}".format(result[TXN_TYPE]))
 
     def requestConfirmed(self, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
@@ -403,11 +413,14 @@ class Client(PlenumClient):
     def registerObserver(self, observer: Callable, name=None):
         if not name:
             name = uuid.uuid4()
-        if name in self._observers:
+        if name in self._observers or observer in self._observerSet:
             raise RuntimeError("Observer {} already registered".format(name))
         self._observers[name] = observer
+        self._observerSet.add(observer)
 
     def deregisterObserver(self, name):
         if name not in self._observers:
             raise RuntimeError("Observer {} not registered".format(name))
+        self._observerSet.remove(self._observers[name])
         del self._observers[name]
+

@@ -9,6 +9,7 @@ from plenum.common.types import f
 ROLE = 'role'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
+ATTR_NAMES = "attr_names"
 
 LAST_TXN = "lastTxn"
 TXNS = "Txns"
@@ -42,18 +43,22 @@ ADD_PKI = "ADD_PKI"
 REQ_CRED = "REQ_CRED"
 GET_NONCE = "GET_NONCE"
 VER_PRF = "VER_PRF"
+ISSUER_KEY = "ISSUER_KEY"
+GET_ISSUER_KEY = "GET_ISSUER_KEY"
 
 # Temp for demo
 GEN_CRED = "GEN_CRED"
 
-openTxns = (GET_NYM, GET_ATTR)
+openTxns = (GET_NYM, GET_ATTR, GET_CRED_DEF, GET_ISSUER_KEY)
 
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {NYM: ([TARGET_NYM], [ROLE]),
           ATTRIB: ([], [RAW, ENC, HASH]),
-          CRED_DEF: ([NAME, VERSION, TYPE, KEYS], [IP, PORT]),
-          GET_CRED_DEF: ([], [])
+          CRED_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
+          GET_CRED_DEF: ([], []),
+          ISSUER_KEY: ([REFERENCE, DATA]),
+          GET_ISSUER_KEY: ([REFERENCE, ORIGIN])
           }
 
 validTxnTypes = {NYM,
@@ -65,7 +70,9 @@ validTxnTypes = {NYM,
                  GET_NYM,
                  GET_TXNS,
                  CRED_DEF,
-                 GET_CRED_DEF}
+                 GET_CRED_DEF,
+                 ISSUER_KEY,
+                 GET_ISSUER_KEY}
 validTxnTypes.update(POOL_TXN_TYPES)
 
 
