@@ -392,6 +392,9 @@ class Wallet(PWallet, Sponsoring):
             if li.remoteIdentifier == target:
                 return li
 
+    def getLinkInvitation(self, name: str):
+        return self._linkInvitations.get(name)
+
     def getMatchingLinkInvitations(self, name: str):
         allMatched = []
         for k, v in self._linkInvitations.items():
