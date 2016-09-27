@@ -159,6 +159,12 @@ class WalletedAgent(Agent):
     def wallet(self, wallet):
         self._wallet = wallet
 
+    def getClaimList(self):
+        raise NotImplementedError
+
+    def getAvailableClaimList(self):
+        raise NotImplementedError
+
     def getErrorResponse(self, reqBody, errorMsg="Error"):
         invalidSigResp = {
             TYPE: ERROR,
@@ -357,7 +363,7 @@ class WalletedAgent(Agent):
         if link:
             claimName = body[CLAIM_NAME_FIELD]
             claimsToSend = []
-            for cl in CLAIMS_LIST:
+            for cl in self.getClaimList():
                 if cl[NAME] == claimName:
                     claimsToSend.append(cl)
 
@@ -370,7 +376,7 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
-            resp = self.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
+            resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
         # TODO: If I have the below exception thrown, somehow the
@@ -379,30 +385,3 @@ class WalletedAgent(Agent):
         # else:
         #     raise NotImplementedError
 
-
-CLAIMS_LIST = [{
-    "name": "Transcript",
-    "version": "1.2",
-    "claimDefSeqNo": "<claimDefSeqNo>",
-    "values": {
-        "student_name": "Alice Garcia",
-        "ssn": "123456789",
-        "degree": "Bachelor of Science, Marketing",
-        "year": "2015",
-        "status": "graduated"
-    }
-}]
-AVAILABLE_CLAIMS_LIST = [{
-    "name": "Transcript",
-    "version": "1.2",
-    "claimDefSeqNo": "<claimDefSeqNo>",
-    "definition": {
-        "attributes": {
-            "student_name": "string",
-            "ssn": "int",
-            "degree": "string",
-            "year": "string",
-            "status": "string"
-        }
-    }
-}]

@@ -380,7 +380,7 @@ def transcriptClaimMap():
         'status': "available (not yet issued)",
         "version": "1.2",
         "attr-student_name": "string",
-        "attr-ssn": "int",
+        "attr-ssn": "string",
         "attr-degree": "string",
         "attr-year": "string",
         "attr-status": "string"

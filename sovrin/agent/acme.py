@@ -23,6 +23,34 @@ class AcmeAgent(WalletedAgent):
 
         super().__init__('Acme Corp', basedirpath, client, wallet, port)
 
+    def getClaimList(self):
+        return [{
+            "name": "Job-Certificate",
+            "version": "0.1",
+            "claimDefSeqNo": "<claimDefSeqNo>",
+            "values": {
+                "employee_name": "Alice Gracia",
+                "employee_status": "Permanent",
+                "experience": "3 years",
+                "salary_bracket": "between $50,000 to $100,000"
+            }
+        }]
+
+    def getAvailableClaimList(self):
+        return [{
+            "name": "Job-Certificate",
+            "version": "0.1",
+            "claimDefSeqNo": "<claimDefSeqNo>",
+            "definition": {
+                "attributes": {
+                    "employee_name": "string",
+                    "employee_status": "string",
+                    "experience": "string",
+                    "salary_bracket": "string"
+                }
+            }
+        }]
+
 
 def runAcme(name=None, wallet=None, basedirpath=None, startRunning=True):
     _, port = genHa()

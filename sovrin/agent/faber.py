@@ -24,6 +24,35 @@ class FaberAgent(WalletedAgent):
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
 
+    def getClaimList(self):
+        return [{
+            "name": "Transcript",
+            "version": "1.2",
+            "claimDefSeqNo": "<claimDefSeqNo>",
+            "values": {
+                "student_name": "Alice Garcia",
+                "ssn": "123456789",
+                "degree": "Bachelor of Science, Marketing",
+                "year": "2015",
+                "status": "graduated"
+            }
+        }]
+
+    def getAvailableClaimList(self):
+        return [{
+            "name": "Transcript",
+            "version": "1.2",
+            "claimDefSeqNo": "<claimDefSeqNo>",
+            "definition": {
+                "attributes": {
+                    "student_name": "string",
+                    "ssn": "string",
+                    "degree": "string",
+                    "year": "string",
+                    "status": "string"
+                }
+            }
+        }]
 
 def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
     _, port = genHa()

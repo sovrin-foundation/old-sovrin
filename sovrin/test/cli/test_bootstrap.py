@@ -4,7 +4,7 @@ import pytest
 from plenum.common.types import f
 
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
-from sovrin.agent.agent import WalletedAgent, CLAIMS_LIST, AVAILABLE_CLAIMS_LIST
+from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
@@ -322,10 +322,11 @@ def getSignedRespMsg(msg, signer):
     return msg
 
 
-def testAcceptInviteRespWithInvalidSig(aliceCli,
+def testAcceptInviteRespWithInvalidSig(aliceCli, faberIsRunning,
                                        faberInviteSyncedWithEndpoint,
                                        faberCli):
-    msg = WalletedAgent.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
+    faber, _ = faberIsRunning
+    msg = WalletedAgent.createAvailClaimListMsg(faber.getAvailableClaimList())
     sig = aliceCli.activeWallet.signMsg(msg)
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
     msg[f.SIG.nm] = sig
@@ -408,13 +409,14 @@ def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
                                         mapper=transcriptClaimMap)
 
 
-def testReqClaimResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
-                                       faberCli):
+def testReqClaimResponseWithInvalidSig(faberCli, faberIsRunning,
+                                       faberInviteSyncedWithEndpoint):
+    faber, _ = faberIsRunning
     aliceCli = faberInviteSyncedWithEndpoint
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
 
-    msg = WalletedAgent.createClaimsMsg(CLAIMS_LIST)
+    msg = WalletedAgent.createClaimsMsg(faber.getClaimList())
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
 
     reqClaimResp = getSignedRespMsg(msg, aliceSigner)
