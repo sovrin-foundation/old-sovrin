@@ -17,14 +17,12 @@ class FaberAgent(WalletedAgent):
                  basedirpath: str,
                  client: Client=None,
                  wallet: Wallet=None,
-                 port: int=None,
-                 handlers: Dict=None):
+                 port: int=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
-        self.handlers = handlers
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
@@ -34,7 +32,10 @@ def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
                     ha=("0.0.0.0", clientPort),
                     basedirpath=basedirpath)
 
-    faber = FaberAgent(name, wallet=wallet, client=client, port=port)
+    faber = FaberAgent(basedirpath=basedirpath,
+                       client=client,
+                       wallet=wallet,
+                       port=port)
     if startRunning:
         with Looper(debug=True) as looper:
             looper.add(faber)

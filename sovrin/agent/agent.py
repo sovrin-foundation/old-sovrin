@@ -143,7 +143,7 @@ class WalletedAgent(Agent):
                  port: int=None):
         super().__init__(name, basedirpath, client, port)
         self._wallet = wallet or Wallet(name)
-        self.handlers = {
+        self.msgHandlers = {
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
             CLAIMS: self._handleReqClaimResponse,
@@ -227,18 +227,21 @@ class WalletedAgent(Agent):
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
-        handler = self.handlers.get(body.get(TYPE))
+        handler = self.msgHandlers.get(body.get(TYPE))
         if handler:
-            handler(body, frm)
+            frmHa = self.endpoint.getRemote(frm).ha
+            handler((body, (frm, frmHa)))
         else:
             raise NotImplementedError
             # logger.warning("no handler found for type {}".format(typ))
 
-    def _handleError(self, body: Dict, frm=None):
-            self.notifyObservers("Error ({}) occurred while processing this "
-                                 "msg: {}".format(body[DATA], body[REQ_MSG]))
+    def _handleError(self, msg):
+        body, (frm, ha) = msg
+        self.notifyObservers("Error ({}) occurred while processing this "
+                             "msg: {}".format(body[DATA], body[REQ_MSG]))
 
-    def _handleAcceptInviteResponse(self, body: Dict, frm=None):
+    def _handleAcceptInviteResponse(self, msg):
+        body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
             identifier = body.get("identifier")
@@ -280,12 +283,14 @@ class WalletedAgent(Agent):
             else:
                 self.notifyObservers("No matching link found")
 
-    def _handleRequestClaimResponse(self, body: Dict, frm=None):
+    def _handleRequestClaimResponse(self, msg):
+        body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
             raise NotImplementedError
 
-    def _handleReqClaimResponse(self, body: Dict, frm=None):
+    def _handleReqClaimResponse(self, msg):
+        body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
             self.notifyObservers("Signature accepted.")
@@ -346,7 +351,8 @@ class WalletedAgent(Agent):
         #                             req.reqId, self.activeClient, getNymReply,
         #                             availableClaims, li)
 
-    def _reqClaim(self, body, frm):
+    def _reqClaim(self, msg):
+        body, (frm, ha) = msg
         link = self.verifyAndGetLink(body)
         if link:
             claimName = body[CLAIM_NAME_FIELD]
@@ -360,8 +366,9 @@ class WalletedAgent(Agent):
         else:
             raise NotImplementedError
 
-    def _acceptInvite(self, body, frm):
-        link = self.verifyAndGetLink(body)
+    def _acceptInvite(self, msg):
+        body, (frm, ha) = msg
+        link = self.verifyAndGetLink(msg)
         if link:
             resp = self.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
