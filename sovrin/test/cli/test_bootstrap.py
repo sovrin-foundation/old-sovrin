@@ -4,8 +4,7 @@ import pytest
 from plenum.common.types import f
 
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
-from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.faber import AVAILABLE_CLAIMS_LIST, CLAIMS_LIST
+from sovrin.agent.agent import WalletedAgent, CLAIMS_LIST, AVAILABLE_CLAIMS_LIST
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines

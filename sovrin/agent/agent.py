@@ -11,11 +11,12 @@ from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
-from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE
+from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex
 from sovrin.agent.agent_net import AgentNet
-from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS
+from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIMS, \
+    ACCEPT_INVITE, CLAIM_NAME_FIELD
 from sovrin.client.client import Client
 from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
@@ -142,6 +143,13 @@ class WalletedAgent(Agent):
                  port: int=None):
         super().__init__(name, basedirpath, client, port)
         self._wallet = wallet or Wallet(name)
+        self.handlers = {
+            ERROR: self._handleError,
+            AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
+            CLAIMS: self._handleReqClaimResponse,
+            ACCEPT_INVITE: self._acceptInvite,
+            REQUEST_CLAIMS: self._reqClaim
+        }
 
     @property
     def wallet(self):
@@ -219,18 +227,21 @@ class WalletedAgent(Agent):
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
-        if body[TYPE] == ERROR:
+        handler = self.handlers.get(body.get(TYPE))
+        if handler:
+            handler(body, frm)
+        else:
+            raise NotImplementedError
+            # logger.warning("no handler found for type {}".format(typ))
+
+    def _handleError(self, body: Dict, frm):
             self.notifyObservers("Error ({}) occurred while processing this "
                                  "msg: {}".format(body[DATA], body[REQ_MSG]))
-        if body[TYPE] == AVAIL_CLAIM_LIST:
-            self._handleAcceptInviteResponse(body)
-        if body[TYPE] == CLAIMS:
-            self._handleReqClaimResponse(body)
 
-    def _handleAcceptInviteResponse(self, msg: Dict):
-        isVerified = self._isVerified(msg)
+    def _handleAcceptInviteResponse(self, body: Dict, frm):
+        isVerified = self._isVerified(body)
         if isVerified:
-            identifier = msg.get("identifier")
+            identifier = body.get("identifier")
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 # TODO: Show seconds took to respond
@@ -240,7 +251,7 @@ class WalletedAgent(Agent):
                 # Not sure how to know if the responder is a trust anchor or not
                 self.notifyObservers("    Identifier created in Sovrin.")
                 availableClaims = []
-                for cl in msg[CLAIMS_LIST_FIELD]:
+                for cl in body[CLAIMS_LIST_FIELD]:
                     name, version, claimDefSeqNo = \
                         cl['name'], cl['version'], \
                         cl['claimDefSeqNo']
@@ -269,17 +280,17 @@ class WalletedAgent(Agent):
             else:
                 self.notifyObservers("No matching link found")
 
-    def _handleRequestClaimResponse(self, msg: Dict):
-        isVerified = self._isVerified(msg)
+    def _handleRequestClaimResponse(self, body: Dict, frm):
+        isVerified = self._isVerified(body)
         if isVerified:
             raise NotImplementedError
 
-    def _handleReqClaimResponse(self, msg: Dict):
-        isVerified = self._isVerified(msg)
+    def _handleReqClaimResponse(self, body: Dict, frm):
+        isVerified = self._isVerified(body)
         if isVerified:
             self.notifyObservers("Signature accepted.")
-            identifier = msg.get("identifier")
-            for claim in msg[CLAIMS_FIELD]:
+            identifier = body.get("identifier")
+            for claim in body[CLAIMS_FIELD]:
                 self.notifyObservers("Received {}.".format(claim['name']))
                 li = self._getLinkByTarget(getCryptonym(identifier))
                 if li:
@@ -335,3 +346,56 @@ class WalletedAgent(Agent):
         #                             req.reqId, self.activeClient, getNymReply,
         #                             availableClaims, li)
 
+    def _reqClaim(self, body, frm):
+        link = self.verifyAndGetLink(body)
+        if link:
+            claimName = body[CLAIM_NAME_FIELD]
+            claimsToSend = []
+            for cl in CLAIMS_LIST:
+                if cl[NAME] == claimName:
+                    claimsToSend.append(cl)
+
+            resp = self.createClaimsMsg(claimsToSend)
+            self.signAndSendToCaller(resp, link.localIdentifier, frm)
+        else:
+            raise NotImplementedError
+
+    def _acceptInvite(self, body, frm):
+        link = self.verifyAndGetLink(body)
+        if link:
+            resp = self.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
+            self.signAndSendToCaller(resp, link.localIdentifier, frm)
+
+        # TODO: If I have the below exception thrown, somehow the
+        # error msg which is sent in verifyAndGetLink is not being received
+        # on the other end, so for now, commented, need to come back to this
+        # else:
+        #     raise NotImplementedError
+
+
+CLAIMS_LIST = [{
+    "name": "Transcript",
+    "version": "1.2",
+    "claimDefSeqNo": "<claimDefSeqNo>",
+    "values": {
+        "student_name": "Alice Garcia",
+        "ssn": "123456789",
+        "degree": "Bachelor of Science, Marketing",
+        "year": "2015",
+        "status": "graduated"
+    }
+}]
+AVAILABLE_CLAIMS_LIST = [{
+    "name": "Transcript",
+    "version": "1.2",
+    "claimDefSeqNo": "<claimDefSeqNo>",
+    "definition": {
+        "attributes": {
+            "student_name": "string",
+            "ssn": "int",
+            "degree": "string",
+            "year": "string",
+            "status": "string"
+        }
+    }
+}]
