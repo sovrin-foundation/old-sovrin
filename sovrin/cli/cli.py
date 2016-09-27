@@ -51,6 +51,8 @@ from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.test.conftest import staticPrimes
 
 """
 Objective
@@ -510,20 +512,32 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient, chk)
 
-    @staticmethod
-    def _buildCredDef(matchedVars):
+    # @staticmethod
+    def _buildCredDef(self, matchedVars):
         """
         Helper function to build CredentialDefinition function from given values
         """
         name = matchedVars.get('name')
         version = matchedVars.get('version')
-        ip = matchedVars.get('ip')
-        port = matchedVars.get('port')
+        # ip = matchedVars.get('ip')
+        # port = matchedVars.get('port')
         keys = matchedVars.get('keys')
-        attributes = [s.strip() for s in keys.split(",")]
-        return CredDefModule.CredDef(attrNames=attributes, name=name,
-                       version=version, ip=ip, port=port,
-                       p_prime="prime1", q_prime="prime1")
+        attrNames = [s.strip() for s in keys.split(",")]
+        # TODO: Directly using anoncreds lib, should use plugin
+        csk = CredDefSecretKey(*staticPrimes().get("prime1"))
+        uid = self.activeWallet.addCredDefSk(str(csk))
+        credDef = CredDef(seqNo=None,
+                          attrNames=attrNames,
+                          name=name,
+                          version=version,
+                          origin=self.activeWallet.defaultId,
+                          typ=matchedVars.get(TYPE),
+                          secretKey=uid)
+        self.activeWallet.addCredDef(credDef)
+        # return CredDefModule.CredDef(attrNames=attributes, name=name,
+        #                version=version,
+        #                 # ip=ip, port=port, p_prime="prime1", q_prime="prime1"
+        #                              )
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):
@@ -713,14 +727,14 @@ class SovrinCli(PlenumCli):
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
             credDef = self._buildCredDef(matchedVars)
-            sk = CredDefSk(credDef.name, credDef.version, credDef.serializedSK,
-                           dest=self.activeWallet.defaultId)
-            self.activeWallet.addCredDefSk(sk)
-            data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
-            cd = CredDef(data[NAME], data[VERSION],
-                                self.activeWallet.defaultId, data[TYPE],
-                              data[IP], data[PORT], data[KEYS])
-            self.activeWallet.addCredDef(cd)
+            # sk = CredDefSk(credDef.name, credDef.version, credDef.serializedSK,
+            #                dest=self.activeWallet.defaultId)
+            # self.activeWallet.addCredDefSk(sk)
+            # data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
+            # cd = CredDef(data[NAME], data[VERSION],
+            #                     self.activeWallet.defaultId, data[TYPE],
+            #                   data[IP], data[PORT], data[KEYS])
+            # self.activeWallet.addCredDef(cd)
             reqs = self.activeWallet.preparePending()
             self.activeClient.submitReqs(*reqs)
             self.print("The following credential definition is published to the"

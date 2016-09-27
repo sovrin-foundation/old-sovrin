@@ -3,8 +3,8 @@ from typing import Optional, Dict
 
 from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.credential_definition import CredentialDefinition
-from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, IP, PORT, KEYS, \
-    TARGET_NYM, RAW, TYPE, ORIGIN
+from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, TARGET_NYM, TYPE,\
+    ORIGIN
 from plenum.common.types import Identifier
 from sovrin.common.txn import CRED_DEF, GET_CRED_DEF, ATTR_NAMES, ISSUER_KEY, \
     GET_ISSUER_KEY, REFERENCE
@@ -104,16 +104,6 @@ class CredDef(CredentialDefinition, HasSeqNo):
             return Request(identifier=requestAuthor, operation=self._opForGet())
 
 
-# class CredDefSk(CredDefKey):
-#     def __init__(self,
-#                  name: str,
-#                  version: str,
-#                  secretKey: str,
-#                  dest: Optional[str]=None):
-#         super().__init__(name, version, dest)
-#         self.secretKey = secretKey
-
-
 class IssuerPubKey(IssuerKey, HasSeqNo):
     def __init__(self, claimDefSeqNo: int,
                  origin, N=None, R=None, S=None, Z=None, secretKeyUid=None,
@@ -123,9 +113,11 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
         else:
             self.uid = seqNo
         self.claimDefSeqNo = claimDefSeqNo
+        # TODO: Remove this
         self.secretKeyUid = secretKeyUid
         self.origin = origin
 
+    # TODO: Remove this late initialisation.
     def initPubKey(self, seqNo, N, R, S, Z):
         IssuerKey.__init__(self, seqNo, N, R, S, Z)
 
