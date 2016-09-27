@@ -329,7 +329,7 @@ def testAcceptInviteRespWithInvalidSig(aliceCli,
     sig = aliceCli.activeWallet.signMsg(msg)
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
     msg[f.SIG.nm] = sig
-    aliceCli.agent._handleAcceptInviteResponse(msg, None)
+    aliceCli.agent._handleAcceptInviteResponse((msg, (None, None)))
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
@@ -418,7 +418,7 @@ def testReqClaimResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
 
     reqClaimResp = getSignedRespMsg(msg, aliceSigner)
-    aliceCli.agent._handleReqClaimResponse(reqClaimResp)
+    aliceCli.agent._handleReqClaimResponse((reqClaimResp, (None, None)))
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
