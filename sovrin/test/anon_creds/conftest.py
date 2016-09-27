@@ -126,7 +126,7 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     def chk():
         assert sponsorWallet.getCredDef(key).seqNo is not None
 
-    looper.run(eventually(chk, retryWait=.1, timeout=30))
+    looper.run(eventually(chk, retryWait=1, timeout=30))
     return sponsorWallet.getCredDef(key).seqNo
 
     # DEPR
@@ -169,5 +169,5 @@ def issuerPublicKeysAdded(genned, updatedSteward, addedSponsor, sponsor,
     def chk():
         assert sponsorWallet.getIssuerPublicKey(key).seqNo is not None
 
-    looper.run(eventually(chk, retryWait=.1, timeout=30))
+    looper.run(eventually(chk, retryWait=1, timeout=30))
     return sponsorWallet.getIssuerPublicKey(key).seqNo

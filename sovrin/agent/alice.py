@@ -70,28 +70,19 @@ class AliceAgent(Agent):
             logger.debug("no handler found for type")
 
 
-def runAlice(name=None, wallet=None, basedirpath=None, startRunning=True):
+def runAlice(name=None, wallet=None, basedirpath=None, port=None,
+             startRunning=True):
     # TODO: Copied code from `runFaber`, need to refactor
     name = name or 'Alice Jones'
     wallet = wallet or Wallet(name)
     config = getConfig()
     basedirpath = basedirpath or os.path.expanduser(config.baseDir)
-    _, port = genHa()
+    if not port:
+        _, port = genHa()
     _, clientPort = genHa()
     client = Client(randomString(6),
                     ha=("0.0.0.0", clientPort),
                     basedirpath=basedirpath)
-
-    # def f1():
-    #     doSomethingWithWallet(wallet, action)
-    #
-    # def f2():
-    #     doSomethingElseWithWallet(wallet, action2)
-    #
-    # handlers = {
-    #     acc: f1,
-    #     acd: f2
-    # }
 
     def listClaims(msg):
         body, frm = msg

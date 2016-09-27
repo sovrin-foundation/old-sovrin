@@ -22,7 +22,7 @@ from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, \
     faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, acmeIsRunning, \
     faberAgentPort, acmeAgentPort
-
+from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
 
@@ -363,6 +363,7 @@ def transcriptClaimAttrValueMap():
         "attr-year": "2015",
         "attr-status": "graduated"
     }
+
 
 @pytest.fixture(scope="module")
 def transcriptClaimValueMap(transcriptClaimAttrValueMap):

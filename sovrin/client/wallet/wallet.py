@@ -106,7 +106,7 @@ class Wallet(PWallet, Sponsoring):
 
     def getClaimDefByKey(self, key: ClaimDefKey):
         return self._claimDefs.get(
-            (key.name, key.version, key.claimDefSeqNo), None)
+            (key.name, key.version, key.claimDefSeqNo))
 
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []

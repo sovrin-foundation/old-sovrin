@@ -35,7 +35,7 @@ from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
-from sovrin.cli.helper import getNewClientGrams, Environment
+from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ReceivedClaim
@@ -359,7 +359,7 @@ class SovrinCli(PlenumCli):
             self.print("Transaction id for NYM {} is {}".
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
@@ -376,7 +376,7 @@ class SovrinCli(PlenumCli):
         def out(reply, error):
             self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient, out)
         return True
 
@@ -409,7 +409,7 @@ class SovrinCli(PlenumCli):
             self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
                        Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient, chk)
 
     # @staticmethod
@@ -453,7 +453,7 @@ class SovrinCli(PlenumCli):
         self.print("Getting issuer key for cred def {}".
                    format(reference), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient,
                                     clbk, *args)
 
@@ -472,7 +472,7 @@ class SovrinCli(PlenumCli):
             seqNo = data.get(F.seqNo.name)
             self._getIssuerKeyAndExecuteClbk(origin, seqNo, clbk, *args)
 
-        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient,
                                     _getKey)
 
@@ -647,7 +647,7 @@ class SovrinCli(PlenumCli):
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
             self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
-            self.looper.loop.call_later(.2, self.ensureReqCompleted,
+            self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient)
             return True
 
@@ -664,7 +664,7 @@ class SovrinCli(PlenumCli):
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
             self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
-            self.looper.loop.call_later(.2, self.ensureReqCompleted,
+            self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient)
             return True
 
@@ -962,7 +962,7 @@ class SovrinCli(PlenumCli):
                 attrib, sender=self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
             self.looper.loop.call_later(.2,
-                                        self.ensureReqCompleted,
+                                        self._ensureReqCompleted,
                                         req.reqId,
                                         self.activeClient,
                                         self._syncLinkPostEndPointRetrieval,
@@ -1483,13 +1483,14 @@ class SovrinCli(PlenumCli):
             self.looper.loop.call_later(.2, self.ensureAgentConnected,
                                         otherAgentHa, clbk, *args, **kwargs)
 
-    def ensureReqCompleted(self, reqId, client, clbk=None, *args):
-        reply, err = client.replyIfConsensus(reqId)
-        if reply is None:
-            self.looper.loop.call_later(.2, self.ensureReqCompleted,
-                                        reqId, client, clbk, *args)
-        elif clbk:
-            clbk(reply, err, *args)
+    def _ensureReqCompleted(self, reqId, client, clbk=None, *args):
+        # reply, err = client.replyIfConsensus(reqId)
+        # if reply is None:
+        #     self.looper.loop.call_later(.2, self._ensureReqCompleted,
+        #                                 reqId, client, clbk, *args)
+        # elif clbk:
+        #     clbk(reply, err, *args)
+        ensureReqCompleted(self.looper.loop, reqId, client, clbk, *args)
 
     def addAlias(self, reply, err, client, alias, signer):
         txnId = reply[TXN_ID]

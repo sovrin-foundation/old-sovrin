@@ -1,16 +1,21 @@
 import json
+import uuid
 
 import pytest
 from plenum.common.types import f
 
-from plenum.common.txn import TYPE, NONCE, IDENTIFIER
+from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
+from plenum.test.eventually import eventually
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE
-from sovrin.common.txn import ENDPOINT
+from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.common.txn import ENDPOINT, ATTR_NAMES
 from sovrin.test.cli.helper import getFileLines
 
 
-FABER_ENDPOINT_PORT = 1212
+# FABER_ENDPOINT_PORT = 1212
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 
 
 def prompt_is(prompt):
@@ -405,7 +410,10 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 
 
 def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
-                                   aliceAcceptedFaberInvitation, faberIsRunning):
+                                   aliceAcceptedFaberInvitation,
+                           faberIsRunning,
+                           # faberAddedClaimDefAndIssuerKeys    # Adding this fails the test, since the wallet's _credDefReply is not called
+                           ):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
@@ -500,26 +508,6 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
     return philCli
 
 
-def getAcmeAcceptInviteRespMsg():
-    return """{
-                "type":"AVAIL_CLAIM_LIST",
-                "identifier": "<identifier>",
-                "availableClaimsList": [ {
-                    "name": "Job-Certificate",
-                    "version": "1.2",
-                    "claimDefSeqNo":"<claimDefSeqNo>",
-                    "definition": {
-                        "attributes": {
-                            "employee_name": "string",
-                            "employee_status": "string",
-                            "experience": "string",
-                            "salary_bracket": "string"
-                        }
-                    }
-                } ]
-              }"""
-
-
 @pytest.fixture(scope="module")
 def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    aliceRequestedFaberTranscriptClaim,
@@ -528,7 +516,7 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    acmeCli):
     be(aliceCli)
     do("accept invitation "
-       "from {inviter}", within=5,
+       "from {inviter}", within=6,
                          expect=["Invitation not yet verified.",
                                  "Starting communication with {inviter}",
                                  "Signature accepted.",
@@ -666,3 +654,50 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
                                                 "occurred while "
                                                 "processing this msg: {}".
                                                 format(msg)])
+
+
+@pytest.fixture(scope="module")
+def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
+                                    staticPrimes, looper):
+    faber, faberWallet = faberIsRunning
+    csk = CredDefSecretKey(*staticPrimes.get("prime1"))
+    sid = faberWallet.addCredDefSk(str(csk))
+    # Need to modify the claim definition. We do not support types yet
+    claimDef = {
+            "name": "Transcript",
+            "version": "1.2",
+            "type": "CL",
+            "attr_names": ["student_name", "ssn", "degree", "year", "status"]
+    }
+    credDef = CredDef(seqNo=None,
+                      attrNames=claimDef[ATTR_NAMES],
+                      name=claimDef[NAME],
+                      version=claimDef[VERSION],
+                      origin=faberWallet.defaultId,
+                      typ=claimDef[TYPE],
+                      secretKey=sid)
+    faberWallet.addCredDef(credDef)
+    reqs = faberWallet.preparePending()
+    faber.client.submitReqs(*reqs)
+
+    def chk():
+        assert credDef.seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+
+    isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+    faberWallet.addIssuerSecretKey(isk)
+    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                       claimDefSeqNo=credDef.seqNo,
+                       secretKeyUid=isk.uid, origin=faberWallet.defaultId)
+    faberWallet.addIssuerPublicKey(ipk)
+    reqs = faberWallet.preparePending()
+    faber.client.submitReqs(*reqs)
+
+    key = (faberWallet.defaultId, credDef.seqNo)
+
+    def chk():
+        assert faberWallet.getIssuerPublicKey(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+    return ipk.seqNo

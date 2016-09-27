@@ -3,7 +3,9 @@ from datetime import datetime
 from typing import Dict
 from typing import Tuple
 
+import asyncio
 from plenum.common.types import Identifier
+from sovrin.cli.helper import ensureReqCompleted
 
 from sovrin.common.identity import Identity
 
@@ -385,11 +387,16 @@ class WalletedAgent(Agent):
                 TARGET_NYM: identifier,
                 TXN_TYPE: NYM
             }
-            # TODO: Need to add some checks to confirm if it happened or not
-            self._sendToSovrin(op)
 
-            resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
-            self.signAndSendToCaller(resp, link.localIdentifier, frm)
+            def sendClaimList(reply, error):
+                print("sent to sovrin {}".format(identifier))
+                resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
+                self.signAndSendToCaller(resp, link.localIdentifier, frm)
+
+            print("sending to sovrin {}".format(identifier))
+            self._sendToSovrinAndDo(op, clbk=sendClaimList)
+            # TODO: Temp
+            sendClaimList(None, None)
 
         # TODO: If I have the below exception thrown, somehow the
         # error msg which is sent in verifyAndGetLink is not being received
@@ -397,7 +404,8 @@ class WalletedAgent(Agent):
         # else:
         #     raise NotImplementedError
 
-    def _sendToSovrin(self, op):
+    def _sendToSovrinAndDo(self, op, clbk=None, *args):
         req = self.wallet.signOp(op, identifier=self.wallet.defaultId)
         self.client.submitReqs(req)
-
+        # loop = asyncio.get_event_loop()
+        # ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)

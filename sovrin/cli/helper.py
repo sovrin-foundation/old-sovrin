@@ -63,3 +63,13 @@ Environment = NamedTuple("Environment", [
     ("poolLedger", str),
     ("domainLedger", str)
 ])
+
+
+# TODO: Need to have a timeout. Should keep trying forever.
+def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
+    reply, err = client.replyIfConsensus(reqId)
+    if reply is None:
+        loop.call_later(.2, ensureReqCompleted, loop,
+                                    reqId, client, clbk, *args)
+    elif clbk:
+        clbk(reply, err, *args)
