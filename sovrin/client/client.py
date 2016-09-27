@@ -213,25 +213,6 @@ class Client(PlenumClient):
             elif result[TXN_TYPE] == ISSUER_KEY:
                 if self.graphStore:
                     self.graphStore.addIssuerKeyTxnToGraph(result)
-
-            # elif result[TXN_TYPE] == GET_ISSUER_KEY:
-            #     data = result.get(DATA)
-            #     try:
-            #         data = json.loads(data)
-            #         keys = json.loads(data[KEYS])
-            #     except Exception as ex:
-            #         # Checking if data was converted to JSON, if it was then
-            #         #  exception was raised while converting KEYS
-            #         # TODO: Check fails if data was a dictionary.
-            #         if isinstance(data, dict):
-            #             logger.error(
-            #                 "Keys {} cannot be converted to JSON"
-            #                     .format(data[KEYS]))
-            #         else:
-            #             logger.error("{} cannot be converted to JSON"
-            #                          .format(data))
-            #     else:
-            #         pass
             else:
                 logger.debug("Unknown type {}".format(result[TXN_TYPE]))
 

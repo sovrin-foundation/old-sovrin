@@ -49,7 +49,6 @@ def acmeAdded(genned, looper, steward, stewardWallet, acmeWallet):
               role=SPONSOR)
 
 
-
 @pytest.fixture(scope="module")
 def aliceIsRunning(emptyLooper, tdirWithPoolTxns, aliceWallet):
     aliceWallet.addSigner(signer=SimpleSigner())
@@ -65,6 +64,7 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet):
         seed=b'Faber000000000000000000000000000'))
     faber = runFaber(faberWallet.name, faberWallet,
                      basedirpath=tdirWithPoolTxns, startRunning=False)
+
     emptyLooper.add(faber)
     return faber, faberWallet
 

@@ -11,7 +11,8 @@ from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
-from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION
+from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
+    TARGET_NYM, TXN_TYPE, NYM
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex
 from sovrin.agent.agent_net import AgentNet
@@ -143,6 +144,9 @@ class WalletedAgent(Agent):
                  port: int=None):
         super().__init__(name, basedirpath, client, port)
         self._wallet = wallet or Wallet(name)
+        self._wallet.pendSyncRequests()
+        prepared = self._wallet.preparePending()
+        self.client.submitReqs(*prepared)
         self.msgHandlers = {
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
@@ -376,7 +380,15 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
-            resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
+            identifier = body.get(f.IDENTIFIER.nm)
+            op = {
+                TARGET_NYM: identifier,
+                TXN_TYPE: NYM
+            }
+            # TODO: Need to add some checks to confirm if it happened or not
+            self._sendToSovrin(op)
+
+            resp = self.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
         # TODO: If I have the below exception thrown, somehow the
@@ -384,4 +396,8 @@ class WalletedAgent(Agent):
         # on the other end, so for now, commented, need to come back to this
         # else:
         #     raise NotImplementedError
+
+    def _sendToSovrin(self, op):
+        req = self.wallet.signOp(op, identifier=self.wallet.defaultId)
+        self.client.submitReqs(req)
 

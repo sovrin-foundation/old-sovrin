@@ -50,8 +50,6 @@ def stewardWallet():
 @pytest.fixture(scope="module")
 def steward(genned, looper, tdir, up, stewardWallet):
     s, _ = genTestClient(genned, tmpdir=tdir)
-    # for node in genned:
-    #     node.whitelistClient(s.name)
     s.registerObserver(stewardWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
