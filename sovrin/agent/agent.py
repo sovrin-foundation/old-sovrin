@@ -353,7 +353,7 @@ class WalletedAgent(Agent):
 
     def _reqClaim(self, msg):
         body, (frm, ha) = msg
-        link = self.verifyAndGetLink(body)
+        link = self.verifyAndGetLink(msg)
         if link:
             claimName = body[CLAIM_NAME_FIELD]
             claimsToSend = []
