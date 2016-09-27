@@ -234,11 +234,11 @@ class WalletedAgent(Agent):
             raise NotImplementedError
             # logger.warning("no handler found for type {}".format(typ))
 
-    def _handleError(self, body: Dict, frm):
+    def _handleError(self, body: Dict, frm=None):
             self.notifyObservers("Error ({}) occurred while processing this "
                                  "msg: {}".format(body[DATA], body[REQ_MSG]))
 
-    def _handleAcceptInviteResponse(self, body: Dict, frm):
+    def _handleAcceptInviteResponse(self, body: Dict, frm=None):
         isVerified = self._isVerified(body)
         if isVerified:
             identifier = body.get("identifier")
@@ -280,12 +280,12 @@ class WalletedAgent(Agent):
             else:
                 self.notifyObservers("No matching link found")
 
-    def _handleRequestClaimResponse(self, body: Dict, frm):
+    def _handleRequestClaimResponse(self, body: Dict, frm=None):
         isVerified = self._isVerified(body)
         if isVerified:
             raise NotImplementedError
 
-    def _handleReqClaimResponse(self, body: Dict, frm):
+    def _handleReqClaimResponse(self, body: Dict, frm=None):
         isVerified = self._isVerified(body)
         if isVerified:
             self.notifyObservers("Signature accepted.")
