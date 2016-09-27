@@ -1,6 +1,7 @@
 import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
+from plenum.test.helper import genHa
 from sovrin.agent.acme import runAcme
 from sovrin.agent.alice import runAlice
 from sovrin.agent.faber import runFaber
@@ -59,26 +60,44 @@ def aliceIsRunning(emptyLooper, tdirWithPoolTxns, aliceWallet):
 
 
 @pytest.fixture(scope="module")
-def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet):
+def faberAgentPort():
+    return genHa()[1]
+
+
+@pytest.fixture(scope="module")
+def acmeAgentPort():
+    return genHa()[1]
+
+
+@pytest.fixture(scope="module")
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
+                   faberWallet):
     faberWallet.addSigner(signer=SimpleSigner(
         seed=b'Faber000000000000000000000000000'))
     faber = runFaber(faberWallet.name, faberWallet,
-                     basedirpath=tdirWithPoolTxns, startRunning=False)
+                     basedirpath=tdirWithPoolTxns,
+                     port=faberAgentPort,
+                     startRunning=False)
 
     emptyLooper.add(faber)
     return faber, faberWallet
 
 
 @pytest.fixture(scope="module")
-def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet):
+def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
+                  acmeWallet):
     acmeWallet.addSigner(signer=SimpleSigner(
         seed=b'Acme0000000000000000000000000000'))
     acme = runAcme(acmeWallet.name, acmeWallet,
-                     basedirpath=tdirWithPoolTxns, startRunning=False)
+                     basedirpath=tdirWithPoolTxns,
+                     port=acmeAgentPort,
+                     startRunning=False)
     emptyLooper.add(acme)
     return acme, acmeWallet
 
 
+# TODO: Rename it, not clear whether link is added to which wallet and
+# who is adding
 @pytest.fixture(scope="module")
 def faberLinkAdded(faberIsRunning):
     faber, wallet = faberIsRunning

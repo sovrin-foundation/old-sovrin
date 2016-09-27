@@ -54,8 +54,11 @@ class FaberAgent(WalletedAgent):
             }
         }]
 
-def runFaber(name=None, wallet=None, basedirpath=None, startRunning=True):
-    _, port = genHa()
+
+def runFaber(name=None, wallet=None, basedirpath=None, port=None,
+             startRunning=True):
+    if not port:
+        _, port = genHa()
     _, clientPort = genHa()
     client = Client(randomString(6),
                     ha=("0.0.0.0", clientPort),

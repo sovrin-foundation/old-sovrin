@@ -217,6 +217,8 @@ def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do,
 def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
                                   acceptUnSyncedWithoutEndpointWhenConnected,
                                   faberMap, connectedToTest,
+                                  faberAddedByPhil,
+                                  faberIsRunning,
                                   poolNodesStarted):
     aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
@@ -235,6 +237,8 @@ def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
 def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
                                      faberInviteLoadedByAlice, poolNodesStarted,
                                      connectedToTest,
+                                     faberAddedByPhil,
+                                     faberIsRunning,
                                      syncLinkOutWithoutEndpoint):
     be(aliceCli)
     if not aliceCli._isConnectedToAnyEnv():
@@ -265,8 +269,7 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
 
 
 @pytest.fixture(scope="module")
-def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut,
-                           faberIsRunning):
+def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut):
     philCli = faberAddedByPhil
     be(philCli)
     # I had to give two open/close curly braces in raw data
@@ -322,7 +325,8 @@ def getSignedRespMsg(msg, signer):
     return msg
 
 
-def testAcceptInviteRespWithInvalidSig(aliceCli, faberIsRunning,
+def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
+                                       faberIsRunning,
                                        faberInviteSyncedWithEndpoint,
                                        faberCli):
     faber, _ = faberIsRunning
@@ -336,7 +340,8 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberIsRunning,
 
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
-                                 faberLinkAdded,
+                                 faberAddedByPhil,
+                                 faberLinkAdded, faberIsRunning,
                                  faberInviteSyncedWithEndpoint):
     be(aliceCli)
     do("accept invitation from {inviter}",
@@ -400,7 +405,7 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 
 
 def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
-                                   aliceAcceptedFaberInvitation):
+                                   aliceAcceptedFaberInvitation, faberIsRunning):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
@@ -425,7 +430,8 @@ def testReqClaimResponseWithInvalidSig(faberCli, faberIsRunning,
 
 
 @pytest.fixture(scope="module")
-def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberLinkAdded,
+def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberAddedByPhil,
+                                       faberLinkAdded,
                                        aliceAcceptedFaberInvitation):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
@@ -517,8 +523,9 @@ def getAcmeAcceptInviteRespMsg():
 @pytest.fixture(scope="module")
 def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    aliceRequestedFaberTranscriptClaim,
-                                   acmeInviteLoadedByAlice, acmeLinkAdded,
-                                   acmeMap, acmeAddedByPhil, acmeCli):
+                                   acmeInviteLoadedByAlice, acmeAddedByPhil,
+                                   acmeIsRunning, acmeMap, acmeLinkAdded,
+                                   acmeCli):
     be(aliceCli)
     do("accept invitation "
        "from {inviter}", within=3,
@@ -618,7 +625,7 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
-                      faberInviteSyncedWithoutEndpoint):
+                                faberIsRunning, faberInviteSyncedWithoutEndpoint):
 
     msg = {
         TYPE: ACCEPT_INVITE,

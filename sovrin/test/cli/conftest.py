@@ -5,8 +5,10 @@ import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
+from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT
-from sovrin.test.helper import createNym
+from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest
 
 plenum.common.util.loggingConfigured = False
 
@@ -18,7 +20,9 @@ from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, \
-    faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, acmeIsRunning
+    faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, acmeIsRunning, \
+    faberAgentPort, acmeAgentPort
+
 
 config = getConfig()
 
@@ -83,8 +87,8 @@ def aliceMap():
 
 
 @pytest.fixture(scope="module")
-def faberMap(faberIsRunning):
-    endpoint = "127.0.0.1:{}".format(faberIsRunning[0].endpoint.ha[1])
+def faberMap(faberAgentPort):
+    endpoint = "127.0.0.1:{}".format(faberAgentPort)
     return {'inviter': 'Faber College',
             'invite': "sample/faber-invitation.sovrin",
             'invite-not-exists': "sample/faber-invitation.sovrin.not.exists",
@@ -99,8 +103,8 @@ def faberMap(faberIsRunning):
 
 
 @pytest.fixture(scope="module")
-def acmeMap(acmeIsRunning):
-    endpoint = "127.0.0.1:{}".format(acmeIsRunning[0].endpoint.ha[1])
+def acmeMap(acmeAgentPort):
+    endpoint = "127.0.0.1:{}".format(acmeAgentPort)
     return {'inviter': 'Acme Corp',
             'invite': "sample/acme-job-application.sovrin",
             'invite-not-exists': "sample/acme-job-application.sovrin.not.exists",
@@ -620,3 +624,18 @@ def faberAdded(poolNodesCreated,
     client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
     createNym(looper, li.remoteIdentifier, client, wallet, role=SPONSOR)
+
+
+@pytest.fixture(scope="module")
+def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
+                           poolTxnStewardData):
+    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
+                                              tdirWithDomainTxns,
+                                              clientClass=TestClient,
+                                              walletClass=Wallet)
+    client.registerObserver(wallet.handleIncomingReply)
+
+    looper.add(client)
+    looper.run(client.ensureConnectedToNodes())
+    makePendingTxnsRequest(client, wallet)
+    return client, wallet

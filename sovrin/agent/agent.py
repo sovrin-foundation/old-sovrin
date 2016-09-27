@@ -388,7 +388,7 @@ class WalletedAgent(Agent):
             # TODO: Need to add some checks to confirm if it happened or not
             self._sendToSovrin(op)
 
-            resp = self.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
+            resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
         # TODO: If I have the below exception thrown, somehow the

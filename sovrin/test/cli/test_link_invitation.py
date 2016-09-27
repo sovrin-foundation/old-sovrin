@@ -1,39 +1,8 @@
-import json
-import os
-
 import pytest
-from plenum.client.signer import SimpleSigner
 from plenum.test.eventually import eventually
-from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
-from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import USER, ENDPOINT
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, getLinkInvitation
-from sovrin.test.helper import makeNymRequest, makePendingTxnsRequest, \
-    TestClient, addRawAttribute
-
-
-# Temporary
-# def testSigning():
-#     signer = SimpleSigner(seed=b'Acme0000000000000000000000000000')
-#     filePath = "/home/rkalaria/dev/evernym/sovrin-priv/sample/acme-req-job-cert-claim-response.sovrin"
-#     with open(os.path.join(filePath)) as data_file:
-#         msg = json.load(data_file)
-#         print(signer.sign(msg))
-
-
-@pytest.fixture(scope="module")
-def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
-                           poolTxnStewardData):
-    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
-                                              tdirWithDomainTxns,
-                                              clientClass=TestClient,
-                                              walletClass=Wallet)
-    client.registerObserver(wallet.handleIncomingReply)
-
-    looper.add(client)
-    looper.run(client.ensureConnectedToNodes())
-    makePendingTxnsRequest(client, wallet)
-    return client, wallet
+from sovrin.test.helper import makeNymRequest, addRawAttribute
 
 
 @pytest.fixture(scope="module")
