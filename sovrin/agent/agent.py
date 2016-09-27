@@ -11,7 +11,7 @@ from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
-from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME
+from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex
 from sovrin.agent.agent_net import AgentNet
@@ -244,7 +244,7 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
-            identifier = body.get("identifier")
+            identifier = body.get(f.SIG.nm)
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 # TODO: Show seconds took to respond
@@ -256,7 +256,7 @@ class WalletedAgent(Agent):
                 availableClaims = []
                 for cl in body[CLAIMS_LIST_FIELD]:
                     name, version, claimDefSeqNo = \
-                        cl['name'], cl['version'], \
+                        cl[NAME], cl[VERSION], \
                         cl['claimDefSeqNo']
                     claimDefKey = ClaimDefKey(name, version, claimDefSeqNo)
                     availableClaims.append(AvailableClaimData(claimDefKey))
@@ -294,13 +294,13 @@ class WalletedAgent(Agent):
         isVerified = self._isVerified(body)
         if isVerified:
             self.notifyObservers("Signature accepted.")
-            identifier = body.get("identifier")
+            identifier = body.get(IDENTIFIER)
             for claim in body[CLAIMS_FIELD]:
-                self.notifyObservers("Received {}.".format(claim['name']))
+                self.notifyObservers("Received {}.".format(claim[NAME]))
                 li = self._getLinkByTarget(getCryptonym(identifier))
                 if li:
                     name, version, claimDefSeqNo = \
-                        claim['name'], claim['version'], \
+                        claim[NAME], claim[VERSION], \
                         claim['claimDefSeqNo']
                     issuerKeys = {}  # TODO: Need to decide how/where to get it
                     values = claim['values']  # TODO: Need to finalize this
@@ -315,11 +315,11 @@ class WalletedAgent(Agent):
                 self.notifyObservers("No matching link found")
 
     def _isVerified(self, msg: Dict[str, str]):
-        signature = msg.get("signature")
-        identifier = msg.get("identifier")
+        signature = msg.get(f.SIG.nm)
+        identifier = msg.get(IDENTIFIER)
         msgWithoutSig = {}
         for k, v in msg.items():
-            if k != "signature":
+            if k != f.SIG.nm:
                 msgWithoutSig[k] = v
 
         key = cryptonymToHex(identifier) if not isHex(
@@ -353,7 +353,7 @@ class WalletedAgent(Agent):
 
     def _reqClaim(self, msg):
         body, (frm, ha) = msg
-        link = self.verifyAndGetLink(body)
+        link = self.verifyAndGetLink(msg)
         if link:
             claimName = body[CLAIM_NAME_FIELD]
             claimsToSend = []

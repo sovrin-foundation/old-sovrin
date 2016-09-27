@@ -427,7 +427,7 @@ def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberLinkAdded,
                                        aliceAcceptedFaberInvitation):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
-    do("request claim Transcript",      within=3,
+    do("request claim Transcript",      within=4,
                                         expect=[
                                             "Signature accepted.",
                                             "Received Transcript."])
