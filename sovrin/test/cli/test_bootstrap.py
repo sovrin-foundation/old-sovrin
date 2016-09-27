@@ -351,7 +351,7 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                     "Signature accepted.",
                                     "Trust established.",
                                     "Identifier created in Sovrin.",
-                                    "Available claims: Transcript"
+                                    "Available claims: Transcript",
                                     "Synchronizing...",
                                     # Once faber starts writing identifier
                                     # to Sovrin, need to uncomment below line
@@ -530,11 +530,11 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
     do("accept invitation "
        "from {inviter}", within=3,
                          expect=["Invitation not yet verified.",
-                                 "Starting communication with {inviter}"
+                                 "Starting communication with {inviter}",
                                  "Signature accepted.",
                                  "Trust established.",
                                  "Identifier created in Sovrin.",
-                                 "Available claims: {claims}"
+                                 "Available claims: {claims}",
                                  "Synchronizing...",
                                  # Once acme starts writing identifier
                                  # to Sovrin, need to uncomment below line
