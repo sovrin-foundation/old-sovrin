@@ -178,7 +178,7 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
     # TODO tylerAdded ensures that activeClient is already set.
     """BYU writes a credential definition to Sovrin."""
     cmd = ("send CRED_DEF name={} version={} "
-           "type=CL ip=10.10.10.10 port=7897 keys=undergrad,last_name,"
+           "type=CL keys=undergrad,last_name,"
            "first_name,birth_date,postgrad,expiry_date".
            format(credDefName, credDefVersion))
     checkCmdValid(byuCLI, cmd)
@@ -194,6 +194,11 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
     assert "credential definition is published" in output
     assert credDefName in output
     return byuCLI.activeWallet.defaultId
+
+
+@pytest.fixture(scope="module")
+def byuAddsIssuerKey(byuAddsCredDef):
+    pass
 
 
 @pytest.fixture(scope="module")

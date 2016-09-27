@@ -52,6 +52,7 @@ from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.types import SerFmt
 from anoncreds.test.conftest import staticPrimes
 
 """
@@ -534,6 +535,7 @@ class SovrinCli(PlenumCli):
                           typ=matchedVars.get(TYPE),
                           secretKey=uid)
         self.activeWallet.addCredDef(credDef)
+        return credDef
         # return CredDefModule.CredDef(attrNames=attributes, name=name,
         #                version=version,
         #                 # ip=ip, port=port, p_prime="prime1", q_prime="prime1"
@@ -740,7 +742,7 @@ class SovrinCli(PlenumCli):
             self.print("The following credential definition is published to the"
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
-            self.print("{}".format(credDef.get(serFmt=CredDefModule.SerFmt.base58)))
+            self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
             self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient)
             return True
