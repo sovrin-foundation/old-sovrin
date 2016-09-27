@@ -6,7 +6,6 @@ from plenum.test.eventually import eventually
 from sovrin.client.wallet.link_invitation import Link
 
 from sovrin.common.plugin_helper import writeAnonCredPlugin
-from sovrin.common.txn import USER, ROLE
 from sovrin.test.helper import TestNode, TestClient
 
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \

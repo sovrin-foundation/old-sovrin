@@ -47,9 +47,9 @@ logger = getlogger()
 
 
 class AliceAgent(Agent):
-    def __init__(self, name: str="agent2", client: Client=None, port: int=None,
+    def __init__(self, name: str, basedirpath, client: Client=None, port: int=None,
                  handlers: Dict=None):
-        super().__init__(name, client, port, msgHandler=self.handleEndpointMessage)
+        super().__init__(name, basedirpath, client, port,)
         self.handlers = handlers
 
     @property
@@ -78,7 +78,8 @@ def runAlice(name=None, wallet=None, basedirpath=None, startRunning=True):
     basedirpath = basedirpath or os.path.expanduser(config.baseDir)
     _, port = genHa()
     _, clientPort = genHa()
-    client = Client(randomString(6), ha=("0.0.0.0", clientPort),
+    client = Client(randomString(6),
+                    ha=("0.0.0.0", clientPort),
                     basedirpath=basedirpath)
 
     # def f1():
@@ -112,7 +113,11 @@ def runAlice(name=None, wallet=None, basedirpath=None, startRunning=True):
         AVAIL_CLAIM_LIST: listClaims
     }
 
-    alice = AliceAgent(name, client=client, port=port, handlers=handlers)
+    alice = AliceAgent(name,
+                       basedirpath=basedirpath,
+                       client=client,
+                       port=port,
+                       handlers=handlers)
     if startRunning:
         with Looper(debug=True) as looper:
             looper.add(alice)

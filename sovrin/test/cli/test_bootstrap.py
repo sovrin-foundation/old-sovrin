@@ -1,7 +1,11 @@
 import json
 
 import pytest
-from sovrin.agent.faber import FaberAgent
+from plenum.common.types import f
+
+from plenum.common.txn import TYPE, NONCE, IDENTIFIER
+from sovrin.agent.agent import WalletedAgent, CLAIMS_LIST, AVAILABLE_CLAIMS_LIST
+from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
 
@@ -110,7 +114,7 @@ def faberAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                                         expect=connectedToTest, mapper=faberMap)
 
     do('send NYM dest={target} role=SPONSOR',
-                                        within=2,
+                                        within=3,
                                         expect=nymAddedOut, mapper=faberMap)
     return philCli
 
@@ -248,8 +252,9 @@ def testSyncFaberInviteWithoutEndpoint(faberInviteSyncedWithoutEndpoint):
     pass
 
 
-def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap,
-                         linkNotYetSynced, showSyncedLinkWithoutEndpointOut):
+def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
+                              faberMap, linkNotYetSynced,
+                              showSyncedLinkWithoutEndpointOut):
     aliceCLI = faberInviteSyncedWithoutEndpoint
 
     be(aliceCLI)
@@ -311,78 +316,31 @@ def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
                                         expect=linkNotExists, mapper=faberMap)
 
 
-def testAliceAcceptInvitation(be, do, aliceCli, faberInviteSyncedWithEndpoint,
-                              linkNotExists, faberMap, faberLinkAdded):
-    be(aliceCli)
-    do('accept invitation from {inviter}', within=1,
-                                expect=[
-                                    "Signature accepted.",
-                                    "Trust established.",
-                                    "Identifier created in Sovrin.",
-                                    "Available claims: Transcript"
-                                    "Synchronizing...",
-                                    # Once faber starts writing identifier
-                                    # to Sovrin, need to uncomment below line
-                                    # "Confirmed identifier written to Sovrin."
-                                ], mapper=faberMap)
+def getSignedRespMsg(msg, signer):
+    signature = signer.sign(msg)
+    msg["signature"] = signature
+    return msg
 
 
-def getFaberAcceptInviteRespMsg():
-    return """{
-                "type":"AVAIL_CLAIM_LIST",
-                "identifier": "<identifier>",
-                "claimsList": [ {
-                    "name": "Transcript",
-                    "version": "1.2",
-                    "claimDefSeqNo":"<claimDefSeqNo>",
-                    "definition": {
-                        "attributes": {
-                            "student_name": "string",
-                            "ssn": "int",
-                            "degree": "string",
-                            "year": "string",
-                            "status": "string"
-                        }
-                    }
-                } ]
-              }"""
-
-
-def getSignedRespMsg(msgToSign, identifier, signer):
-    msg = msgToSign.replace("<identifier>", identifier)
-    acceptInviteResp = json.loads(msg)
-    signature = signer.sign(acceptInviteResp)
-    acceptInviteResp["signature"] = signature
-    return acceptInviteResp
-
-
-def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
-                                 faberCli):
-    aliceCli = faberInviteSyncedWithEndpoint
-    aliceSigner = aliceCli.activeWallet._getIdData(
-        aliceCli.activeWallet.defaultId).signer
-
-    acceptInviteResp = getSignedRespMsg(getFaberAcceptInviteRespMsg(),
-                                        faberCli.activeWallet.defaultId,
-                                        aliceSigner)
-    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
+def testAcceptInviteRespWithInvalidSig(aliceCli,
+                                       faberInviteSyncedWithEndpoint,
+                                       faberCli):
+    msg = WalletedAgent.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
+    sig = aliceCli.activeWallet.signMsg(msg)
+    msg[IDENTIFIER] = faberCli.activeWallet.defaultId
+    msg[f.SIG.nm] = sig
+    aliceCli.agent._handleAcceptInviteResponse((msg, (None, None)))
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
 @pytest.fixture(scope="module")
-def faberRespondedToAcceptInvite(be, do, faberInviteSyncedWithEndpoint,
-                                 faberCli):
-    aliceCli = faberInviteSyncedWithEndpoint
-    faberSigner = faberCli.activeWallet._getIdData(
-        faberCli.activeWallet.defaultId).signer
-
-    acceptInviteResp = getSignedRespMsg(getFaberAcceptInviteRespMsg(),
-                                        faberCli.activeWallet.defaultId,
-                                        faberSigner)
-    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
-
+def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
+                                 faberLinkAdded,
+                                 faberInviteSyncedWithEndpoint):
     be(aliceCli)
-    do(None,                    within=1,
+    do("accept invitation from {inviter}",
+                                within=3,
+                                mapper=faberMap,
                                 expect=[
                                     "Signature accepted.",
                                     "Trust established.",
@@ -396,13 +354,13 @@ def faberRespondedToAcceptInvite(be, do, faberInviteSyncedWithEndpoint,
     return aliceCli
 
 
-def testFaberRespondsToAcceptInvite(faberRespondedToAcceptInvite):
+def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
     pass
 
 
 def testShowFaberLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
-                                  faberRespondedToAcceptInvite):
-    aliceCli = faberRespondedToAcceptInvite
+                                  aliceAcceptedFaberInvitation):
+    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("show link {inviter}",           expect=showAcceptedLinkOut,
@@ -411,8 +369,8 @@ def testShowFaberLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
 
 
 def testShowClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
-                                   faberRespondedToAcceptInvite):
-    aliceCli = faberRespondedToAcceptInvite
+                                   aliceAcceptedFaberInvitation):
+    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("show claim claim-to-show-not-exists",
@@ -421,8 +379,8 @@ def testShowClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 
 
 def testShowTranscriptClaim(be, do, transcriptClaimMap, showClaimOut,
-                                   faberRespondedToAcceptInvite):
-    aliceCli = faberRespondedToAcceptInvite
+                                   aliceAcceptedFaberInvitation):
+    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("show claim {name}",
@@ -431,8 +389,8 @@ def testShowTranscriptClaim(be, do, transcriptClaimMap, showClaimOut,
 
 
 def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
-                                   faberRespondedToAcceptInvite):
-    aliceCli = faberRespondedToAcceptInvite
+                                   aliceAcceptedFaberInvitation):
+    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("request claim claim-to-req-not-exists",
@@ -441,8 +399,8 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 
 
 def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
-                                   faberRespondedToAcceptInvite):
-    aliceCli = faberRespondedToAcceptInvite
+                                   aliceAcceptedFaberInvitation):
+    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("request claim {name}",
@@ -450,62 +408,39 @@ def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
                                         mapper=transcriptClaimMap)
 
 
-def getReqTranscriptClaimRespMsg():
-    return """{
-                "type":"CLAIM",
-                "identifier": "<identifier>",
-                "name": "Transcript",
-                "version": "1.2",
-                "claimDefSeqNo":"<claimDefSeqNo>",
-                "values": {
-                    "student_name": "Alice Garcia",
-                    "ssn": "123456789",
-                    "degree": "Bachelor of Science, Marketing",
-                    "year": "2015",
-                    "status": "graduated"
-                }
-              }"""
-
-
 def testReqClaimResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
-                                 faberCli):
+                                       faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
 
-    reqClaimResp = getSignedRespMsg(getReqTranscriptClaimRespMsg(),
-                                    faberCli.activeWallet.defaultId,
-                                    aliceSigner)
-    aliceCli._handleReqClaimResponse(reqClaimResp)
+    msg = WalletedAgent.createClaimsMsg(CLAIMS_LIST)
+    msg[IDENTIFIER] = faberCli.activeWallet.defaultId
+
+    reqClaimResp = getSignedRespMsg(msg, aliceSigner)
+    aliceCli.agent._handleReqClaimResponse((reqClaimResp, (None, None)))
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
 @pytest.fixture(scope="module")
-def faberRespondedToReqClaim(be, do, faberRespondedToAcceptInvite, faberCli):
-    aliceCli = faberRespondedToAcceptInvite
-    faberSigner = faberCli.activeWallet._getIdData(
-        faberCli.activeWallet.defaultId).signer
-    reqClaimResp = getSignedRespMsg(getReqTranscriptClaimRespMsg(),
-                                    faberCli.activeWallet.defaultId,
-                                    faberSigner)
-
-
-    aliceCli._handleReqClaimResponse(reqClaimResp)
-
+def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberLinkAdded,
+                                       aliceAcceptedFaberInvitation):
+    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
-    do(None,                            expect=[
+    do("request claim Transcript",      within=4,
+                                        expect=[
                                             "Signature accepted.",
                                             "Received Transcript."])
     return aliceCli
 
 
-def testFaberRespondsToReqClaim(faberRespondedToReqClaim):
+def testAliceReqClaim(aliceRequestedFaberTranscriptClaim):
     pass
 
 
-def testShowFaberClaimPostReqClaim(be, do, faberRespondedToReqClaim,
+def testShowFaberClaimPostReqClaim(be, do, aliceRequestedFaberTranscriptClaim,
                                    transcriptClaimValueMap, rcvdClaimOut):
-    aliceCli = faberRespondedToReqClaim
+    aliceCli = aliceRequestedFaberTranscriptClaim
     be(aliceCli)
 
     do("show claim {name}",
@@ -559,7 +494,7 @@ def getAcmeAcceptInviteRespMsg():
     return """{
                 "type":"AVAIL_CLAIM_LIST",
                 "identifier": "<identifier>",
-                "claimsList": [ {
+                "availableClaimsList": [ {
                     "name": "Job-Certificate",
                     "version": "1.2",
                     "claimDefSeqNo":"<claimDefSeqNo>",
@@ -576,50 +511,36 @@ def getAcmeAcceptInviteRespMsg():
 
 
 @pytest.fixture(scope="module")
-def acmeRespondedToAcceptInvite(be, do, faberRespondedToReqClaim,
-                                acmeInviteLoadedByAlice, acmeMap,
-                                acmeAddedByPhil, acmeCli):
-
-    aliceCli = faberRespondedToReqClaim
-    acmeSigner = acmeCli.activeWallet._getIdData(
-        acmeCli.activeWallet.defaultId).signer
-
-    acceptInviteResp = getSignedRespMsg(getAcmeAcceptInviteRespMsg(),
-                                        acmeCli.activeWallet.defaultId,
-                                        acmeSigner)
-
+def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
+                                   aliceRequestedFaberTranscriptClaim,
+                                   acmeInviteLoadedByAlice, acmeLinkAdded,
+                                   acmeMap, acmeAddedByPhil, acmeCli):
     be(aliceCli)
-    do("accept invitation from {inviter}",
-                                        expect=[
-                                            "Invitation not yet verified.",
-                                            "Starting communication with {inviter}"
-                                        ],
-                                        mapper=acmeMap)
-
-    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
-    do(None,                            within=3,
-                                        expect=[
-                                            "Signature accepted.",
-                                            "Trust established.",
-                                            "Identifier created in Sovrin.",
-                                            "Available claims: {claims}"
-                                            "Synchronizing...",
-                                            # Once acme starts writing identifier
-                                            # to Sovrin, need to uncomment below line
-                                            # "Confirmed identifier written to Sovrin."
-                                        ],
-                                        mapper=acmeMap)
+    do("accept invitation "
+       "from {inviter}", within=3,
+                         expect=["Invitation not yet verified.",
+                                 "Starting communication with {inviter}"
+                                 "Signature accepted.",
+                                 "Trust established.",
+                                 "Identifier created in Sovrin.",
+                                 "Available claims: {claims}"
+                                 "Synchronizing...",
+                                 # Once acme starts writing identifier
+                                 # to Sovrin, need to uncomment below line
+                                 # "Confirmed identifier written to Sovrin."
+                                 ],
+                         mapper=acmeMap)
     return aliceCli
 
 
-def testAcmeRespondsToAcceptInvite(acmeRespondedToAcceptInvite):
+def testAliceAcceptedAcmeJobInvitation(aliceAcceptedAcmeJobInvitation):
     pass
 
 
 def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap,
-                                      acmeRespondedToAcceptInvite,
+                                      aliceAcceptedAcmeJobInvitation,
                                       showAcceptedLinkWithClaimReqsOut):
-    aliceCli = acmeRespondedToAcceptInvite
+    aliceCli = aliceAcceptedAcmeJobInvitation
     be(aliceCli)
 
     do("show link {inviter}",           expect=showAcceptedLinkWithClaimReqsOut,
@@ -628,8 +549,8 @@ def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap,
 
 
 def testShowClaimReqNotExists(be, do, acmeMap, claimReqNotExists,
-                              acmeRespondedToAcceptInvite):
-    aliceCli = acmeRespondedToAcceptInvite
+                              aliceAcceptedAcmeJobInvitation):
+    aliceCli = aliceAcceptedAcmeJobInvitation
     be(aliceCli)
     do("show claim request claim-req-to-show-not-exists",
                                         expect=claimReqNotExists,
@@ -639,8 +560,8 @@ def testShowClaimReqNotExists(be, do, acmeMap, claimReqNotExists,
 def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
                                    jobApplicationClaimReqMap,
                                    transcriptClaimAttrValueMap,
-                                   acmeRespondedToAcceptInvite):
-    aliceCli = acmeRespondedToAcceptInvite
+                                   aliceAcceptedAcmeJobInvitation):
+    aliceCli = aliceAcceptedAcmeJobInvitation
     be(aliceCli)
 
     mapping = {
@@ -668,8 +589,8 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
                                                showJobAppClaimReqOut,
                                                jobApplicationClaimReqMap,
                                                transcriptClaimAttrValueMap,
-                                               acmeRespondedToAcceptInvite):
-    aliceCli = acmeRespondedToAcceptInvite
+                                               aliceAcceptedAcmeJobInvitation):
+    aliceCli = aliceAcceptedAcmeJobInvitation
     be(aliceCli)
 
     mapping = {
@@ -690,3 +611,47 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
     do("show claim request {claim-req-to-show}",
                                         expect=showJobAppClaimReqOut,
                                         mapper=mapping)
+
+
+def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
+                      faberInviteSyncedWithoutEndpoint):
+
+    msg = {
+        TYPE: ACCEPT_INVITE,
+        IDENTIFIER: faberCli.activeWallet.defaultId,
+        NONCE: "unknown"
+    }
+    signature = aliceCli.activeWallet.signMsg(msg,
+                                              aliceCli.activeWallet.defaultId)
+    msg[f.SIG.nm] = signature
+    ip, port = faberMap[ENDPOINT].split(":")
+    aliceCli.sendToEndpoint(msg, (ip, int(port)))
+
+    be(aliceCli)
+    do(None,                            within=3,
+                                        expect=["Error (Signature Rejected) "
+                                                "occurred while "
+                                                "processing this msg: ".
+                                                format(msg)])
+
+
+def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
+                      faberInviteSyncedWithoutEndpoint):
+
+    msg = {
+        TYPE: ACCEPT_INVITE,
+        IDENTIFIER: aliceCli.activeWallet.defaultId,
+        NONCE: "unknown"
+    }
+    signature = aliceCli.activeWallet.signMsg(msg,
+                                              aliceCli.activeWallet.defaultId)
+    msg[f.SIG.nm] = signature
+    ip, port = faberMap[ENDPOINT].split(":")
+    aliceCli.sendToEndpoint(msg, (ip, int(port)))
+
+    be(aliceCli)
+    do(None,                            within=3,
+                                        expect=["Error (No Such Link found) "
+                                                "occurred while "
+                                                "processing this msg: {}".
+                                                format(msg)])

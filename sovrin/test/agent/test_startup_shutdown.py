@@ -4,8 +4,8 @@ from sovrin.agent.agent import Agent
 
 
 @fixture(scope="module")
-def agent():
-    return Agent()
+def agent(tdir):
+    return Agent('agent1', tdir)
 
 
 @fixture(scope="module")
