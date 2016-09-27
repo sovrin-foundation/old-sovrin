@@ -1,10 +1,12 @@
-from typing import Callable, Any, List, Dict
+from typing import Callable, Any, List, Dict, Tuple
 
+from plenum.common.exceptions import RemoteNotFound
 from plenum.common.raet import getHaFromLocalEstate
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
 from plenum.common.util import getlogger, randomString
 from raet.raeting import AutoMode
+from raet.road.estating import RemoteEstate
 from sovrin.agent.agent_net import AgentNet
 
 logger = getlogger()
@@ -13,7 +15,7 @@ logger = getlogger()
 class Endpoint(AgentNet, SimpleStack):
     def __init__(self, port: int, msgHandler: Callable,
                  name: str=None, basedirpath: str=None):
-        if basedirpath:
+        if name and basedirpath:
             ha = getHaFromLocalEstate(name, basedirpath)
             if ha and ha[1] != port:
                 port = ha[1]
@@ -57,3 +59,12 @@ class Endpoint(AgentNet, SimpleStack):
     def baseMsgHandler(self, msg):
         logger.debug("Got {}".format(msg))
         self.msgHandler(msg)
+
+    def connectTo(self, ha):
+        remote = self.findInRemotesByHA(ha)
+        if not remote:
+            remote = RemoteEstate(stack=self, ha=ha)
+            self.addRemote(remote)
+            # updates the store time so the join timer is accurate
+            self.updateStamp()
+            self.join(uid=remote.uid, cascade=True, timeout=30)

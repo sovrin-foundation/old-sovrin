@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Callable, Tuple
 
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
@@ -12,7 +12,8 @@ from sovrin.common.identity import Identity
 
 
 class Agent(Motor, AgentNet):
-    def __init__(self, name: str="agent1", client: Client=None, port: int=None):
+    def __init__(self, name: str="agent1", client: Client=None, port: int=None,
+                 msgHandler: Callable=None):
         Motor.__init__(self)
         self._name = name
 
@@ -21,7 +22,7 @@ class Agent(Motor, AgentNet):
 
         # known identifiers of this agent's owner
         self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
-        self.endpoint = Endpoint(port, self.handleEndpointMessage,
+        self.endpoint = Endpoint(port, msgHandler or self.handleEndpointMessage,
                                  name=self._name,
                                  basedirpath=client.basedirpath) if port else None
 
@@ -80,10 +81,13 @@ class Agent(Motor, AgentNet):
     def handleEndpointMessage(self, msg):
         pass
 
-    def sendMessage(self, msg, to: str):
+    def sendMessage(self, msg, destName: str=None, destHa: Tuple=None):
         try:
-            remote = self.endpoint.getRemote(to)
+            remote = self.endpoint.getRemote(name=destName, ha=destHa)
         except RemoteNotFound as ex:
-            fault(ex, "Do not know {}".format(to))
+            fault(ex, "Do not know {} {}".format(destName, destHa))
             return
         self.endpoint.transmit(msg, remote.uid)
+
+    def connectTo(self, ha):
+        self.endpoint.connectTo(ha)

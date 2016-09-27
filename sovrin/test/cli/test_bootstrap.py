@@ -2,6 +2,7 @@ import json
 
 import pytest
 from sovrin.agent.faber import FaberAgent
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
 
 
@@ -210,9 +211,9 @@ def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do,
 
 
 def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
-                                          acceptUnSyncedWhenConnected,
-                                          faberMap, connectedToTest,
-                                          poolNodesStarted):
+                                  acceptUnSyncedWithoutEndpointWhenConnected,
+                                  faberMap, connectedToTest,
+                                  poolNodesStarted):
     aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
     if not aliceCli ._isConnectedToAnyEnv():
@@ -220,8 +221,9 @@ def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
                                         expect=connectedToTest,
                                         mapper=faberMap)
 
-    do('accept invitation from {inviter}',   within=3,
-                                        expect=acceptUnSyncedWhenConnected,
+    do('accept invitation from {inviter}',
+                                        within=3,
+                                        expect=acceptUnSyncedWithoutEndpointWhenConnected,
                                         mapper=faberMap)
 
 
@@ -258,12 +260,14 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap
 
 
 @pytest.fixture(scope="module")
-def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut):
+def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut,
+                           faberIsRunning):
     philCli = faberAddedByPhil
     be(philCli)
     # I had to give two open/close curly braces in raw data
     # to avoid issue in mapping
-    do('send ATTRIB dest={target} raw={{"endpoint": "0.0.0.0:1212"}}',
+    do('send ATTRIB dest={target} raw={endpointAttr}',
+    # do('send ATTRIB dest={target} raw={{"endpoint": "127.0.0.1:1212"}}',
                                         within=3,
                                         expect=attrAddedOut,
                                         mapper=faberMap)
@@ -305,6 +309,22 @@ def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
     be(aliceCli)
     do('accept invitation from {inviter-not-exists}',
                                         expect=linkNotExists, mapper=faberMap)
+
+
+def testAliceAcceptInvitation(be, do, aliceCli, faberInviteSyncedWithEndpoint,
+                              linkNotExists, faberMap, faberLinkAdded):
+    be(aliceCli)
+    do('accept invitation from {inviter}', within=1,
+                                expect=[
+                                    "Signature accepted.",
+                                    "Trust established.",
+                                    "Identifier created in Sovrin.",
+                                    "Available claims: Transcript"
+                                    "Synchronizing...",
+                                    # Once faber starts writing identifier
+                                    # to Sovrin, need to uncomment below line
+                                    # "Confirmed identifier written to Sovrin."
+                                ], mapper=faberMap)
 
 
 def getFaberAcceptInviteRespMsg():
@@ -438,7 +458,7 @@ def getReqTranscriptClaimRespMsg():
                 "version": "1.2",
                 "claimDefSeqNo":"<claimDefSeqNo>",
                 "values": {
-                    "student_name": "Alice",
+                    "student_name": "Alice Garcia",
                     "ssn": "123456789",
                     "degree": "Bachelor of Science, Marketing",
                     "year": "2015",
@@ -513,9 +533,9 @@ def testLoadAcmeInvite(acmeInviteLoadedByAlice):
 
 
 def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
-                       showUnSyncedLinkOut, acmeMap):
+                       showUnSyncedLinkOut, showLinkWithClaimReqOut, acmeMap):
     showUnSyncedLinkWithClaimReqs = \
-        showUnSyncedLinkOut + ["Claim Requests: Job Application"]
+        showUnSyncedLinkOut + showLinkWithClaimReqOut
     be(aliceCli)
     do('show link {inviter}',           expect=showUnSyncedLinkWithClaimReqs,
                                         mapper=acmeMap)
@@ -596,12 +616,13 @@ def testAcmeRespondsToAcceptInvite(acmeRespondedToAcceptInvite):
     pass
 
 
-def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap, showAcceptedLinkOut,
-                                      acmeRespondedToAcceptInvite):
+def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap,
+                                      acmeRespondedToAcceptInvite,
+                                      showAcceptedLinkWithClaimReqsOut):
     aliceCli = acmeRespondedToAcceptInvite
     be(aliceCli)
 
-    do("show link {inviter}",           expect=showAcceptedLinkOut,
+    do("show link {inviter}",           expect=showAcceptedLinkWithClaimReqsOut,
                                         not_expect="Link (not yet accepted)",
                                         mapper=acmeMap)
 
@@ -617,14 +638,55 @@ def testShowClaimReqNotExists(be, do, acmeMap, claimReqNotExists,
 
 def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
                                    jobApplicationClaimReqMap,
+                                   transcriptClaimAttrValueMap,
                                    acmeRespondedToAcceptInvite):
     aliceCli = acmeRespondedToAcceptInvite
     be(aliceCli)
 
-    mapping = {}
+    mapping = {
+        "set-attr-first_name": "",
+        "set-attr-last_name": "",
+        "set-attr-phone_number": ""
+    }
     mapping.update(acmeMap)
     mapping.update(jobApplicationClaimReqMap)
+    mapping.update(transcriptClaimAttrValueMap)
+    do("show claim request {claim-req-to-show}",
+                                        expect=showJobAppClaimReqOut,
+                                        mapper=mapping)
 
+
+def testSetAttrWithoutContext(be, do, faberCli):
+    be(faberCli)
+    do("set first_name to Alice",       expect=[
+                                            "No context, "
+                                            "use below command to "
+                                            "set the context"])
+
+
+def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
+                                               showJobAppClaimReqOut,
+                                               jobApplicationClaimReqMap,
+                                               transcriptClaimAttrValueMap,
+                                               acmeRespondedToAcceptInvite):
+    aliceCli = acmeRespondedToAcceptInvite
+    be(aliceCli)
+
+    mapping = {
+        "set-attr-first_name": "",
+        "set-attr-last_name": "",
+        "set-attr-phone_number": ""
+    }
+    mapping.update(acmeMap)
+    mapping.update(jobApplicationClaimReqMap)
+    mapping.update(transcriptClaimAttrValueMap)
+    do("show claim request {claim-req-to-show}",
+                                        expect=showJobAppClaimReqOut,
+                                        mapper=mapping)
+    do("set first_name to Alice")
+    mapping.update({
+        "set-attr-first_name": "Alice"
+    })
     do("show claim request {claim-req-to-show}",
                                         expect=showJobAppClaimReqOut,
                                         mapper=mapping)

@@ -100,13 +100,16 @@ class Wallet(PWallet, Sponsoring):
 
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
+        matched = []
+
         for k, li in self._linkInvitations.items():
             for rc in li.receivedClaims.values():
-                commonAttr = set(attributes.keys()).intersection(rc.values.keys())
+                commonAttr = (set(attributes.keys()) - set(matched)).\
+                    intersection(rc.values.keys())
                 if commonAttr:
                     matchingLinkAndRcvdClaim.append((li, rc, commonAttr))
-                    for ca in commonAttr:
-                        del attributes[ca]
+                    matched.extend(commonAttr)
+
         return matchingLinkAndRcvdClaim
 
     # TODO: Few of the below methods have duplicate code, need to refactor it
@@ -320,7 +323,6 @@ class Wallet(PWallet, Sponsoring):
 
     def getLinkInvitationByTarget(self, target: str):
         for k, li in self._linkInvitations.items():
-            # li = Link.getFromDict(k, v)
             if li.remoteIdentifier == target:
                 return li
 
