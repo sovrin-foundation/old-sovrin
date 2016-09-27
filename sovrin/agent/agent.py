@@ -37,7 +37,7 @@ class Agent(Motor, AgentNet):
                           name=self._name.replace(" ", ""),
                           port=port,
                           basedirpath=basedirpath,
-                          msgHandler=msgHandler or self.handleEndpointMessage)
+                          msgHandler=self.handleEndpointMessage)
 
         # Client used to connect to Sovrin and forward on owner's txns
         self.client = client

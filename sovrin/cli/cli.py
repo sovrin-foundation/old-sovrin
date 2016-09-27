@@ -303,7 +303,7 @@ class SovrinCli(PlenumCli):
                     else:
                         # TODO: Go and get definition from Sovrin and store
                         # it in wallet's claim def store
-                        pass
+                        raise NotImplementedError
 
                 li.linkStatus = LINK_STATUS_ACCEPTED
                 li.targetVerkey = TARGET_VER_KEY_SAME_AS_ID
