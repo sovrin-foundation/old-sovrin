@@ -215,7 +215,7 @@ def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
 
 @pytest.fixture(scope="module")
 def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
-                   attrAddedToRepo, byuAddsCredDef,
+                   attrAddedToRepo, byuAddsCredDef, byuAddsIssuerKey,
                    credDefNameVersion, tylerConnected,
                    tylerStoresAttributesAsKnownToBYU):
     credDefName, credDefVersion = credDefNameVersion

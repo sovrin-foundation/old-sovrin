@@ -428,9 +428,10 @@ class Wallet(PWallet, Sponsoring):
         if req:
             return self.prepReq(req)
 
-    def requestCredDef(self, credefKey, sender):
-        credDef = CredDef(*credefKey.key())
-        self._credDefs[credefKey.key()] = credDef
+    def requestCredDef(self, credDefKey, sender):
+        name, version, origin = credDefKey
+        credDef = CredDef(name=name, version=version, origin=origin)
+        self._credDefs[credDefKey] = credDef
         req = credDef.getRequest(sender)
         if req:
             return self.prepReq(req)

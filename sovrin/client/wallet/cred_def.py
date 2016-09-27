@@ -34,12 +34,12 @@ class HasSeqNo:
 
 class CredDef(CredentialDefinition, HasSeqNo):
     def __init__(self,
-                 seqNo: Optional[int],
-                 attrNames,
                  name: str,
                  version: str,
+                 origin: Optional[Identifier] = None,
+                 seqNo: Optional[int] = None,
+                 attrNames=None,
                  secretKey: Optional[str]=None,    # uid of the Cred Def secret key
-                 origin: Optional[Identifier]=None,
                  typ: str=None,
                  # DEPR
                  # ip: str=None,

@@ -46,10 +46,7 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     # and it gives error (for permanent solution bug is created: #130181205).
     # from sovrin.test.helper import genTestClient
     #
-    # user, _ = genTestClient(nodeSet, tmpdir=tdir)
-    # user.registerObserver(userWalletA.handleIncomingReply)
-    # looper.add(user)
-    # looper.run(user.ensureConnectedToNodes())
+
     definition = credDef.get(serFmt=SerFmt.base58)
     op = {
         TARGET_NYM: sponsorWallet.defaultId,

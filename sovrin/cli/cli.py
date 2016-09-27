@@ -8,6 +8,8 @@ import os
 from hashlib import sha256
 
 import collections
+
+from ledger.util import F
 from plenum.common.signing import serializeForSig
 from plenum.common.types import f
 from raet.nacling import Verifier as SigVerifier
@@ -21,7 +23,7 @@ from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import SimpleSigner
 from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
-    PORT, IP
+    PORT, IP, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, cleanSeed, getCryptonym, isHex, \
     cryptonymToHex
@@ -55,6 +57,7 @@ import sovrin.anon_creds.cred_def as CredDefModule
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
+from anoncreds.protocol.utils import strToCharmInteger
 from anoncreds.test.conftest import staticPrimes
 
 """
@@ -277,19 +280,11 @@ class SovrinCli(PlenumCli):
 
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
                                               availableClaims):
-        # identity = Identity(identifier=li.localIdentifier)
-        # req = self.activeWallet.requestIdentity(identity,
-        #                                 sender=self.activeWallet.defaultId)
-        # self.activeClient.submitReqs(req)
         self.print("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
             self.print("Confirmed identifier written to Sovrin.")
             self._printShowAndReqClaimUsage(availableClaims)
-
-        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
-        #                             req.reqId, self.activeClient, getNymReply,
-        #                             availableClaims, li)
 
     def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
         self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
@@ -540,10 +535,6 @@ class SovrinCli(PlenumCli):
                           typ=matchedVars.get(TYPE),
                           secretKey=uid)
         return credDef
-        # return CredDefModule.CredDef(attrNames=attributes, name=name,
-        #                version=version,
-        #                 # ip=ip, port=port, p_prime="prime1", q_prime="prime1"
-        #                              )
 
     def _buildIssuerKey(self, origin, reference):
         wallet = self.activeWallet
@@ -556,35 +547,42 @@ class SovrinCli(PlenumCli):
 
         return ipk
 
-    def _getCredDefAndExecuteCallback(self, dest, credName,
-                                      credVersion, clbk, *args):
-        credDefKey = CredDefKey(credName, credVersion, dest)
-        req = self.activeWallet.requestCredDef(credDefKey,
-                                               self.activeWallet.defaultId)
-        # op = {
-        #     TARGET_NYM: dest,
-        #     TXN_TYPE: GET_CRED_DEF,
-        #     DATA: {
-        #         NAME: credName,
-        #         VERSION: credVersion
-        #     }
-        # }
-        # req, = self.activeClient.submit(op,
-        #                                 identifier=self.activeSigner.identifier)
+    def _getIssuerKeyAndExecuteClbk(self, origin, reference, clbk, *args):
+        req = self.activeWallet.requestIssuerKey((origin, reference),
+                                                 self.activeWallet.defaultId)
         self.activeClient.submitReqs(req)
-        self.print("Getting cred def {} version {} for {}".
-                   format(credName, credVersion, dest), Token.BoldBlue)
+        self.print("Getting issuer key for cred def {}".
+                   format(reference), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                     req.reqId, self.activeClient,
                                     clbk, *args)
 
+    def _getCredDefIsrKeyAndExecuteCallback(self, dest, credName,
+                                            credVersion, clbk, *args):
+        credDefKey = (credName, credVersion, dest)
+        req = self.activeWallet.requestCredDef(credDefKey,
+                                               self.activeWallet.defaultId)
+        self.activeClient.submitReqs(req)
+        self.print("Getting cred def {} version {} for {}".
+                   format(credName, credVersion, dest), Token.BoldBlue)
+
+        def _getKey(result, error):
+            data = json.loads(result.get(DATA))
+            origin = data.get(ORIGIN)
+            seqNo = data.get(F.seqNo.name)
+            self._getIssuerKeyAndExecuteClbk(origin, seqNo, clbk, *args)
+
+        self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                    req.reqId, self.activeClient,
+                                    _getKey)
+
     # callback function which once gets reply for GET_CRED_DEF will
     # send the proper command/msg to issuer
     def _sendCredReqToIssuer(self, reply, err, credName,
                                            credVersion, issuerId, proverId):
-        credDef = self.activeWallet.getCredDef(CredDefKey(credName,
-                                           credVersion, issuerId))
+        credDef = self.activeWallet.getCredDef((credName, credVersion, issuerId))
+        issuerPubKey = self.activeWallet.getIssuerPublicKey((issuerId, credDef.seqNo))
 
         def getEncodedAttrs(issuerId):
             attributes = self.attributeRepo.getAttributes(issuerId)
@@ -598,9 +596,8 @@ class SovrinCli(PlenumCli):
             }
 
         self.logger.debug("cred def is {}".format(credDef))
-        keys = credDef.keys
         pk = {
-            issuerId: self.pKFromCredDef(keys)
+            issuerId: issuerPubKey
         }
         masterSecret = self.activeWallet.masterSecret
 
@@ -744,13 +741,6 @@ class SovrinCli(PlenumCli):
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
             credDef = self._buildCredDef(matchedVars)
-            # sk = CredDefSk(credDef.name, credDef.version, credDef.serializedSK,
-            #                dest=self.activeWallet.defaultId)
-            # self.activeWallet.addCredDefSk(sk)
-            # data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
-            # cd = CredDef(data[NAME], data[VERSION],
-            #                     self.activeWallet.defaultId, data[TYPE],
-            #                   data[IP], data[PORT], data[KEYS])
             self.activeWallet.addCredDef(credDef)
             reqs = self.activeWallet.preparePending()
             self.activeClient.submitReqs(*reqs)
@@ -786,10 +776,10 @@ class SovrinCli(PlenumCli):
             credName = matchedVars.get('cred_name')
             proverName = matchedVars.get('prover_id')
             credVersion = matchedVars.get('version')
-            self._getCredDefAndExecuteCallback(dest, credName, credVersion,
-                                               self._sendCredReqToIssuer,
-                                               credName,
-                                               credVersion, dest, proverName)
+            self._getCredDefIsrKeyAndExecuteCallback(dest, credName, credVersion,
+                                                     self._sendCredReqToIssuer,
+                                                     credName,
+                                                     credVersion, dest, proverName)
             return True
 
     def _listCredAction(self, matchedVars):
@@ -864,9 +854,9 @@ class SovrinCli(PlenumCli):
             return True
 
     def _verifyProof(self, status, proof):
-        self._getCredDefAndExecuteCallback(proof["issuer"], proof[NAME],
-                                           proof[VERSION], self.doVerification,
-                                           status, proof)
+        self._getCredDefIsrKeyAndExecuteCallback(proof["issuer"], proof[NAME],
+                                                 proof[VERSION], self.doVerification,
+                                                 status, proof)
 
     def doVerification(self, reply, err, status, proof):
         issuer = proof[ISSUER]
@@ -1524,16 +1514,17 @@ class SovrinCli(PlenumCli):
             credName = matchedVars.get('cred_name')
             credVersion = matchedVars.get('cred_version')
             uValue = matchedVars.get('u_value')
-            credDefKey = CredDefKey(credName, credVersion,
-                                    self.activeWallet.defaultId)
+            credDefKey = (credName, credVersion, self.activeWallet.defaultId)
             credDef = self.activeWallet.getCredDef(credDefKey)
-            keys = credDef.keys
-            pk = self.pKFromCredDef(keys)
-            attributes = self.attributeRepo.\
-                getAttributes(proverId).encoded()
+            issuerPubKey = self.activeWallet.getIssuerPublicKey(
+                (self.activeWallet.defaultId, credDef.seqNo))
+            # keys = credDef.keys
+            pk = issuerPubKey
+            attributes = self.attributeRepo.getAttributes(proverId).encoded()
             if attributes:
                 attributes = list(attributes.values())[0]
-            sk = self.activeWallet.getCredDefSk(credDefKey).secretKey
+            sk = CredDefSecretKey.fromStr(
+                self.activeWallet.getCredDefSk(credDef.secretKey))
             cred = Issuer.generateCredential(uValue, attributes, pk, sk)
             # TODO: For real scenario, do we need to send this credential back
             # or it will be out of band?
