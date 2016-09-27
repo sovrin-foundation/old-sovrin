@@ -460,6 +460,8 @@ def testShowAcmeInvite(be, do, aliceCli, acmeMap):
 def acmeInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, acmeMap):
     be(aliceCli)
     do('load {invite}',                 expect=loadInviteOut, mapper=acmeMap)
+    link = aliceCli.activeWallet.getLinkInvitation(acmeMap.get("inviter"))
+    link.remoteEndPoint = acmeMap.get(ENDPOINT)
     return aliceCli
 
 
