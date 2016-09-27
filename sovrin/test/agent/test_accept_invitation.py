@@ -1,3 +1,6 @@
+import pytest
+from plenum.common.txn import TYPE, NONCE
+
 from plenum.common.types import f
 from plenum.test.eventually import eventually
 from sovrin.agent.msg_types import ACCEPT_INVITE
@@ -19,11 +22,12 @@ def testAcceptInvitation(faberIsRunning, faberLinkAdded, faberAdded,
     alice, awallet = aliceIsRunning
     ensureAgentsConnected(emptyLooper, alice, faber)
     msg = {
-        'type': ACCEPT_INVITE,
+        TYPE: ACCEPT_INVITE,
         f.IDENTIFIER.nm: awallet.defaultId,
-        'nonce': faberLinkAdded.nonce,
-        f.SIG.nm: 'dsd'
+        NONCE: faberLinkAdded.nonce,
     }
+    sig = awallet.signMsg(msg)
+    msg[f.SIG.nm] = sig
     alice.sendMessage(msg, faber.endpoint.name)
 
     def chk():
@@ -34,9 +38,11 @@ def testAcceptInvitation(faberIsRunning, faberLinkAdded, faberAdded,
     emptyLooper.run(eventually(chk))
 
 
+@pytest.mark.skip("Not yet implemented")
 def testAddClaimDef():
-    pass
+    raise NotImplementedError
 
 
+@pytest.mark.skip("Not yet implemented")
 def testAddIssuerKeys():
-    pass
+    raise NotImplementedError

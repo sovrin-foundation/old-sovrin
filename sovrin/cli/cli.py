@@ -38,7 +38,7 @@ from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
-from sovrin.client.wallet.helper import CLAIMS_LIST_FIELD, CLAIMS_FIELD, ERROR, \
+from sovrin.agent.agent import CLAIMS_LIST_FIELD, CLAIMS_FIELD, ERROR, \
     REQ_MSG
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, \
@@ -92,7 +92,6 @@ class SovrinCli(PlenumCli):
         self.attributeRepo = None   # type: AttrRepo
         self.proofBuilders = {}
         self.verifier = Verifier(randomString())
-        # self.endpoint = Endpoint(port, self.handleEndpointMsg, basedirpath=self.basedirpath)
         self._agent = None
         self.curContext = (None, None)  # Current Link, Current Claim Req
 
@@ -320,7 +319,7 @@ class SovrinCli(PlenumCli):
             else:
                 self.print("No matching link found")
 
-    def handleEndpointMsg(self, msg):
+    def handleEndpointMessage(self, msg):
         body, frm = msg
         if body[TYPE] == ERROR:
             self.print("Error ({}) occurred while processing this msg: {}".
@@ -405,8 +404,11 @@ class SovrinCli(PlenumCli):
     def agent(self):
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
-            self._agent = Agent(name=randomString(6), client=self.activeClient,
-                                port=port, msgHandler=self.handleEndpointMsg)
+            self._agent = Agent(name=randomString(6),
+                                basedirpath=self.basedirpath,
+                                client=self.activeClient,
+                                port=port,
+                                msgHandler=self.handleEndpointMessage)
             self.looper.add(self._agent)
         return self._agent
 

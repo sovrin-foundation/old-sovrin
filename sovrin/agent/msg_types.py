@@ -5,6 +5,7 @@ CLAIMS = 'CLAIMS'
 
 CLAIM_NAME_FIELD="claimName"
 
+
 """
 ACCEPT_INVITE
 {

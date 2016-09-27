@@ -2,10 +2,9 @@ import json
 
 import pytest
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
+from sovrin.agent.agent import SIGNATURE, WalletedAgent
 from sovrin.agent.faber import FaberAgent, AVAILABLE_CLAIMS_LIST, CLAIMS_LIST
 from sovrin.agent.msg_types import ACCEPT_INVITE
-from sovrin.client.wallet.helper import createAvailClaimListMsg, createClaimsMsg, \
-    SIGNATURE
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
 
@@ -322,13 +321,13 @@ def getSignedRespMsg(msg, signer):
     return msg
 
 
-def testAcceptInvitationResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
+def testAcceptInviteRespWithInvalidSig(faberInviteSyncedWithEndpoint,
                                  faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
-    msg = createAvailClaimListMsg(faberCli.activeWallet.defaultId,
-                                  AVAILABLE_CLAIMS_LIST)
+    msg = WalletedAgent.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
+    msg[IDENTIFIER] = faberCli.activeWallet.defaultId
     acceptInviteResp = getSignedRespMsg(msg, aliceSigner)
     aliceCli._handleAcceptInviteResponse(acceptInviteResp)
 
@@ -511,27 +510,25 @@ def getAcmeAcceptInviteRespMsg():
 
 
 @pytest.fixture(scope="module")
-def aliceAcceptedAcmeJobInvitation(be, do, aliceRequestedFaberTranscriptClaim,
+def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
+                                   aliceRequestedFaberTranscriptClaim,
                                    acmeInviteLoadedByAlice, acmeLinkAdded,
-                                   acmeMap,acmeAddedByPhil, acmeCli):
-
-    aliceCli = aliceRequestedFaberTranscriptClaim
+                                   acmeMap, acmeAddedByPhil, acmeCli):
     be(aliceCli)
-    do("accept invitation from {inviter}",
-                                        within=3,
-                                        expect=[
-                                            "Invitation not yet verified.",
-                                            "Starting communication with {inviter}"
-                                            "Signature accepted.",
-                                            "Trust established.",
-                                            "Identifier created in Sovrin.",
-                                            "Available claims: {claims}"
-                                            "Synchronizing...",
-                                            # Once acme starts writing identifier
-                                            # to Sovrin, need to uncomment below line
-                                            # "Confirmed identifier written to Sovrin."
-                                        ],
-                                        mapper=acmeMap)
+    do("accept invitation "
+       "from {inviter}", within=3,
+                         expect=["Invitation not yet verified.",
+                                 "Starting communication with {inviter}"
+                                 "Signature accepted.",
+                                 "Trust established.",
+                                 "Identifier created in Sovrin.",
+                                 "Available claims: {claims}"
+                                 "Synchronizing...",
+                                 # Once acme starts writing identifier
+                                 # to Sovrin, need to uncomment below line
+                                 # "Confirmed identifier written to Sovrin."
+                                 ],
+                         mapper=acmeMap)
     return aliceCli
 
 
@@ -629,7 +626,7 @@ def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
     aliceCli.sendToEndpoint(msg, (ip, int(port)))
 
     be(aliceCli)
-    do(None,                            within=10,
+    do(None,                            within=3,
                                         expect=["Error (Signature Rejected) "
                                                 "occurred while "
                                                 "processing this msg: ".
@@ -651,7 +648,7 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
     aliceCli.sendToEndpoint(msg, (ip, int(port)))
 
     be(aliceCli)
-    do(None,                            within=10,
+    do(None,                            within=3,
                                         expect=["Error (No Such Link found) "
                                                 "occurred while "
                                                 "processing this msg: {}".
