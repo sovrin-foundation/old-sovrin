@@ -528,7 +528,7 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    acmeCli):
     be(aliceCli)
     do("accept invitation "
-       "from {inviter}", within=3,
+       "from {inviter}", within=5,
                          expect=["Invitation not yet verified.",
                                  "Starting communication with {inviter}",
                                  "Signature accepted.",
