@@ -360,7 +360,7 @@ class Node(PlenumNode):
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStore.addCredDefTxnToGraph(result)
         elif result[TXN_TYPE] == ISSUER_KEY:
-            self.graphStore.addIssuerKeyToGraph(result)
+            self.graphStore.addIssuerKeyTxnToGraph(result)
         else:
             logger.debug("Got an unknown type {} to process".
                          format(result[TXN_TYPE]))

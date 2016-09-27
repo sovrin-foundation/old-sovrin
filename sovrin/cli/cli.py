@@ -2,6 +2,7 @@ import ast
 import datetime
 import json
 from typing import Dict, Any, Tuple, Callable
+import uuid
 
 import os
 from hashlib import sha256
@@ -38,7 +39,7 @@ from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
-from sovrin.client.wallet.cred_def import CredDef#, CredDefSk, CredDefKey
+from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef#, CredDefSk, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, \
@@ -52,6 +53,7 @@ from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
 from anoncreds.test.conftest import staticPrimes
 
@@ -107,6 +109,7 @@ class SovrinCli(PlenumCli):
             'send_get_nym',
             'send_attrib',
             'send_cred_def',
+            'send_isr_key',
             'send_cred',
             'list_cred',
             'prep_proof',
@@ -143,6 +146,7 @@ class SovrinCli(PlenumCli):
         completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
         completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
         completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
+        completers["send_isr_key"] = WordCompleter(["send", "ISSUER_KEY"])
         completers["req_cred"] = WordCompleter(["request", "credential"])
         completers["gen_cred"] = WordCompleter(["generate", "credential"])
         completers["store_cred"] = WordCompleter(["store", "credential"])
@@ -186,6 +190,7 @@ class SovrinCli(PlenumCli):
                         self._sendGetNymAction,
                         self._sendAttribAction,
                         self._sendCredDefAction,
+                        self._sendIssuerKeyAction,
                         self._reqCredAction,
                         self._listCredAction,
                         self._verifyProofAction,
@@ -534,12 +539,22 @@ class SovrinCli(PlenumCli):
                           origin=self.activeWallet.defaultId,
                           typ=matchedVars.get(TYPE),
                           secretKey=uid)
-        self.activeWallet.addCredDef(credDef)
         return credDef
         # return CredDefModule.CredDef(attrNames=attributes, name=name,
         #                version=version,
         #                 # ip=ip, port=port, p_prime="prime1", q_prime="prime1"
         #                              )
+
+    def _buildIssuerKey(self, origin, reference):
+        wallet = self.activeWallet
+        credDef = wallet.getCredDef(seqNo=reference)
+        csk = CredDefSecretKey.fromStr(wallet.getCredDefSk(credDef.secretKey))
+        isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+        ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                           claimDefSeqNo=reference,
+                           secretKeyUid=isk.uid, origin=wallet.defaultId)
+
+        return ipk
 
     def _getCredDefAndExecuteCallback(self, dest, credName,
                                       credVersion, clbk, *args):
@@ -736,13 +751,30 @@ class SovrinCli(PlenumCli):
             # cd = CredDef(data[NAME], data[VERSION],
             #                     self.activeWallet.defaultId, data[TYPE],
             #                   data[IP], data[PORT], data[KEYS])
-            # self.activeWallet.addCredDef(cd)
+            self.activeWallet.addCredDef(credDef)
             reqs = self.activeWallet.preparePending()
             self.activeClient.submitReqs(*reqs)
             self.print("The following credential definition is published to the"
                        " Sovrin distributed ledger\n", Token.BoldBlue,
                        newline=False)
             self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
+            self.looper.loop.call_later(.2, self.ensureReqCompleted,
+                                        reqs[0].reqId, self.activeClient)
+            return True
+
+    def _sendIssuerKeyAction(self, matchedVars):
+        if matchedVars.get('send_isr_key') == 'send ISSUER_KEY':
+            reference = int(matchedVars.get(REFERENCE))
+            ipk = self._buildIssuerKey(self.activeWallet.defaultId,
+                                             reference)
+            self.activeWallet.addIssuerPublicKey(ipk)
+            reqs = self.activeWallet.preparePending()
+            # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
+            self.activeClient.submitReqs(*reqs)
+            self.print("The following issuer key is published to the"
+                       " Sovrin distributed ledger\n", Token.BoldBlue,
+                       newline=False)
+            self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
             self.looper.loop.call_later(.2, self.ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient)
             return True

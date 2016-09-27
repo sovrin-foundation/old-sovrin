@@ -27,7 +27,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
     DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF, \
-    GET_ISSUER_KEY
+    GET_ISSUER_KEY, ISSUER_KEY
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
@@ -210,6 +210,10 @@ class Client(PlenumClient):
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:
                     self.graphStore.addCredDefTxnToGraph(result)
+            elif result[TXN_TYPE] == ISSUER_KEY:
+                if self.graphStore:
+                    self.graphStore.addIssuerKeyTxnToGraph(result)
+
             # elif result[TXN_TYPE] == GET_ISSUER_KEY:
             #     data = result.get(DATA)
             #     try:

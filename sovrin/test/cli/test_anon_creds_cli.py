@@ -4,11 +4,11 @@ import re
 import sovrin.anon_creds.cred_def as cred_def
 
 from plenum.common.looper import Looper
-from plenum.common.txn import NAME, VERSION
+from plenum.common.txn import NAME, VERSION, ORIGIN
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     checkClientConnected
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR, USER, CRED_DEF
+from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REFERENCE
 from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
     ensureNymAdded
 
@@ -197,8 +197,20 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 
 
 @pytest.fixture(scope="module")
-def byuAddsIssuerKey(byuAddsCredDef):
-    pass
+def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
+    origin = byuAddsCredDef
+    key = (*credDefNameVersion, origin)
+    credDef = byuCLI.activeWallet.getCredDef(key=key)
+    cmd = ("send ISSUER_KEY reference={}" .format(credDef.seqNo))
+    checkCmdValid(byuCLI, cmd)
+
+    def checkIsKAdded():
+        assert byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+
+    byuCLI.looper.run(eventually(checkIsKAdded, retryWait=1, timeout=15))
+    output = byuCLI.lastCmdOutput
+    assert "issuer key is published" in output
+    return byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
 
 
 @pytest.fixture(scope="module")
@@ -352,6 +364,10 @@ def testTylerCreated(tylerCreated):
 
 
 def testBYUAddsCredDef(byuAddsCredDef):
+    pass
+
+
+def testBYUAddsIssuerKey(byuAddsIssuerKey):
     pass
 
 

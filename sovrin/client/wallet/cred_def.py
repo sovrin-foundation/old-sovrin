@@ -52,6 +52,7 @@ class CredDef(CredentialDefinition, HasSeqNo):
                          version=version)
         self.typ = typ
         self.origin = origin
+        self.secretKey = secretKey
         # DEPR
         # self.ip = ip
         # self.port = port
