@@ -323,16 +323,15 @@ def getSignedRespMsg(msg, signer):
     return msg
 
 
-def testAcceptInviteRespWithInvalidSig(faberInviteSyncedWithEndpoint,
-                                 faberCli):
-    aliceCli = faberInviteSyncedWithEndpoint
+def testAcceptInviteRespWithInvalidSig(aliceCli,
+                                       faberInviteSyncedWithEndpoint,
+                                       faberCli):
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
     msg = WalletedAgent.createAvailClaimListMsg(AVAILABLE_CLAIMS_LIST)
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
     acceptInviteResp = getSignedRespMsg(msg, aliceSigner)
-    aliceCli._handleAcceptInviteResponse(acceptInviteResp)
-
+    aliceCli.agent._handleAcceptInviteResponse(acceptInviteResp)
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
@@ -412,14 +411,16 @@ def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
 
 
 def testReqClaimResponseWithInvalidSig(faberInviteSyncedWithEndpoint,
-                                 faberCli):
+                                       faberCli):
     aliceCli = faberInviteSyncedWithEndpoint
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
 
-    msg = createClaimsMsg(faberCli.activeWallet.defaultId, CLAIMS_LIST)
+    msg = WalletedAgent.createClaimsMsg(CLAIMS_LIST)
+    msg[IDENTIFIER] = faberCli.activeWallet.defaultId
+
     reqClaimResp = getSignedRespMsg(msg, aliceSigner)
-    aliceCli._handleReqClaimResponse(reqClaimResp)
+    aliceCli.agent._handleReqClaimResponse(reqClaimResp)
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
