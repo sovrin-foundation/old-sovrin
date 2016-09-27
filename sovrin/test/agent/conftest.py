@@ -1,6 +1,7 @@
 import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
+from sovrin.agent.acme import runAcme
 from sovrin.agent.alice import runAlice
 from sovrin.agent.faber import runFaber
 from sovrin.client.wallet.link_invitation import Link
@@ -72,7 +73,7 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet):
 def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet):
     acmeWallet.addSigner(signer=SimpleSigner(
         seed=b'Acme0000000000000000000000000000'))
-    acme = runFaber(acmeWallet.name, acmeWallet,
+    acme = runAcme(acmeWallet.name, acmeWallet,
                      basedirpath=tdirWithPoolTxns, startRunning=False)
     emptyLooper.add(acme)
     return acme, acmeWallet
