@@ -9,6 +9,8 @@ from hashlib import sha256
 
 import collections
 
+from plenum.client.signer import Signer
+
 from ledger.util import F
 from plenum.common.types import f
 
@@ -103,7 +105,7 @@ class SovrinCli(PlenumCli):
         self.verifier = Verifier(randomString(), MemoryCredDefStore(),
                                  MemoryIssuerKeyStore())
         _, port = self.nextAvailableClientAddr()
-        self.endpoint = Endpoint(port, self.handleEndpointMsg)
+        # self.endpoint = Endpoint(port, self.handleEndpointMsg)
         self.curContext = (None, None)  # Current Link, Current Claim Req
         self._agent = None
 
