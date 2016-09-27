@@ -6,30 +6,32 @@ from sovrin.common.util import getNonce
 from sovrin.client.wallet.claim import AvailableClaimData, ClaimDefKey, \
     ReceivedClaim, ClaimRequest
 
-TRUST_ANCHOR = "Trust Anchor"
-SIGNER_IDENTIFIER = "Identifier"
-SIGNER_VER_KEY = "Verification Key"
-SIGNER_VER_KEY_SAME_AS_ID = '<same as local identifier>'
 
-TARGET_IDENTIFIER = "Target"
-TARGET_VER_KEY = "Target Verification Key"
-TARGET_VER_KEY_SAME_AS_ID = '<same as target>'
-TARGET_END_POINT = "Target endpoint"
-SIGNATURE = "Signature"
-CLAIM_REQUESTS = "Claim Requests"
-AVAILABLE_CLAIMS = "Available Claims"
-RECEIVED_CLAIMS = "Received Claims"
+class t:
+    TRUST_ANCHOR = "Trust Anchor"
+    SIGNER_IDENTIFIER = "Identifier"
+    SIGNER_VER_KEY = "Verification Key"
+    SIGNER_VER_KEY_SAME_AS_ID = '<same as local identifier>'
 
-LINK_NONCE = "Nonce"
-LINK_STATUS = "Invitation status"
-LINK_LAST_SYNCED = "Last Synced"
-LINK_LAST_SEQ_NO = "Last Sync no"
-LINK_STATUS_ACCEPTED = "Accepted"
+    TARGET_IDENTIFIER = "Target"
+    TARGET_VER_KEY = "Target Verification Key"
+    TARGET_VER_KEY_SAME_AS_ID = '<same as target>'
+    TARGET_END_POINT = "Target endpoint"
+    SIGNATURE = "Signature"
+    CLAIM_REQUESTS = "Claim Requests"
+    AVAILABLE_CLAIMS = "Available Claims"
+    RECEIVED_CLAIMS = "Received Claims"
 
-LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
-UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
+    LINK_NONCE = "Nonce"
+    LINK_STATUS = "Invitation status"
+    LINK_LAST_SYNCED = "Last Synced"
+    LINK_LAST_SEQ_NO = "Last Sync no"
+    LINK_STATUS_ACCEPTED = "Accepted"
 
-LINK_ITEM_PREFIX = '\n\t'
+    LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
+    UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
+
+    LINK_ITEM_PREFIX = '\n\t'
 
 
 # TODO: Rename to Link
@@ -71,13 +73,13 @@ class Link:
     # TODO: THis method is not used any more. We should remove it
     @staticmethod
     def getFromDict(name, values):
-        localIdentifier = values[SIGNER_IDENTIFIER]
-        trustAnchor = values[TRUST_ANCHOR]
-        remoteIdentifier = values[TARGET_IDENTIFIER]
-        linkNonce = values[LINK_NONCE]
-        # signature = values[SIGNATURE]
+        localIdentifier = values[t.SIGNER_IDENTIFIER]
+        trustAnchor = values[t.TRUST_ANCHOR]
+        remoteIdentifier = values[t.TARGET_IDENTIFIER]
+        linkNonce = values[t.LINK_NONCE]
+        # signature = values[t.SIGNATURE]
 
-        claimRequestJson = values.get(CLAIM_REQUESTS, None)
+        claimRequestJson = values.get(t.CLAIM_REQUESTS, None)
         claimRequests = []
         if claimRequestJson:
             for cr in claimRequestJson:
@@ -85,7 +87,7 @@ class Link:
                     ClaimRequest(cr.get("name"), cr.get("version"),
                                  cr.get("attributes")))
 
-        availableClaimsJson = values.get(AVAILABLE_CLAIMS, None)
+        availableClaimsJson = values.get(t.AVAILABLE_CLAIMS, None)
         availableClaims = []
         if availableClaimsJson:
             for ac in availableClaimsJson:
@@ -94,7 +96,7 @@ class Link:
                         ClaimDefKey(ac.get("name"), ac.get("version"),
                         ac.get("claimDefSeqNo"))))
 
-        receivedClaimsJson = values.get(RECEIVED_CLAIMS, None)
+        receivedClaimsJson = values.get(t.RECEIVED_CLAIMS, None)
         receivedClaims = []
         if receivedClaimsJson:
             for ac in receivedClaimsJson:
@@ -105,13 +107,13 @@ class Link:
                 rc.updateDateOfIssue(ac.get('dateOfIssue'))
                 receivedClaims.append(rc)
 
-        localVerKey = values.get(SIGNER_VER_KEY, None)
-        remoteEndPoint = values.get(TARGET_END_POINT, None)
+        localVerKey = values.get(t.SIGNER_VER_KEY, None)
+        remoteEndPoint = values.get(t.TARGET_END_POINT, None)
 
-        remoteVerKey = values.get(TARGET_VER_KEY, None)
-        linkStatus = values.get(LINK_STATUS, None)
-        linkLastSynced = values.get(LINK_LAST_SYNCED, None)
-        linkLastSyncNo = values.get(LINK_LAST_SEQ_NO, None)
+        remoteVerKey = values.get(t.TARGET_VER_KEY, None)
+        linkStatus = values.get(t.LINK_STATUS, None)
+        linkLastSynced = values.get(t.LINK_LAST_SYNCED, None)
+        linkLastSyncNo = values.get(t.LINK_LAST_SEQ_NO, None)
 
         li = Link(name, localIdentifier, localVerKey, trustAnchor,
                   remoteIdentifier, remoteEndPoint, linkNonce,
@@ -139,43 +141,43 @@ class Link:
     # TODO: THis method is not used any more. We should remove it
     def getDictToBeStored(self) -> dict:
         fixed = {
-            SIGNER_IDENTIFIER: self.localIdentifier,
-            TRUST_ANCHOR: self.trustAnchor,
-            TARGET_IDENTIFIER: self.remoteIdentifier,
-            LINK_NONCE: self.nonce,
-            SIGNATURE: self.signature
+            t.SIGNER_IDENTIFIER: self.localIdentifier,
+            t.TRUST_ANCHOR: self.trustAnchor,
+            t.TARGET_IDENTIFIER: self.remoteIdentifier,
+            t.LINK_NONCE: self.nonce,
+            t.SIGNATURE: self.signature
         }
         optional = {}
         if self.verkey:
-            optional[SIGNER_VER_KEY] = self.verkey
+            optional[t.SIGNER_VER_KEY] = self.verkey
         if self.targetVerkey:
-            optional[TARGET_VER_KEY] = self.targetVerkey
+            optional[t.TARGET_VER_KEY] = self.targetVerkey
         if self.remoteEndPoint:
-            optional[TARGET_END_POINT] = self.remoteEndPoint
+            optional[t.TARGET_END_POINT] = self.remoteEndPoint
         if self.linkStatus:
-            optional[LINK_STATUS] = self.linkStatus
+            optional[t.LINK_STATUS] = self.linkStatus
         if self.linkLastSynced:
-            optional[LINK_LAST_SYNCED] = self.linkLastSynced.isoformat()
+            optional[t.LINK_LAST_SYNCED] = self.linkLastSynced.isoformat()
         if self.linkLastSyncNo:
-            optional[LINK_LAST_SEQ_NO] = self.linkLastSyncNo
+            optional[t.LINK_LAST_SEQ_NO] = self.linkLastSyncNo
 
         if self.claimRequests:
             claimRequests = []
             for cr in self.claimRequests:
                 claimRequests.append(cr.getDictToBeStored())
-            optional[CLAIM_REQUESTS] = claimRequests
+            optional[t.CLAIM_REQUESTS] = claimRequests
 
         if self.availableClaims:
             availableClaims = []
             for ac in self.availableClaims.values():
                 availableClaims.append(ac.getDictToBeStored())
-            optional[AVAILABLE_CLAIMS] = availableClaims
+            optional[t.AVAILABLE_CLAIMS] = availableClaims
 
         if self.receivedClaims:
             receivedClaims = []
             for rc in self.receivedClaims.values():
                 receivedClaims.append(rc.getDictToBeStored())
-            optional[RECEIVED_CLAIMS] = receivedClaims
+            optional[t.RECEIVED_CLAIMS] = receivedClaims
 
         fixed.update(optional)
         return fixed
@@ -190,7 +192,7 @@ class Link:
         from datetime import datetime
         now = datetime.now()
         if time is None:
-            return LINK_NOT_SYNCHRONIZED
+            return t.LINK_NOT_SYNCHRONIZED
 
         if not isinstance(time, (int, datetime)):
             raise RuntimeError("Cannot parse time")
@@ -225,28 +227,28 @@ class Link:
             return str(day_diff) + " days ago"
 
     def isAccepted(self):
-        return self.linkStatus and self.linkStatus == LINK_STATUS_ACCEPTED
+        return self.linkStatus and self.linkStatus == t.LINK_STATUS_ACCEPTED
 
     def getLinkInfoStr(self) -> str:
         trustAnchor = self.trustAnchor or ""
         trustAnchorStatus = '(not yet written to Sovrin)'
-        targetVerKey = UNKNOWN_WAITING_FOR_SYNC
-        targetEndPoint = self.remoteEndPoint or UNKNOWN_WAITING_FOR_SYNC
+        targetVerKey = t.UNKNOWN_WAITING_FOR_SYNC
+        targetEndPoint = self.remoteEndPoint or t.UNKNOWN_WAITING_FOR_SYNC
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = Link.prettyDate(self.linkLastSynced)
 
-        if linkLastSynced != LINK_NOT_SYNCHRONIZED and \
-                        targetEndPoint == UNKNOWN_WAITING_FOR_SYNC:
+        if linkLastSynced != t.LINK_NOT_SYNCHRONIZED and \
+                        targetEndPoint == t.UNKNOWN_WAITING_FOR_SYNC:
             targetEndPoint = "Not Available"
 
         if self.isAccepted():
             trustAnchorStatus = '(confirmed)'
-            targetVerKey = TARGET_VER_KEY_SAME_AS_ID
+            targetVerKey = t.TARGET_VER_KEY_SAME_AS_ID
             linkStatus = self.linkStatus
 
         # TODO: The verkey would be same as the local identifier until we
         # support key rotation
-        verKey = SIGNER_VER_KEY_SAME_AS_ID
+        verKey = t.SIGNER_VER_KEY_SAME_AS_ID
         # if self.signerVerKey:
         #     verKey = self.signerVerKey
 
@@ -284,5 +286,5 @@ class Link:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
 
         linkItems = fixedLinkItems + optionalLinkItems
-        indentedLinkItems = LINK_ITEM_PREFIX.join(linkItems.splitlines())
+        indentedLinkItems = t.LINK_ITEM_PREFIX.join(linkItems.splitlines())
         return fixedLinkHeading + indentedLinkItems

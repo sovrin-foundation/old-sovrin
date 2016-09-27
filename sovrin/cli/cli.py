@@ -19,11 +19,10 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
     PORT, IP
 from plenum.common.txn_util import createGenesisTxnFile
-from plenum.common.util import randomString, getCryptonym, isHex, \
-    cryptonymToHex
-from sovrin.agent.agent import Agent
-from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST, CLAIMS, \
-    REQUEST_CLAIMS, CLAIM_NAME_FIELD
+from plenum.common.util import randomString, getCryptonym
+from sovrin.agent.agent import WalletedAgent
+from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIMS, \
+    CLAIM_NAME_FIELD
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.cred_def import SerFmt
@@ -35,19 +34,16 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
+from sovrin.client.wallet.claim import ReceivedClaim
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
-from sovrin.agent.agent import CLAIMS_LIST_FIELD, CLAIMS_FIELD, ERROR, \
-    REQ_MSG
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.client.wallet.link_invitation import Link, \
-    TARGET_VER_KEY_SAME_AS_ID, LINK_STATUS_ACCEPTED, AvailableClaimData, \
+from sovrin.client.wallet.link_invitation import Link, AvailableClaimData, \
     ClaimRequest
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
-from sovrin.common.util import getConfig, verifySig
+from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
@@ -216,120 +212,6 @@ class SovrinCli(PlenumCli):
                 'request claim {}'.format(claimName)]
         self.printUsage(msgs)
 
-    def _isVerified(self, msg: Dict[str, str]):
-        signature = msg.get("signature")
-        identifier = msg.get("identifier")
-        msgWithoutSig = {}
-        for k, v in msg.items():
-            if k != "signature":
-                msgWithoutSig[k] = v
-
-        key = cryptonymToHex(identifier) if not isHex(
-            identifier) else identifier
-        isVerified = verifySig(key, signature, msgWithoutSig)
-        if not isVerified:
-            self.print("Signature rejected")
-        return isVerified
-
-    def _handleRequestClaimResponse(self, msg: Dict):
-        isVerified = self._isVerified(msg)
-        if isVerified:
-            pass
-
-    def _handleReqClaimResponse(self, msg: Dict):
-        isVerified = self._isVerified(msg)
-        if isVerified:
-            self.print("Signature accepted.")
-            identifier = msg.get("identifier")
-            for claim in msg[CLAIMS_FIELD]:
-                self.print("Received {}.".format(claim['name']))
-                li = self._getLinkByTarget(getCryptonym(identifier))
-                if li:
-                    name, version, claimDefSeqNo = \
-                        claim['name'], claim['version'], \
-                        claim['claimDefSeqNo']
-                    issuerKeys = {}  # TODO: Need to decide how/where to get it
-                    values = claim['values']  # TODO: Need to finalize this
-                    rc = ReceivedClaim(ClaimDefKey(name, version, claimDefSeqNo),
-                                  issuerKeys, values)
-                    rc.dateOfIssue = datetime.datetime.now()
-                    li.updateReceivedClaims([rc])
-                    self.activeWallet.addLinkInvitation(li)
-            else:
-                self.print("No matching link found")
-
-    def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
-                                              availableClaims):
-        # identity = Identity(identifier=li.localIdentifier)
-        # req = self.activeWallet.requestIdentity(identity,
-        #                                 sender=self.activeWallet.defaultId)
-        # self.activeClient.submitReqs(req)
-        self.print("Synchronizing...")
-
-        def getNymReply(reply, err, availableClaims, li):
-            self.print("Confirmed identifier written to Sovrin.")
-            self._printShowAndReqClaimUsage(availableClaims)
-
-        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
-        #                             req.reqId, self.activeClient, getNymReply,
-        #                             availableClaims, li)
-
-    def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
-        self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
-
-    def _handleAcceptInviteResponse(self, msg: Dict):
-        isVerified = self._isVerified(msg)
-        if isVerified:
-            identifier = msg.get("identifier")
-            li = self._getLinkByTarget(getCryptonym(identifier))
-            if li:
-                # TODO: Show seconds took to respond
-                self.print("Response from {}:".format(li.name))
-                self.print("    Signature accepted.")
-                self.print("    Trust established.")
-                # Not sure how to know if the responder is a trust anchor or not
-                self.print("    Identifier created in Sovrin.")
-                availableClaims = []
-                for cl in msg[CLAIMS_LIST_FIELD]:
-                    name, version, claimDefSeqNo = \
-                        cl['name'], cl['version'], \
-                        cl['claimDefSeqNo']
-                    claimDefKey = ClaimDefKey(name, version, claimDefSeqNo)
-                    availableClaims.append(AvailableClaimData(claimDefKey))
-
-                    if cl.get('definition', None):
-                        self.activeWallet.addClaimDef(
-                            ClaimDef(claimDefKey, cl['definition']))
-                    else:
-                        # TODO: Go and get definition from Sovrin and store
-                        # it in wallet's claim def store
-                        raise NotImplementedError
-
-                li.linkStatus = LINK_STATUS_ACCEPTED
-                li.targetVerkey = TARGET_VER_KEY_SAME_AS_ID
-                li.updateAvailableClaims(availableClaims)
-
-                self.activeWallet.addLinkInvitation(li)
-
-                if len(availableClaims) > 0:
-                    self.print("    Available claims: {}".
-                               format(",".join([cl.claimDefKey.name
-                                                for cl in availableClaims])))
-                    self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
-            else:
-                self.print("No matching link found")
-
-    def handleEndpointMessage(self, msg):
-        body, frm = msg
-        if body[TYPE] == ERROR:
-            self.print("Error ({}) occurred while processing this msg: {}".
-                       format(body[DATA], body[REQ_MSG]))
-
-        if body[TYPE] == AVAIL_CLAIM_LIST:
-            self._handleAcceptInviteResponse(body)
-        if body[TYPE] == CLAIMS:
-            self._handleReqClaimResponse(body)
-
     # TODO: Rename as sendToAgent
     def sendToEndpoint(self, msg: Any, endpoint: Tuple):
         # TODO: Check if already connected
@@ -404,11 +286,12 @@ class SovrinCli(PlenumCli):
     def agent(self):
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
-            self._agent = Agent(name=randomString(6),
-                                basedirpath=self.basedirpath,
-                                client=self.activeClient,
-                                port=port,
-                                msgHandler=self.handleEndpointMessage)
+            self._agent = WalletedAgent(name=randomString(6),
+                                        basedirpath=self.basedirpath,
+                                        client=self.activeClient,
+                                        wallet=self.activeWallet,
+                                        port=port)
+            self._agent.registerObserver(self)
             self.looper.add(self._agent)
         return self._agent
 
@@ -896,7 +779,7 @@ class SovrinCli(PlenumCli):
             with open(filePath) as data_file:
                 respData = json.load(
                     data_file, object_pairs_hook=collections.OrderedDict)
-                self.handleEndpointMsg(respData)
+                self.handleEndpointMessage(respData)
             return True
 
     def _loadFile(self, matchedVars):
@@ -1036,9 +919,6 @@ class SovrinCli(PlenumCli):
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
                            "Please check if Sovrin is running")
-
-    def _getLinkByTarget(self, target) -> Link:
-        return self.activeWallet.getLinkInvitationByTarget(target)
 
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
@@ -1569,3 +1449,6 @@ class SovrinCli(PlenumCli):
 
     def print(self, msg, token=None, newline=True):
         super().print(msg, token=token, newline=newline)
+
+    def notify(self, notifier, msg):
+        self.print(msg)

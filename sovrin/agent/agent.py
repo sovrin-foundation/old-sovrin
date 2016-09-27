@@ -1,25 +1,32 @@
 import logging
-from logging import ERROR
-from typing import Dict, Callable, Tuple
+from datetime import datetime
+from typing import Dict
+from typing import Tuple
+
+from plenum.common.types import Identifier
+
+from sovrin.common.identity import Identity
 
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE
-from plenum.common.types import Identifier, f
+from plenum.common.types import f
+from plenum.common.util import getCryptonym, isHex, cryptonymToHex
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS
 from sovrin.client.client import Client
-from sovrin.client.wallet.link_invitation import SIGNATURE
+from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
+from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
+from sovrin.client.wallet.link_invitation import Link, t
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.identity import Identity
 from sovrin.common.util import verifySig
 
 CLAIMS_LIST_FIELD = 'availableClaimsList'
 CLAIMS_FIELD = 'claims'
 REQ_MSG = "REQ_MSG"
-SIGNATURE = "signature"
+
 ERROR = "ERROR"
 
 
@@ -28,9 +35,9 @@ class Agent(Motor, AgentNet):
                  name: str,
                  basedirpath: str,
                  client: Client=None,
-                 port: int=None,
-                 msgHandler=None):
+                 port: int=None):
         Motor.__init__(self)
+        self._observers = set()
         self._name = name
 
         AgentNet.__init__(self,
@@ -98,7 +105,7 @@ class Agent(Motor, AgentNet):
         raise NotImplementedError
 
     def handleEndpointMessage(self, msg):
-        pass
+        raise NotImplementedError
 
     def sendMessage(self, msg, destName: str=None, destHa: Tuple=None):
         try:
@@ -110,6 +117,12 @@ class Agent(Motor, AgentNet):
 
     def connectTo(self, ha):
         self.endpoint.connectTo(ha)
+
+    def registerObserver(self, observer):
+        self._observers.add(observer)
+
+    def deregisterObserver(self, observer):
+        self._observers.remove(observer)
 
 
 class WalletedAgent(Agent):
@@ -155,7 +168,7 @@ class WalletedAgent(Agent):
     def verifyAndGetLink(self, msg):
         body, (frm, ha) = msg
         key = body.get(f.IDENTIFIER.nm)
-        signature = body.get(SIGNATURE)
+        signature = body.get(f.SIG.nm)
         verified = verifySig(key, signature, body)
 
         nonce = body.get(NONCE)
@@ -179,7 +192,7 @@ class WalletedAgent(Agent):
     def signAndSendToCaller(self, resp, identifier, frm):
         resp[IDENTIFIER] = self.wallet.defaultId
         signature = self.wallet.signMsg(resp, identifier)
-        resp[SIGNATURE] = signature
+        resp[f.SIG.nm] = signature
         self.sendMessage(resp, destName=frm)
 
     @staticmethod
@@ -199,3 +212,126 @@ class WalletedAgent(Agent):
         msg = WalletedAgent.getCommonMsg(CLAIMS)
         msg[CLAIMS_FIELD] = claims
         return msg
+
+    def notifyObservers(self, msg):
+        for o in self._observers:
+            o.notify(self, msg)
+
+    def handleEndpointMessage(self, msg):
+        body, frm = msg
+        if body[TYPE] == ERROR:
+            self.notifyObservers("Error ({}) occurred while processing this "
+                                 "msg: {}".format(body[DATA], body[REQ_MSG]))
+        if body[TYPE] == AVAIL_CLAIM_LIST:
+            self._handleAcceptInviteResponse(body)
+        if body[TYPE] == CLAIMS:
+            self._handleReqClaimResponse(body)
+
+    def _handleAcceptInviteResponse(self, msg: Dict):
+        isVerified = self._isVerified(msg)
+        if isVerified:
+            identifier = msg.get("identifier")
+            li = self._getLinkByTarget(getCryptonym(identifier))
+            if li:
+                # TODO: Show seconds took to respond
+                self.notifyObservers("Response from {}:".format(li.name))
+                self.notifyObservers("    Signature accepted.")
+                self.notifyObservers("    Trust established.")
+                # Not sure how to know if the responder is a trust anchor or not
+                self.notifyObservers("    Identifier created in Sovrin.")
+                availableClaims = []
+                for cl in msg[CLAIMS_LIST_FIELD]:
+                    name, version, claimDefSeqNo = \
+                        cl['name'], cl['version'], \
+                        cl['claimDefSeqNo']
+                    claimDefKey = ClaimDefKey(name, version, claimDefSeqNo)
+                    availableClaims.append(AvailableClaimData(claimDefKey))
+
+                    if cl.get('definition', None):
+                        self.wallet.addClaimDef(
+                            ClaimDef(claimDefKey, cl['definition']))
+                    else:
+                        # TODO: Go and get definition from Sovrin and store
+                        # it in wallet's claim def store
+                        raise NotImplementedError
+
+                li.linkStatus = t.LINK_STATUS_ACCEPTED
+                li.targetVerkey = t.TARGET_VER_KEY_SAME_AS_ID
+                li.updateAvailableClaims(availableClaims)
+
+                self.wallet.addLinkInvitation(li)
+
+                if len(availableClaims) > 0:
+                    self.notifyObservers("    Available claims: {}".
+                                         format(",".join([cl.claimDefKey.name
+                                                          for cl in availableClaims])))
+                    self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
+            else:
+                self.notifyObservers("No matching link found")
+
+    def _handleRequestClaimResponse(self, msg: Dict):
+        isVerified = self._isVerified(msg)
+        if isVerified:
+            raise NotImplementedError
+
+    def _handleReqClaimResponse(self, msg: Dict):
+        isVerified = self._isVerified(msg)
+        if isVerified:
+            self.notifyObservers("Signature accepted.")
+            identifier = msg.get("identifier")
+            for claim in msg[CLAIMS_FIELD]:
+                self.notifyObservers("Received {}.".format(claim['name']))
+                li = self._getLinkByTarget(getCryptonym(identifier))
+                if li:
+                    name, version, claimDefSeqNo = \
+                        claim['name'], claim['version'], \
+                        claim['claimDefSeqNo']
+                    issuerKeys = {}  # TODO: Need to decide how/where to get it
+                    values = claim['values']  # TODO: Need to finalize this
+                    rc = ReceivedClaim(
+                        ClaimDefKey(name, version, claimDefSeqNo),
+                        issuerKeys,
+                        values)
+                    rc.dateOfIssue = datetime.now()
+                    li.updateReceivedClaims([rc])
+                    self.wallet.addLinkInvitation(li)
+            else:
+                self.notifyObservers("No matching link found")
+
+    def _isVerified(self, msg: Dict[str, str]):
+        signature = msg.get("signature")
+        identifier = msg.get("identifier")
+        msgWithoutSig = {}
+        for k, v in msg.items():
+            if k != "signature":
+                msgWithoutSig[k] = v
+
+        key = cryptonymToHex(identifier) if not isHex(
+            identifier) else identifier
+        isVerified = verifySig(key, signature, msgWithoutSig)
+        if not isVerified:
+            self.notifyObservers("Signature rejected")
+        return isVerified
+
+    def _getLinkByTarget(self, target) -> Link:
+        return self.wallet.getLinkInvitationByTarget(target)
+
+    def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
+        self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
+
+    def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
+                                              availableClaims):
+        # identity = Identity(identifier=li.localIdentifier)
+        # req = self.activeWallet.requestIdentity(identity,
+        #                                 sender=self.activeWallet.defaultId)
+        # self.activeClient.submitReqs(req)
+        self.notifyObservers("Synchronizing...")
+
+        def getNymReply(reply, err, availableClaims, li):
+            self.notifyObservers("Confirmed identifier written to Sovrin.")
+            self._printShowAndReqClaimUsage(availableClaims)
+
+        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
+        #                             req.reqId, self.activeClient, getNymReply,
+        #                             availableClaims, li)
+

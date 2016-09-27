@@ -1,9 +1,11 @@
 import json
 
 import pytest
+from plenum.common.types import f
+
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
-from sovrin.agent.agent import SIGNATURE, WalletedAgent
-from sovrin.agent.faber import FaberAgent, AVAILABLE_CLAIMS_LIST, CLAIMS_LIST
+from sovrin.agent.agent import WalletedAgent
+from sovrin.agent.faber import AVAILABLE_CLAIMS_LIST, CLAIMS_LIST
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
@@ -621,7 +623,7 @@ def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
     }
     signature = aliceCli.activeWallet.signMsg(msg,
                                               aliceCli.activeWallet.defaultId)
-    msg[SIGNATURE] = signature
+    msg[f.SIG.nm] = signature
     ip, port = faberMap[ENDPOINT].split(":")
     aliceCli.sendToEndpoint(msg, (ip, int(port)))
 
@@ -643,7 +645,7 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
     }
     signature = aliceCli.activeWallet.signMsg(msg,
                                               aliceCli.activeWallet.defaultId)
-    msg[SIGNATURE] = signature
+    msg[f.SIG.nm] = signature
     ip, port = faberMap[ENDPOINT].split(":")
     aliceCli.sendToEndpoint(msg, (ip, int(port)))
 
