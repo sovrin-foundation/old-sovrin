@@ -1,8 +1,12 @@
 import json
 
 import pytest
+from plenum.common.txn import TYPE, NONCE, IDENTIFIER
 from sovrin.agent.faber import FaberAgent, AVAILABLE_CLAIMS_LIST, CLAIMS_LIST
-from sovrin.client.wallet.helper import createAvailClaimListMsg, createClaimsMsg
+from sovrin.agent.msg_types import ACCEPT_INVITE
+from sovrin.client.wallet.helper import createAvailClaimListMsg, createClaimsMsg, \
+    SIGNATURE
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
 
 
@@ -248,8 +252,9 @@ def testSyncFaberInviteWithoutEndpoint(faberInviteSyncedWithoutEndpoint):
     pass
 
 
-def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint, faberMap,
-                         linkNotYetSynced, showSyncedLinkWithoutEndpointOut):
+def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
+                              faberMap, linkNotYetSynced,
+                              showSyncedLinkWithoutEndpointOut):
     aliceCLI = faberInviteSyncedWithoutEndpoint
 
     be(aliceCLI)
@@ -608,3 +613,46 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
     do("show claim request {claim-req-to-show}",
                                         expect=showJobAppClaimReqOut,
                                         mapper=mapping)
+
+def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
+                      faberInviteSyncedWithoutEndpoint):
+
+    msg = {
+        TYPE: ACCEPT_INVITE,
+        IDENTIFIER: faberCli.activeWallet.defaultId,
+        NONCE: "unknown"
+    }
+    signature = aliceCli.activeWallet.signMsg(msg,
+                                              aliceCli.activeWallet.defaultId)
+    msg[SIGNATURE] = signature
+    ip, port = faberMap[ENDPOINT].split(":")
+    aliceCli.sendToEndpoint(msg, (ip, int(port)))
+
+    be(aliceCli)
+    do(None,                            within=10,
+                                        expect=["Error (Signature Rejected) "
+                                                "occurred while "
+                                                "processing this msg: ".
+                                                format(msg)])
+
+
+def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
+                      faberInviteSyncedWithoutEndpoint):
+
+    msg = {
+        TYPE: ACCEPT_INVITE,
+        IDENTIFIER: aliceCli.activeWallet.defaultId,
+        NONCE: "unknown"
+    }
+    signature = aliceCli.activeWallet.signMsg(msg,
+                                              aliceCli.activeWallet.defaultId)
+    msg[SIGNATURE] = signature
+    ip, port = faberMap[ENDPOINT].split(":")
+    aliceCli.sendToEndpoint(msg, (ip, int(port)))
+
+    be(aliceCli)
+    do(None,                            within=10,
+                                        expect=["Error (No Such Link found) "
+                                                "occurred while "
+                                                "processing this msg: {}".
+                                                format(msg)])

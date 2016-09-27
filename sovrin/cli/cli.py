@@ -38,7 +38,8 @@ from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey, ReceivedClaim
 from sovrin.client.wallet.cred_def import CredDefSk, CredDef, CredDefKey
 from sovrin.client.wallet.credential import Credential as WalletCredential
-from sovrin.client.wallet.helper import CLAIMS_LIST_FIELD, CLAIMS_FIELD
+from sovrin.client.wallet.helper import CLAIMS_LIST_FIELD, CLAIMS_FIELD, ERROR, \
+    REQ_MSG
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, \
     TARGET_VER_KEY_SAME_AS_ID, LINK_STATUS_ACCEPTED, AvailableClaimData, \
@@ -321,6 +322,10 @@ class SovrinCli(PlenumCli):
 
     def handleEndpointMsg(self, msg):
         body, frm = msg
+        if body[TYPE] == ERROR:
+            self.print("Error ({}) occurred while processing this msg: {}".
+                       format(body[DATA], body[REQ_MSG]))
+
         if body[TYPE] == AVAIL_CLAIM_LIST:
             self._handleAcceptInviteResponse(body)
         if body[TYPE] == CLAIMS:

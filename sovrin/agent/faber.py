@@ -50,7 +50,8 @@ AVAILABLE_CLAIMS_LIST = [{
 class FaberAgent(Agent):
     def __init__(self, name: str="agent1", client: Client=None, port: int=None,
                  handlers: Dict=None):
-        super().__init__(name, client, port, msgHandler=self.handleEndpointMessage)
+        super().__init__(name, client, port,
+                         msgHandler=self.handleEndpointMessage)
         self.handlers = handlers
 
     @property
