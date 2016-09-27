@@ -59,6 +59,8 @@ from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
 from anoncreds.protocol.utils import strToCharmInteger
 from anoncreds.test.conftest import staticPrimes
+from anoncreds.test.cred_def_test_store import MemoryCredDefStore
+from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
 
 """
 Objective
@@ -100,7 +102,11 @@ class SovrinCli(PlenumCli):
         self.attributeRepo = None   # type: AttrRepo
         self.proofBuilders = {}
         # DEPR JAL removed following because it doesn't seem right, testing now
-        # self.verifier = Verifier(randomString())
+        # LH: Shouldn't the Cli have a `Verifier` so it can act as a Verifier
+        # entity too?
+        # TODO: Confirm this decision
+        self.verifier = Verifier(randomString(), MemoryCredDefStore(),
+                                 MemoryIssuerKeyStore())
         _, port = self.nextAvailableClientAddr()
         self.endpoint = Endpoint(port, self.handleEndpointMsg)
         self.curContext = (None, None)  # Current Link, Current Claim Req
@@ -804,11 +810,12 @@ class SovrinCli(PlenumCli):
             cred = Credential(self.getCryptoInteger(A),
                               self.getCryptoInteger(e),
                               self.getCryptoInteger(v))
-            credDef = self.activeWallet.getCredDef(CredDefKey(name, version,
-                                                              issuer))
-            keys = credDef.keys
+            credDef = self.activeWallet.getCredDef((name, version, issuer))
+            issuerPubKey = self.activeWallet.getIssuerPublicKey(
+                (issuer, credDef.seqNo))
+            # keys = credDef.keys
             credDefPks = {
-                issuer: self.pKFromCredDef(keys)
+                issuer: issuerPubKey
             }
             masterSecret = self.getCryptoInteger(
                 self.activeWallet.masterSecret)
@@ -844,7 +851,7 @@ class SovrinCli(PlenumCli):
 
     @staticmethod
     def getCryptoInteger(x):
-        return CredDefModule.CredDef.getCryptoInteger(x)
+        return strToCharmInteger(x)
 
     def _verifyProofAction(self, matchedVars):
         if matchedVars.get('verif_proof') == 'verify status is':
@@ -860,11 +867,13 @@ class SovrinCli(PlenumCli):
 
     def doVerification(self, reply, err, status, proof):
         issuer = proof[ISSUER]
-        credDef = self.activeWallet.getCredDef(CredDefKey(proof[NAME],
+        credDef = self.activeWallet.getCredDef((proof[NAME],
                                                       proof[VERSION], issuer))
-        keys = credDef.keys
+        issuerPubKey = self.activeWallet.getIssuerPublicKey(
+            (issuer, credDef.seqNo))
+        # keys = credDef.keys
         pk = {
-            issuer: self.pKFromCredDef(keys)
+            issuer: issuerPubKey
         }
         prf = ProofBuilder.prepareProofFromDict(proof)
         attrs = {
