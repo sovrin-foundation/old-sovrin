@@ -8,23 +8,30 @@ from plenum.common.types import Identifier
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.endpoint import Endpoint
 from sovrin.client.client import Client
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
 
 
 class Agent(Motor, AgentNet):
-    def __init__(self, name: str="agent1", client: Client=None, port: int=None,
-                 msgHandler: Callable=None):
+    def __init__(self,
+                 name: str,
+                 basedirpath: str,
+                 client: Client=None,
+                 port: int=None):
         Motor.__init__(self)
         self._name = name
+
+        AgentNet.__init__(self,
+                          name=self._name.replace(" ", ""),
+                          port=port,
+                          basedirpath=basedirpath,
+                          msgHandler=self.handleEndpointMessage)
 
         # Client used to connect to Sovrin and forward on owner's txns
         self.client = client
 
         # known identifiers of this agent's owner
         self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
-        self.endpoint = Endpoint(port, msgHandler or self.handleEndpointMessage,
-                                 name=self._name,
-                                 basedirpath=client.basedirpath) if port else None
 
     def name(self):
         pass
@@ -91,3 +98,29 @@ class Agent(Motor, AgentNet):
 
     def connectTo(self, ha):
         self.endpoint.connectTo(ha)
+
+
+class WalletedAgent(Agent):
+    """
+    An agent with a self-contained wallet.
+
+    Normally, other logic acts upon a remote agent. That other logic holds keys
+    and signs messages and transactions that the Agent then forwards. In this
+    case, the agent holds a wallet.
+    """
+    def __init__(self,
+                 name: str,
+                 basedirpath: str,
+                 client: Client=None,
+                 wallet: Wallet=None,
+                 port: int=None):
+        super().__init__(name, basedirpath, client, port)
+        self._wallet = wallet or Wallet(name)
+
+    @property
+    def wallet(self):
+        return self._wallet
+
+    @wallet.setter
+    def wallet(self, wallet):
+        self._wallet = wallet

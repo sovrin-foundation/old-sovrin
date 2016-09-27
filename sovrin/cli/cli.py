@@ -400,8 +400,10 @@ class SovrinCli(PlenumCli):
     def agent(self):
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
-            self._agent = Agent(name=randomString(6), client=self.activeClient,
-                                port=port, msgHandler=self.handleEndpointMsg)
+            self._agent = Agent(name=randomString(6),
+                                basedirpath=self.basedirpath,
+                                client=self.activeClient,
+                                port=port)
             self.looper.add(self._agent)
         return self._agent
 

@@ -1,18 +1,16 @@
 from typing import Callable, Any, List, Dict, Tuple
 
-from plenum.common.exceptions import RemoteNotFound
 from plenum.common.raet import getHaFromLocalEstate
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
 from plenum.common.util import getlogger, randomString
 from raet.raeting import AutoMode
 from raet.road.estating import RemoteEstate
-from sovrin.agent.agent_net import AgentNet
 
 logger = getlogger()
 
 
-class Endpoint(AgentNet, SimpleStack):
+class Endpoint(SimpleStack):
     def __init__(self, port: int, msgHandler: Callable,
                  name: str=None, basedirpath: str=None):
         if name and basedirpath:
@@ -30,7 +28,7 @@ class Endpoint(AgentNet, SimpleStack):
         if basedirpath:
             stackParams["basedirpath"] = basedirpath
 
-        SimpleStack.__init__(self, stackParams, self.baseMsgHandler)
+        super().__init__(stackParams, self.baseMsgHandler)
 
         self.msgHandler = msgHandler
 

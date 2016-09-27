@@ -506,27 +506,25 @@ def getAcmeAcceptInviteRespMsg():
 
 
 @pytest.fixture(scope="module")
-def aliceAcceptedAcmeJobInvitation(be, do, aliceRequestedFaberTranscriptClaim,
+def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
+                                   aliceRequestedFaberTranscriptClaim,
                                    acmeInviteLoadedByAlice, acmeLinkAdded,
-                                   acmeMap,acmeAddedByPhil, acmeCli):
-
-    aliceCli = aliceRequestedFaberTranscriptClaim
+                                   acmeMap, acmeAddedByPhil, acmeCli):
     be(aliceCli)
-    do("accept invitation from {inviter}",
-                                        within=3,
-                                        expect=[
-                                            "Invitation not yet verified.",
-                                            "Starting communication with {inviter}"
-                                            "Signature accepted.",
-                                            "Trust established.",
-                                            "Identifier created in Sovrin.",
-                                            "Available claims: {claims}"
-                                            "Synchronizing...",
-                                            # Once acme starts writing identifier
-                                            # to Sovrin, need to uncomment below line
-                                            # "Confirmed identifier written to Sovrin."
-                                        ],
-                                        mapper=acmeMap)
+    do("accept invitation "
+       "from {inviter}", within=3,
+                         expect=["Invitation not yet verified.",
+                                 "Starting communication with {inviter}"
+                                 "Signature accepted.",
+                                 "Trust established.",
+                                 "Identifier created in Sovrin.",
+                                 "Available claims: {claims}"
+                                 "Synchronizing...",
+                                 # Once acme starts writing identifier
+                                 # to Sovrin, need to uncomment below line
+                                 # "Confirmed identifier written to Sovrin."
+                                 ],
+                         mapper=acmeMap)
     return aliceCli
 
 
