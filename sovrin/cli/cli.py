@@ -110,6 +110,7 @@ class SovrinCli(PlenumCli):
         _, port = self.nextAvailableClientAddr()
         self.endpoint = Endpoint(port, self.handleEndpointMsg)
         self.curContext = (None, None)  # Current Link, Current Claim Req
+        self._agent = None
 
     @property
     def lexers(self):
