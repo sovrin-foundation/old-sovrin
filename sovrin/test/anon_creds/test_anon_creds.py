@@ -1,6 +1,12 @@
 # The following setup of logging needs to happen before everything else
 from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
     DemoHandler
+from plenum.test.eventually import eventually
+from sovrin.client.wallet.cred_def import CredDef
+
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.test.conftest import staticPrimes
+
 
 def out(logger, record, extra_cli_value=None):
     """
@@ -122,20 +128,39 @@ def testAnonCredFlow(genned,
     # issuer.attributeRepo = attrRepo
     # Issuer publishes credential definition to Sovrin ledger
 
-    credDef = issuer.addNewCredDef(attrNames, name1, version1,
-                                   p_prime="prime1", q_prime="prime1", ip=ip,
-                                   port=port)
+    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
+    cskId = issuerWallet.addCredDefSk(str(csk))
+    credDef = CredDef(seqNo=None,
+                      attrNames=attrNames,
+                      name=name1,
+                      version=version1,
+                      origin=issuerWallet.defaultId,
+                      secretKey=cskId)
+    # credDef = issuer.addNewCredDef(attrNames, name1, version1,
+    #                                p_prime="prime1", q_prime="prime1", ip=ip,
+    #                                port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
     logger.display("Issuer: Creating version {} of credential definition"
                    " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
-    op = {TXN_TYPE: CRED_DEF,
-          DATA: getCredDefTxnData(credDef)}
+    pending = issuerWallet.addCredDef(credDef)
+    reqs = issuerWallet.preparePending()
+    # op = {TXN_TYPE: CRED_DEF,
+    #       DATA: getCredDefTxnData(credDef)}
     logger.display("Issuer: Writing credential definition to "
                    "Sovrin Ledger...")
+    issuerC.submitReqs(*reqs)
 
-    submitAndCheck(looper, issuerC, issuerWallet, op)
+    def chk():
+        assert issuerWallet.getCredDef((name1,
+                                        version1,
+                                        issuerWallet.defaultId)).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=.1, timeout=30))
+
+    # submitAndCheck(looper, issuerC, issuerWallet, op)
+
 
     # Prover requests Issuer for credential (out of band)
     logger.display("Prover: Requested credential from Issuer")
