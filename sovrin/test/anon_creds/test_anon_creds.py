@@ -38,6 +38,11 @@ from sovrin.test.helper import submitAndCheck, makePendingTxnsRequest
 from sovrin.client.wallet.wallet import Wallet
 
 
+# TODO: This test checks for things already checked in `test_anon_cred_cli.py`.
+# It fails. Updated it a bit. Will come back to it after taking care of more
+# pressing issues.
+
+
 def testAnonCredFlow(genned,
                      looper,
                      tdir,
