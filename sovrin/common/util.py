@@ -11,10 +11,18 @@ from typing import Tuple, Union
 import libnacl.secret
 from plenum.common.signing import serializeForSig
 from plenum.common.txn import KEYS
+from plenum.common.types import f
 from plenum.common.util import isHex, error, getConfig as PlenumConfig, \
     cryptonymToHex
 from raet.nacling import Verifier
 
+
+def getMsgWithoutSig(msg, sigFieldName=f.SIG.nm):
+    msgWithoutSig = {}
+    for k, v in msg.items():
+        if k != sigFieldName:
+            msgWithoutSig[k] = v
+    return msgWithoutSig
 
 def verifySig(identifier, signature, msg) -> bool:
     key = cryptonymToHex(identifier) if not isHex(

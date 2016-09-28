@@ -1,9 +1,14 @@
+import asyncio
+
 from datetime import datetime
 from typing import Dict
 from typing import Tuple
 
 import asyncio
+
+from plenum.common.looper import Looper
 from plenum.common.types import Identifier
+from plenum.test.helper import genHa
 from sovrin.cli.helper import ensureReqCompleted
 
 from sovrin.common.identity import Identity
@@ -15,16 +20,17 @@ from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
     TARGET_NYM, TXN_TYPE, NYM
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger
+from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger, \
+    randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
-    ACCEPT_INVITE, CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS
+    ACCEPT_INVITE, CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS, EVENT_POST_ACCEPT_INVITE
 from sovrin.client.client import Client
 from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
 from sovrin.client.wallet.link_invitation import Link, t
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.util import verifySig
+from sovrin.common.util import verifySig, getConfig
 
 CLAIMS_LIST_FIELD = 'availableClaimsList'
 CLAIMS_FIELD = 'claims'
@@ -44,6 +50,7 @@ class Agent(Motor, AgentNet):
                  port: int=None):
         Motor.__init__(self)
         self._observers = set()
+        self._eventListeners = {}   # Dict[str, set(Callable)]
         self._name = name
 
         AgentNet.__init__(self,
@@ -124,6 +131,19 @@ class Agent(Motor, AgentNet):
     def connectTo(self, ha):
         self.endpoint.connectTo(ha)
 
+    def registerEventListener(self, eventName, listener):
+        cur = self._eventListeners.get(eventName)
+        if cur:
+            self._eventListeners[eventName] = cur.add(listener)
+        else:
+            self._eventListeners[eventName] = {listener}
+
+    def deregisterEventListener(self, eventName, listener):
+        cur = self._eventListeners.get(eventName)
+        if cur:
+            self._eventListeners[eventName] = cur - set(listener)
+
+
     def registerObserver(self, observer):
         self._observers.add(observer)
 
@@ -151,9 +171,10 @@ class WalletedAgent(Agent):
         obs = self._wallet.handleIncomingReply
         if not self.client.hasObserver(obs):
             self.client.registerObserver(obs)
-        # self._wallet.pendSyncRequests()
-        # prepared = self._wallet.preparePending()
-        # self.client.submitReqs(*prepared)
+        self._wallet.pendSyncRequests()
+        prepared = self._wallet.preparePending()
+        self.client.submitReqs(*prepared)
+        self.loop = asyncio.get_event_loop()
         self.msgHandlers = {
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
@@ -171,7 +192,7 @@ class WalletedAgent(Agent):
     def wallet(self, wallet):
         self._wallet = wallet
 
-    def getClaimList(self):
+    def getClaimList(self, claimNames=None):
         raise NotImplementedError
 
     def getAvailableClaimList(self):
@@ -355,20 +376,24 @@ class WalletedAgent(Agent):
     def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
         self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
 
+    def notifyEventListeners(self, eventName, *args):
+        for el in self._eventListeners[eventName]:
+            el(*args)
+
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
                                               availableClaims):
-        # identity = Identity(identifier=li.localIdentifier)
-        # req = self.activeWallet.requestIdentity(identity,
-        #                                 sender=self.activeWallet.defaultId)
-        # self.activeClient.submitReqs(req)
+        identity = Identity(identifier=li.localIdentifier)
+        req = self.wallet.requestIdentity(identity,
+                                        sender=self.wallet.defaultId)
+        # self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
             self.notifyObservers("Confirmed identifier written to Sovrin.")
-            self._printShowAndReqClaimUsage(availableClaims)
+            self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE, availableClaims)
 
-        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
-        #                             req.reqId, self.activeClient, getNymReply,
+        # self.loop.call_later(.2, ensureReqCompleted, self.loop,
+        #                             req.reqId, self.client, getNymReply,
         #                             availableClaims, li)
 
     def _reqClaim(self, msg):
@@ -431,3 +456,34 @@ class WalletedAgent(Agent):
             for nm in attrNames:
                 res[nm] = attributes.get(nm)
         return res
+
+
+def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
+             startRunning=True, bootstrap=False):
+    config = getConfig()
+
+    if not wallet:
+        wallet = Wallet(name)
+    if not basedirpath:
+        basedirpath = config.baseDir
+    if not port:
+        _, port = genHa()
+
+    _, clientPort = genHa()
+    client = Client(randomString(6),
+                    ha=("0.0.0.0", clientPort),
+                    basedirpath=basedirpath)
+
+    agent = agentClass(basedirpath=basedirpath,
+                       client=client,
+                       wallet=wallet,
+                       port=port)
+    if startRunning:
+        if bootstrap:
+            agent.bootstrap()
+        with Looper(debug=True) as looper:
+            looper.add(agent)
+            logger.debug("Running {} now (port: {})".format(name, port))
+            looper.run()
+    else:
+        return agent

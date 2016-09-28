@@ -1,4 +1,3 @@
-import json
 import uuid
 
 import pytest
@@ -209,24 +208,22 @@ def testSyncFaberWhenNotConnected(be, do, aliceCli, faberMap,
                                         mapper=faberMap)
 
 
-def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do,
+def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do, aliceCli,
                                              faberInviteLoadedByAlice,
                                              acceptUnSyncedWhenNotConnected,
                                              faberMap):
-    aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
     do('accept invitation from {inviter}',
                                         expect=acceptUnSyncedWhenNotConnected,
                                         mapper=faberMap)
 
 
-def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
+def testAcceptUnSyncedFaberInvite(be, do, aliceCli, faberInviteLoadedByAlice,
                                   acceptUnSyncedWithoutEndpointWhenConnected,
                                   faberMap, connectedToTest,
                                   faberAddedByPhil,
                                   faberIsRunning,
                                   poolNodesStarted):
-    aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
     if not aliceCli._isConnectedToAnyEnv():
         do('connect test',              within=3,
@@ -275,13 +272,11 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
 
 
 @pytest.fixture(scope="module")
-def faberWithEndpointAdded(be, do, faberAddedByPhil, faberMap, attrAddedOut):
-    philCli = faberAddedByPhil
+def faberWithEndpointAdded(be, do, philCli, faberAddedByPhil,
+                           faberMap, attrAddedOut):
+
     be(philCli)
-    # I had to give two open/close curly braces in raw data
-    # to avoid issue in mapping
     do('send ATTRIB dest={target} raw={endpointAttr}',
-    # do('send ATTRIB dest={target} raw={{"endpoint": "127.0.0.1:1212"}}',
                                         within=3,
                                         expect=attrAddedOut,
                                         mapper=faberMap)
@@ -293,12 +288,11 @@ def testEndpointAddedForFaber(faberWithEndpointAdded):
 
 
 @pytest.fixture(scope="module")
-def faberInviteSyncedWithEndpoint(be, do, faberMap,
+def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI,
                                   faberInviteSyncedWithoutEndpoint,
                                   faberWithEndpointAdded,
                                   syncLinkOutWithEndpoint,
                                   poolNodesStarted):
-    aliceCLI = faberInviteSyncedWithoutEndpoint
     be(aliceCLI)
 
     do('sync {inviter}',                within=2,
@@ -311,9 +305,9 @@ def testSyncFaberInvite(faberInviteSyncedWithEndpoint):
     pass
 
 
-def testShowSyncedFaberInviteWithEndpoint(be, do, faberInviteSyncedWithEndpoint,
+def testShowSyncedFaberInviteWithEndpoint(be, do, aliceCLI,
+                                          faberInviteSyncedWithEndpoint,
                                      showSyncedLinkWithEndpointOut, faberMap):
-    aliceCLI = faberInviteSyncedWithEndpoint
     be(aliceCLI)
     do('show link {inviter}',           expect=showSyncedLinkWithEndpointOut,
                                         mapper=faberMap)
@@ -352,7 +346,7 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                  faberInviteSyncedWithEndpoint):
     be(aliceCli)
     do("accept invitation from {inviter}",
-                                within=3,
+                                within=5,
                                 mapper=faberMap,
                                 expect=[
                                     "Signature accepted.",
@@ -360,8 +354,6 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                     "Identifier created in Sovrin.",
                                     "Available claims: Transcript",
                                     "Synchronizing...",
-                                    # Once faber starts writing identifier
-                                    # to Sovrin, need to uncomment below line
                                     # "Confirmed identifier written to Sovrin."
                                 ])
     return aliceCli
@@ -371,9 +363,9 @@ def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
     pass
 
 
-def testShowFaberLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
-                                  aliceAcceptedFaberInvitation):
-    aliceCli = aliceAcceptedFaberInvitation
+def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,
+                                       showAcceptedLinkOut,
+                                       aliceAcceptedFaberInvitation):
     be(aliceCli)
 
     do("show link {inviter}",           expect=showAcceptedLinkOut,
@@ -381,9 +373,8 @@ def testShowFaberLinkAfterInviteAccept(be, do, faberMap, showAcceptedLinkOut,
                                         mapper=faberMap)
 
 
-def testShowClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
+def testShowClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
                                    aliceAcceptedFaberInvitation):
-    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("show claim claim-to-show-not-exists",
@@ -391,9 +382,9 @@ def testShowClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
                                         mapper=faberMap)
 
 
-def testShowTranscriptClaim(be, do, transcriptClaimMap, showClaimOut,
+def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap, showClaimOut,
                                    aliceAcceptedFaberInvitation):
-    aliceCli = aliceAcceptedFaberInvitation
+
     be(aliceCli)
 
     do("show claim {name}",
@@ -401,9 +392,8 @@ def testShowTranscriptClaim(be, do, transcriptClaimMap, showClaimOut,
                                         mapper=transcriptClaimMap)
 
 
-def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
+def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
                                    aliceAcceptedFaberInvitation):
-    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("request claim claim-to-req-not-exists",
@@ -411,12 +401,11 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
                                         mapper=faberMap)
 
 
-def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
+def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
                            # faberAddedClaimDefAndIssuerKeys,
                            faberIsRunning,
                            aliceAcceptedFaberInvitation
                            ):
-    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
 
     do("request claim {name}",
@@ -424,10 +413,9 @@ def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
                                         mapper=transcriptClaimMap)
 
 
-def testReqClaimResponseWithInvalidSig(faberCli, faberIsRunning,
+def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
                                        faberInviteSyncedWithEndpoint):
     faber, _ = faberIsRunning
-    aliceCli = faberInviteSyncedWithEndpoint
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
 
@@ -440,15 +428,15 @@ def testReqClaimResponseWithInvalidSig(faberCli, faberIsRunning,
 
 
 @pytest.fixture(scope="module")
-def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberAddedByPhil,
+def aliceRequestedFaberTranscriptClaim(be, do, aliceCli, faberCli,
+                                       faberAddedByPhil,
                                        faberLinkAdded,
                                         # faberAddedClaimDefAndIssuerKeys,
                                        aliceAcceptedFaberInvitation,
                                        # faberAddedAttributesForAlice
                                        ):
-    aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
-    do("request claim Transcript",      within=4,
+    do("request claim Transcript",      within=5,
                                         expect=[
                                             "Signature accepted.",
                                             "Received Transcript."])
@@ -459,9 +447,9 @@ def testAliceReqClaim(aliceRequestedFaberTranscriptClaim):
     pass
 
 
-def testShowFaberClaimPostReqClaim(be, do, aliceRequestedFaberTranscriptClaim,
+def testShowFaberClaimPostReqClaim(be, do, aliceCli,
+                                   aliceRequestedFaberTranscriptClaim,
                                    transcriptClaimValueMap, rcvdClaimOut):
-    aliceCli = aliceRequestedFaberTranscriptClaim
     be(aliceCli)
 
     do("show claim {name}",
@@ -523,7 +511,6 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
     do("accept invitation "
        "from {inviter}", within=6,
                          expect=["Invitation not yet verified.",
-                                 "Starting communication with {inviter}",
                                  "Signature accepted.",
                                  "Trust established.",
                                  "Identifier created in Sovrin.",
@@ -541,10 +528,10 @@ def testAliceAcceptedAcmeJobInvitation(aliceAcceptedAcmeJobInvitation):
     pass
 
 
-def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap,
+def testShowAcmeLinkAfterInviteAccept(be, do, aliceCli, acmeMap,
                                       aliceAcceptedAcmeJobInvitation,
                                       showAcceptedLinkWithClaimReqsOut):
-    aliceCli = aliceAcceptedAcmeJobInvitation
+
     be(aliceCli)
 
     do("show link {inviter}",           expect=showAcceptedLinkWithClaimReqsOut,
@@ -552,20 +539,18 @@ def testShowAcmeLinkAfterInviteAccept(be, do, acmeMap,
                                         mapper=acmeMap)
 
 
-def testShowClaimReqNotExists(be, do, acmeMap, claimReqNotExists,
-                              aliceAcceptedAcmeJobInvitation):
-    aliceCli = aliceAcceptedAcmeJobInvitation
+def testShowClaimReqNotExists(be, do, aliceCli, acmeMap, claimReqNotExists):
     be(aliceCli)
     do("show claim request claim-req-to-show-not-exists",
                                         expect=claimReqNotExists,
                                         mapper=acmeMap)
 
 
-def testShowJobApplicationClaimReq(be, do, acmeMap, showJobAppClaimReqOut,
+def testShowJobApplicationClaimReq(be, do, aliceCli, acmeMap,
+                                   showJobAppClaimReqOut,
                                    jobApplicationClaimReqMap,
                                    transcriptClaimAttrValueMap,
                                    aliceAcceptedAcmeJobInvitation):
-    aliceCli = aliceAcceptedAcmeJobInvitation
     be(aliceCli)
 
     mapping = {
@@ -589,12 +574,11 @@ def testSetAttrWithoutContext(be, do, faberCli):
                                             "set the context"])
 
 
-def testShowJobApplicationClaimReqAfterSetAttr(be, do, acmeMap,
+def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli, acmeMap,
                                                showJobAppClaimReqOut,
                                                jobApplicationClaimReqMap,
                                                transcriptClaimAttrValueMap,
                                                aliceAcceptedAcmeJobInvitation):
-    aliceCli = aliceAcceptedAcmeJobInvitation
     be(aliceCli)
 
     mapping = {
@@ -691,7 +675,7 @@ def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
     isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
-    faberWallet.addIssuerSecretKVERSIONey(isk)
+    faberWallet.addIssuerSecretKey(isk)
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                        claimDefSeqNo=credDef.seqNo,
                        secretKeyUid=isk.uid, origin=faberWallet.defaultId)

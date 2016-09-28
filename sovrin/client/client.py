@@ -18,7 +18,7 @@ from plenum.server.router import Router
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
 from plenum.common.txn import REPLY, STEWARD, ENC, HASH, RAW, NAME, VERSION,\
-    KEYS, TYPE, IP, PORT
+    KEYS, TYPE, IP, PORT, REQACK
 from sovrin.common.types import Request
 from plenum.common.types import OP_FIELD_NAME, f, HA
 from plenum.common.util import getlogger, getSymmetricallyEncryptedVal, \
@@ -164,8 +164,11 @@ class Client(PlenumClient):
 
     def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
-        excludeFromCli = excludeFromCli or (msg.get(OP_FIELD_NAME) == REPLY
-                                            and msg[f.RESULT.nm][TXN_TYPE] == GET_TXNS)
+        excludeGetTxns = (msg.get(OP_FIELD_NAME) == REPLY and
+                          msg[f.RESULT.nm].get(TXN_TYPE) == GET_TXNS)
+        excludeReqAcks = msg.get(OP_FIELD_NAME) == REQACK
+        excludeReply = msg.get(OP_FIELD_NAME) == REPLY
+        excludeFromCli = excludeFromCli or excludeReqAcks or excludeReply
         super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))

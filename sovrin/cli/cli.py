@@ -27,7 +27,7 @@ from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, \
-    CLAIM_NAME_FIELD
+    CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttrRepo
@@ -47,7 +47,7 @@ from sovrin.client.wallet.link_invitation import Link, AvailableClaimData, \
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
-from sovrin.common.util import getConfig
+from sovrin.common.util import getConfig, verifySig, getMsgWithoutSig
 from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
@@ -235,6 +235,8 @@ class SovrinCli(PlenumCli):
 
     # TODO: Rename as sendToAgent
     def sendToEndpoint(self, msg: Any, endpoint: Tuple):
+        if not self.agent:
+            return
         # TODO: Check if already connected
         self.agent.connectTo(endpoint)
 
@@ -273,7 +275,7 @@ class SovrinCli(PlenumCli):
         return nodesAdded
 
     def _printNotConnectedEnvMessage(self):
-        self.print("Please connect first.")
+        self.print("Not connected to Sovrin network. Please connect first.")
         self._printConnectUsage()
 
     def _printConnectUsage(self):
@@ -281,14 +283,13 @@ class SovrinCli(PlenumCli):
         self.printUsage(msgs)
 
     def newClient(self, clientName,
-                  # seed=None,
-                  # identifier=None,
-                  # signer=None,
-                  # wallet=None,
                   config=None):
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
-            return
+            # TODO: Return a dummy object that catches all attributes and
+            # method calls and does nothing. Alo the dummy object should
+            # initialise to null
+            return DummyClient()
 
         # DEPR
         # return super().newClient(clientName, seed=seed, identifier=identifier,
@@ -303,6 +304,9 @@ class SovrinCli(PlenumCli):
 
     @property
     def agent(self):
+        if not self.activeEnv:
+            self._printNotConnectedEnvMessage()
+            return None
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
             self._agent = WalletedAgent(name=randomString(6),
@@ -311,6 +315,8 @@ class SovrinCli(PlenumCli):
                                         wallet=self.activeWallet,
                                         port=port)
             self._agent.registerObserver(self)
+            self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
+                                              self._printShowAndReqClaimUsage)
             self.looper.add(self._agent)
         return self._agent
 
@@ -794,12 +800,13 @@ class SovrinCli(PlenumCli):
         # TODO: Lets not assume that the invitation file would contain these
         # keys. Let have a link file validation method
         linkInviation = invitationData["link-invitation"]
-        linkInvitationName = linkInviation["name"]
         remoteIdentifier = linkInviation["identifier"]
+        signature = invitationData["sig"]
+        linkInvitationName = linkInviation["name"]
         remoteEndPoint = linkInviation.get("endpoint", None)
         linkNonce = linkInviation["nonce"]
         claimRequestsJson = invitationData.get("claim-requests", None)
-        signature = invitationData["sig"]
+
         claimRequests = []
         if claimRequestsJson:
             for cr in claimRequestsJson:
@@ -971,11 +978,11 @@ class SovrinCli(PlenumCli):
         else:
 
             if not self.activeEnv:
-                self.print("Cannot sync because not connected.")
-                self._printNotConnectedEnvMessage()
+                self.print("Cannot sync because not connected. Please connect first.")
+                self._printConnectUsage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
-                           "Please check if Sovrin is running")
+                           "Please check if Sovrin network is running.")
 
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
@@ -994,31 +1001,31 @@ class SovrinCli(PlenumCli):
             self.print('Expanding {} to "{}"'.format(linkName, li.name))
         return li
 
+    def _sendReqToTargetEndpoint(self, op, link: Link):
+        op[f.IDENTIFIER.nm] = link.verkey
+        op[NONCE] = link.nonce
+        signature = self.activeWallet.signMsg(op, link.verkey)
+        op[f.SIG.nm] = signature
+        ip, port = link.remoteEndPoint.split(":")
+        self.sendToEndpoint(op, (ip, int(port)))
+
     def _sendReqClaimToTargetEndpoint(self, link: Link, claim):
-        self.print("Starting communication with {}".format(link.name))
         op = {
             f.IDENTIFIER.nm: link.verkey,
             NONCE: link.nonce,
             TYPE: REQUEST_CLAIM,
             "claimDefSeqNo": claim.claimDefSeqNo
-
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
         op['signature'] = signature
         ip, port = link.remoteEndPoint.split(":")
-        self.sendToEndpoint(op, (ip, int(port)))
+        self._sendReqToTargetEndpoint(op, link)
 
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
-        self.print("Starting communication with {}".format(link.name))
         op = {
-            f.IDENTIFIER.nm: link.verkey,
-            NONCE: link.nonce,
             TYPE: ACCEPT_INVITE
         }
-        signature = self.activeWallet.signMsg(op, link.verkey)
-        op['signature'] = signature
-        ip, port = link.remoteEndPoint.split(":")
-        self.sendToEndpoint(op, (ip, int(port)))
+        self._sendReqToTargetEndpoint(op, link)
 
     def _acceptLinkPostSync(self, link: Link):
         if link.remoteEndPoint:
@@ -1477,7 +1484,10 @@ class SovrinCli(PlenumCli):
         else:
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 
-    def ensureAgentConnected(self, otherAgentHa, clbk: Callable=None, *args, **kwargs):
+    def ensureAgentConnected(self, otherAgentHa, clbk: Callable=None,
+                             *args, **kwargs):
+        if not self.agent:
+            return
         if self.agent.endpoint.isConnectedTo(ha=otherAgentHa):
             # TODO: Remove this print
             self.logger.debug("Agent {} connected to {}".
@@ -1586,3 +1596,12 @@ class SovrinCli(PlenumCli):
 
     def notify(self, notifier, msg):
         self.print(msg)
+
+
+class DummyClient:
+    def submitReqs(self, *reqs):
+        pass
+
+    @property
+    def hasSufficientConnections(self):
+        pass
