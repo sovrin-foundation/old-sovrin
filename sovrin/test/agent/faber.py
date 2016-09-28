@@ -73,7 +73,7 @@ class FaberAgent(WalletedAgent):
     def addKeyIfNotAdded(self):
         wallet = self.wallet
         if not wallet.identifiers:
-            wallet.addSigner()
+            wallet.addSigner(seed=b'Faber000000000000000000000000000')
 
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
@@ -213,4 +213,4 @@ def runFaber(name=None, wallet=None, basedirpath=None, port=None,
 
 
 if __name__ == "__main__":
-    runFaber(bootstrap=True)
+    runFaber(bootstrap=True, port=5555)
