@@ -671,7 +671,7 @@ class SovrinCli(PlenumCli):
                            newline=False)
                 self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
                 self.print("Sequence number is {}".format(reply[F.seqNo.name]))
-                
+
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient,
                                         published)
