@@ -27,7 +27,7 @@ from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, \
-    CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE
+    CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE, REQUEST_CLAIM_ATTRS
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttrRepo
@@ -418,8 +418,6 @@ class SovrinCli(PlenumCli):
         """
         name = matchedVars.get('name')
         version = matchedVars.get('version')
-        # ip = matchedVars.get('ip')
-        # port = matchedVars.get('port')
         keys = matchedVars.get('keys')
         attrNames = [s.strip() for s in keys.split(",")]
         # TODO: Directly using anoncreds lib, should use plugin
@@ -1019,7 +1017,7 @@ class SovrinCli(PlenumCli):
         op = {
             f.IDENTIFIER.nm: link.verkey,
             NONCE: link.nonce,
-            TYPE: REQUEST_CLAIM,
+            TYPE: REQUEST_CLAIM_ATTRS,
             "claimDefSeqNo": claim.claimDefSeqNo
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
@@ -1264,7 +1262,6 @@ class SovrinCli(PlenumCli):
                            format(claimName, matchingLink.name))
                 cd = self.activeWallet.getClaimDefByKey(
                     availableClaim.claimDefKey)
-
 
                 if not cd:
                     if self._isConnectedToAnyEnv():

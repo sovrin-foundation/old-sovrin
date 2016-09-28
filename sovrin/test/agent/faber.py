@@ -37,6 +37,9 @@ class FaberAgent(WalletedAgent):
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
         self.attributeRepo = InMemoryAttrRepo()
+        self._seqNos = {
+            ("Transcript", "1.2"): (None, None)
+        }
 
     def getClaimList(self):
         return [{
@@ -77,7 +80,7 @@ class FaberAgent(WalletedAgent):
 
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
-        CredDefSeqNo, IssuerKeySeqNo = self._seqNos()[(name, version)]
+        CredDefSeqNo, IssuerKeySeqNo = self._seqNos[(name, version)]
         csk = CredDefSecretKey(*staticPrimes().get("prime1"))
         sid = self.wallet.addCredDefSk(str(csk))
         # Need to modify the claim definition. We do not support types yet
@@ -163,13 +166,6 @@ class FaberAgent(WalletedAgent):
             }
         }
 
-    @staticmethod
-    def _seqNos():
-        # TODO: Fill these with the actual values of sequence numbers on Sandbox
-        return {
-            ("Transcript", "1.2"): (None, None)
-        }
-
     def bootstrap(self):
         self.addKeyIfNotAdded()
         self.addLinksToWallet()
@@ -177,7 +173,7 @@ class FaberAgent(WalletedAgent):
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=False):
+             startRunning=True, bootstrap=True):
 
     return runAgent(FaberAgent, name or "Faber College", wallet, basedirpath,
                     port, startRunning, bootstrap)
@@ -213,4 +209,4 @@ def runFaber(name=None, wallet=None, basedirpath=None, port=None,
 
 
 if __name__ == "__main__":
-    runFaber(bootstrap=True, port=5555)
+    runFaber(port=5555)

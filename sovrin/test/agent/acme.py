@@ -6,6 +6,7 @@ from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.client.client import Client
+from sovrin.client.wallet.link_invitation import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
@@ -23,6 +24,11 @@ class AcmeAgent(WalletedAgent):
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
         super().__init__('Acme Corp', basedirpath, client, wallet, port)
+
+    def addKeyIfNotAdded(self):
+        wallet = self.wallet
+        if not wallet.identifiers:
+            wallet.addSigner(seed=b'Acme0000000000000000000000000000')
 
     def getClaimList(self, claimNames=None):
         allClaims = [{
@@ -53,11 +59,26 @@ class AcmeAgent(WalletedAgent):
             }
         }]
 
+    def addLinksToWallet(self):
+        wallet = self.wallet
+        idr = wallet.defaultId
+        for nonce, data in self.__attributes().items():
+            link = Link(data.get("name"), idr, nonce=nonce)
+            wallet.addLinkInvitation(link)
+
+    @staticmethod
+    def __attributes():
+        return {
+            "57fbf9dc8c8e6acde33de98c6d747b28c": {
+                "name": "Alice"
+            }
+        }
+
 
 def runAcme(name=None, wallet=None, basedirpath=None, port=None,
-            startRunning=True):
+            startRunning=True, bootstrap=True):
     return runAgent(AcmeAgent, name or "Acme Corp", wallet, basedirpath,
-             port, startRunning)
+             port, startRunning, bootstrap)
 
 if __name__ == "__main__":
     runAcme()

@@ -24,7 +24,8 @@ from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger, \
     randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
-    ACCEPT_INVITE, CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS, EVENT_POST_ACCEPT_INVITE
+    ACCEPT_INVITE, CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS, EVENT_POST_ACCEPT_INVITE, \
+    CLAIM_ATTRS
 from sovrin.client.client import Client
 from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
@@ -182,6 +183,7 @@ class WalletedAgent(Agent):
             ACCEPT_INVITE: self._acceptInvite,
             REQUEST_CLAIM_ATTRS: self._returnClaimAttrs,
             REQUEST_CLAIM: self._reqClaim,
+            CLAIM_ATTRS: self._handleClaimAttrs,
         }
 
     @property
@@ -252,6 +254,12 @@ class WalletedAgent(Agent):
     def createAvailClaimListMsg(claimLists):
         msg = WalletedAgent.getCommonMsg(AVAIL_CLAIM_LIST)
         msg[CLAIMS_LIST_FIELD] = claimLists
+        return msg
+
+    @staticmethod
+    def createClaimsAttrsMsg(claim):
+        msg = WalletedAgent.getCommonMsg(CLAIM_ATTRS)
+        msg[DATA] = claim
         return msg
 
     @staticmethod
@@ -399,6 +407,9 @@ class WalletedAgent(Agent):
     def _reqClaim(self, msg):
         pass
 
+    def _handleClaimAttrs(self, msg):
+        pass
+
     def _returnClaimAttrs(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
@@ -415,7 +426,7 @@ class WalletedAgent(Agent):
             }
             # # TODO: Need to have u value from alice and generate credential
 
-            resp = self.createClaimsMsg(claimDetails)
+            resp = self.createClaimsAttrsMsg(claimDetails)
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
         else:
             raise NotImplementedError
