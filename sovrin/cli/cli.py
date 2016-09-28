@@ -47,7 +47,7 @@ from sovrin.client.wallet.link_invitation import Link, AvailableClaimData, \
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
-from sovrin.common.util import getConfig
+from sovrin.common.util import getConfig, verifySig, getMsgWithoutSig
 from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
@@ -273,7 +273,7 @@ class SovrinCli(PlenumCli):
         return nodesAdded
 
     def _printNotConnectedEnvMessage(self):
-        self.print("Please connect first.")
+        self.print("Not connected to Sovrin network. Please connect first.")
         self._printConnectUsage()
 
     def _printConnectUsage(self):
@@ -796,12 +796,13 @@ class SovrinCli(PlenumCli):
         # TODO: Lets not assume that the invitation file would contain these
         # keys. Let have a link file validation method
         linkInviation = invitationData["link-invitation"]
-        linkInvitationName = linkInviation["name"]
         remoteIdentifier = linkInviation["identifier"]
+        signature = invitationData["sig"]
+        linkInvitationName = linkInviation["name"]
         remoteEndPoint = linkInviation.get("endpoint", None)
         linkNonce = linkInviation["nonce"]
         claimRequestsJson = invitationData.get("claim-requests", None)
-        signature = invitationData["sig"]
+
         claimRequests = []
         if claimRequestsJson:
             for cr in claimRequestsJson:
@@ -973,11 +974,11 @@ class SovrinCli(PlenumCli):
         else:
 
             if not self.activeEnv:
-                self.print("Cannot sync because not connected.")
-                self._printNotConnectedEnvMessage()
+                self.print("Cannot sync because not connected. Please connect first.")
+                self._printConnectUsage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
-                           "Please check if Sovrin is running")
+                           "Please check if Sovrin network is running.")
 
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \

@@ -5,7 +5,10 @@ from typing import Dict
 from typing import Tuple
 
 import asyncio
+
+from plenum.common.looper import Looper
 from plenum.common.types import Identifier
+from plenum.test.helper import genHa
 from sovrin.cli.helper import ensureReqCompleted
 
 from sovrin.common.identity import Identity
@@ -17,7 +20,8 @@ from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
     TARGET_NYM, TXN_TYPE, NYM
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger
+from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger, \
+    randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIMS, \
     ACCEPT_INVITE, CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE
@@ -187,7 +191,7 @@ class WalletedAgent(Agent):
     def wallet(self, wallet):
         self._wallet = wallet
 
-    def getClaimList(self):
+    def getClaimList(self, claimNames=None):
         raise NotImplementedError
 
     def getAvailableClaimList(self):
@@ -378,16 +382,16 @@ class WalletedAgent(Agent):
         identity = Identity(identifier=li.localIdentifier)
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
-        self.client.submitReqs(req)
+        # self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
             self.notifyObservers("Confirmed identifier written to Sovrin.")
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE, availableClaims)
 
-        self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                    req.reqId, self.client, getNymReply,
-                                    availableClaims, li)
+        # self.loop.call_later(.2, ensureReqCompleted, self.loop,
+        #                             req.reqId, self.client, getNymReply,
+        #                             availableClaims, li)
 
     def _reqClaim(self, msg):
         body, (frm, ha) = msg
@@ -432,3 +436,25 @@ class WalletedAgent(Agent):
         self.client.submitReqs(req)
         loop = asyncio.get_event_loop()
         ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
+
+
+def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
+             startRunning=True):
+    if not port:
+        _, port = genHa()
+    _, clientPort = genHa()
+    client = Client(randomString(6),
+                    ha=("0.0.0.0", clientPort),
+                    basedirpath=basedirpath)
+
+    agent = agentClass(basedirpath=basedirpath,
+                       client=client,
+                       wallet=wallet,
+                       port=port)
+    if startRunning:
+        with Looper(debug=True) as looper:
+            looper.add(agent)
+            logger.debug("Running {} now (port: {})".format(name, port))
+            looper.run()
+    else:
+        return agent
