@@ -4,7 +4,8 @@ from plenum.common.txn import TXN_ID
 from plenum.common.txn import TXN_TYPE, TXN_TIME
 from plenum.common.types import f
 from sovrin.common.types import Request
-from plenum.common.util import checkIfMoreThanFSameItems, getMaxFailures
+from plenum.common.util import checkIfMoreThanFSameItems, getMaxFailures, \
+    updateFieldsWithSeqNo
 from plenum.persistence.orientdb_store import OrientDbStore
 
 from sovrin.common.txn import getTxnOrderedFields
@@ -39,7 +40,8 @@ class ClientReqRepStoreOrientDB(ClientReqRepStore):
 
     @property
     def txnFieldOrdering(self):
-        return getTxnOrderedFields()
+        fields = getTxnOrderedFields()
+        return updateFieldsWithSeqNo(fields)
 
     def createLastTxnClass(self):
         self.store.createClass(LAST_TXN_DATA)

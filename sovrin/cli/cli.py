@@ -649,12 +649,16 @@ class SovrinCli(PlenumCli):
             self.activeWallet.addCredDef(credDef)
             reqs = self.activeWallet.preparePending()
             self.activeClient.submitReqs(*reqs)
-            self.print("The following credential definition is published to the"
-                       " Sovrin distributed ledger\n", Token.BoldBlue,
-                       newline=False)
-            self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
+
+            def published(reply, error):
+                self.print("The following credential definition is published"
+                           "to the Sovrin distributed ledger\n", Token.BoldBlue,
+                           newline=False)
+                self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
+                self.print("Sequence number is {}".format(reply[F.seqNo.name]))
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient)
+                                        reqs[0].reqId, self.activeClient,
+                                        published)
             return True
 
     def _sendIssuerKeyAction(self, matchedVars):
@@ -1499,12 +1503,6 @@ class SovrinCli(PlenumCli):
                                         otherAgentHa, clbk, *args, **kwargs)
 
     def _ensureReqCompleted(self, reqId, client, clbk=None, *args):
-        # reply, err = client.replyIfConsensus(reqId)
-        # if reply is None:
-        #     self.looper.loop.call_later(.2, self._ensureReqCompleted,
-        #                                 reqId, client, clbk, *args)
-        # elif clbk:
-        #     clbk(reply, err, *args)
         ensureReqCompleted(self.looper.loop, reqId, client, clbk, *args)
 
     def addAlias(self, reply, err, client, alias, signer):

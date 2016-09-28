@@ -1,7 +1,10 @@
 import json
 
 import os
+from collections import OrderedDict
 
+from ledger.util import F
+from plenum.common.util import updateFieldsWithSeqNo
 from plenum.persistence.client_req_rep_store_file import ClientReqRepStoreFile \
     as PClientReqRepStoreFile
 
@@ -15,7 +18,8 @@ class ClientReqRepStoreFile(PClientReqRepStoreFile):
 
     @property
     def txnFieldOrdering(self):
-        return getTxnOrderedFields()
+        fields = getTxnOrderedFields()
+        return updateFieldsWithSeqNo(fields)
 
     def setLastTxnForIdentifier(self, identifier, value: str):
         filePath = os.path.join(self.dataLocation, self.lastTxnsFileName)

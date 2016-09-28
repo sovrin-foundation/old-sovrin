@@ -188,11 +188,11 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
         assert any(txn[NAME] == credDefName and
                    txn[VERSION] == credDefVersion
                    for txn in txns)
+        output = byuCLI.lastCmdOutput
+        assert "credential definition is published" in output
+        assert credDefName in output
 
     byuCLI.looper.run(eventually(checkCredAdded, retryWait=1, timeout=15))
-    output = byuCLI.lastCmdOutput
-    assert "credential definition is published" in output
-    assert credDefName in output
     return byuCLI.activeWallet.defaultId
 
 
