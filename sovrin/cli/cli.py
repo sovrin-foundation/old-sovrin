@@ -21,8 +21,7 @@ from pygments.token import Token
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
-    PORT, IP, ORIGIN
+from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent
@@ -105,7 +104,6 @@ class SovrinCli(PlenumCli):
         self.verifier = Verifier(randomString(), MemoryCredDefStore(),
                                  MemoryIssuerKeyStore())
         _, port = self.nextAvailableClientAddr()
-        # self.endpoint = Endpoint(port, self.handleEndpointMsg)
         self.curContext = (None, None)  # Current Link, Current Claim Req
         self._agent = None
 
@@ -1033,7 +1031,7 @@ class SovrinCli(PlenumCli):
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
         op['signature'] = signature
-        ip, port = link.remoteEndPoint.split(":")
+        # ip, port = link.remoteEndPoint.split(":")
         self._sendReqToTargetEndpoint(op, link)
 
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):

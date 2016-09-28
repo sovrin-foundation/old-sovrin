@@ -71,64 +71,6 @@ class Link:
             if linkLastSynced else None
         self.linkLastSyncNo = linkLastSyncNo
 
-    # TODO: THis method is not used any more. We should remove it
-    @staticmethod
-    # def getFromDict(name, values):
-    #     localIdentifier = values[t.SIGNER_IDENTIFIER]
-    #     trustAnchor = values[t.TRUST_ANCHOR]
-    #     remoteIdentifier = values[t.TARGET_IDENTIFIER]
-    #     linkNonce = values[t.LINK_NONCE]
-    #     # signature = values[t.SIGNATURE]
-    #
-    #     claimRequestJson = values.get(t.CLAIM_REQUESTS, None)
-    #     claimRequests = []
-    #     if claimRequestJson:
-    #         for cr in claimRequestJson:
-    #             claimRequests.append(
-    #                 ClaimRequest(cr.get("name"), cr.get("version"),
-    #                              cr.get("attributes")))
-    #
-    #     availableClaimsJson = values.get(t.AVAILABLE_CLAIMS, None)
-    #     availableClaims = []
-    #     if availableClaimsJson:
-    #         for ac in availableClaimsJson:
-    #             availableClaims.append(
-    #                 AvailableClaimData(
-    #                     ClaimDefKey(ac.get("name"), ac.get("version"),
-    #                     ac.get("claimDefSeqNo"))))
-    #
-    #     receivedClaimsJson = values.get(t.RECEIVED_CLAIMS, None)
-    #     receivedClaims = []
-    #     if receivedClaimsJson:
-    #         for ac in receivedClaimsJson:
-    #             rc = ReceivedClaim(
-    #                     ClaimDefKey(ac.get("name"), ac.get("version"),
-    #                                 ac.get("claimDefSeqNo")),
-    #                     ac.get('issuerKeys'), ac.get('values'))
-    #             rc.updateDateOfIssue(ac.get('dateOfIssue'))
-    #             receivedClaims.append(rc)
-    #
-    #     localVerKey = values.get(t.SIGNER_VER_KEY, None)
-    #     remoteEndPoint = values.get(t.TARGET_END_POINT, None)
-    #
-    #     remoteVerKey = values.get(t.TARGET_VER_KEY, None)
-    #     linkStatus = values.get(t.LINK_STATUS, None)
-    #     linkLastSynced = values.get(t.LINK_LAST_SYNCED, None)
-    #     linkLastSyncNo = values.get(t.LINK_LAST_SEQ_NO, None)
-    #
-    #     li = Link(name, localIdentifier, localVerKey, trustAnchor,
-    #               remoteIdentifier, remoteEndPoint, linkNonce,
-    #               claimRequests)
-    #     li.updateState(remoteVerKey, linkStatus, linkLastSynced, linkLastSyncNo)
-    #     li.updateAvailableClaims(availableClaims)
-    #
-    #     return li
-
-    # @staticmethod
-    # # TODO: Create a key property for ClaimDefKey
-    # def _getClaimDefKeyTuple(claimDefKey: ClaimDefKey):
-    #     return claimDefKey.name, claimDefKey.version, claimDefKey.claimDefSeqNo, claimDefKey.author
-
     def updateReceivedClaims(self, rcvdClaims):
         for rc in rcvdClaims:
             self.receivedClaims[rc.defKey.key] = rc
@@ -136,50 +78,6 @@ class Link:
     def updateAvailableClaims(self, availableClaims):
         for ac in availableClaims:
             self.availableClaims[ac.claimDefKey.key] = ac
-
-    # TODO: THis method is not used any more. We should remove it
-    # def getDictToBeStored(self) -> dict:
-    #     fixed = {
-    #         t.SIGNER_IDENTIFIER: self.localIdentifier,
-    #         t.TRUST_ANCHOR: self.trustAnchor,
-    #         t.TARGET_IDENTIFIER: self.remoteIdentifier,
-    #         t.LINK_NONCE: self.nonce,
-    #         t.SIGNATURE: self.signature
-    #     }
-    #     optional = {}
-    #     if self.verkey:
-    #         optional[t.SIGNER_VER_KEY] = self.verkey
-    #     if self.targetVerkey:
-    #         optional[t.TARGET_VER_KEY] = self.targetVerkey
-    #     if self.remoteEndPoint:
-    #         optional[t.TARGET_END_POINT] = self.remoteEndPoint
-    #     if self.linkStatus:
-    #         optional[t.LINK_STATUS] = self.linkStatus
-    #     if self.linkLastSynced:
-    #         optional[t.LINK_LAST_SYNCED] = self.linkLastSynced.isoformat()
-    #     if self.linkLastSyncNo:
-    #         optional[t.LINK_LAST_SEQ_NO] = self.linkLastSyncNo
-    #
-    #     if self.claimRequests:
-    #         claimRequests = []
-    #         for cr in self.claimRequests:
-    #             claimRequests.append(cr.getDictToBeStored())
-    #         optional[t.CLAIM_REQUESTS] = claimRequests
-    #
-    #     if self.availableClaims:
-    #         availableClaims = []
-    #         for ac in self.availableClaims.values():
-    #             availableClaims.append(ac.getDictToBeStored())
-    #         optional[t.AVAILABLE_CLAIMS] = availableClaims
-    #
-    #     if self.receivedClaims:
-    #         receivedClaims = []
-    #         for rc in self.receivedClaims.values():
-    #             receivedClaims.append(rc.getDictToBeStored())
-    #         optional[t.RECEIVED_CLAIMS] = receivedClaims
-    #
-    #     fixed.update(optional)
-    #     return fixed
 
     def isRemoteEndpointAvailable(self):
         return self.remoteEndPoint and self.remoteEndPoint != t.NOT_AVAILABLE

@@ -25,6 +25,12 @@ class AcmeAgent(WalletedAgent):
 
         super().__init__('Acme Corp', basedirpath, client, wallet, port)
 
+        self._attributes = {
+            "57fbf9dc8c8e6acde33de98c6d747b28c": {
+                "name": "Alice"
+            }
+        }
+
     def addKeyIfNotAdded(self):
         wallet = self.wallet
         if not wallet.identifiers:
@@ -62,17 +68,9 @@ class AcmeAgent(WalletedAgent):
     def addLinksToWallet(self):
         wallet = self.wallet
         idr = wallet.defaultId
-        for nonce, data in self.__attributes().items():
+        for nonce, data in self._attributes.items():
             link = Link(data.get("name"), idr, nonce=nonce)
             wallet.addLinkInvitation(link)
-
-    @staticmethod
-    def __attributes():
-        return {
-            "57fbf9dc8c8e6acde33de98c6d747b28c": {
-                "name": "Alice"
-            }
-        }
 
 
 def runAcme(name=None, wallet=None, basedirpath=None, port=None,

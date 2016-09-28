@@ -7,8 +7,9 @@ from plenum.common.txn import NAME, TYPE
 from plenum.common.txn import VERSION
 from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
+
+from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
-from sovrin.anon_creds.issuer import AttribType, AttribDef
 from sovrin.client.client import Client
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.link_invitation import Link
@@ -36,9 +37,38 @@ class FaberAgent(WalletedAgent):
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
-        self.attributeRepo = InMemoryAttrRepo()
         self._seqNos = {
             ("Transcript", "1.2"): (None, None)
+        }
+        self._attributes = {
+            "b1134a647eb818069c089e7694f63e6d": {
+                "student_name": "Alice Garcia",
+                "ssn": "123456789",
+                "degree": "Bachelor of Science, Marketing",
+                "year": "2015",
+                "status": "graduated"
+            },
+            "2a2eb72eca8b404e8d412c5bf79f2640": {
+                "student_name": "Carol Atkinson",
+                "ssn": "783412695",
+                "degree": "Bachelor of Science, Physics",
+                "year": "2012",
+                "status": "graduated"
+            },
+            "7513d1397e87cada4214e2a650f603eb": {
+                "student_name": "Frank Jeffrey",
+                "ssn": "996541211",
+                "degree": "Bachelor of Arts, History",
+                "year": "2013",
+                "status": "dropped"
+            },
+            "710b78be79f29fc81335abaa4ee1c5e8": {
+                "student_name": "Craig Richards",
+                "ssn": "151445876",
+                "degree": "MBA, Finance",
+                "year": "2014",
+                "status": "graduated"
+            }
         }
 
     def getClaimList(self):
@@ -111,12 +141,12 @@ class FaberAgent(WalletedAgent):
     def addLinksToWallet(self):
         wallet = self.wallet
         idr = wallet.defaultId
-        for nonce, data in self.__attributes().items():
+        for nonce, data in self._attributes.items():
             link = Link(data.get("student_name"), idr, nonce=nonce)
             wallet.addLinkInvitation(link)
 
     def getAttributes(self, nonce):
-        attrs = self.__attributes().get(nonce)
+        attrs = self._attributes.get(nonce)
         if not attrs:
             attrs = {
                 "student_name": random.choice(randomData.NAMES),
@@ -132,39 +162,6 @@ class FaberAgent(WalletedAgent):
         attribsDef = AttribDef("Transcript", attribTypes)
         attribs = attribsDef.attribs(**attrs)
         return attribs
-
-    @staticmethod
-    def __attributes():
-        return {
-            "b1134a647eb818069c089e7694f63e6d": {
-                "student_name": "Alice Garcia",
-                "ssn": "123456789",
-                "degree": "Bachelor of Science, Marketing",
-                "year": "2015",
-                "status": "graduated"
-            },
-            "2a2eb72eca8b404e8d412c5bf79f2640": {
-                "student_name": "Carol Atkinson",
-                "ssn": "783412695",
-                "degree": "Bachelor of Science, Physics",
-                "year": "2012",
-                "status": "graduated"
-            },
-            "7513d1397e87cada4214e2a650f603eb": {
-                "student_name": "Frank Jeffrey",
-                "ssn": "996541211",
-                "degree": "Bachelor of Arts, History",
-                "year": "2013",
-                "status": "dropped"
-            },
-            "710b78be79f29fc81335abaa4ee1c5e8": {
-                "student_name": "Craig Richards",
-                "ssn": "151445876",
-                "degree": "MBA, Finance",
-                "year": "2014",
-                "status": "graduated"
-            }
-        }
 
     def bootstrap(self):
         self.addKeyIfNotAdded()

@@ -144,7 +144,6 @@ class Agent(Motor, AgentNet):
         if cur:
             self._eventListeners[eventName] = cur - set(listener)
 
-
     def registerObserver(self, observer):
         self._observers.add(observer)
 
@@ -408,7 +407,30 @@ class WalletedAgent(Agent):
         pass
 
     def _handleClaimAttrs(self, msg):
-        pass
+        body, (frm, ha) = msg
+        isVerified = self._isVerified(body)
+        if isVerified:
+            self.notifyObservers("Signature accepted.")
+            identifier = body.get(IDENTIFIER)
+            claim = body[DATA]
+            # for claim in body[CLAIMS_FIELD]:
+            self.notifyObservers("Received {}.".format(claim[NAME]))
+            li = self._getLinkByTarget(getCryptonym(identifier))
+            if li:
+                name, version, claimDefSeqNo, idr = \
+                    claim[NAME], claim[VERSION], \
+                    claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
+                issuerKeys = {}  # TODO: Need to decide how/where to get it
+                attributes = claim['attributes']  # TODO: Need to finalize this
+                rc = ReceivedClaim(
+                    ClaimDefKey(name, version, claimDefSeqNo, idr),
+                    issuerKeys,
+                    attributes)
+                rc.dateOfIssue = datetime.now()
+                li.updateReceivedClaims([rc])
+                self.wallet.addLinkInvitation(li)
+            else:
+                self.notifyObservers("No matching link found")
 
     def _returnClaimAttrs(self, msg):
         body, (frm, ha) = msg
@@ -422,7 +444,8 @@ class WalletedAgent(Agent):
                 NAME: claimDef.name,
                 VERSION: claimDef.version,
                 'attributes': attributes,
-                'claimDefSeqNo': claimDefSeqNo
+                'claimDefSeqNo': claimDefSeqNo,
+                f.IDENTIFIER.nm: claimDef.origin
             }
             # # TODO: Need to have u value from alice and generate credential
 
@@ -462,7 +485,7 @@ class WalletedAgent(Agent):
 
     def _getClaimsAttrsFor(self, nonce, attrNames):
         res = {}
-        attributes = self.attributeRepo.getAttributes(nonce)
+        attributes = self.getAttributes(nonce)
         if attributes:
             for nm in attrNames:
                 res[nm] = attributes.get(nm)
