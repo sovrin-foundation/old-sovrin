@@ -326,7 +326,6 @@ class SovrinCli(PlenumCli):
             r = super()._clientCommand(matchedVars)
             if not r:
                 client_name = matchedVars.get('client_name')
-                client = self.clients[client_name]
                 if client_name not in self.clients:
                     self.print("{} cannot add a new user".
                                format(client_name), Token.BoldOrange)
@@ -611,6 +610,8 @@ class SovrinCli(PlenumCli):
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
+            if not self.canMakeSovrinRequest:
+                return True
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
             self._addNym(nym, role)
@@ -618,12 +619,16 @@ class SovrinCli(PlenumCli):
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
+            if not self.hasAnyKey:
+                return True
             destId = matchedVars.get('dest_id')
             self._getNym(destId)
             return True
 
     def _sendAttribAction(self, matchedVars):
         if matchedVars.get('send_attrib') == 'send ATTRIB':
+            if not self.canMakeSovrinRequest:
+                return True
             nym = matchedVars.get('dest_id')
             raw = matchedVars.get('raw') \
                 if matchedVars.get('raw') else None
@@ -636,6 +641,8 @@ class SovrinCli(PlenumCli):
 
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
+            if not self.canMakeSovrinRequest:
+                return True
             credDef = self._buildCredDef(matchedVars)
             self.activeWallet.addCredDef(credDef)
             reqs = self.activeWallet.preparePending()
@@ -655,6 +662,8 @@ class SovrinCli(PlenumCli):
 
     def _sendIssuerKeyAction(self, matchedVars):
         if matchedVars.get('send_isr_key') == 'send ISSUER_KEY':
+            if not self.canMakeSovrinRequest:
+                return True
             reference = int(matchedVars.get(REFERENCE))
             ipk = self._buildIssuerKey(self.activeWallet.defaultId,
                                              reference)
@@ -678,6 +687,8 @@ class SovrinCli(PlenumCli):
     # will get invoked when prover cli enters request credential command
     def _reqCredAction(self, matchedVars):
         if matchedVars.get('req_cred') == 'request credential':
+            if not self.canMakeSovrinRequest:
+                return True
             dest = matchedVars.get('issuer_id')
             credName = matchedVars.get('cred_name')
             proverName = matchedVars.get('prover_id')
@@ -1505,6 +1516,9 @@ class SovrinCli(PlenumCli):
         ensureReqCompleted(self.looper.loop, reqId, client, clbk, *args)
 
     def addAlias(self, reply, err, client, alias, signer):
+        if not self.canMakeSovrinRequest:
+            return True
+
         txnId = reply[TXN_ID]
         op = {
             TARGET_NYM: alias,
@@ -1593,6 +1607,23 @@ class SovrinCli(PlenumCli):
 
     def notify(self, notifier, msg):
         self.print(msg)
+
+    @property
+    def canMakeSovrinRequest(self):
+        if not self.hasAnyKey:
+            return False
+        if not self.activeEnv:
+            self._printNotConnectedEnvMessage()
+            return False
+        return True
+
+    @property
+    def hasAnyKey(self):
+        if not self.activeWallet.defaultId:
+            self.print("No key present in keyring")
+            self.printUsage("new key")
+            return False
+        return True
 
 
 class DummyClient:

@@ -206,10 +206,10 @@ def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
 
     def checkIsKAdded():
         assert byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+        output = byuCLI.lastCmdOutput
+        assert "issuer key is published" in output
 
     byuCLI.looper.run(eventually(checkIsKAdded, retryWait=1, timeout=15))
-    output = byuCLI.lastCmdOutput
-    assert "issuer key is published" in output
     return byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
 
 
