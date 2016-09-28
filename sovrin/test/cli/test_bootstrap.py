@@ -228,7 +228,7 @@ def testAcceptUnSyncedFaberInvite(be, do, faberInviteLoadedByAlice,
                                   poolNodesStarted):
     aliceCli = faberInviteLoadedByAlice
     be(aliceCli)
-    if not aliceCli ._isConnectedToAnyEnv():
+    if not aliceCli._isConnectedToAnyEnv():
         do('connect test',              within=3,
                                         expect=connectedToTest,
                                         mapper=faberMap)
@@ -348,7 +348,7 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                  faberAddedByPhil,
                                  faberLinkAdded, faberIsRunning,
-                                faberAddedClaimDefAndIssuerKeys,
+                                # faberAddedClaimDefAndIssuerKeys,
                                  faberInviteSyncedWithEndpoint):
     be(aliceCli)
     do("accept invitation from {inviter}",
@@ -412,7 +412,7 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 
 
 def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
-                           faberAddedClaimDefAndIssuerKeys,
+                           # faberAddedClaimDefAndIssuerKeys,
                            faberIsRunning,
                            aliceAcceptedFaberInvitation
                            ):
@@ -442,9 +442,10 @@ def testReqClaimResponseWithInvalidSig(faberCli, faberIsRunning,
 @pytest.fixture(scope="module")
 def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberAddedByPhil,
                                        faberLinkAdded,
-                                        faberAddedClaimDefAndIssuerKeys,
+                                        # faberAddedClaimDefAndIssuerKeys,
                                        aliceAcceptedFaberInvitation,
-                                       faberAddedAttributesForAlice):
+                                       # faberAddedAttributesForAlice
+                                       ):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
     do("request claim Transcript",      within=4,
@@ -690,7 +691,7 @@ def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
     isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
-    faberWallet.addIssuerSecretKey(isk)
+    faberWallet.addIssuerSecretKVERSIONey(isk)
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                        claimDefSeqNo=credDef.seqNo,
                        secretKeyUid=isk.uid, origin=faberWallet.defaultId)
@@ -708,9 +709,11 @@ def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
 
 
 @pytest.fixture(scope="module")
-def faberAddedAttributesForAlice(aliceAcceptedFaberInvitation, aliceCli, faberMap, faberIsRunning):
+def faberAddedAttributesForAlice(aliceAcceptedFaberInvitation, aliceCli,
+                                 faberMap, faberIsRunning):
     faber, faberWallet = faberIsRunning
-    aliceIdrForFaber = aliceCli.activeWallet.getLinkInvitationByTarget(faberMap['target']).verkey
+    aliceIdrForFaber = aliceCli.activeWallet.getLinkInvitationByTarget(
+        faberMap['target']).verkey
     attrs = {
         "student_name": "Alice Garcia",
         "ssn": "123456789",

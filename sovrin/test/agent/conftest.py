@@ -3,11 +3,11 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.test.helper import genHa
 from sovrin.agent.acme import runAcme
-from sovrin.agent.alice import runAlice
 from sovrin.agent.faber import runFaber
 from sovrin.client.wallet.link_invitation import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR
+from sovrin.test.agent.alice import runAlice
 from sovrin.test.helper import createNym
 
 
@@ -77,7 +77,7 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
     faber = runFaber(faberWallet.name, faberWallet,
                      basedirpath=tdirWithPoolTxns,
                      port=faberAgentPort,
-                     startRunning=False)
+                     startRunning=False, bootstrap=True)
     faberWallet.pendSyncRequests()
     prepared = faberWallet.preparePending()
     faber.client.submitReqs(*prepared)

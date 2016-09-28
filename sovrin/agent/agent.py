@@ -380,8 +380,8 @@ class WalletedAgent(Agent):
         if link:
             claimDefSeqNo = body["claimDefSeqNo"]
             claimDef = self.wallet.getCredDef(seqNo=claimDefSeqNo)
-            attributes = self._getClaimsAttrsFor(link.remoteIdentifier,
-                                          claimDef.attrNames)
+            attributes = self._getClaimsAttrsFor(link.nonce,
+                                                 claimDef.attrNames)
             claimDetails = {
                 NAME: claimDef.name,
                 VERSION: claimDef.version,
@@ -424,9 +424,9 @@ class WalletedAgent(Agent):
         loop = asyncio.get_event_loop()
         ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
 
-    def _getClaimsAttrsFor(self, targetIdr, attrNames):
+    def _getClaimsAttrsFor(self, nonce, attrNames):
         res = {}
-        attributes = self.attributeRepo.getAttributes(targetIdr)
+        attributes = self.attributeRepo.getAttributes(nonce)
         if attributes:
             for nm in attrNames:
                 res[nm] = attributes.get(nm)
