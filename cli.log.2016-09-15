@@ -1,0 +1,6 @@
+1,973 DEBUG   Plugins {'anoncreds'} are already loaded from basedir: /home/lovesh/.sovrin
+1,973 DEBUG   Total plugins loaded from basedir /home/lovesh/.sovrin are : 0
+1,973 DEBUG   total plugins loaded in cli: 0
+3,838 INFO    CLI command entered: new node all
+6,121 INFO    Looper shutting down now...
+6,131 INFO    Looper shut down in 0.010 seconds.

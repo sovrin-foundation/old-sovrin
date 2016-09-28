@@ -32,7 +32,6 @@ class Vertices:
     _Properties = {
         Nym: (NYM, TXN_ID, ROLE, F.seqNo.name),
         Attribute: (RAW, ENC, HASH),
-        # CredDef: (TYPE, IP, PORT, KEYS)
         CredDef: (TYPE, ATTR_NAMES),
         IssuerKey: (REFERENCE, DATA)
     }
@@ -143,18 +142,12 @@ class IdentityGraph(OrientDbGraphStore):
         self.createVertexClass(Vertices.CredDef, properties={
             ATTR_NAMES: "string",
             TYPE: "string",
-            # IP: "string",
-            # PORT: "integer",
-            # KEYS: "string"      # JSON
         })
 
     def createIssuerKeyClass(self):
         self.createVertexClass(Vertices.IssuerKey, properties={
             REFERENCE: "string",
             DATA: "string", # JSON
-            # IP: "string",
-            # PORT: "integer",
-            # KEYS: "string"      # JSON
         })
 
     def createAddsNymClass(self):
@@ -265,7 +258,8 @@ class IdentityGraph(OrientDbGraphStore):
             }
             self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
-    def addCredDef(self, frm, txnId, name, version, attrNames, typ: Optional[str]=None):
+    def addCredDef(self, frm, txnId, name, version, attrNames,
+                   typ: Optional[str]=None):
         kwargs = {
             TYPE: typ,
             ATTR_NAMES: attrNames
@@ -322,13 +316,10 @@ class IdentityGraph(OrientDbGraphStore):
             return {
                 NAME: name,
                 VERSION: version,
-                # IP: credDef.get(IP),
-                # PORT: credDef.get(PORT),
                 TYPE: credDef.get(TYPE),
                 F.seqNo.name: edgeData.get(F.seqNo.name),
                 ATTR_NAMES: credDef.get(ATTR_NAMES),
                 ORIGIN: frm,
-                # KEYS: credDef.get(KEYS)
             }
         return None
 
@@ -353,10 +344,6 @@ class IdentityGraph(OrientDbGraphStore):
                 REFERENCE: ref,
                 F.seqNo.name: edgeData.get(F.seqNo.name),
                 DATA: json.loads(needle.oRecordData.get(DATA))
-                # IP: credDef.get(IP),
-                # PORT: credDef.get(PORT),
-
-                # KEYS: credDef.get(KEYS)
             }
         return None
 
@@ -637,7 +624,8 @@ class IdentityGraph(OrientDbGraphStore):
                 try:
                     txnTimeStamp = int(time.mktime(txnTime.timetuple()))
                 except (OverflowError, ValueError) as ex:
-                    logger.warn("TXN_TIME cannot convert datetime '{}' to timestamp, reject it".format(txnTime))
+                    logger.warn("TXN_TIME cannot convert datetime '{}' "
+                                "to timestamp, reject it".format(txnTime))
                 else:
                     # TODO The right thing to do is check the time of the PRE-PREPARE.
                     # https://github.com/evernym/sovrin-priv/pull/20#discussion_r80387554

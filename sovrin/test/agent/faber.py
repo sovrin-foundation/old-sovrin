@@ -11,6 +11,7 @@ from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.anon_creds.issuer import AttribType, AttribDef
 from sovrin.client.client import Client
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.link_invitation import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import ATTR_NAMES
 from sovrin.common.util import getConfig
@@ -69,6 +70,11 @@ class FaberAgent(WalletedAgent):
             })
         return resp
 
+    def addKeyIfNotAdded(self):
+        wallet = self.wallet
+        if not wallet.identifiers:
+            wallet.addSigner()
+
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
         CredDefSeqNo, IssuerKeySeqNo = self._seqNos()[(name, version)]
@@ -98,6 +104,13 @@ class FaberAgent(WalletedAgent):
                            seqNo=IssuerKeySeqNo)
         key = (wallet.defaultId, CredDefSeqNo)
         wallet._issuerPks[key] = ipk
+
+    def addLinksToWallet(self):
+        wallet = self.wallet
+        idr = wallet.defaultId
+        for nonce, data in self.__attributes().items():
+            link = Link(data.get("student_name"), idr, nonce=nonce)
+            wallet.addLinkInvitation(link)
 
     def getAttributes(self, nonce):
         attrs = self.__attributes().get(nonce)
@@ -158,6 +171,8 @@ class FaberAgent(WalletedAgent):
         }
 
     def bootstrap(self):
+        self.addKeyIfNotAdded()
+        self.addLinksToWallet()
         self.addClaimDefsToWallet()
 
 

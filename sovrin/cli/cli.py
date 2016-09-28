@@ -291,9 +291,6 @@ class SovrinCli(PlenumCli):
             # initialise to null
             return DummyClient()
 
-        # DEPR
-        # return super().newClient(clientName, seed=seed, identifier=identifier,
-        #                          signer=signer, wallet=wallet, config=config)
         client = super().newClient(clientName, config=config)
         if self.activeWallet:
             client.registerObserver(self.activeWallet.handleIncomingReply)
@@ -319,9 +316,6 @@ class SovrinCli(PlenumCli):
                                               self._printShowAndReqClaimUsage)
             self.looper.add(self._agent)
         return self._agent
-
-    # def handleAgentMessage(self, msg):
-    #     logger.debug
 
     @staticmethod
     def bootstrapClientKeys(idr, verkey, nodes):
