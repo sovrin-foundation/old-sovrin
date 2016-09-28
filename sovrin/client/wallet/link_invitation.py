@@ -41,7 +41,7 @@ class Link:
                  remoteIdentifier=None, remoteEndPoint=None, nonce=None,
                  claimRequests=None, invitationData: Dict=None):
         self.name = name
-        self._localIdentifier = localIdentifier
+        self.localIdentifier = localIdentifier
 
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
@@ -60,10 +60,6 @@ class Link:
         self.linkStatus = None
         self.linkLastSynced = None
         self.linkLastSyncNo = None
-
-    @property
-    def localIdentifier(self):
-        return self._localIdentifier.split(':')[-1]
 
     def updateState(self, targetVerKey, linkStatus, linkLastSynced,
                     linkLastSyncNo):
@@ -145,7 +141,7 @@ class Link:
     # TODO: THis method is not used any more. We should remove it
     def getDictToBeStored(self) -> dict:
         fixed = {
-            t.SIGNER_IDENTIFIER: self._localIdentifier,
+            t.SIGNER_IDENTIFIER: self.localIdentifier,
             t.TRUST_ANCHOR: self.trustAnchor,
             t.TARGET_IDENTIFIER: self.remoteIdentifier,
             t.LINK_NONCE: self.nonce,
@@ -265,7 +261,7 @@ class Link:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
-            'Identifier: ' + self._localIdentifier + '\n' \
+            'Identifier: ' + self.localIdentifier + '\n' \
             'Trust anchor: ' + trustAnchor + ' ' + trustAnchorStatus + '\n' \
             'Verification key: ' + verKey + '\n' \
             'Signing key: <hidden>' '\n' \

@@ -996,28 +996,26 @@ class SovrinCli(PlenumCli):
             self.print('Expanding {} to "{}"'.format(linkName, li.name))
         return li
 
-    def _sendReqClaimToTargetEndpoint(self, link: Link, claimName):
-        op = {
-            f.IDENTIFIER.nm: self.activeWallet.defaultId,
-            NONCE: link.nonce,
-            TYPE: REQUEST_CLAIMS,
-            CLAIM_NAME_FIELD: claimName
-        }
-        signature = self.activeWallet.signMsg(op, self.activeWallet.defaultId)
+    def _sendReqToTargetEndpoint(self, op, link: Link):
+        op[f.IDENTIFIER.nm] = link.verkey
+        op[NONCE] = link.nonce
+        signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
         ip, port = link.remoteEndPoint.split(":")
         self.sendToEndpoint(op, (ip, int(port)))
 
+    def _sendReqClaimToTargetEndpoint(self, link: Link, claimName):
+        op = {
+            TYPE: REQUEST_CLAIMS,
+            CLAIM_NAME_FIELD: claimName
+        }
+        self._sendReqToTargetEndpoint(op, link)
+
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
         op = {
-            f.IDENTIFIER.nm: link.localIdentifier,
-            NONCE: link.nonce,
             TYPE: ACCEPT_INVITE
         }
-        signature = self.activeWallet.signMsg(op, self.activeWallet.defaultId)
-        op[f.SIG.nm] = signature
-        ip, port = link.remoteEndPoint.split(":")
-        self.sendToEndpoint(op, (ip, int(port)))
+        self._sendReqToTargetEndpoint(op, link)
 
     def _acceptLinkPostSync(self, link: Link):
         if link.remoteEndPoint:
