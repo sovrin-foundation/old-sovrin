@@ -198,4 +198,4 @@ def runFaber(name=None, wallet=None, basedirpath=None, port=None,
 
 
 if __name__ == "__main__":
-    runFaber()
+    runFaber(bootstrap=True)

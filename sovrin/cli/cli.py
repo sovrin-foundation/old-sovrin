@@ -407,8 +407,7 @@ class SovrinCli(PlenumCli):
         self.activeWallet.addAttribute(attrib)
         reqs = self.activeWallet.preparePending()
         req, = self.activeClient.submitReqs(*reqs)
-        self.print("Adding attributes {} for {}".
-                   format(data, nym), Token.BoldBlue)
+        self.print("Adding attributes {} for {}".format(data, nym))
 
         def chk(reply, error):
             assert self.activeWallet.getAttribute(attrib).seqNo is not None
@@ -1484,7 +1483,7 @@ class SovrinCli(PlenumCli):
 
     def ensureClientConnected(self):
         if self._isConnectedToAnyEnv():
-            self.print("Connected to {}".format(self.activeEnv))
+            self.print("Connected to {}".format(self.activeEnv), Token.BoldBlue)
         else:
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 
