@@ -351,7 +351,7 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                     "Trust established.",
                                     "Identifier created in Sovrin.",
                                     "Available claims: Transcript",
-                                    "Synchronizing...",
+                                    # "Synchronizing...",
                                     # "Confirmed identifier written to Sovrin."
                                 ])
     return aliceCli
@@ -510,7 +510,7 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                  "Trust established.",
                                  "Identifier created in Sovrin.",
                                  "Available claims: {claims}",
-                                 "Synchronizing...",
+                                 # "Synchronizing...",
                                  # Once acme starts writing identifier
                                  # to Sovrin, need to uncomment below line
                                  # "Confirmed identifier written to Sovrin."

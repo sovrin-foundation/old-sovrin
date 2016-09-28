@@ -383,7 +383,7 @@ class WalletedAgent(Agent):
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
         # self.client.submitReqs(req)
-        self.notifyObservers("Synchronizing...")
+        # self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
             self.notifyObservers("Confirmed identifier written to Sovrin.")
