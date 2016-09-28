@@ -881,6 +881,7 @@ class SovrinCli(PlenumCli):
         curDirPath = os.path.dirname(os.path.abspath(__file__))
         sampleExplicitFilePath = curDirPath + "/../../" + givenPath
         sampleImplicitFilePath = curDirPath + "/../../sample/" + givenPath
+
         if os.path.exists(givenPath):
             return givenPath
         elif os.path.exists(sampleExplicitFilePath):
@@ -935,9 +936,9 @@ class SovrinCli(PlenumCli):
         if endPoint:
             link.remoteEndPoint = endPoint
             self.print('Endpoint received: {}'.format(endPoint))
-            self._pingToEndpoint(endPoint)
             link.linkLastSynced = datetime.datetime.now()
             self.print("Link {} synced".format(link.name))
+            self._pingToEndpoint(endPoint)
         else:
             link.remoteEndPoint = t.NOT_AVAILABLE
             self.print('Endpoint not available')
@@ -1038,7 +1039,7 @@ class SovrinCli(PlenumCli):
                 self._printLinkAlreadyExcepted(li.name)
             else:
                 self.print("Invitation not yet verified.")
-                if not li.remoteEndPoint:
+                if not li.isRemoteEndpointAvailable():
                     self.print("Link not yet synchronized. "
                                "Attempting to sync...")
                     if self._isConnectedToAnyEnv():
