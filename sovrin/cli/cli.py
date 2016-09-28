@@ -43,7 +43,7 @@ from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, AvailableClaimData, \
-    ClaimRequest
+    ClaimRequest, t
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
@@ -878,6 +878,7 @@ class SovrinCli(PlenumCli):
         curDirPath = os.path.dirname(os.path.abspath(__file__))
         sampleExplicitFilePath = curDirPath + "/../../" + givenPath
         sampleImplicitFilePath = curDirPath + "/../../sample/" + givenPath
+
         if os.path.exists(givenPath):
             return givenPath
         elif os.path.exists(sampleExplicitFilePath):
@@ -932,10 +933,12 @@ class SovrinCli(PlenumCli):
         if endPoint:
             link.remoteEndPoint = endPoint
             self.print('Endpoint received: {}'.format(endPoint))
+            link.linkLastSynced = datetime.datetime.now()
+            self.print("Link {} synced".format(link.name))
             self._pingToEndpoint(endPoint)
         else:
+            link.remoteEndPoint = t.NOT_AVAILABLE
             self.print('Endpoint not available')
-        link.linkLastSynced =datetime.datetime.now()
         self.activeWallet.addLinkInvitation(link)
 
     def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
@@ -945,7 +948,6 @@ class SovrinCli(PlenumCli):
             return True
 
         self._updateLinkWithLatestInfo(link, reply)
-        self.print("Link {} synced".format(link.name))
         postSync(link)
         return True
 
@@ -975,7 +977,8 @@ class SovrinCli(PlenumCli):
         else:
 
             if not self.activeEnv:
-                self.print("Cannot sync because not connected. Please connect first.")
+                self.print("Cannot sync because not connected. "
+                           "Please connect first.")
                 self._printConnectUsage()
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
@@ -1025,7 +1028,7 @@ class SovrinCli(PlenumCli):
         self._sendReqToTargetEndpoint(op, link)
 
     def _acceptLinkPostSync(self, link: Link):
-        if link.remoteEndPoint:
+        if link.isRemoteEndpointAvailable():
             self._sendAcceptInviteToTargetEndpoint(link)
         else:
             self.print("Remote endpoint not found, "
@@ -1038,7 +1041,7 @@ class SovrinCli(PlenumCli):
                 self._printLinkAlreadyExcepted(li.name)
             else:
                 self.print("Invitation not yet verified.")
-                if not li.remoteEndPoint:
+                if not li.isRemoteEndpointAvailable():
                     self.print("Link not yet synchronized. "
                                "Attempting to sync...")
                     if self._isConnectedToAnyEnv():
@@ -1054,7 +1057,7 @@ class SovrinCli(PlenumCli):
     def _syncLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
         if li:
-            if li.remoteEndPoint:
+            if li.isRemoteEndpointAvailable():
                 self._pingToEndpoint(li.remoteEndPoint)
                 self._printShowAndAcceptLinkUsage(li.name)
             else:
