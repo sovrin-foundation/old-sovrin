@@ -412,7 +412,7 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
                                    aliceAcceptedFaberInvitation,
                            faberIsRunning,
-                           # faberAddedClaimDefAndIssuerKeys    # Adding this fails the test, since the wallet's _credDefReply is not called
+                           faberAddedClaimDefAndIssuerKeys    # Adding this fails the test, since the wallet's _credDefReply is not called
                            ):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)

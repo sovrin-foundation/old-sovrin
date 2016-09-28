@@ -148,7 +148,9 @@ class WalletedAgent(Agent):
                  port: int=None):
         super().__init__(name, basedirpath, client, port)
         self._wallet = wallet or Wallet(name)
-        # self.client.registerObserver(self._wallet.handleIncomingReply)
+        obs = self._wallet.handleIncomingReply
+        if not self.client.hasObserver(obs):
+            self.client.registerObserver(obs)
         self._wallet.pendSyncRequests()
         prepared = self._wallet.preparePending()
         self.client.submitReqs(*prepared)
@@ -386,10 +388,9 @@ class WalletedAgent(Agent):
         link = self.verifyAndGetLink(msg)
         if link:
             identifier = body.get(f.IDENTIFIER.nm)
-            op = {
-                TARGET_NYM: identifier,
-                TXN_TYPE: NYM
-            }
+            idy = Identity(identifier)
+            self.wallet.addSponsoredIdentity(idy)
+            reqs = self.wallet.preparePending()
 
             def sendClaimList(reply, error):
                 logger.debug("sent to sovrin {}".format(identifier))
@@ -397,7 +398,8 @@ class WalletedAgent(Agent):
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
             logger.debug("sending to sovrin {}".format(identifier))
-            self._sendToSovrinAndDo(op, clbk=sendClaimList)
+            # Assuming there was only one pending request
+            self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
         # TODO: If I have the below exception thrown, somehow the
         # error msg which is sent in verifyAndGetLink is not being received
@@ -405,8 +407,7 @@ class WalletedAgent(Agent):
         # else:
         #     raise NotImplementedError
 
-    def _sendToSovrinAndDo(self, op, clbk=None, *args):
-        req = self.wallet.signOp(op, identifier=self.wallet.defaultId)
+    def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
         loop = asyncio.get_event_loop()
         ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)

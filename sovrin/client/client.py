@@ -405,3 +405,5 @@ class Client(PlenumClient):
         self._observerSet.remove(self._observers[name])
         del self._observers[name]
 
+    def hasObserver(self, name):
+        return name in self._observerSet
