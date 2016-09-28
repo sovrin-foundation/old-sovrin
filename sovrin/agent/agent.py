@@ -1,4 +1,6 @@
 import logging
+import asyncio
+
 from datetime import datetime
 from typing import Dict
 from typing import Tuple
@@ -19,7 +21,7 @@ from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIMS, \
-    ACCEPT_INVITE, CLAIM_NAME_FIELD
+    ACCEPT_INVITE, CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE
 from sovrin.client.client import Client
 from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
@@ -42,6 +44,7 @@ class Agent(Motor, AgentNet):
                  port: int=None):
         Motor.__init__(self)
         self._observers = set()
+        self._eventListeners = {}   # Dict[str, set(Callable)]
         self._name = name
 
         AgentNet.__init__(self,
@@ -122,6 +125,19 @@ class Agent(Motor, AgentNet):
     def connectTo(self, ha):
         self.endpoint.connectTo(ha)
 
+    def registerEventListener(self, eventName, listener):
+        cur = self._eventListeners.get(eventName)
+        if cur:
+            self._eventListeners[eventName] = cur.add(listener)
+        else:
+            self._eventListeners[eventName] = {listener}
+
+    def deregisterEventListener(self, eventName, listener):
+        cur = self._eventListeners.get(eventName)
+        if cur:
+            self._eventListeners[eventName] = cur - set(listener)
+
+
     def registerObserver(self, observer):
         self._observers.add(observer)
 
@@ -149,6 +165,7 @@ class WalletedAgent(Agent):
         self._wallet.pendSyncRequests()
         prepared = self._wallet.preparePending()
         self.client.submitReqs(*prepared)
+        self.loop = asyncio.get_event_loop()
         self.msgHandlers = {
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
@@ -347,21 +364,25 @@ class WalletedAgent(Agent):
     def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
         self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
 
+    def notifyEventListeners(self, eventName, *args):
+        for el in self._eventListeners[eventName]:
+            el(*args)
+
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
                                               availableClaims):
-        # identity = Identity(identifier=li.localIdentifier)
-        # req = self.activeWallet.requestIdentity(identity,
-        #                                 sender=self.activeWallet.defaultId)
-        # self.activeClient.submitReqs(req)
+        identity = Identity(identifier=li.localIdentifier)
+        req = self.wallet.requestIdentity(identity,
+                                        sender=self.wallet.defaultId)
+        self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
             self.notifyObservers("Confirmed identifier written to Sovrin.")
-            self._printShowAndReqClaimUsage(availableClaims)
+            self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE, availableClaims)
 
-        # self.looper.loop.call_later(.2, self.ensureReqCompleted,
-        #                             req.reqId, self.activeClient, getNymReply,
-        #                             availableClaims, li)
+        self.loop.call_later(.2, ensureReqCompleted, self.loop,
+                                    req.reqId, self.client, getNymReply,
+                                    availableClaims, li)
 
     def _reqClaim(self, msg):
         body, (frm, ha) = msg

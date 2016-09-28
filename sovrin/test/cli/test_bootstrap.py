@@ -350,7 +350,7 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                  faberInviteSyncedWithEndpoint):
     be(aliceCli)
     do("accept invitation from {inviter}",
-                                within=3,
+                                within=5,
                                 mapper=faberMap,
                                 expect=[
                                     "Signature accepted.",
@@ -358,8 +358,6 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                     "Identifier created in Sovrin.",
                                     "Available claims: Transcript",
                                     "Synchronizing...",
-                                    # Once faber starts writing identifier
-                                    # to Sovrin, need to uncomment below line
                                     # "Confirmed identifier written to Sovrin."
                                 ])
     return aliceCli
@@ -518,7 +516,6 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
     do("accept invitation "
        "from {inviter}", within=6,
                          expect=["Invitation not yet verified.",
-                                 "Starting communication with {inviter}",
                                  "Signature accepted.",
                                  "Trust established.",
                                  "Identifier created in Sovrin.",

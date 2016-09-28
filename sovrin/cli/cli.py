@@ -27,7 +27,7 @@ from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIMS, \
-    CLAIM_NAME_FIELD
+    CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttrRepo
@@ -311,6 +311,8 @@ class SovrinCli(PlenumCli):
                                         wallet=self.activeWallet,
                                         port=port)
             self._agent.registerObserver(self)
+            self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
+                                              self._printShowAndReqClaimUsage)
             self.looper.add(self._agent)
         return self._agent
 
@@ -995,7 +997,6 @@ class SovrinCli(PlenumCli):
         return li
 
     def _sendReqClaimToTargetEndpoint(self, link: Link, claimName):
-        self.print("Starting communication with {}".format(link.name))
         op = {
             f.IDENTIFIER.nm: self.activeWallet.defaultId,
             NONCE: link.nonce,
@@ -1003,19 +1004,18 @@ class SovrinCli(PlenumCli):
             CLAIM_NAME_FIELD: claimName
         }
         signature = self.activeWallet.signMsg(op, self.activeWallet.defaultId)
-        op['signature'] = signature
+        op[f.SIG.nm] = signature
         ip, port = link.remoteEndPoint.split(":")
         self.sendToEndpoint(op, (ip, int(port)))
 
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
-        self.print("Starting communication with {}".format(link.name))
         op = {
-            f.IDENTIFIER.nm: self.activeWallet.defaultId,
+            f.IDENTIFIER.nm: link.localIdentifier,
             NONCE: link.nonce,
             TYPE: ACCEPT_INVITE
         }
         signature = self.activeWallet.signMsg(op, self.activeWallet.defaultId)
-        op['signature'] = signature
+        op[f.SIG.nm] = signature
         ip, port = link.remoteEndPoint.split(":")
         self.sendToEndpoint(op, (ip, int(port)))
 
