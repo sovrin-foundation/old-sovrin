@@ -649,6 +649,7 @@ class SovrinCli(PlenumCli):
                            newline=False)
                 self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
                 self.print("Sequence number is {}".format(reply[F.seqNo.name]))
+
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient,
                                         published)
@@ -663,12 +664,17 @@ class SovrinCli(PlenumCli):
             reqs = self.activeWallet.preparePending()
             # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
             self.activeClient.submitReqs(*reqs)
-            self.print("The following issuer key is published to the"
-                       " Sovrin distributed ledger\n", Token.BoldBlue,
-                       newline=False)
-            self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
+
+            def published(reply, error):
+                self.print("The following issuer key is published to the"
+                           " Sovrin distributed ledger\n", Token.BoldBlue,
+                           newline=False)
+                self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
+                self.print("Sequence number is {}".format(reply[F.seqNo.name]))
+
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient)
+                                        reqs[0].reqId, self.activeClient,
+                                        published)
             return True
 
     # will get invoked when prover cli enters request credential command
