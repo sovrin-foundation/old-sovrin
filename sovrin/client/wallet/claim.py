@@ -36,10 +36,16 @@ class ClaimRequest:
 
 class ClaimDefKey:
     # TODO: Create a key property for ClaimDefKey
-    def __init__(self, name, version, claimDefSeqNo):
+    def __init__(self, name, version, claimDefSeqNo, author):
         self.name = name
         self.version = version
         self.claimDefSeqNo = claimDefSeqNo
+        self.author = author
+
+    # TODO: Why key of a key?
+    @property
+    def key(self):
+        return self.name, self.version, self.claimDefSeqNo, self.author
 
 
 class AvailableClaimData:

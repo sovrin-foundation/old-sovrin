@@ -17,8 +17,8 @@ from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger
 from sovrin.agent.agent_net import AgentNet
-from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIMS, \
-    ACCEPT_INVITE, CLAIM_NAME_FIELD
+from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
+    ACCEPT_INVITE, CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS
 from sovrin.client.client import Client
 from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
@@ -151,15 +151,16 @@ class WalletedAgent(Agent):
         obs = self._wallet.handleIncomingReply
         if not self.client.hasObserver(obs):
             self.client.registerObserver(obs)
-        self._wallet.pendSyncRequests()
-        prepared = self._wallet.preparePending()
-        self.client.submitReqs(*prepared)
+        # self._wallet.pendSyncRequests()
+        # prepared = self._wallet.preparePending()
+        # self.client.submitReqs(*prepared)
         self.msgHandlers = {
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
             CLAIMS: self._handleReqClaimResponse,
             ACCEPT_INVITE: self._acceptInvite,
-            REQUEST_CLAIMS: self._reqClaim
+            REQUEST_CLAIM_ATTRS: self._returnClaimAttrs,
+            REQUEST_CLAIM: self._reqClaim,
         }
 
     @property
@@ -215,7 +216,7 @@ class WalletedAgent(Agent):
         return matchingLink
 
     def signAndSendToCaller(self, resp, identifier, frm):
-        resp[IDENTIFIER] = self.wallet.defaultId
+        resp[IDENTIFIER] = identifier
         signature = self.wallet.signMsg(resp, identifier)
         resp[f.SIG.nm] = signature
         self.sendMessage(resp, destName=frm)
@@ -233,9 +234,10 @@ class WalletedAgent(Agent):
         return msg
 
     @staticmethod
-    def createClaimsMsg(claims):
+    def createClaimsMsg(claim):
         msg = WalletedAgent.getCommonMsg(CLAIMS)
-        msg[CLAIMS_FIELD] = claims
+        # TODO: Should be called CLAIM_FILED, no plural
+        msg[CLAIMS_FIELD] = claim
         return msg
 
     def notifyObservers(self, msg):
@@ -269,13 +271,13 @@ class WalletedAgent(Agent):
                 self.notifyObservers("    Signature accepted.")
                 self.notifyObservers("    Trust established.")
                 # Not sure how to know if the responder is a trust anchor or not
-                self.notifyObservers("    Identifier created in Sovrin.")
+                self.notifyObservers("Identifier created in Sovrin.")
                 availableClaims = []
                 for cl in body[CLAIMS_LIST_FIELD]:
-                    name, version, claimDefSeqNo = \
-                        cl[NAME], cl[VERSION], \
-                        cl['claimDefSeqNo']
-                    claimDefKey = ClaimDefKey(name, version, claimDefSeqNo)
+                    name, version, claimDefSeqNo = cl[NAME], cl[VERSION], \
+                                                   cl['claimDefSeqNo']
+                    claimDefKey = ClaimDefKey(name, version, claimDefSeqNo,
+                                              li.remoteIdentifier)
                     availableClaims.append(AvailableClaimData(claimDefKey))
 
                     if cl.get('definition', None):
@@ -312,22 +314,23 @@ class WalletedAgent(Agent):
         if isVerified:
             self.notifyObservers("Signature accepted.")
             identifier = body.get(IDENTIFIER)
-            for claim in body[CLAIMS_FIELD]:
-                self.notifyObservers("Received {}.".format(claim[NAME]))
-                li = self._getLinkByTarget(getCryptonym(identifier))
-                if li:
-                    name, version, claimDefSeqNo = \
-                        claim[NAME], claim[VERSION], \
-                        claim['claimDefSeqNo']
-                    issuerKeys = {}  # TODO: Need to decide how/where to get it
-                    values = claim['values']  # TODO: Need to finalize this
-                    rc = ReceivedClaim(
-                        ClaimDefKey(name, version, claimDefSeqNo),
-                        issuerKeys,
-                        values)
-                    rc.dateOfIssue = datetime.now()
-                    li.updateReceivedClaims([rc])
-                    self.wallet.addLinkInvitation(li)
+            claim = body[CLAIMS_FIELD]
+            # for claim in body[CLAIMS_FIELD]:
+            self.notifyObservers("Received {}.".format(claim[NAME]))
+            li = self._getLinkByTarget(getCryptonym(identifier))
+            if li:
+                name, version, claimDefSeqNo, idr = \
+                    claim[NAME], claim[VERSION], \
+                    claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
+                issuerKeys = {}  # TODO: Need to decide how/where to get it
+                attributes = claim['attributes']  # TODO: Need to finalize this
+                rc = ReceivedClaim(
+                    ClaimDefKey(name, version, claimDefSeqNo, idr),
+                    issuerKeys,
+                    attributes)
+                rc.dateOfIssue = datetime.now()
+                li.updateReceivedClaims([rc])
+                self.wallet.addLinkInvitation(li)
             else:
                 self.notifyObservers("No matching link found")
 
@@ -369,16 +372,25 @@ class WalletedAgent(Agent):
         #                             availableClaims, li)
 
     def _reqClaim(self, msg):
+        pass
+
+    def _returnClaimAttrs(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
-            claimName = body[CLAIM_NAME_FIELD]
-            claimsToSend = []
-            for cl in self.getClaimList():
-                if cl[NAME] == claimName:
-                    claimsToSend.append(cl)
+            claimDefSeqNo = body["claimDefSeqNo"]
+            claimDef = self.wallet.getCredDef(seqNo=claimDefSeqNo)
+            attributes = self._getClaimsAttrsFor(link.remoteIdentifier,
+                                          claimDef.attrNames)
+            claimDetails = {
+                NAME: claimDef.name,
+                VERSION: claimDef.version,
+                'attributes': attributes,
+                'claimDefSeqNo': claimDefSeqNo
+            }
+            # # TODO: Need to have u value from alice and generate credential
 
-            resp = self.createClaimsMsg(claimsToSend)
+            resp = self.createClaimsMsg(claimDetails)
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
         else:
             raise NotImplementedError
@@ -411,3 +423,11 @@ class WalletedAgent(Agent):
         self.client.submitReqs(req)
         loop = asyncio.get_event_loop()
         ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
+
+    def _getClaimsAttrsFor(self, targetIdr, attrNames):
+        res = {}
+        attributes = self.attributeRepo.getAttributes(targetIdr)
+        if attributes:
+            for nm in attrNames:
+                res[nm] = attributes.get(nm)
+        return res

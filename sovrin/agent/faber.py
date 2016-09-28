@@ -2,12 +2,16 @@ import os
 from typing import Dict
 
 from plenum.common.looper import Looper
+from plenum.common.txn import NAME
+from plenum.common.txn import VERSION
 from plenum.common.util import getlogger, randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import WalletedAgent
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
+
+from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
 
 logger = getlogger()
 
@@ -23,6 +27,7 @@ class FaberAgent(WalletedAgent):
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
+        self.attributeRepo = InMemoryAttrRepo()
 
     def getClaimList(self):
         return [{
@@ -39,20 +44,22 @@ class FaberAgent(WalletedAgent):
         }]
 
     def getAvailableClaimList(self):
-        return [{
-            "name": "Transcript",
-            "version": "1.2",
-            "claimDefSeqNo": "<claimDefSeqNo>",
-            "definition": {
-                "attributes": {
-                    "student_name": "string",
-                    "ssn": "string",
-                    "degree": "string",
-                    "year": "string",
-                    "status": "string"
+        acl = self.wallet.getAvailableClaimList()
+        resp = []
+        for cd, ik in acl:
+            attrs = {}
+            for a in cd.attrNames:
+                attrs[a] = "string"
+            resp.append({
+                NAME: cd.name,
+                VERSION: cd.version,
+                "claimDefSeqNo": cd.seqNo,
+                "issuerKeySeqNo": ik.seqNo,
+                "definition": {
+                    "attributes": attrs
                 }
-            }
-        }]
+            })
+        return resp
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,

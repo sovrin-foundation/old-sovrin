@@ -26,7 +26,7 @@ from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIMS, \
+from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, \
     CLAIM_NAME_FIELD
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
@@ -39,7 +39,7 @@ from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ReceivedClaim
-from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef#, CredDefSk, CredDefKey
+from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link_invitation import Link, AvailableClaimData, \
@@ -994,15 +994,16 @@ class SovrinCli(PlenumCli):
             self.print('Expanding {} to "{}"'.format(linkName, li.name))
         return li
 
-    def _sendReqClaimToTargetEndpoint(self, link: Link, claimName):
+    def _sendReqClaimToTargetEndpoint(self, link: Link, claim):
         self.print("Starting communication with {}".format(link.name))
         op = {
-            f.IDENTIFIER.nm: self.activeWallet.defaultId,
+            f.IDENTIFIER.nm: link.verkey,
             NONCE: link.nonce,
-            TYPE: REQUEST_CLAIMS,
-            CLAIM_NAME_FIELD: claimName
+            TYPE: REQUEST_CLAIM,
+            "claimDefSeqNo": claim.claimDefSeqNo
+
         }
-        signature = self.activeWallet.signMsg(op, self.activeWallet.defaultId)
+        signature = self.activeWallet.signMsg(op, link.verkey)
         op['signature'] = signature
         ip, port = link.remoteEndPoint.split(":")
         self.sendToEndpoint(op, (ip, int(port)))
@@ -1250,17 +1251,21 @@ class SovrinCli(PlenumCli):
                            format(claimName, matchingLink.name))
                 cd = self.activeWallet.getClaimDefByKey(
                     availableClaim.claimDefKey)
+
+
                 if not cd:
                     if self._isConnectedToAnyEnv():
                         self.print("Getting Claim Definition from Sovrin...")
-                        # TODO: Get claim def from sovrin and store it in wallet
+                        key = availableClaim.claimDefKey
+                        self.activeWallet.requestIssuerKey(
+                            (key.author, key.claimDefSeqNo), matchingLink.verkey)
                     else:
                         self._printNotConnectedEnvMessage()
-                # TODO: get keys from sovrin
-                # TODO: request claim
+
                 self.print("Requesting claim {} from {}...".format(
                     claimName, matchingLink.name))
-                self._sendReqClaimToTargetEndpoint(matchingLink, claimName)
+                self._sendReqClaimToTargetEndpoint(matchingLink,
+                                                   availableClaim.claimDefKey)
             else:
                 self.print("No matching claim(s) found "
                            "in any links in current keyring")

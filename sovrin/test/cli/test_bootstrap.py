@@ -16,6 +16,7 @@ from sovrin.test.cli.helper import getFileLines
 # FABER_ENDPOINT_PORT = 1212
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from anoncreds.protocol.types import AttribDef, AttribType
 
 
 def prompt_is(prompt):
@@ -347,6 +348,7 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                  faberAddedByPhil,
                                  faberLinkAdded, faberIsRunning,
+                                faberAddedClaimDefAndIssuerKeys,
                                  faberInviteSyncedWithEndpoint):
     be(aliceCli)
     do("accept invitation from {inviter}",
@@ -410,9 +412,9 @@ def testReqClaimNotExists(be, do, faberMap, showClaimNotFoundOut,
 
 
 def testReqTranscriptClaim(be, do, transcriptClaimMap, reqClaimOut,
-                                   aliceAcceptedFaberInvitation,
+                           faberAddedClaimDefAndIssuerKeys,
                            faberIsRunning,
-                           faberAddedClaimDefAndIssuerKeys    # Adding this fails the test, since the wallet's _credDefReply is not called
+                           aliceAcceptedFaberInvitation
                            ):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
@@ -440,7 +442,9 @@ def testReqClaimResponseWithInvalidSig(faberCli, faberIsRunning,
 @pytest.fixture(scope="module")
 def aliceRequestedFaberTranscriptClaim(be, do, faberCli, faberAddedByPhil,
                                        faberLinkAdded,
-                                       aliceAcceptedFaberInvitation):
+                                        faberAddedClaimDefAndIssuerKeys,
+                                       aliceAcceptedFaberInvitation,
+                                       faberAddedAttributesForAlice):
     aliceCli = aliceAcceptedFaberInvitation
     be(aliceCli)
     do("request claim Transcript",      within=4,
@@ -701,3 +705,23 @@ def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
     return ipk.seqNo
+
+
+@pytest.fixture(scope="module")
+def faberAddedAttributesForAlice(aliceAcceptedFaberInvitation, aliceCli, faberMap, faberIsRunning):
+    faber, faberWallet = faberIsRunning
+    aliceIdrForFaber = aliceCli.activeWallet.getLinkInvitationByTarget(faberMap['target']).verkey
+    attrs = {
+        "student_name": "Alice Garcia",
+        "ssn": "123456789",
+        "degree": "Bachelor of Science, Marketing",
+        "year": "2015",
+        "status": "graduated"
+    }
+    attribTypes = []
+    for name in attrs:
+        attribTypes.append(AttribType(name, encode=True))
+    attribsDef = AttribDef("Transcript", attribTypes)
+    attribs = attribsDef.attribs(**attrs)
+    faber.attributeRepo.addAttributes(aliceIdrForFaber, attribs)
+

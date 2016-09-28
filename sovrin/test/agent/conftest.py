@@ -78,7 +78,9 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
                      basedirpath=tdirWithPoolTxns,
                      port=faberAgentPort,
                      startRunning=False)
-
+    faberWallet.pendSyncRequests()
+    prepared = faberWallet.preparePending()
+    faber.client.submitReqs(*prepared)
     emptyLooper.add(faber)
     return faber, faberWallet
 
@@ -92,6 +94,9 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
                      basedirpath=tdirWithPoolTxns,
                      port=acmeAgentPort,
                      startRunning=False)
+    acmeWallet.pendSyncRequests()
+    prepared = acmeWallet.preparePending()
+    acme.client.submitReqs(*prepared)
     emptyLooper.add(acme)
     return acme, acmeWallet
 

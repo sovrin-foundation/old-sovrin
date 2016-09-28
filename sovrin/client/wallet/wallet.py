@@ -101,12 +101,10 @@ class Wallet(PWallet, Sponsoring):
         return source == target or source.lower() in target.lower()
 
     def addClaimDef(self, cd: ClaimDef):
-        self._claimDefs[
-            (cd.key.name, cd.key.version, cd.key.claimDefSeqNo)] = cd
+        self._claimDefs[cd.key.key] = cd
 
     def getClaimDefByKey(self, key: ClaimDefKey):
-        return self._claimDefs.get(
-            (key.name, key.version, key.claimDefSeqNo))
+        return self._claimDefs.get(key.key)
 
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
@@ -472,3 +470,17 @@ class Wallet(PWallet, Sponsoring):
 
     def getIssuerPublicKey(self, key):
         return self._issuerPks.get(key)
+
+    def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo):
+        # Assuming only one identifier per claimDefSeqNo
+        for k, v in self._issuerPks.items():
+            if k[1] == claimDefSeqNo:
+                return v
+
+    def getAvailableClaimList(self):
+        resp = []
+        for k, v in self._credDefs.items():
+            ipk = self.getIssuerPublicKeyForClaimDef(v.seqNo)
+            resp.append((v, ipk))
+        return resp
+
