@@ -1010,11 +1010,11 @@ class SovrinCli(PlenumCli):
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
         self.print("Starting communication with {}".format(link.name))
         op = {
-            f.IDENTIFIER.nm: self.activeWallet.defaultId,
+            f.IDENTIFIER.nm: link.verkey,
             NONCE: link.nonce,
             TYPE: ACCEPT_INVITE
         }
-        signature = self.activeWallet.signMsg(op, self.activeWallet.defaultId)
+        signature = self.activeWallet.signMsg(op, link.verkey)
         op['signature'] = signature
         ip, port = link.remoteEndPoint.split(":")
         self.sendToEndpoint(op, (ip, int(port)))

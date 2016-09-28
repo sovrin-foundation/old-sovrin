@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from typing import Dict
 from typing import Tuple
@@ -16,7 +15,7 @@ from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
     TARGET_NYM, TXN_TYPE, NYM
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, isHex, cryptonymToHex
+from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIMS, \
     ACCEPT_INVITE, CLAIM_NAME_FIELD
@@ -32,6 +31,9 @@ CLAIMS_FIELD = 'claims'
 REQ_MSG = "REQ_MSG"
 
 ERROR = "ERROR"
+
+
+logger = getlogger()
 
 
 class Agent(Motor, AgentNet):
@@ -146,6 +148,7 @@ class WalletedAgent(Agent):
                  port: int=None):
         super().__init__(name, basedirpath, client, port)
         self._wallet = wallet or Wallet(name)
+        # self.client.registerObserver(self._wallet.handleIncomingReply)
         self._wallet.pendSyncRequests()
         prepared = self._wallet.preparePending()
         self.client.submitReqs(*prepared)
@@ -181,7 +184,7 @@ class WalletedAgent(Agent):
         return invalidSigResp
 
     def logAndSendErrorResp(self, to, reqBody, respMsg, logMsg):
-        logging.warning(logMsg)
+        logger.warning(logMsg)
         self.signAndSendToCaller(resp=self.getErrorResponse(reqBody, respMsg),
                                  identifier=self.wallet.defaultId, frm=to)
 
@@ -389,14 +392,12 @@ class WalletedAgent(Agent):
             }
 
             def sendClaimList(reply, error):
-                print("sent to sovrin {}".format(identifier))
+                logger.debug("sent to sovrin {}".format(identifier))
                 resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
-            print("sending to sovrin {}".format(identifier))
+            logger.debug("sending to sovrin {}".format(identifier))
             self._sendToSovrinAndDo(op, clbk=sendClaimList)
-            # TODO: Temp
-            sendClaimList(None, None)
 
         # TODO: If I have the below exception thrown, somehow the
         # error msg which is sent in verifyAndGetLink is not being received
@@ -407,5 +408,5 @@ class WalletedAgent(Agent):
     def _sendToSovrinAndDo(self, op, clbk=None, *args):
         req = self.wallet.signOp(op, identifier=self.wallet.defaultId)
         self.client.submitReqs(req)
-        # loop = asyncio.get_event_loop()
-        # ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
+        loop = asyncio.get_event_loop()
+        ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
