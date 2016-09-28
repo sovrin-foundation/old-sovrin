@@ -33,6 +33,8 @@ class t:
 
     LINK_ITEM_PREFIX = '\n\t'
 
+    NOT_AVAILABLE = "Not Available"
+
 
 # TODO: Rename to Link
 class Link:
@@ -182,6 +184,9 @@ class Link:
         fixed.update(optional)
         return fixed
 
+    def isRemoteEndpointAvailable(self):
+        return self.remoteEndPoint and self.remoteEndPoint != t.NOT_AVAILABLE
+
     @staticmethod
     def prettyDate(time=False):
         """
@@ -239,7 +244,7 @@ class Link:
 
         if linkLastSynced != t.LINK_NOT_SYNCHRONIZED and \
                         targetEndPoint == t.UNKNOWN_WAITING_FOR_SYNC:
-            targetEndPoint = "Not Available"
+            targetEndPoint = t.NOT_AVAILABLE
 
         if self.isAccepted():
             trustAnchorStatus = '(confirmed)'

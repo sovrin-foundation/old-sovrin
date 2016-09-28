@@ -163,8 +163,7 @@ def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
 
 @pytest.fixture(scope="module")
 def acceptUnSyncedWithoutEndpointWhenConnected(commonAcceptInvitationMsgs):
-    return commonAcceptInvitationMsgs + \
-            ["Link {inviter} synced"]
+    return commonAcceptInvitationMsgs
 
 
 @pytest.fixture(scope="module")
@@ -322,9 +321,8 @@ def syncLinkOutWithEndpoint(syncLinkOutStartsWith, endpointReceived,
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith, endpointNotAvailable,
-                               syncLinkOutEndsWith):
-    return syncLinkOutStartsWith + endpointNotAvailable + syncLinkOutEndsWith
+def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith, endpointNotAvailable):
+    return syncLinkOutStartsWith + endpointNotAvailable
 
 
 @pytest.fixture(scope="module")
@@ -336,9 +334,7 @@ def showSyncedLinkWithEndpointOut(showLinkOut):
 
 @pytest.fixture(scope="module")
 def showSyncedLinkWithoutEndpointOut(showLinkOut):
-    return showLinkOut + \
-        ["Last synced: "] + \
-        ["Target endpoint: Not Available"]
+    return showLinkOut + ["Target endpoint: Not Available"]
 
 
 @pytest.fixture(scope="module")

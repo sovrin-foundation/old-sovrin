@@ -266,7 +266,7 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
     be(aliceCLI)
 
     do('show link {inviter}',           expect=showSyncedLinkWithoutEndpointOut,
-                                        not_expect=linkNotYetSynced,
+                                        #not_expect=linkNotYetSynced,
                                         mapper=faberMap)
 
 
