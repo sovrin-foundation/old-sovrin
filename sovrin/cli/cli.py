@@ -235,6 +235,8 @@ class SovrinCli(PlenumCli):
 
     # TODO: Rename as sendToAgent
     def sendToEndpoint(self, msg: Any, endpoint: Tuple):
+        if not self.agent:
+            return
         # TODO: Check if already connected
         self.agent.connectTo(endpoint)
 
@@ -281,14 +283,13 @@ class SovrinCli(PlenumCli):
         self.printUsage(msgs)
 
     def newClient(self, clientName,
-                  # seed=None,
-                  # identifier=None,
-                  # signer=None,
-                  # wallet=None,
                   config=None):
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
-            return
+            # TODO: Return a dummy object that catches all attributes and
+            # method calls and does nothing. Alo the dummy object should
+            # initialise to null
+            return DummyClient()
 
         # DEPR
         # return super().newClient(clientName, seed=seed, identifier=identifier,
@@ -303,6 +304,9 @@ class SovrinCli(PlenumCli):
 
     @property
     def agent(self):
+        if not self.activeEnv:
+            self._printNotConnectedEnvMessage()
+            return None
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
             self._agent = WalletedAgent(name=randomString(6),
@@ -1473,7 +1477,10 @@ class SovrinCli(PlenumCli):
         else:
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 
-    def ensureAgentConnected(self, otherAgentHa, clbk: Callable=None, *args, **kwargs):
+    def ensureAgentConnected(self, otherAgentHa, clbk: Callable=None,
+                             *args, **kwargs):
+        if not self.agent:
+            return
         if self.agent.endpoint.isConnectedTo(ha=otherAgentHa):
             # TODO: Remove this print
             self.logger.debug("Agent {} connected to {}".
@@ -1582,3 +1589,12 @@ class SovrinCli(PlenumCli):
 
     def notify(self, notifier, msg):
         self.print(msg)
+
+
+class DummyClient:
+    def submitReqs(self, *reqs):
+        pass
+
+    @property
+    def hasSufficientConnections(self):
+        pass
