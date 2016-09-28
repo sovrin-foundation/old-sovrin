@@ -145,9 +145,9 @@ def getGenesisTxns():
         {TXN_TYPE: NYM, f.IDENTIFIER.nm: 'xRuFk+Z8yWFVRvf1Z4JWe1f82Ew3nmr73ghN2oS9PVI=', TARGET_NYM: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=', ROLE: SPONSOR, TXN_ID: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4c'},
         {TXN_TYPE: NYM, TARGET_NYM: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw=', TXN_ID: '50c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ROLE: SPONSOR, f.IDENTIFIER.nm: 'xRuFk+Z8yWFVRvf1Z4JWe1f82Ew3nmr73ghN2oS9PVI='},
         {TXN_TYPE: NYM, TARGET_NYM: 'adityastaging', TXN_ID: '77c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='},
-        {TXN_TYPE: NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='}
+        {TXN_TYPE: NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='},
+        {ALIAS: "Steward8", TARGET_NYM: "V+jbY0Fniz7xFzYIrRYeVQZeDeGHrlB3fwCPEwvicqI=", TXN_ID: "4770beb7e45bf623bd9987af4bd6d6d8eb8b68a4d00fa2a4c6b6f3f0c1c036f8", TXN_TYPE: NYM, ROLE: STEWARD},
     ]
-
 
 def getGenesisTxnsForLocal():
     return [{ALIAS: "Steward1",
