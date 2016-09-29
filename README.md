@@ -15,8 +15,8 @@ ReqReplyStore = "file"
 
 
 ### Initializing Keep
-To run a node you need to generate its keys. The keys are stored in on disk in files in a location called `keep`. 
-The  following generates keys for a noded named `Alpha` in the keep. 
+To run a node you need to generate its keys. The keys are stored on a disk in files in the location called `keep`. 
+The  following generates keys for a node named `Alpha` in the keep. 
 The keep for node `Alpha` is located at `~/.sovrin/Alpha`. 
 ```
 init_sovrin_raet_keep --name Alpha [--seed 111111111111111111111111111Alpha] [--force]
@@ -67,7 +67,7 @@ The `nodes` argument specifies the number of nodes and the `clients` argument sp
 The `nodeNum` argument specifies the node number for which you intend to create the private keys locally. 
 Since you run on the machine where you run this command. Since you are running all 4 nodes on same machine you create private keys for all nodes locally.
  
-Now lets say you want to 4 nodes on 4 different machines as
+Now lets say you want to run 4 nodes on 4 different machines as
 1. Node1 running on 191.177.76.26
 2. Node2 running on 22.185.194.102
 3. Node3 running on 247.81.153.79
