@@ -380,8 +380,6 @@ class Wallet(PWallet, Sponsoring):
         self._pending.appendleft((req, key))
 
     def addLinkInvitation(self, linkInvitation):
-        # self._linkInvitations[linkInvitation.name] = linkInvitation.\
-        #     getDictToBeStored()
         self._linkInvitations[linkInvitation.name] = linkInvitation
 
     def getLinkInvitationByTarget(self, target: str) -> Link:
@@ -396,21 +394,8 @@ class Wallet(PWallet, Sponsoring):
         allMatched = []
         for k, v in self._linkInvitations.items():
             if name == k or name.lower() in k.lower():
-                # liValues = v
-                # li = LinkInvitation.getFromDict(k, v)
                 allMatched.append(v)
         return allMatched
-
-    # TODO: Is `requestAttribute` a better name?
-    # def makeGetAttributeRequest(self, attrName: str, origin=None, dest=None):
-    #     # # TODO: How do i move this to Attribute
-    #     op = {
-    #         TARGET_NYM: dest,
-    #         TXN_TYPE: GET_ATTR,
-    #         RAW: attrName
-    #     }
-    #     req = self.signOp(op)
-    #     return self.prepReq(req)
 
     def requestAttribute(self, attrib: Attribute, sender):
         """

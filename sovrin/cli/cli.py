@@ -446,7 +446,6 @@ class SovrinCli(PlenumCli):
             self.print("Reference {} not found".format(reference),
                        Token.BoldOrange)
 
-
     def _getIssuerKeyAndExecuteClbk(self, origin, reference, clbk, *args):
         req = self.activeWallet.requestIssuerKey((origin, reference),
                                                  self.activeWallet.defaultId)
@@ -691,7 +690,6 @@ class SovrinCli(PlenumCli):
                                             reqs[0].reqId, self.activeClient,
                                             published)
             return True
-
 
     # will get invoked when prover cli enters request credential command
     def _reqCredAction(self, matchedVars):

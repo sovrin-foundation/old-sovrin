@@ -52,26 +52,9 @@ class Client(PlenumClient):
                          ha,
                          basedirpath,
                          config)
-        # self.storage = self.getStorage(basedirpath)
-        # self.lastReqId = self.storage.lastReqId
-        # TODO: Should I store values of attributes as non encrypted
-        # Dictionary of attribute requests
-        # Key is request id and values are stored as tuple of 5 elements
-        # identifier, toNym, secretKey, attribute name, txnId
-        # self.attributeReqs = self.storage.loadAttributes()
-        # type: Dict[int, List[Tuple[str, str, str, str, str]]]
         self.graphStore = self.getGraphStore()
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
-        # DEPR
-        # Issuer.__init__(self, self.defaultIdentifier)
-        # Prover.__init__(self, self.defaultIdentifier)
-        # Verifier.__init__(self, self.defaultIdentifier)
-        dataDirs = ["data/{}s".format(r) for r in roles]
-
-        # To make anonymous credentials optional, we may have a subclass
-        #  of Sovrin Client instead that mixes in Issuer, Prover and
-        #  Verifier.
         self.hasAnonCreds = bool(peerHA)
         if self.hasAnonCreds:
             self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)
@@ -115,52 +98,6 @@ class Client(PlenumClient):
 
     def getTxnLogStore(self):
         return ClientTxnLog(self.name, self.basedirpath)
-
-    #DEPR
-    def submit_DEPRECATED(self, *operations: Mapping, identifier: str=None) -> \
-            List[Request]:
-        origin = identifier or self.defaultIdentifier
-        for op in operations:
-            if op[TXN_TYPE] == ATTRIB:
-                if not (RAW in op or ENC in op or HASH in op):
-                    error("An operation must have one of these keys: {} "
-                          "or {} {}".format(RAW, ENC, HASH))
-
-                # TODO: Consider encryption type too.
-                if ENC in op:
-                    anm = list(json.loads(op[ENC]).keys())[0]
-                    encVal, secretKey = getSymmetricallyEncryptedVal(op[ENC])
-                    op[ENC] = encVal
-                    self.wallet.addAttribute(name=anm, val=encVal,
-                                             origin=origin,
-                                             dest=op.get(TARGET_NYM),
-                                             encKey=secretKey)
-                # TODO: Consider hash type too.
-                elif HASH in op:
-                    data = json.loads(op[HASH])
-                    anm = list(data.keys())[0]
-                    aval = list(data.values())[0]
-                    hashed = sha256(aval.encode()).hexdigest()
-                    op[HASH] = {anm: hashed}
-                    self.wallet.addAttribute(name=anm, val=aval,
-                                             origin=origin,
-                                             dest=op.get(TARGET_NYM),
-                                             hashed=True)
-                else:
-                    data = json.loads(op[RAW])
-                    anm = list(data.keys())[0]
-                    aval = list(data.values())[0]
-                    self.wallet.addAttribute(name=anm, val=aval,
-                                             origin=origin,
-                                             dest=op.get(TARGET_NYM))
-            if op[TXN_TYPE] == CRED_DEF:
-                data = op.get(DATA)
-                keys = data[KEYS]
-                self.wallet.addCredDef(data[NAME], data[VERSION],
-                                       origin, data[TYPE],
-                                       data[IP], data[PORT], keys)
-        requests = super().submit(*operations, identifier=identifier)
-        return requests
 
     def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
@@ -276,32 +213,6 @@ class Client(PlenumClient):
                     txn[VERSION] = txn[DATA][VERSION]
             return txns
 
-    # TODO: Just for now. Remove it later
-    # DEPR
-    def doAttrDisclose_DEPRECATED(self, origin, target, txnId, key):
-        box = libnacl.public.Box(b64decode(origin), b64decode(target))
-
-        data = json.dumps({TXN_ID: txnId, SKEY: key})
-        nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
-
-        op = {
-            TARGET_NYM: target,
-            TXN_TYPE: DISCLO,
-            NONCE: base58.b58encode(nonce),
-            DATA: base58.b58encode(boxedMsg)
-        }
-        self.submit(op, identifier=origin)
-
-    # DEPR
-    def doGetAttributeTxn_DEPRECATED(self, identifier, attrName):
-        # Getting public attribute only
-        op = {
-            TARGET_NYM: identifier,
-            TXN_TYPE: GET_ATTR,
-            RAW: attrName
-        }
-        return self.submit(op, identifier=identifier)
-
     @staticmethod
     def _getDecryptedData(encData, key):
         data = bytes(bytearray.fromhex(encData))
@@ -309,43 +220,6 @@ class Client(PlenumClient):
         box = libnacl.secret.SecretBox(rawKey)
         decData = box.decrypt(data).decode()
         return json.loads(decData)
-
-    # DEPR
-    def getAttributeForNym_DEPRECATED(self, nym, attrName, identifier=None):
-        walletAttribute = self.wallet.getAttribute(attrName, nym)
-        if walletAttribute:
-            if TARGET_NYM in walletAttribute and \
-                            walletAttribute[TARGET_NYM] == nym:
-                if RAW in walletAttribute:
-                    if walletAttribute[NAME] == attrName:
-                        return {walletAttribute[NAME]: walletAttribute[RAW]}
-                elif ENC in walletAttribute:
-                    attr = self._getDecryptedData(walletAttribute[ENC],
-                                           walletAttribute[SKEY])
-                    if attrName in attr:
-                        return attr
-                elif HASH in walletAttribute:
-                    if walletAttribute[NAME] == attrName:
-                        return {walletAttribute[NAME]: walletAttribute[HASH]}
-
-    # DEPR
-    def doGetNym_DEPRECATED(self, nym, identifier=None):
-        identifier = identifier if identifier else self.defaultIdentifier
-        op = {
-            TARGET_NYM: nym,
-            TXN_TYPE: GET_NYM,
-        }
-        self.submit(op, identifier=identifier)
-
-    # DEPR
-    def doGetTxn_DEPRECATED(self, txnId, identifier=None):
-        identifier = identifier if identifier else self.defaultIdentifier
-        op = {
-            TARGET_NYM: identifier,
-            TXN_TYPE: GET_TXN,
-            DATA: txnId
-        }
-        self.submit(op, identifier=identifier)
 
     def hasNym(self, nym):
         if self.graphStore:
@@ -356,27 +230,8 @@ class Client(PlenumClient):
                     return True
             return False
 
-    # DEPR
-    # def requestPendingTxns(self):
-    #     requests = []
-    #     for identifier in self.signers:
-    #         lastTxn = self.reqRepStore.getLastTxnForIdentifier(identifier)
-    #         op = {
-    #             TARGET_NYM: identifier,
-    #             TXN_TYPE: GET_TXNS,
-    #         }
-    #         if lastTxn:
-    #             op[DATA] = lastTxn
-    #         requests.append(self.submit(op, identifier=identifier))
-    #     return requests
-
     def _statusChanged(self, old, new):
         super()._statusChanged(old, new)
-        # DEPR
-        # if new == Status.started:
-        #     if not self.requestedPendingTxns:
-        #         self.requestPendingTxns()
-        #         self.requestedPendingTxns = True
 
     def start(self, loop):
         super().start(loop)
