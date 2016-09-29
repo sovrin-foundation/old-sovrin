@@ -317,7 +317,7 @@ class WalletedAgent(Agent):
                 self.notifyObservers("    Signature accepted.")
                 self.notifyObservers("    Trust established.")
                 # Not sure how to know if the responder is a trust anchor or not
-                self.notifyObservers("Identifier created in Sovrin.")
+                self.notifyObservers("    Identifier created in Sovrin.")
                 availableClaims = []
                 for cl in body[CLAIMS_LIST_FIELD]:
                     name, version, claimDefSeqNo = cl[NAME], cl[VERSION], \
@@ -500,10 +500,10 @@ class WalletedAgent(Agent):
             logger.debug("sending to sovrin {}".format(identifier))
             # Assuming there was only one pending request
             if alreadyAdded:
-                sendClaimList()
                 self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
                                           "Already accepted",
                                           link.verkey, frm)
+                sendClaimList()
             else:
                 reqs = self.wallet.preparePending()
                 self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
@@ -516,8 +516,7 @@ class WalletedAgent(Agent):
 
     def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
-        loop = asyncio.get_event_loop()
-        ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
+        ensureReqCompleted(self.loop, req.reqId, self.client, clbk, *args)
 
     def _getClaimsAttrsFor(self, nonce, attrNames):
         res = {}

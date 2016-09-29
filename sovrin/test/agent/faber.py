@@ -71,8 +71,8 @@ class FaberAgent(WalletedAgent):
             }
         }
 
-    def getClaimList(self):
-        return [{
+    def getClaimList(self, claimNames=None):
+        allClaims = [{
             "name": "Transcript",
             "version": "1.2",
             "claimDefSeqNo": "<claimDefSeqNo>",
@@ -84,6 +84,7 @@ class FaberAgent(WalletedAgent):
                 "status": "graduated"
             }
         }]
+        return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
 
     def getAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()
