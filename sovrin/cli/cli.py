@@ -233,13 +233,11 @@ class SovrinCli(PlenumCli):
                 'request claim {}'.format(claimName)]
         self.printUsage(msgs)
 
-    # TODO: Rename as sendToAgent
-    def sendToEndpoint(self, msg: Any, endpoint: Tuple):
+    def sendToAgent(self, msg: Any, endpoint: Tuple):
         if not self.agent:
             return
-        # TODO: Check if already connected
-        self.agent.connectTo(endpoint)
 
+        self.agent.connectTo(endpoint)
         # TODO: Refactor this
         def _send():
             self.agent.sendMessage(msg, destHa=endpoint)
@@ -251,8 +249,6 @@ class SovrinCli(PlenumCli):
             _send()
 
     def _buildWalletClass(self, nm):
-        # DEPR
-        # storage = WalletStorageFile.fromName(nm, self.basedirpath)
         return Wallet(nm)
 
     @property
@@ -261,10 +257,6 @@ class SovrinCli(PlenumCli):
 
     def reset(self):
         self._genesisTransactions = []
-
-    # @property
-    # def activeWallet(self) -> Wallet:
-    #     return super().activeWallet()
 
     def newNode(self, nodeName: str):
         config = getConfig()
@@ -1029,7 +1021,7 @@ class SovrinCli(PlenumCli):
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
         ip, port = link.remoteEndPoint.split(":")
-        self.sendToEndpoint(op, (ip, int(port)))
+        self.sendToAgent(op, (ip, int(port)))
 
     def _sendReqClaimToTargetEndpoint(self, link: Link, claim):
         op = {
