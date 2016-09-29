@@ -1,13 +1,20 @@
 import json
 import traceback
+import uuid
 
 import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
+from plenum.common.txn import NAME, TYPE
+from plenum.common.txn import VERSION
 from plenum.test.eventually import eventually
 from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
+
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import SPONSOR, ENDPOINT
+from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
 from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest
 
 plenum.common.util.loggingConfigured = False
@@ -19,9 +26,9 @@ from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
-from sovrin.test.agent.conftest import faberIsRunning, emptyLooper, \
-    faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, acmeIsRunning, \
-    faberAgentPort, acmeAgentPort
+from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
+    emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
+    acmeIsRunning, faberAgentPort, acmeAgentPort
 from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
@@ -635,3 +642,60 @@ def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
     looper.run(client.ensureConnectedToNodes())
     makePendingTxnsRequest(client, wallet)
     return client, wallet
+
+
+@pytest.fixture(scope="module")
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
+                   faberWallet, faberAddedByPhil):
+    faber, faberWallet = runningFaber(emptyLooper, tdirWithPoolTxns,
+                                      faberAgentPort, faberWallet)
+    cdSeqNo, iskSeqNo = faberAddedClaimDefAndIssuerKeys(emptyLooper, faber, faberWallet)
+    faber._seqNos = {
+        ("Transcript", "1.2"): (cdSeqNo, iskSeqNo)
+    }
+    faber.addLinksToWallet()
+    return faber, faberWallet
+
+
+def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
+    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
+    sid = faberWallet.addCredDefSk(str(csk))
+    # Need to modify the claim definition. We do not support types yet
+    claimDef = {
+            "name": "Transcript",
+            "version": "1.2",
+            "type": "CL",
+            "attr_names": ["student_name", "ssn", "degree", "year", "status"]
+    }
+    credDef = CredDef(seqNo=None,
+                      attrNames=claimDef[ATTR_NAMES],
+                      name=claimDef[NAME],
+                      version=claimDef[VERSION],
+                      origin=faberWallet.defaultId,
+                      typ=claimDef[TYPE],
+                      secretKey=sid)
+    faberWallet.addCredDef(credDef)
+    reqs = faberWallet.preparePending()
+    faber.client.submitReqs(*reqs)
+
+    def chk():
+        assert credDef.seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+
+    isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+    faberWallet.addIssuerSecretKey(isk)
+    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                       claimDefSeqNo=credDef.seqNo,
+                       secretKeyUid=isk.uid, origin=faberWallet.defaultId)
+    faberWallet.addIssuerPublicKey(ipk)
+    reqs = faberWallet.preparePending()
+    faber.client.submitReqs(*reqs)
+
+    key = (faberWallet.defaultId, credDef.seqNo)
+
+    def chk():
+        assert faberWallet.getIssuerPublicKey(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+    return credDef.seqNo, ipk.seqNo

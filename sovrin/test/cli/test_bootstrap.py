@@ -477,7 +477,6 @@ def testShowFaberClaimPostReqClaim(be, do, aliceCli,
                                    aliceRequestedFaberTranscriptClaim,
                                    transcriptClaimValueMap, rcvdClaimOut):
     be(aliceCli)
-
     do("show claim {name}",
                                         expect=rcvdClaimOut,
                                         mapper=transcriptClaimValueMap)

@@ -25,7 +25,8 @@ from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM
+from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, \
+    CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttrRepo
@@ -36,6 +37,7 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.client.wallet.claim import ReceivedClaim
 from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
@@ -104,7 +106,6 @@ class SovrinCli(PlenumCli):
         self.verifier = Verifier(randomString(), MemoryCredDefStore(),
                                  MemoryIssuerKeyStore())
         _, port = self.nextAvailableClientAddr()
-        # self.endpoint = Endpoint(port, self.handleEndpointMsg)
         self.curContext = (None, None)  # Current Link, Current Claim Req
         self._agent = None
 
@@ -325,7 +326,6 @@ class SovrinCli(PlenumCli):
             r = super()._clientCommand(matchedVars)
             if not r:
                 client_name = matchedVars.get('client_name')
-                client = self.clients[client_name]
                 if client_name not in self.clients:
                     self.print("{} cannot add a new user".
                                format(client_name), Token.BoldOrange)
@@ -417,8 +417,6 @@ class SovrinCli(PlenumCli):
         """
         name = matchedVars.get('name')
         version = matchedVars.get('version')
-        # ip = matchedVars.get('ip')
-        # port = matchedVars.get('port')
         keys = matchedVars.get('keys')
         attrNames = [s.strip() for s in keys.split(",")]
         # TODO: Directly using anoncreds lib, should use plugin
@@ -612,6 +610,8 @@ class SovrinCli(PlenumCli):
 
     def _sendNymAction(self, matchedVars):
         if matchedVars.get('send_nym') == 'send NYM':
+            if not self.canMakeSovrinRequest:
+                return True
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
             self._addNym(nym, role)
@@ -619,12 +619,16 @@ class SovrinCli(PlenumCli):
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
+            if not self.hasAnyKey:
+                return True
             destId = matchedVars.get('dest_id')
             self._getNym(destId)
             return True
 
     def _sendAttribAction(self, matchedVars):
         if matchedVars.get('send_attrib') == 'send ATTRIB':
+            if not self.canMakeSovrinRequest:
+                return True
             nym = matchedVars.get('dest_id')
             raw = matchedVars.get('raw') \
                 if matchedVars.get('raw') else None
@@ -637,6 +641,8 @@ class SovrinCli(PlenumCli):
 
     def _sendCredDefAction(self, matchedVars):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
+            if not self.canMakeSovrinRequest:
+                return True
             credDef = self._buildCredDef(matchedVars)
             self.activeWallet.addCredDef(credDef)
             reqs = self.activeWallet.preparePending()
@@ -656,6 +662,8 @@ class SovrinCli(PlenumCli):
 
     def _sendIssuerKeyAction(self, matchedVars):
         if matchedVars.get('send_isr_key') == 'send ISSUER_KEY':
+            if not self.canMakeSovrinRequest:
+                return True
             reference = int(matchedVars.get(REFERENCE))
             ipk = self._buildIssuerKey(self.activeWallet.defaultId,
                                              reference)
@@ -679,6 +687,8 @@ class SovrinCli(PlenumCli):
     # will get invoked when prover cli enters request credential command
     def _reqCredAction(self, matchedVars):
         if matchedVars.get('req_cred') == 'request credential':
+            if not self.canMakeSovrinRequest:
+                return True
             dest = matchedVars.get('issuer_id')
             credName = matchedVars.get('cred_name')
             proverName = matchedVars.get('prover_id')
@@ -1018,12 +1028,12 @@ class SovrinCli(PlenumCli):
         op = {
             f.IDENTIFIER.nm: link.verkey,
             NONCE: link.nonce,
-            TYPE: REQUEST_CLAIM,
+            TYPE: REQUEST_CLAIM_ATTRS,
             "claimDefSeqNo": claim.claimDefSeqNo
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
         op['signature'] = signature
-        ip, port = link.remoteEndPoint.split(":")
+        # ip, port = link.remoteEndPoint.split(":")
         self._sendReqToTargetEndpoint(op, link)
 
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
@@ -1060,38 +1070,14 @@ class SovrinCli(PlenumCli):
                         self.print("Cannot sync because not connected")
                         self._printNotConnectedEnvMessage()
 
-                # self.print("Invitation not yet verified.")
-                # if not li.isRemoteEndpointAvailable():
-                #     self.print("Link not yet synchronized. "
-                #            "Attempting to sync...")
-                # else:
-                #
-                # if self._isConnectedToAnyEnv():
-                #     self._getTargetEndpoint(li, self._acceptLinkPostSync)
-                # else:
-                #     self.print("Invitation acceptance aborted.")
-                #     self.print("Cannot sync because not connected")
-                #     self._printNotConnectedEnvMessage()
-                #     return True
-                # else:
-                #     self._sendAcceptInviteToTargetEndpoint(li)
-
     def _syncLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
         if li:
-            # if li.isRemoteEndpointAvailable():
-            #     self._pingToEndpoint(li.remoteEndPoint)
-            #     self._printShowAndAcceptLinkUsage(li.name)
-            # else:
             self._getTargetEndpoint(li, self._printUsagePostSync)
 
     @staticmethod
     def removeDoubleQuotes(name):
         return name.replace('"', '')
-
-    # def _printConnectUsage(self):
-    #     msgs = ['connect (test | live)']
-    #     self.printUsage(msgs)
 
     def _printSyncAndAcceptUsage(self, linkName):
         msgs = ['sync "{}"'.format(linkName),
@@ -1280,7 +1266,6 @@ class SovrinCli(PlenumCli):
                            format(claimName, matchingLink.name))
                 cd = self.activeWallet.getClaimDefByKey(
                     availableClaim.claimDefKey)
-
 
                 if not cd:
                     if self._isConnectedToAnyEnv():
@@ -1524,6 +1509,9 @@ class SovrinCli(PlenumCli):
         ensureReqCompleted(self.looper.loop, reqId, client, clbk, *args)
 
     def addAlias(self, reply, err, client, alias, signer):
+        if not self.canMakeSovrinRequest:
+            return True
+
         txnId = reply[TXN_ID]
         op = {
             TARGET_NYM: alias,
@@ -1612,6 +1600,23 @@ class SovrinCli(PlenumCli):
 
     def notify(self, notifier, msg):
         self.print(msg)
+
+    @property
+    def canMakeSovrinRequest(self):
+        if not self.hasAnyKey:
+            return False
+        if not self.activeEnv:
+            self._printNotConnectedEnvMessage()
+            return False
+        return True
+
+    @property
+    def hasAnyKey(self):
+        if not self.activeWallet.defaultId:
+            self.print("No key present in keyring")
+            self.printUsage("new key")
+            return False
+        return True
 
 
 class DummyClient:

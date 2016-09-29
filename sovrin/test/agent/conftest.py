@@ -77,11 +77,12 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
     faber = runFaber(faberWallet.name, faberWallet,
                      basedirpath=tdirWithPoolTxns,
                      port=faberAgentPort,
-                     startRunning=False)
+                     startRunning=False, bootstrap=False)
+    faber.addKeyIfNotAdded()
     faberWallet.pendSyncRequests()
     prepared = faberWallet.preparePending()
     faber.client.submitReqs(*prepared)
-    faber.bootstrap()
+    # faber.bootstrap()
     emptyLooper.add(faber)
     return faber, faberWallet
 
