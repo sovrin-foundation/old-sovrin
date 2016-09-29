@@ -434,13 +434,18 @@ class SovrinCli(PlenumCli):
     def _buildIssuerKey(self, origin, reference):
         wallet = self.activeWallet
         credDef = wallet.getCredDef(seqNo=reference)
-        csk = CredDefSecretKey.fromStr(wallet.getCredDefSk(credDef.secretKey))
-        isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
-        ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                           claimDefSeqNo=reference,
-                           secretKeyUid=isk.uid, origin=wallet.defaultId)
+        if credDef:
+            csk = CredDefSecretKey.fromStr(wallet.getCredDefSk(credDef.secretKey))
+            isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+            ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                               claimDefSeqNo=reference,
+                               secretKeyUid=isk.uid, origin=wallet.defaultId)
 
-        return ipk
+            return ipk
+        else:
+            self.print("Reference {} not found".format(reference),
+                       Token.BoldOrange)
+
 
     def _getIssuerKeyAndExecuteClbk(self, origin, reference, clbk, *args):
         req = self.activeWallet.requestIssuerKey((origin, reference),
@@ -653,7 +658,8 @@ class SovrinCli(PlenumCli):
                            "to the Sovrin distributed ledger\n", Token.BoldBlue,
                            newline=False)
                 self.print("{}".format(credDef.get(serFmt=SerFmt.base58)))
-                self.print("Sequence number is {}".format(reply[F.seqNo.name]))
+                self.print("Sequence number is {}".format(reply[F.seqNo.name]),
+                           Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         reqs[0].reqId, self.activeClient,
@@ -667,22 +673,25 @@ class SovrinCli(PlenumCli):
             reference = int(matchedVars.get(REFERENCE))
             ipk = self._buildIssuerKey(self.activeWallet.defaultId,
                                              reference)
-            self.activeWallet.addIssuerPublicKey(ipk)
-            reqs = self.activeWallet.preparePending()
-            # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
-            self.activeClient.submitReqs(*reqs)
+            if ipk:
+                self.activeWallet.addIssuerPublicKey(ipk)
+                reqs = self.activeWallet.preparePending()
+                # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
+                self.activeClient.submitReqs(*reqs)
 
-            def published(reply, error):
-                self.print("The following issuer key is published to the"
-                           " Sovrin distributed ledger\n", Token.BoldBlue,
-                           newline=False)
-                self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
-                self.print("Sequence number is {}".format(reply[F.seqNo.name]))
+                def published(reply, error):
+                    self.print("The following issuer key is published to the"
+                               " Sovrin distributed ledger\n", Token.BoldBlue,
+                               newline=False)
+                    self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
+                    self.print("Sequence number is {}".format(reply[F.seqNo.name]),
+                               Token.BoldBlue)
 
-            self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient,
-                                        published)
+                self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                            reqs[0].reqId, self.activeClient,
+                                            published)
             return True
+
 
     # will get invoked when prover cli enters request credential command
     def _reqCredAction(self, matchedVars):
@@ -1413,7 +1422,7 @@ class SovrinCli(PlenumCli):
                     self.envs[envName].domainLedger
                 self.activeEnv = envName
                 self._buildClientIfNotExists(config)
-                self.print("Connecting to {}".format(envName))
+                self.print("Connecting to {}".format(envName), Token.BoldGreen)
                 # Prompt has to be changed, so it show the environment too
                 self._setPrompt(self.currPromptText)
                 self.ensureClientConnected()
