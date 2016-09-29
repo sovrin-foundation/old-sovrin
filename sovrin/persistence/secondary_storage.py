@@ -13,7 +13,7 @@ class SecondaryStorage(PlenumSS):
         txn = self._txnStore.getTxn(identifier, reqId, **kwargs)
         if txn:
             txn.update(self._primaryStorage.merkleInfo(txn.get(F.seqNo.name)))
-            return Reply(txn)
+            return txn
 
     def getReplies(self, *txnIds, seqNo=None):
         txnData = self._txnStore.getResultForTxnIds(*txnIds, seqNo=seqNo)

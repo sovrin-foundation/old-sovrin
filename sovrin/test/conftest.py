@@ -79,7 +79,7 @@ def domainTxnOrderedFields():
 
 @pytest.fixture(scope="module")
 def gennedTdir(genesisTxns, tdir, domainTxnOrderedFields):
-    config = getConfig()
+    config = getConfig(tdir)
     createGenesisTxnFile(genesisTxns, tdir, config.domainTransactionsFile,
                          domainTxnOrderedFields)
     return tdir
@@ -101,8 +101,8 @@ def genned(gennedTdir, nodeSet):
 
 
 @pytest.fixture(scope="module")
-def conf():
-    return getConfig()
+def conf(tdir):
+    return getConfig(tdir)
 
 
 @pytest.fixture(scope="module")

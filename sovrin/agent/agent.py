@@ -6,9 +6,9 @@ from typing import Tuple
 
 import asyncio
 
-from plenum.cli.helper import genHa
 from plenum.common.looper import Looper
 from plenum.common.types import Identifier
+from plenum.test.helper import genHa
 from sovrin.cli.helper import ensureReqCompleted
 
 from sovrin.common.identity import Identity

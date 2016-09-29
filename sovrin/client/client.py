@@ -164,8 +164,8 @@ class Client(PlenumClient):
 
     def handleOneNodeMsg(self, wrappedMsg, excludeFromCli=None) -> None:
         msg, sender = wrappedMsg
-        excludeGetTxns = (msg.get(OP_FIELD_NAME) == REPLY and
-                          msg[f.RESULT.nm].get(TXN_TYPE) == GET_TXNS)
+        # excludeGetTxns = (msg.get(OP_FIELD_NAME) == REPLY and
+        #                   msg[f.RESULT.nm].get(TXN_TYPE) == GET_TXNS)
         excludeReqAcks = msg.get(OP_FIELD_NAME) == REQACK
         excludeReply = msg.get(OP_FIELD_NAME) == REPLY
         excludeFromCli = excludeFromCli or excludeReqAcks or excludeReply
