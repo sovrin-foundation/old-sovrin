@@ -33,7 +33,6 @@ class constant:
     NOT_AVAILABLE = "Not Available"
 
 
-# TODO: Rename to Link
 class Link:
     def __init__(self, name, localIdentifier, trustAnchor=None,
                  remoteIdentifier=None, remoteEndPoint=None, nonce=None,
@@ -46,8 +45,6 @@ class Link:
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
         self.nonce = nonce or getNonce()
-        # TODO: Keep the whole invitation data, including signature
-        # self.signature = signature
         self.claimRequests = claimRequests
         self.invitationData = invitationData
 
@@ -67,8 +64,6 @@ class Link:
             if linkLastSynced else None
         self.linkLastSyncNo = linkLastSyncNo
 
-
-
     def updateReceivedClaims(self, rcvdClaims):
         for rc in rcvdClaims:
             self.receivedClaims[rc.defKey.key] = rc
@@ -77,7 +72,7 @@ class Link:
         for ac in availableClaims:
             self.availableClaims[ac.claimDefKey.key] = ac
 
-
+    @property
     def isRemoteEndpointAvailable(self):
         return self.remoteEndPoint and self.remoteEndPoint != constant.NOT_AVAILABLE
 
@@ -125,10 +120,11 @@ class Link:
         if day_diff < 7:
             return str(day_diff) + " days ago"
 
+    @property
     def isAccepted(self):
         return self.linkStatus and self.linkStatus == constant.LINK_STATUS_ACCEPTED
 
-    def getLinkInfoStr(self) -> str:
+    def __str__(self):
         trustAnchor = self.trustAnchor or ""
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
@@ -140,7 +136,7 @@ class Link:
                         targetEndPoint == constant.UNKNOWN_WAITING_FOR_SYNC:
             targetEndPoint = constant.NOT_AVAILABLE
 
-        if self.isAccepted():
+        if self.isAccepted:
             trustAnchorStatus = '(confirmed)'
             targetVerKey = constant.TARGET_VER_KEY_SAME_AS_ID
             linkStatus = self.linkStatus
@@ -152,7 +148,7 @@ class Link:
         #     verKey = self.signerVerKey
 
         fixedLinkHeading = "Link "
-        if not self.isAccepted():
+        if not self.isAccepted:
             fixedLinkHeading += "(not yet accepted)"
 
         # TODO: Refactor to use string interpolation
