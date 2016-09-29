@@ -122,7 +122,7 @@ def acmeMap(acmeAgentPort):
             "endpointAttr": json.dumps({ENDPOINT: endpoint}),
             "claim-requests" : "Job Application",
             "claim-req-to-show": "Job Application",
-            "claims": "Job-Certificate",
+            "claims": "<claim-name>",
             "rcvd-claim-transcript-provider": "Faber College",
             "rcvd-claim-transcript-name": "Transcript",
             "rcvd-claim-transcript-version": "1.2",
@@ -230,23 +230,29 @@ def jobApplicationClaimReqMap():
 
 
 @pytest.fixture(scope="module")
-def syncedInviteAcceptedOut():
+def syncedInviteAcceptedOutWithoutClaims():
     return [
         "Signature accepted.",
         "Trust established.",
         "Identifier created in Sovrin.",
-        "Available claims: {claims}",
         # "Synchronizing...",
         # "Confirmed identifier written to Sovrin."
     ]
 
+
 @pytest.fixture(scope="module")
-def unsycedAcceptedInviteAcceptedOut(syncedInviteAcceptedOut):
+def syncedInviteAcceptedWithClaimsOut(syncedInviteAcceptedOutWithoutClaims):
+    return syncedInviteAcceptedOutWithoutClaims + [
+        "Available claims: {claims}",
+    ]
+
+@pytest.fixture(scope="module")
+def unsycedAcceptedInviteAcceptedWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
     return [
         "Invitation not yet verified",
         "Attempting to sync...",
         "Synchronizing...",
-    ] + syncedInviteAcceptedOut
+    ] + syncedInviteAcceptedOutWithoutClaims
 
 @pytest.fixture(scope="module")
 def unsycedAlreadyAcceptedInviteAcceptedOut():
@@ -501,9 +507,31 @@ def showLinkWithClaimReqOut():
     return ["Claim Requests: {claim-requests}"]
 
 @pytest.fixture(scope="module")
+def showLinkWithAvailableClaimsOut():
+    return ["Available claims: {claims}"]
+
+
+@pytest.fixture(scope="module")
 def showAcceptedLinkWithClaimReqsOut(showAcceptedLinkOut,
-                                     showLinkWithClaimReqOut):
-    return showAcceptedLinkOut + showLinkWithClaimReqOut
+                                     showLinkWithClaimReqOut,
+                                     showLinkWithAvailableClaimsOut,
+                                     showLinkUsage):
+    return showAcceptedLinkOut + showLinkWithClaimReqOut + \
+           showLinkWithAvailableClaimsOut +\
+           showLinkUsage
+
+@pytest.fixture(scope="module")
+def showAcceptedLinkWithoutAvailableClaimsOut(showAcceptedLinkOut,
+                                        showLinkWithClaimReqOut,
+                                        showLinkUsage):
+    return showAcceptedLinkOut + showLinkWithClaimReqOut + showLinkUsage
+
+
+@pytest.fixture(scope="module")
+def showLinkUsage(usageLine):
+    return usageLine + \
+    ['show claim {claims}',
+     'request claim {claims}']
 
 
 @pytest.fixture(scope="module")
@@ -515,10 +543,7 @@ def showAcceptedLinkOut(usageLine):
             "Target Verification key: <same as target>",
             "Trust anchor: {inviter} (confirmed)",
             "Invitation nonce: {nonce}",
-            "Invitation status: Accepted",
-            "Available claims: {claims}"] + usageLine + \
-           ['show claim {claims}',
-            'request claim {claims}']
+            "Invitation status: Accepted"]
 
 
 @pytest.fixture(scope="module")

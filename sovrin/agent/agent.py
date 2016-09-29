@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 
 from datetime import datetime
 from typing import Dict
@@ -9,7 +10,11 @@ import asyncio
 from plenum.common.looper import Looper
 from plenum.common.types import Identifier
 from plenum.test.helper import genHa
+
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import ensureReqCompleted
+from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
 
@@ -29,6 +34,7 @@ from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.txn import ATTR_NAMES
 from sovrin.common.util import verifySig, getConfig
 
 CLAIMS_LIST_FIELD = 'availableClaimsList'
@@ -525,6 +531,36 @@ class WalletedAgent(Agent):
             for nm in attrNames:
                 res[nm] = attributes.get(nm)
         return res
+
+    def addClaimDefsToWallet(self, name, version, attrNames,
+                             staticPrime, credDefSeqNo, issuerKeySeqNo):
+        csk = CredDefSecretKey(*staticPrime)
+        sid = self.wallet.addCredDefSk(str(csk))
+        # Need to modify the claim definition. We do not support types yet
+        claimDef = {
+            NAME: name,
+            VERSION: version,
+            TYPE: "CL",
+            ATTR_NAMES: attrNames
+        }
+        wallet = self.wallet
+        credDef = CredDef(seqNo=credDefSeqNo,
+                          attrNames=claimDef[ATTR_NAMES],
+                          name=claimDef[NAME],
+                          version=claimDef[VERSION],
+                          origin=wallet.defaultId,
+                          typ=claimDef[TYPE],
+                          secretKey=sid)
+        wallet._credDefs[(name, version, wallet.defaultId)] = credDef
+        isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+        self.wallet.addIssuerSecretKey(isk)
+        ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                           claimDefSeqNo=credDef.seqNo,
+                           secretKeyUid=isk.uid, origin=wallet.defaultId,
+                           seqNo=issuerKeySeqNo)
+        key = (wallet.defaultId, credDefSeqNo)
+        wallet._issuerPks[key] = ipk
+
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,

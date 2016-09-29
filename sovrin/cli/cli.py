@@ -229,6 +229,7 @@ class SovrinCli(PlenumCli):
 
     def _printShowAndReqClaimUsage(self, availableClaims):
         claimName = "|".join([cl.claimDefKey.name for cl in availableClaims])
+        claimName = claimName or "<claim-name>"
         msgs = ['show claim {}'.format(claimName),
                 'request claim {}'.format(claimName)]
         self.printUsage(msgs)

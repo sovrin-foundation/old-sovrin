@@ -1,26 +1,18 @@
 import os
 import random
-import uuid
 
-from plenum.common.looper import Looper
-from plenum.common.txn import NAME, TYPE
+from plenum.common.txn import NAME
 from plenum.common.txn import VERSION
-from plenum.common.util import getlogger, randomString
-from plenum.test.helper import genHa
+from plenum.common.util import getlogger
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.client.client import Client
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import ATTR_NAMES
 from sovrin.common.util import getConfig
 import sovrin.test.random_data as randomData
 
-from anoncreds.protocol.attribute_repo import InMemoryAttrRepo
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.test.conftest import staticPrimes
 
 logger = getlogger()
@@ -71,20 +63,10 @@ class FaberAgent(WalletedAgent):
             }
         }
 
-    def getClaimList(self, claimNames=None):
-        allClaims = [{
-            "name": "Transcript",
-            "version": "1.2",
-            "claimDefSeqNo": "<claimDefSeqNo>",
-            "values": {
-                "student_name": "Alice Garcia",
-                "ssn": "123456789",
-                "degree": "Bachelor of Science, Marketing",
-                "year": "2015",
-                "status": "graduated"
-            }
-        }]
-        return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
+    def addKeyIfNotAdded(self):
+        wallet = self.wallet
+        if not wallet.identifiers:
+            wallet.addSigner(seed=b'Faber000000000000000000000000000')
 
     def getAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()
@@ -104,47 +86,32 @@ class FaberAgent(WalletedAgent):
             })
         return resp
 
-    def addKeyIfNotAdded(self):
-        wallet = self.wallet
-        if not wallet.identifiers:
-            wallet.addSigner(seed=b'Faber000000000000000000000000000')
+    def getClaimList(self, claimNames=None):
+        allClaims = [{
+            "name": "Transcript",
+            "version": "1.2",
+            "claimDefSeqNo": "<claimDefSeqNo>",
+            "values": {
+                "student_name": "Alice Garcia",
+                "ssn": "123456789",
+                "degree": "Bachelor of Science, Marketing",
+                "year": "2015",
+                "status": "graduated"
+            }
+        }]
+        return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
 
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
-        CredDefSeqNo, IssuerKeySeqNo = self._seqNos[(name, version)]
-        csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-        sid = self.wallet.addCredDefSk(str(csk))
-        # Need to modify the claim definition. We do not support types yet
-        claimDef = {
-            NAME: name,
-            VERSION: version,
-            TYPE: "CL",
-            ATTR_NAMES: ["student_name", "ssn", "degree", "year", "status"]
-        }
-        wallet = self.wallet
-        credDef = CredDef(seqNo=CredDefSeqNo,
-                          attrNames=claimDef[ATTR_NAMES],
-                          name=claimDef[NAME],
-                          version=claimDef[VERSION],
-                          origin=wallet.defaultId,
-                          typ=claimDef[TYPE],
-                          secretKey=sid)
-        wallet._credDefs[(name, version, wallet.defaultId)] = credDef
-        isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
-        self.wallet.addIssuerSecretKey(isk)
-        ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                           claimDefSeqNo=credDef.seqNo,
-                           secretKeyUid=isk.uid, origin=wallet.defaultId,
-                           seqNo=IssuerKeySeqNo)
-        key = (wallet.defaultId, CredDefSeqNo)
-        wallet._issuerPks[key] = ipk
-
-    def addLinksToWallet(self):
-        wallet = self.wallet
-        idr = wallet.defaultId
-        for nonce, data in self._attributes.items():
-            link = Link(data.get("student_name"), idr, nonce=nonce)
-            wallet.addLinkInvitation(link)
+        credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
+        staticPrime = staticPrimes().get("prime1")
+        attrNames = ["student_name", "ssn", "degree", "year", "status"]
+        super().addClaimDefsToWallet(name=name,
+                                     version=version,
+                                     attrNames=attrNames,
+                                     staticPrime=staticPrime,
+                                     credDefSeqNo=credDefSeqNo,
+                                     issuerKeySeqNo=issuerKeySeqNo)
 
     def getAttributes(self, nonce):
         attrs = self._attributes.get(nonce)
@@ -163,6 +130,14 @@ class FaberAgent(WalletedAgent):
         attribsDef = AttribDef("Transcript", attribTypes)
         attribs = attribsDef.attribs(**attrs)
         return attribs
+
+
+    def addLinksToWallet(self):
+        wallet = self.wallet
+        idr = wallet.defaultId
+        for nonce, data in self._attributes.items():
+            link = Link(data.get("student_name"), idr, nonce=nonce)
+            wallet.addLinkInvitation(link)
 
     def bootstrap(self):
         self.addKeyIfNotAdded()

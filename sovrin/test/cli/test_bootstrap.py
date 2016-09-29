@@ -362,10 +362,10 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
 
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
-                                 faberAddedByPhil, syncedInviteAcceptedOut,
+                                 faberAddedByPhil, syncedInviteAcceptedWithClaimsOut,
                                  faberLinkAdded, faberIsRunning,
                                  faberInviteSyncedWithEndpoint):
-    acceptInvitation(be, do, aliceCli, faberMap, syncedInviteAcceptedOut)
+    acceptInvitation(be, do, aliceCli, faberMap, syncedInviteAcceptedWithClaimsOut)
     return aliceCli
 
 
@@ -382,8 +382,8 @@ def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
     li.linkStatus = None
     be(aliceCli)
 
-    acceptInvitation(be, do, aliceCli, faberMap, unsycedAlreadyAcceptedInviteAcceptedOut)
-
+    acceptInvitation(be, do, aliceCli, faberMap,
+                     unsycedAlreadyAcceptedInviteAcceptedOut)
 
 
 def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,
@@ -524,28 +524,29 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
 
 
 @pytest.fixture(scope="module")
-def aliceAcceptedAcmeJobInvitation(aliceCli, be, do, syncedInviteAcceptedOut,
-                                   unsycedAcceptedInviteAcceptedOut,
+def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
+                                   unsycedAcceptedInviteAcceptedWithoutClaimOut,
                                    aliceRequestedFaberTranscriptClaim,
                                    acmeInviteLoadedByAlice, acmeAddedByPhil,
                                    acmeIsRunning, acmeMap, acmeLinkAdded,
                                    acmeCli, acmeWithEndpointAdded):
     be(aliceCli)
-    acceptInvitation(be, do, aliceCli, acmeMap, unsycedAcceptedInviteAcceptedOut)
+    acceptInvitation(be, do, aliceCli, acmeMap,
+                     unsycedAcceptedInviteAcceptedWithoutClaimOut)
     return aliceCli
 
 
-def testAliceAcceptedAcmeJobInvitation(aliceAcceptedAcmeJobInvitation):
+def testAliceAcceptAcmeJobInvitation(aliceAcceptedAcmeJobInvitation):
     pass
 
 
 def testShowAcmeLinkAfterInviteAccept(be, do, aliceCli, acmeMap,
                                       aliceAcceptedAcmeJobInvitation,
-                                      showAcceptedLinkWithClaimReqsOut):
+                                      showAcceptedLinkWithoutAvailableClaimsOut):
 
     be(aliceCli)
 
-    do("show link {inviter}",           expect=showAcceptedLinkWithClaimReqsOut,
+    do("show link {inviter}",           expect=showAcceptedLinkWithoutAvailableClaimsOut,
                                         not_expect="Link (not yet accepted)",
                                         mapper=acmeMap)
 

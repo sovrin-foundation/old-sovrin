@@ -126,7 +126,7 @@ class Link:
             return str(day_diff) + " days ago"
 
     def isAccepted(self):
-        return self.linkStatus and self.linkStatus == constant.LINK_STATUS_ACCEPTED
+        return self.linkStatus == constant.LINK_STATUS_ACCEPTED
 
     def getLinkInfoStr(self) -> str:
         trustAnchor = self.trustAnchor or ""
