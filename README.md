@@ -1,7 +1,17 @@
 A Sovrin node requires OrientDB running
 Refer https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-orientdb-on-ubuntu-14-04 for installing Orient DB
 
-A Sovrin client can be configured to use flat files or OrientDB for persistence. To use files instead of OrientDB we require 
+A Sovrin client can be configured to use flat files or OrientDB for persistence. To use files instead of OrientDB you need to add 2 entries 
+in your configuration located at `~/.sovrin/sovrin_config.py`
+The first entry to add is
+```
+ClientIdentityGraph = False
+```
+
+And the second is
+```
+ReqReplyStore = "file"
+```
 
 
 ### Initializing Keep
