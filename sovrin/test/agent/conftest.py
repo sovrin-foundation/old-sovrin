@@ -2,9 +2,7 @@ import pytest
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.test.helper import genHa
-# from sovrin.agent.acme import runAcme
-# from sovrin.agent.faber import runFaber
-from sovrin.client.wallet.link_invitation import Link
+from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR
 from sovrin.test.agent.acme import runAcme

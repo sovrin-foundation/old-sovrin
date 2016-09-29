@@ -2,16 +2,14 @@ import os
 import random
 import uuid
 
-from plenum.common.looper import Looper
 from plenum.common.txn import NAME, TYPE
 from plenum.common.txn import VERSION
-from plenum.common.util import getlogger, randomString
-from plenum.test.helper import genHa
+from plenum.common.util import getlogger
 from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.anon_creds.issuer import AttribType, AttribDef
 from sovrin.client.client import Client
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
-from sovrin.client.wallet.link_invitation import Link
+from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import ATTR_NAMES
 from sovrin.common.util import getConfig
@@ -181,35 +179,6 @@ def runFaber(name=None, wallet=None, basedirpath=None, port=None,
 
     return runAgent(FaberAgent, name or "Faber College", wallet, basedirpath,
                     port, startRunning, bootstrap)
-
-    # config = getConfig()
-    # if not name:
-    #     name = "Faber College"
-    # if not wallet:
-    #     wallet = Wallet(name)
-    # if not basedirpath:
-    #     basedirpath = config.baseDir
-    # if not port:
-    #     _, port = genHa()
-    #
-    # _, clientPort = genHa()
-    # client = Client(randomString(6),
-    #                 ha=("0.0.0.0", clientPort),
-    #                 basedirpath=basedirpath)
-    #
-    # faber = FaberAgent(basedirpath=basedirpath,
-    #                    client=client,
-    #                    wallet=wallet,
-    #                    port=port)
-    # if startRunning:
-    #     if bootstrap:
-    #         faber.bootstrap()
-    #     with Looper(debug=True) as looper:
-    #         looper.add(faber)
-    #         logger.debug("Running Faber now...")
-    #         looper.run()
-    # else:
-    #     return faber
 
 
 if __name__ == "__main__":

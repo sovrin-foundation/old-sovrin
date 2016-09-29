@@ -7,7 +7,7 @@
 # from ledger.stores.text_file_store import TextFileStore
 # from plenum.persistence.wallet_storage_file import WalletStorageFile \
 #     as PWalletStorageFile
-# from sovrin.client.link_invitation import LinkInvitation
+# from sovrin.client.link import LinkInvitation
 #
 # from sovrin.persistence.attribute_store_file import AttributeStoreFile
 # from sovrin.persistence.credential_def_store_file import CredDefStoreFile

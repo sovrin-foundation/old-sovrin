@@ -338,29 +338,55 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
+def acceptInvitation(be, do, userCli, agentMap, expect):
+    be(userCli)
+    do("accept invitation from {inviter}",
+                                within=5,
+                                mapper=agentMap,
+                                expect=expect)
+
+    return userCli
+
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                  faberAddedByPhil,
                                  faberLinkAdded, faberIsRunning,
-                                # faberAddedClaimDefAndIssuerKeys,
                                  faberInviteSyncedWithEndpoint):
-    be(aliceCli)
-    do("accept invitation from {inviter}",
-                                within=5,
-                                mapper=faberMap,
-                                expect=[
-                                    "Signature accepted.",
-                                    "Trust established.",
-                                    "Identifier created in Sovrin.",
-                                    "Available claims: Transcript",
-                                    # "Synchronizing...",
-                                    # "Confirmed identifier written to Sovrin."
-                                ])
+    expect = [
+        "Signature accepted.",
+        "Trust established.",
+        "Identifier created in Sovrin.",
+        "Available claims: Transcript",
+        # "Synchronizing...",
+        # "Confirmed identifier written to Sovrin."
+    ]
+
+    acceptInvitation(be, do, aliceCli, faberMap, expect)
+
     return aliceCli
 
 
 def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
     pass
+
+
+def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli,
+                                             faberMap,
+                                        aliceAcceptedFaberInvitation):
+
+    li = aliceCli.activeWallet.getLinkInvitationByTarget(
+        faberCli.activeWallet.defaultId)
+    li.linkStatus = None
+    be(aliceCli)
+    expect = [
+        "Invitation not yet verified",
+        "Attempting to sync...",
+        "Synchronizing...",
+        "Already accepted"
+    ]
+
+    acceptInvitation(be, do, aliceCli, faberMap, expect)
+
 
 
 def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,

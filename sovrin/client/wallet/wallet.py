@@ -20,8 +20,7 @@ from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim import ClaimDefKey, ClaimDef
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
-# from sovrin.client.wallet.link import Link
-from sovrin.client.wallet.link_invitation import Link
+from sovrin.client.wallet.link import Link
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
     GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
 from sovrin.common.identity import Identity
@@ -385,7 +384,7 @@ class Wallet(PWallet, Sponsoring):
         #     getDictToBeStored()
         self._linkInvitations[linkInvitation.name] = linkInvitation
 
-    def getLinkInvitationByTarget(self, target: str):
+    def getLinkInvitationByTarget(self, target: str) -> Link:
         for k, li in self._linkInvitations.items():
             if li.remoteIdentifier == target:
                 return li

@@ -21,13 +21,11 @@ from pygments.token import Token
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.client.signer import SimpleSigner
-from plenum.common.txn import DATA, NAME, VERSION, KEYS, TYPE, \
-    PORT, IP, ORIGIN
+from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
-from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, \
-    CLAIM_NAME_FIELD, EVENT_POST_ACCEPT_INVITE
+from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE
+from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttrRepo
@@ -38,12 +36,13 @@ from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ReceivedClaim
 from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.client.wallet.link_invitation import Link, AvailableClaimData, \
-    ClaimRequest, t
+from sovrin.client.wallet.link import Link, constant
+from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim, \
+    ClaimRequest
+
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
@@ -943,7 +942,7 @@ class SovrinCli(PlenumCli):
             self.print("Link {} synced".format(link.name))
             self._pingToEndpoint(endPoint)
         else:
-            link.remoteEndPoint = t.NOT_AVAILABLE
+            link.remoteEndPoint = constant.NOT_AVAILABLE
             self.print('Endpoint not available')
         self.activeWallet.addLinkInvitation(link)
 
@@ -1047,27 +1046,44 @@ class SovrinCli(PlenumCli):
                 self._printLinkAlreadyExcepted(li.name)
             else:
                 self.print("Invitation not yet verified.")
-                if not li.isRemoteEndpointAvailable():
-                    self.print("Link not yet synchronized. "
-                               "Attempting to sync...")
-                    if self._isConnectedToAnyEnv():
-                        self._getTargetEndpoint(li, self._acceptLinkPostSync)
+                if not li.linkLastSynced:
+                    self.print("Link not yet synchronized.")
+
+                if self._isConnectedToAnyEnv():
+                    self.print("Attempting to sync...")
+                    self._getTargetEndpoint(li, self._acceptLinkPostSync)
+                else:
+                    if li.isRemoteEndpointAvailable():
+                        self._sendAcceptInviteToTargetEndpoint(li)
                     else:
                         self.print("Invitation acceptance aborted.")
                         self.print("Cannot sync because not connected")
                         self._printNotConnectedEnvMessage()
-                        return True
-                else:
-                    self._sendAcceptInviteToTargetEndpoint(li)
+
+                # self.print("Invitation not yet verified.")
+                # if not li.isRemoteEndpointAvailable():
+                #     self.print("Link not yet synchronized. "
+                #            "Attempting to sync...")
+                # else:
+                #
+                # if self._isConnectedToAnyEnv():
+                #     self._getTargetEndpoint(li, self._acceptLinkPostSync)
+                # else:
+                #     self.print("Invitation acceptance aborted.")
+                #     self.print("Cannot sync because not connected")
+                #     self._printNotConnectedEnvMessage()
+                #     return True
+                # else:
+                #     self._sendAcceptInviteToTargetEndpoint(li)
 
     def _syncLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
         if li:
-            if li.isRemoteEndpointAvailable():
-                self._pingToEndpoint(li.remoteEndPoint)
-                self._printShowAndAcceptLinkUsage(li.name)
-            else:
-                self._getTargetEndpoint(li, self._printUsagePostSync)
+            # if li.isRemoteEndpointAvailable():
+            #     self._pingToEndpoint(li.remoteEndPoint)
+            #     self._printShowAndAcceptLinkUsage(li.name)
+            # else:
+            self._getTargetEndpoint(li, self._printUsagePostSync)
 
     @staticmethod
     def removeDoubleQuotes(name):

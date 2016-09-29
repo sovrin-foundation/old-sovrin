@@ -3,7 +3,7 @@ import json
 import os
 from plenum.test.cli.test_cli_client_port import initDirWithGenesisTxns
 from plenum.test.eventually import eventually
-from sovrin.client.wallet.link_invitation import Link
+from sovrin.client.wallet.link import Link
 
 from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.test.helper import TestNode, TestClient

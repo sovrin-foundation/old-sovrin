@@ -6,9 +6,9 @@ from typing import Tuple
 
 import asyncio
 
+from plenum.cli.helper import genHa
 from plenum.common.looper import Looper
 from plenum.common.types import Identifier
-from plenum.test.helper import genHa
 from sovrin.cli.helper import ensureReqCompleted
 
 from sovrin.common.identity import Identity
@@ -17,18 +17,17 @@ from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
-from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
-    TARGET_NYM, TXN_TYPE, NYM
+from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger, \
     randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
-    ACCEPT_INVITE, CLAIM_NAME_FIELD, REQUEST_CLAIM_ATTRS, EVENT_POST_ACCEPT_INVITE
+    ACCEPT_INVITE, REQUEST_CLAIM_ATTRS
 from sovrin.client.client import Client
 from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
 from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
-from sovrin.client.wallet.link_invitation import Link, t
+from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import verifySig, getConfig
 
@@ -36,8 +35,12 @@ CLAIMS_LIST_FIELD = 'availableClaimsList'
 CLAIMS_FIELD = 'claims'
 REQ_MSG = "REQ_MSG"
 
-ERROR = "ERROR"
+ERROR = "error"
+EVENT = "event"
+EVENT_NAME = "eventName"
 
+EVENT_NOTIFY_MSG = "NOTIFY"
+EVENT_POST_ACCEPT_INVITE = "POST_ACCEPT_INVITE_EVENT"
 
 logger = getlogger()
 
@@ -182,6 +185,7 @@ class WalletedAgent(Agent):
             ACCEPT_INVITE: self._acceptInvite,
             REQUEST_CLAIM_ATTRS: self._returnClaimAttrs,
             REQUEST_CLAIM: self._reqClaim,
+            EVENT: self._eventHandler
         }
 
     @property
@@ -261,9 +265,24 @@ class WalletedAgent(Agent):
         msg[CLAIMS_FIELD] = claim
         return msg
 
+    def _eventHandler(self, msg):
+        body, (frm, ha) = msg
+        isVerified = self._isVerified(body)
+        if isVerified:
+            eventName = body[EVENT_NAME]
+            data = body[DATA]
+            if eventName == EVENT_NOTIFY_MSG:
+                self.notifyObservers(data)
+            else:
+                self.notifyEventListeners(eventName, **data)
+
     def notifyObservers(self, msg):
         for o in self._observers:
             o.notify(self, msg)
+
+    def notifyEventListeners(self, eventName, **args):
+        for el in self._eventListeners[eventName]:
+            el(**args)
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
@@ -309,8 +328,8 @@ class WalletedAgent(Agent):
                         # it in wallet's claim def store
                         raise NotImplementedError
 
-                li.linkStatus = t.LINK_STATUS_ACCEPTED
-                li.targetVerkey = t.TARGET_VER_KEY_SAME_AS_ID
+                li.linkStatus = constant.LINK_STATUS_ACCEPTED
+                li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
                 li.updateAvailableClaims(availableClaims)
 
                 self.wallet.addLinkInvitation(li)
@@ -376,10 +395,6 @@ class WalletedAgent(Agent):
     def _syncLinkPostAvailableClaimsRcvd(self, li, availableClaims):
         self._checkIfLinkIdentifierWrittenToSovrin(li, availableClaims)
 
-    def notifyEventListeners(self, eventName, *args):
-        for el in self._eventListeners[eventName]:
-            el(*args)
-
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
                                               availableClaims):
         identity = Identity(identifier=li.localIdentifier)
@@ -420,23 +435,45 @@ class WalletedAgent(Agent):
         else:
             raise NotImplementedError
 
+    def notifyToRemoteCaller(self, event, msg, identifier, frm):
+        resp = {
+            TYPE: EVENT,
+            EVENT_NAME: event,
+            DATA: msg
+        }
+        self.signAndSendToCaller(resp, identifier, frm)
+
     def _acceptInvite(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
             identifier = body.get(f.IDENTIFIER.nm)
             idy = Identity(identifier)
-            self.wallet.addSponsoredIdentity(idy)
-            reqs = self.wallet.preparePending()
+            alreadyAdded = False
+            try:
+                self.wallet.addSponsoredIdentity(idy)
+            except Exception as e:
+                if e.args[0] == 'identifier already added':
+                    alreadyAdded = True
+                else:
+                    raise e
 
-            def sendClaimList(reply, error):
+            def sendClaimList(reply=None, error=None):
                 logger.debug("sent to sovrin {}".format(identifier))
-                resp = self.createAvailClaimListMsg(self.getAvailableClaimList())
+                resp = self.createAvailClaimListMsg(
+                    self.getAvailableClaimList())
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
             logger.debug("sending to sovrin {}".format(identifier))
             # Assuming there was only one pending request
-            self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
+            if alreadyAdded:
+                sendClaimList()
+                self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                          "Already accepted",
+                                          link.verkey, frm)
+            else:
+                reqs = self.wallet.preparePending()
+                self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
         # TODO: If I have the below exception thrown, somehow the
         # error msg which is sent in verifyAndGetLink is not being received
@@ -487,3 +524,4 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
             looper.run()
     else:
         return agent
+

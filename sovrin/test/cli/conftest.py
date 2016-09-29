@@ -169,7 +169,7 @@ def acceptUnSyncedWithoutEndpointWhenConnected(commonAcceptInvitationMsgs):
 @pytest.fixture(scope="module")
 def commonAcceptInvitationMsgs():
     return ["Invitation not yet verified",
-            "Link not yet synchronized. Attempting to sync...",
+            "Link not yet synchronized.",
             ]
 
 
