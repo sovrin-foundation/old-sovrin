@@ -119,6 +119,7 @@ def acmeMap(acmeAgentPort):
             "target": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
             "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
             ENDPOINT: endpoint,
+            "endpointAttr": json.dumps({ENDPOINT: endpoint}),
             "claim-requests" : "Job Application",
             "claim-req-to-show": "Job Application",
             "claims": "Job-Certificate",
@@ -226,6 +227,35 @@ def jobApplicationClaimReqMap():
         'claim-req-attr-status': 'status',
         'claim-req-attr-ssn': 'ssn'
     }
+
+
+@pytest.fixture(scope="module")
+def syncedInviteAcceptedOut():
+    return [
+        "Signature accepted.",
+        "Trust established.",
+        "Identifier created in Sovrin.",
+        "Available claims: {claims}",
+        # "Synchronizing...",
+        # "Confirmed identifier written to Sovrin."
+    ]
+
+@pytest.fixture(scope="module")
+def unsycedAcceptedInviteAcceptedOut(syncedInviteAcceptedOut):
+    return [
+        "Invitation not yet verified",
+        "Attempting to sync...",
+        "Synchronizing...",
+    ] + syncedInviteAcceptedOut
+
+@pytest.fixture(scope="module")
+def unsycedAlreadyAcceptedInviteAcceptedOut():
+    return [
+        "Invitation not yet verified",
+        "Attempting to sync...",
+        "Synchronizing...",
+        "Already accepted"
+    ]
 
 @pytest.fixture(scope="module")
 def showTranscriptClaimProofOut():

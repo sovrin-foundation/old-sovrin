@@ -1,5 +1,7 @@
 import pytest
 from plenum.test.eventually import eventually
+
+from sovrin.client.wallet.link import constant
 from sovrin.common.txn import USER, ENDPOINT
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, getLinkInvitation
 from sovrin.test.helper import makeNymRequest, addRawAttribute
@@ -104,7 +106,7 @@ def testSyncLinkWhenEndpointIsAvailable(looper,
                                         faberAdded):
     client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
-    assert li.remoteEndPoint is t.NOT_AVAILABLE
+    assert li.remoteEndPoint is constant.NOT_AVAILABLE
     endpointValue = "0.0.0.0:0000"
     addRawAttribute(looper, client, wallet, ENDPOINT, endpointValue,
                     dest=li.remoteIdentifier)

@@ -283,6 +283,19 @@ def faberWithEndpointAdded(be, do, philCli, faberAddedByPhil,
     return philCli
 
 
+@pytest.fixture(scope="module")
+def acmeWithEndpointAdded(be, do, philCli, acmeAddedByPhil,
+                           acmeMap, attrAddedOut):
+
+    be(philCli)
+    do('send ATTRIB dest={target} raw={endpointAttr}',
+                                        within=3,
+                                        expect=attrAddedOut,
+                                        mapper=acmeMap)
+    return philCli
+
+
+
 def testEndpointAddedForFaber(faberWithEndpointAdded):
     pass
 
@@ -349,20 +362,10 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
 
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
-                                 faberAddedByPhil,
+                                 faberAddedByPhil, syncedInviteAcceptedOut,
                                  faberLinkAdded, faberIsRunning,
                                  faberInviteSyncedWithEndpoint):
-    expect = [
-        "Signature accepted.",
-        "Trust established.",
-        "Identifier created in Sovrin.",
-        "Available claims: Transcript",
-        # "Synchronizing...",
-        # "Confirmed identifier written to Sovrin."
-    ]
-
-    acceptInvitation(be, do, aliceCli, faberMap, expect)
-
+    acceptInvitation(be, do, aliceCli, faberMap, syncedInviteAcceptedOut)
     return aliceCli
 
 
@@ -370,22 +373,16 @@ def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
     pass
 
 
-def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli,
-                                             faberMap,
+def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
+                                        unsycedAlreadyAcceptedInviteAcceptedOut,
                                         aliceAcceptedFaberInvitation):
 
     li = aliceCli.activeWallet.getLinkInvitationByTarget(
         faberCli.activeWallet.defaultId)
     li.linkStatus = None
     be(aliceCli)
-    expect = [
-        "Invitation not yet verified",
-        "Attempting to sync...",
-        "Synchronizing...",
-        "Already accepted"
-    ]
 
-    acceptInvitation(be, do, aliceCli, faberMap, expect)
+    acceptInvitation(be, do, aliceCli, faberMap, unsycedAlreadyAcceptedInviteAcceptedOut)
 
 
 
@@ -527,25 +524,14 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
 
 
 @pytest.fixture(scope="module")
-def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
+def aliceAcceptedAcmeJobInvitation(aliceCli, be, do, syncedInviteAcceptedOut,
+                                   unsycedAcceptedInviteAcceptedOut,
                                    aliceRequestedFaberTranscriptClaim,
                                    acmeInviteLoadedByAlice, acmeAddedByPhil,
                                    acmeIsRunning, acmeMap, acmeLinkAdded,
-                                   acmeCli):
+                                   acmeCli, acmeWithEndpointAdded):
     be(aliceCli)
-    do("accept invitation "
-       "from {inviter}", within=6,
-                         expect=["Invitation not yet verified.",
-                                 "Signature accepted.",
-                                 "Trust established.",
-                                 "Identifier created in Sovrin.",
-                                 "Available claims: {claims}",
-                                 # "Synchronizing...",
-                                 # Once acme starts writing identifier
-                                 # to Sovrin, need to uncomment below line
-                                 # "Confirmed identifier written to Sovrin."
-                                 ],
-                         mapper=acmeMap)
+    acceptInvitation(be, do, aliceCli, acmeMap, unsycedAcceptedInviteAcceptedOut)
     return aliceCli
 
 
