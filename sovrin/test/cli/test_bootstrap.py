@@ -38,19 +38,19 @@ def acmeCLI(CliBuilder):
 def poolNodesStarted(be, do, poolCLI):
     be(poolCLI)
 
-    do('new node all',                  within=6,
-                                        expect=['Alpha now connected to Beta',
-                                                'Alpha now connected to Gamma',
-                                                'Alpha now connected to Delta',
-                                                'Beta now connected to Alpha',
-                                                'Beta now connected to Gamma',
-                                                'Beta now connected to Delta',
-                                                'Gamma now connected to Alpha',
-                                                'Gamma now connected to Beta',
-                                                'Gamma now connected to Delta',
-                                                'Delta now connected to Alpha',
-                                                'Delta now connected to Beta',
-                                                'Delta now connected to Gamma'])
+    do('new node all',              within=6,
+                                    expect=['Alpha now connected to Beta',
+                                            'Alpha now connected to Gamma',
+                                            'Alpha now connected to Delta',
+                                            'Beta now connected to Alpha',
+                                            'Beta now connected to Gamma',
+                                            'Beta now connected to Delta',
+                                            'Gamma now connected to Alpha',
+                                            'Gamma now connected to Beta',
+                                            'Gamma now connected to Delta',
+                                            'Delta now connected to Alpha',
+                                            'Delta now connected to Beta',
+                                            'Delta now connected to Gamma'])
     return poolCLI
 
 
@@ -58,15 +58,14 @@ def poolNodesStarted(be, do, poolCLI):
 def faberCli(be, do, faberCLI):
     be(faberCLI)
 
-    do('prompt FABER',                  expect=prompt_is('FABER'))
+    do('prompt FABER',              expect=prompt_is('FABER'))
 
-    do('new keyring Faber',             expect=['New keyring Faber created',
-                                                'Active keyring set to "Faber"'
-                                                ])
+    do('new keyring Faber',         expect=['New keyring Faber created',
+                                            'Active keyring set to "Faber"'])
     seed = 'Faber000000000000000000000000000'
     idr = '3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4='
 
-    do('new key with seed ' + seed,expect=['Key created in keyring Faber',
+    do('new key with seed ' + seed, expect=['Key created in keyring Faber',
                                            'Identifier for key is ' + idr,
                                            'Current identifier set to ' + idr])
     return faberCLI
@@ -76,36 +75,33 @@ def faberCli(be, do, faberCLI):
 def acmeCli(be, do, acmeCLI):
     be(acmeCLI)
 
-    do('prompt Acme',                  expect=prompt_is('Acme'))
+    do('prompt Acme',               expect=prompt_is('Acme'))
 
-    do('new keyring Acme',             expect=['New keyring Acme created',
-                                                'Active keyring set to "Acme"'
-                                                ])
+    do('new keyring Acme',          expect=['New keyring Acme created',
+                                            'Active keyring set to "Acme"'])
     seed = 'Acme0000000000000000000000000000'
     idr = 'YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4='
 
     do('new key with seed ' + seed, expect=['Key created in keyring Acme',
-                                           'Identifier for key is ' + idr,
-                                           'Current identifier set to ' +
-                                           idr])
+                                            'Identifier for key is ' + idr,
+                                            'Current identifier set to ' + idr])
     return acmeCLI
 
 
 @pytest.fixture(scope="module")
 def philCli(be, do, philCLI):
     be(philCLI)
-    do('prompt Phil',                   expect=prompt_is('Phil'))
+    do('prompt Phil',               expect=prompt_is('Phil'))
 
-    do('new keyring Phil',              expect=['New keyring Phil created',
-                                                'Active keyring set to "Phil"'])
+    do('new keyring Phil',          expect=['New keyring Phil created',
+                                            'Active keyring set to "Phil"'])
 
     mapper = {
         'seed': '11111111111111111111111111111111',
         'idr': 'SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0='}
-    do('new key with seed {seed}',      expect=['Key created in keyring Phil',
-                                                'Identifier for key is {idr}',
-                                                'Current identifier set to '
-                                                '{idr}'],
+    do('new key with seed {seed}',  expect=['Key created in keyring Phil',
+                                            'Identifier for key is {idr}',
+                                            'Current identifier set to {idr}'],
        mapper=mapper)
 
     return philCLI
@@ -115,12 +111,12 @@ def philCli(be, do, philCLI):
 def faberAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                      nymAddedOut, faberMap):
     be(philCli)
-    do('connect test',                  within=3,
-                                        expect=connectedToTest, mapper=faberMap)
+    do('connect test',              within=3,
+                                    expect=connectedToTest, mapper=faberMap)
 
     do('send NYM dest={target} role=SPONSOR',
-                                        within=3,
-                                        expect=nymAddedOut, mapper=faberMap)
+                                    within=3,
+                                    expect=nymAddedOut, mapper=faberMap)
     return philCli
 
 
@@ -128,12 +124,12 @@ def faberAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
 def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                      nymAddedOut, acmeMap):
     be(philCli)
-    do('connect test',                  within=3,
-                                        expect=connectedToTest, mapper=acmeMap)
+    do('connect test',              within=3,
+                                    expect=connectedToTest, mapper=acmeMap)
 
     do('send NYM dest={target} role=SPONSOR',
-                                        within=2,
-                                        expect=nymAddedOut, mapper=acmeMap)
+                                    within=2,
+                                    expect=nymAddedOut, mapper=acmeMap)
     return philCli
 
 
@@ -141,39 +137,39 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
 def aliceCli(be, do, aliceCLI, newKeyringOut, aliceMap):
     be(aliceCLI)
 
-    do('prompt ALICE', expect=prompt_is('ALICE'))
+    do('prompt ALICE',              expect=prompt_is('ALICE'))
 
-    do('new keyring Alice',             expect=newKeyringOut, mapper=aliceMap)
+    do('new keyring Alice',         expect=newKeyringOut, mapper=aliceMap)
     return aliceCLI
 
 
 def testNotConnected(be, do, aliceCli, notConnectedStatus):
     be(aliceCli)
-    do('status',                        expect=notConnectedStatus)
+    do('status',                    expect=notConnectedStatus)
 
 
 def testShowInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
     be(aliceCli)
-    do('show {invite-not-exists}',      expect=fileNotExists, mapper=faberMap)
+    do('show {invite-not-exists}',  expect=fileNotExists, mapper=faberMap)
 
 
 def testShowFaberInvite(be, do, aliceCli, faberMap):
     be(aliceCli)
     inviteContents = getFileLines(faberMap.get("invite"))
 
-    do('show {invite}',                 expect=inviteContents,
-                                        mapper=faberMap)
+    do('show {invite}',             expect=inviteContents,
+                                    mapper=faberMap)
 
 
 def testLoadInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
     be(aliceCli)
-    do('load {invite-not-exists}',      expect=fileNotExists, mapper=faberMap)
+    do('load {invite-not-exists}',  expect=fileNotExists, mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
 def faberInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, faberMap):
     be(aliceCli)
-    do('load {invite}',                 expect=loadInviteOut, mapper=faberMap)
+    do('load {invite}',             expect=loadInviteOut, mapper=faberMap)
     return aliceCli
 
 
@@ -184,28 +180,28 @@ def testLoadFaberInvite(faberInviteLoadedByAlice):
 def testShowLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
     be(aliceCli)
     do('show link {inviter-not-exists}',
-                                        expect=linkNotExists,
-                                        mapper=faberMap)
+                                    expect=linkNotExists,
+                                    mapper=faberMap)
 
 
 def testShowFaberLink(be, do, aliceCli, faberInviteLoadedByAlice,
                        showUnSyncedLinkOut, faberMap):
     be(aliceCli)
-    do('show link {inviter}',           expect=showUnSyncedLinkOut,
-                                        mapper=faberMap)
+    do('show link {inviter}',       expect=showUnSyncedLinkOut,
+                                    mapper=faberMap)
 
 
 def testSyncLinkNotExists(be, do, aliceCli, linkNotExists, faberMap):
     be(aliceCli)
-    do('sync {inviter-not-exists}',     expect=linkNotExists, mapper=faberMap)
+    do('sync {inviter-not-exists}', expect=linkNotExists, mapper=faberMap)
 
 
 def testSyncFaberWhenNotConnected(be, do, aliceCli, faberMap,
                                         faberInviteLoadedByAlice,
                                         syncWhenNotConnected):
     be(aliceCli)
-    do('sync {inviter}',                expect=syncWhenNotConnected,
-                                        mapper=faberMap)
+    do('sync {inviter}',            expect=syncWhenNotConnected,
+                                    mapper=faberMap)
 
 
 def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do, aliceCli,
@@ -214,8 +210,8 @@ def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do, aliceCli,
                                              faberMap):
     be(aliceCli)
     do('accept invitation from {inviter}',
-                                        expect=acceptUnSyncedWhenNotConnected,
-                                        mapper=faberMap)
+                                    expect=acceptUnSyncedWhenNotConnected,
+                                    mapper=faberMap)
 
 
 def testAcceptUnSyncedFaberInvite(be, do, aliceCli, faberInviteLoadedByAlice,
@@ -226,14 +222,14 @@ def testAcceptUnSyncedFaberInvite(be, do, aliceCli, faberInviteLoadedByAlice,
                                   poolNodesStarted):
     be(aliceCli)
     if not aliceCli._isConnectedToAnyEnv():
-        do('connect test',              within=3,
-                                        expect=connectedToTest,
-                                        mapper=faberMap)
+        do('connect test',          within=3,
+                                    expect=connectedToTest,
+                                    mapper=faberMap)
 
     do('accept invitation from {inviter}',
-                                        within=3,
-                                        expect=acceptUnSyncedWithoutEndpointWhenConnected,
-                                        mapper=faberMap)
+                                    within=3,
+                                    expect=acceptUnSyncedWithoutEndpointWhenConnected,
+                                    mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
@@ -245,13 +241,13 @@ def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
                                      syncLinkOutWithoutEndpoint):
     be(aliceCli)
     if not aliceCli._isConnectedToAnyEnv():
-        do('connect test',              within=3,
-                                        expect=connectedToTest,
-                                        mapper=faberMap)
+        do('connect test',          within=3,
+                                    expect=connectedToTest,
+                                    mapper=faberMap)
 
-    do('sync {inviter}',                within=2,
-                                        expect=syncLinkOutWithoutEndpoint,
-                                        mapper=faberMap)
+    do('sync {inviter}',            within=2,
+                                    expect=syncLinkOutWithoutEndpoint,
+                                    mapper=faberMap)
     return aliceCli
 
 
@@ -266,9 +262,9 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
 
     be(aliceCLI)
 
-    do('show link {inviter}',           expect=showSyncedLinkWithoutEndpointOut,
-                                        #not_expect=linkNotYetSynced,
-                                        mapper=faberMap)
+    do('show link {inviter}',       expect=showSyncedLinkWithoutEndpointOut,
+                                    #not_expect=linkNotYetSynced,
+                                    mapper=faberMap)
 
 
 @pytest.fixture(scope="module")
@@ -277,9 +273,9 @@ def faberWithEndpointAdded(be, do, philCli, faberAddedByPhil,
 
     be(philCli)
     do('send ATTRIB dest={target} raw={endpointAttr}',
-                                        within=3,
-                                        expect=attrAddedOut,
-                                        mapper=faberMap)
+                                    within=3,
+                                    expect=attrAddedOut,
+                                    mapper=faberMap)
     return philCli
 
 
@@ -289,9 +285,9 @@ def acmeWithEndpointAdded(be, do, philCli, acmeAddedByPhil,
 
     be(philCli)
     do('send ATTRIB dest={target} raw={endpointAttr}',
-                                        within=3,
-                                        expect=attrAddedOut,
-                                        mapper=acmeMap)
+                                    within=3,
+                                    expect=attrAddedOut,
+                                    mapper=acmeMap)
     return philCli
 
 
@@ -308,9 +304,9 @@ def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI,
                                   poolNodesStarted):
     be(aliceCLI)
 
-    do('sync {inviter}',                within=2,
-                                        expect=syncLinkOutWithEndpoint,
-                                        mapper=faberMap)
+    do('sync {inviter}',            within=2,
+                                    expect=syncLinkOutWithEndpoint,
+                                    mapper=faberMap)
     return aliceCLI
 
 
@@ -322,14 +318,14 @@ def testShowSyncedFaberInviteWithEndpoint(be, do, aliceCLI,
                                           faberInviteSyncedWithEndpoint,
                                      showSyncedLinkWithEndpointOut, faberMap):
     be(aliceCLI)
-    do('show link {inviter}',           expect=showSyncedLinkWithEndpointOut,
-                                        mapper=faberMap)
+    do('show link {inviter}',       expect=showSyncedLinkWithEndpointOut,
+                                    mapper=faberMap)
 
 
 def testAcceptNotExistsLink(be, do, aliceCli, linkNotExists, faberMap):
     be(aliceCli)
     do('accept invitation from {inviter-not-exists}',
-                                        expect=linkNotExists, mapper=faberMap)
+                                    expect=linkNotExists, mapper=faberMap)
 
 
 def getSignedRespMsg(msg, signer):
@@ -354,9 +350,9 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
 def acceptInvitation(be, do, userCli, agentMap, expect):
     be(userCli)
     do("accept invitation from {inviter}",
-                                within=5,
-                                mapper=agentMap,
-                                expect=expect)
+                                    within=5,
+                                    mapper=agentMap,
+                                    expect=expect)
 
     return userCli
 
@@ -391,9 +387,9 @@ def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,
                                        aliceAcceptedFaberInvitation):
     be(aliceCli)
 
-    do("show link {inviter}",           expect=showAcceptedLinkOut,
-                                        not_expect="Link (not yet accepted)",
-                                        mapper=faberMap)
+    do("show link {inviter}",       expect=showAcceptedLinkOut,
+                                    not_expect="Link (not yet accepted)",
+                                    mapper=faberMap)
 
 
 def testShowClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
@@ -401,8 +397,8 @@ def testShowClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
     be(aliceCli)
 
     do("show claim claim-to-show-not-exists",
-                                        expect=showClaimNotFoundOut,
-                                        mapper=faberMap)
+                                    expect=showClaimNotFoundOut,
+                                    mapper=faberMap)
 
 
 def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap, showClaimOut,
@@ -411,8 +407,8 @@ def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap, showClaimOut,
     be(aliceCli)
 
     do("show claim {name}",
-                                        expect=showClaimOut,
-                                        mapper=transcriptClaimMap)
+                                    expect=showClaimOut,
+                                    mapper=transcriptClaimMap)
 
 
 def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
@@ -420,8 +416,8 @@ def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
     be(aliceCli)
 
     do("request claim claim-to-req-not-exists",
-                                        expect=showClaimNotFoundOut,
-                                        mapper=faberMap)
+                                    expect=showClaimNotFoundOut,
+                                    mapper=faberMap)
 
 
 def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
@@ -432,8 +428,8 @@ def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
     be(aliceCli)
 
     do("request claim {name}",
-                                        expect=reqClaimOut,
-                                        mapper=transcriptClaimMap)
+                                    expect=reqClaimOut,
+                                    mapper=transcriptClaimMap)
 
 
 def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
@@ -459,10 +455,9 @@ def aliceRequestedFaberTranscriptClaim(be, do, aliceCli, faberCli,
                                        # faberAddedAttributesForAlice
                                        ):
     be(aliceCli)
-    do("request claim Transcript",      within=5,
-                                        expect=[
-                                            "Signature accepted.",
-                                            "Received Transcript."])
+    do("request claim Transcript",  within=5,
+                                    expect=[ "Signature accepted.",
+                                             "Received Transcript."])
     return aliceCli
 
 
@@ -475,22 +470,22 @@ def testShowFaberClaimPostReqClaim(be, do, aliceCli,
                                    transcriptClaimValueMap, rcvdClaimOut):
     be(aliceCli)
     do("show claim {name}",
-                                        expect=rcvdClaimOut,
-                                        mapper=transcriptClaimValueMap)
+                                    expect=rcvdClaimOut,
+                                    mapper=transcriptClaimValueMap)
 
 
 def testShowAcmeInvite(be, do, aliceCli, acmeMap):
     be(aliceCli)
     inviteContents = getFileLines(acmeMap.get("invite"))
 
-    do('show {invite}',                 expect=inviteContents,
-                                        mapper=acmeMap)
+    do('show {invite}',             expect=inviteContents,
+                                    mapper=acmeMap)
 
 
 @pytest.fixture(scope="module")
 def acmeInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, acmeMap):
     be(aliceCli)
-    do('load {invite}',                 expect=loadInviteOut, mapper=acmeMap)
+    do('load {invite}',             expect=loadInviteOut, mapper=acmeMap)
     link = aliceCli.activeWallet.getLinkInvitation(acmeMap.get("inviter"))
     link.remoteEndPoint = acmeMap.get(ENDPOINT)
     return aliceCli
@@ -505,8 +500,8 @@ def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
     showUnSyncedLinkWithClaimReqs = \
         showUnSyncedLinkOut + showLinkWithClaimReqOut
     be(aliceCli)
-    do('show link {inviter}',           expect=showUnSyncedLinkWithClaimReqs,
-                                        mapper=acmeMap)
+    do('show link {inviter}',       expect=showUnSyncedLinkWithClaimReqs,
+                                    mapper=acmeMap)
 
 
 @pytest.fixture(scope="module")
@@ -514,12 +509,12 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                      nymAddedOut, acmeMap):
     be(philCli)
     if not philCli._isConnectedToAnyEnv():
-        do('connect test',              within=3,
-                                        expect=connectedToTest, mapper=acmeMap)
+        do('connect test',          within=3,
+                                    expect=connectedToTest, mapper=acmeMap)
 
     do('send NYM dest={target} role=SPONSOR',
-                                        within=3,
-                                        expect=nymAddedOut, mapper=acmeMap)
+                                    within=3,
+                                    expect=nymAddedOut, mapper=acmeMap)
     return philCli
 
 
@@ -546,16 +541,16 @@ def testShowAcmeLinkAfterInviteAccept(be, do, aliceCli, acmeMap,
 
     be(aliceCli)
 
-    do("show link {inviter}",           expect=showAcceptedLinkWithoutAvailableClaimsOut,
-                                        not_expect="Link (not yet accepted)",
-                                        mapper=acmeMap)
+    do("show link {inviter}",       expect=showAcceptedLinkWithoutAvailableClaimsOut,
+                                    not_expect="Link (not yet accepted)",
+                                    mapper=acmeMap)
 
 
 def testShowClaimReqNotExists(be, do, aliceCli, acmeMap, claimReqNotExists):
     be(aliceCli)
     do("show claim request claim-req-to-show-not-exists",
-                                        expect=claimReqNotExists,
-                                        mapper=acmeMap)
+                                    expect=claimReqNotExists,
+                                    mapper=acmeMap)
 
 
 def testShowJobApplicationClaimReq(be, do, aliceCli, acmeMap,
@@ -574,13 +569,13 @@ def testShowJobApplicationClaimReq(be, do, aliceCli, acmeMap,
     mapping.update(jobApplicationClaimReqMap)
     mapping.update(transcriptClaimAttrValueMap)
     do("show claim request {claim-req-to-show}",
-                                        expect=showJobAppClaimReqOut,
-                                        mapper=mapping)
+                                    expect=showJobAppClaimReqOut,
+                                    mapper=mapping)
 
 
 def testSetAttrWithoutContext(be, do, faberCli):
     be(faberCli)
-    do("set first_name to Alice",       expect=[
+    do("set first_name to Alice",   expect=[
                                             "No context, "
                                             "use below command to "
                                             "set the context"])
@@ -602,15 +597,15 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli, acmeMap,
     mapping.update(jobApplicationClaimReqMap)
     mapping.update(transcriptClaimAttrValueMap)
     do("show claim request {claim-req-to-show}",
-                                        expect=showJobAppClaimReqOut,
-                                        mapper=mapping)
+                                    expect=showJobAppClaimReqOut,
+                                    mapper=mapping)
     do("set first_name to Alice")
     mapping.update({
         "set-attr-first_name": "Alice"
     })
     do("show claim request {claim-req-to-show}",
-                                        expect=showJobAppClaimReqOut,
-                                        mapper=mapping)
+                                    expect=showJobAppClaimReqOut,
+                                    mapper=mapping)
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
@@ -628,8 +623,8 @@ def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
     aliceCli.sendToAgent(msg, (ip, int(port)))
 
     be(aliceCli)
-    do(None,                            within=3,
-                                        expect=["Error (Signature Rejected) "
+    do(None,                        within=3,
+                                    expect=["Error (Signature Rejected) "
                                                 "occurred while "
                                                 "processing this msg: ".
                                                 format(msg)])
@@ -650,10 +645,10 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
     aliceCli.sendToAgent(msg, (ip, int(port)))
 
     be(aliceCli)
-    do(None,                            within=3,
-                                        expect=["Error (No Such Link found) "
-                                                "occurred while "
-                                                "processing this msg: {}".
+    do(None,                        within=3,
+                                    expect=["Error (No Such Link found) "
+                                            "occurred while "
+                                            "processing this msg: {}".
                                                 format(msg)])
 
 

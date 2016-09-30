@@ -7,10 +7,10 @@ from typing import Tuple
 
 import asyncio
 
+from plenum.common.log import getlogger
 from plenum.common.looper import Looper
+from plenum.common.port_dispenser import genHa
 from plenum.common.types import Identifier
-from plenum.test.helper import genHa
-
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import ensureReqCompleted
@@ -24,7 +24,7 @@ from plenum.common.motor import Motor
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger, \
+from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \

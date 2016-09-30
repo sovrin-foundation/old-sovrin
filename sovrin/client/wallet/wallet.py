@@ -65,10 +65,9 @@ class Wallet(PWallet, Sponsoring):
         self._credDefs = {}         # type: Dict[(str, str, str), CredDef]
         self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
-        # self._links = {}            # type: Dict[str, Link]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         # TODO Rename to `_links`
-        self._linkInvitations = {}  # type: Dict[str, Link]
+        self._links = {}  # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
         self._issuerSks = {}
@@ -109,7 +108,7 @@ class Wallet(PWallet, Sponsoring):
         matchingLinkAndRcvdClaim = []
         matched = []
 
-        for k, li in self._linkInvitations.items():
+        for k, li in self._links.items():
             for rc in li.receivedClaims.values():
                 commonAttr = (set(attributes.keys()) - set(matched)).\
                     intersection(rc.values.keys())
@@ -122,7 +121,7 @@ class Wallet(PWallet, Sponsoring):
     # TODO: Few of the below methods have duplicate code, need to refactor it
     def getMatchingLinksWithAvailableClaim(self, claimName):
         matchingLinkAndAvailableClaim = []
-        for k, li in self._linkInvitations.items():
+        for k, li in self._links.items():
             for ac in li.availableClaims.values():
                 if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
                     matchingLinkAndAvailableClaim.append((li, ac))
@@ -130,7 +129,7 @@ class Wallet(PWallet, Sponsoring):
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
-        for k, li in self._linkInvitations.items():
+        for k, li in self._links.items():
             for rc in li.receivedClaims.values():
                 if Wallet._isMatchingName(rc.defKey.name, claimName):
                     matchingLinkAndReceivedClaim.append((li, rc))
@@ -138,7 +137,7 @@ class Wallet(PWallet, Sponsoring):
 
     def getMatchingLinksWithClaimReq(self, claimReqName):
         matchingLinkAndClaimReq = []
-        for k, li in self._linkInvitations.items():
+        for k, li in self._links.items():
             for cr in li.claimRequests:
                 if Wallet._isMatchingName(cr.name, claimReqName):
                     matchingLinkAndClaimReq.append((li, cr))
@@ -380,19 +379,19 @@ class Wallet(PWallet, Sponsoring):
         self._pending.appendleft((req, key))
 
     def addLinkInvitation(self, linkInvitation):
-        self._linkInvitations[linkInvitation.name] = linkInvitation
+        self._links[linkInvitation.name] = linkInvitation
 
     def getLinkInvitationByTarget(self, target: str) -> Link:
-        for k, li in self._linkInvitations.items():
+        for k, li in self._links.items():
             if li.remoteIdentifier == target:
                 return li
 
     def getLinkInvitation(self, name: str):
-        return self._linkInvitations.get(name)
+        return self._links.get(name)
 
     def getMatchingLinkInvitations(self, name: str):
         allMatched = []
-        for k, v in self._linkInvitations.items():
+        for k, v in self._links.items():
             if name == k or name.lower() in k.lower():
                 allMatched.append(v)
         return allMatched
@@ -434,7 +433,7 @@ class Wallet(PWallet, Sponsoring):
         return self.preparePending()[0]
 
     def getLinkByNonce(self, nonce) -> Optional[Link]:
-        for _, li in self._linkInvitations.items():
+        for _, li in self._links.items():
             if li.nonce == nonce:
                 return li
 

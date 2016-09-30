@@ -4,9 +4,10 @@ import base58
 import libnacl.public
 import pytest
 from plenum.client.signer import SimpleSigner
+from plenum.common.log import getlogger
 from plenum.common.txn import REQNACK, ENC, DATA
 from plenum.common.types import f, OP_FIELD_NAME
-from plenum.common.util import adict, getlogger
+from plenum.common.util import adict
 from plenum.test.eventually import eventually
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
@@ -19,9 +20,6 @@ from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
     makeAttribRequest, makeGetNymRequest, addAttributeAndCheck
 
 logger = getlogger()
-
-
-# TODO use wallet instead of SimpleSigner in client
 
 
 def checkNacks(client, reqId, contains='', nodeCount=4):
@@ -402,7 +400,6 @@ def testNonSponsoredNymCanDoGetNym(genned, addedSponsor,
     looper.run(someClient.ensureConnectedToNodes())
     needle = sponsorWallet.defaultId
     makeGetNymRequest(someClient, wallet, needle)
-    # someClient.doGetNym(needle)
     looper.run(eventually(someClient.hasNym, needle, retryWait=1, timeout=5))
 
 

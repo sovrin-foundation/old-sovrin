@@ -12,22 +12,18 @@ import pyorient
 from raet.raeting import AutoMode
 
 from plenum.common.error import fault
+from plenum.common.log import getlogger
 from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
-from plenum.common.txn import REPLY, STEWARD, ENC, HASH, RAW, NAME, VERSION,\
-    KEYS, TYPE, IP, PORT, REQACK
-from sovrin.common.types import Request
+from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK
 from plenum.common.types import OP_FIELD_NAME, f, HA
-from plenum.common.util import getlogger, getSymmetricallyEncryptedVal, \
-    libnacl, error
+from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, TXN_ID, TARGET_NYM, SKEY,\
-    DISCLO, NONCE, GET_ATTR, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, GET_TXN, CRED_DEF, GET_CRED_DEF, \
-    GET_ISSUER_KEY, ISSUER_KEY
+from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \

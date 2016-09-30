@@ -28,7 +28,7 @@ pip-delete-this-directory.txt
 pip-selfcheck.json
 
 # CLI logs
-cli.log
+cli.log*
 cli_output.log
 
 # testing / coverage reports

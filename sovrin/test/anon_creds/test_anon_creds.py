@@ -1,7 +1,8 @@
 # The following setup of logging needs to happen before everything else
 import pytest
-from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL, \
-    DemoHandler
+
+from plenum.common.log import DISPLAY_LOG_LEVEL, setupLogging, \
+    DemoHandler, getlogger
 from plenum.test.eventually import eventually
 from sovrin.client.wallet.cred_def import CredDef
 

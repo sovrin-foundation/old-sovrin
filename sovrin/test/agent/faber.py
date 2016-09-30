@@ -1,9 +1,9 @@
 import os
 import random
 
+from plenum.common.log import getlogger
 from plenum.common.txn import NAME
 from plenum.common.txn import VERSION
-from plenum.common.util import getlogger
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
