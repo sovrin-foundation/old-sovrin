@@ -357,20 +357,30 @@ class SovrinCli(PlenumCli):
 
     def _addNym(self, nym, role, other_client_name=None):
         idy = Identity(nym, role=role)
-        self.activeWallet.addSponsoredIdentity(idy)
-        reqs = self.activeWallet.preparePending()
-        req, = self.activeClient.submitReqs(*reqs)
-        printStr = "Adding nym {}".format(nym)
+        alreadyAdded = False
+        try:
+            self.activeWallet.addSponsoredIdentity(idy)
+        except Exception as e:
+            if e.args[0] == 'identifier already added':
+                alreadyAdded = True
+            else:
+                raise e
+        if alreadyAdded:
+            self.print("Identity already added.")
+        else:
+            reqs = self.activeWallet.preparePending()
+            req, = self.activeClient.submitReqs(*reqs)
+            printStr = "Adding nym {}".format(nym)
 
-        if other_client_name:
-            printStr = printStr + " for " + other_client_name
-        self.print(printStr)
+            if other_client_name:
+                printStr = printStr + " for " + other_client_name
+            self.print(printStr)
 
-        def out(reply, error):
-            self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+            def out(reply, error):
+                self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                    req.reqId, self.activeClient, out)
+            self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                        req.reqId, self.activeClient, out)
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
