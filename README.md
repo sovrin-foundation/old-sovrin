@@ -15,7 +15,8 @@ separately. Read below to see how.
 Sovrin also depends on a crypto library. The default configuration includes an example that uses Charm-Crypto. Instructions for installing Charm-Crypto can be found here: https://jhuisi.github.io/charm/install_source.html.
 
 ### Installing Sovrin
-Check out this repo. Navigate to the root directory of the local repo and install Sovrin.
+Check out this repo. Navigate to the root directory of the local repo and install Sovrin. Sovrin requires anonymous credentials library which requires a cryptographic framework called charm-crypto. 
+The steps to install charm-crypto are mentioned in our [Anonymous Credentials](https://github.com/evernym/anoncreds) repository. You just have to run `setup-charm.sh` script. It will require sudo privileges on the system.  
 
 ```
 pip install -e .
@@ -29,11 +30,13 @@ Note: For Windows, we recommended using either [cmder](http://cmder.net/) or [co
 sovrin
 ```
 
-...or run the tests.
+...or run the tests. 
 
 ```
 python -m sovrin.test
 ```
+Note. The tests create Sovrin nodes (dont worry, all nodes are created in the same process) which require OrientDB to be running. You can install OrientDB from [here](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-orientdb-on-ubuntu-14-04).
+
 
 ### Installing python 3.5 and libsodium:
 
@@ -146,7 +149,7 @@ source <name of virtual environment>/bin/activate
 
 
 A Sovrin node requires OrientDB running
-Refer https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-orientdb-on-ubuntu-14-04 for installing Orient DB
+Refer this [guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-orientdb-on-ubuntu-14-04) for installing Orient DB
 
 A Sovrin client can be configured to use flat files or OrientDB for persistence. To use files instead of OrientDB you need to add 2 entries 
 in your configuration located at `~/.sovrin/sovrin_config.py`
