@@ -800,12 +800,6 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
-    def printUsage(self, msgs):
-        self.print("\nUsage:")
-        for m in msgs:
-            self.print('  {}'.format(m))
-        self.print("\n")
-
     def _loadInvitation(self, invitationData):
         # TODO: Lets not assume that the invitation file would contain these
         # keys. Let have a link file validation method
@@ -1587,14 +1581,6 @@ class SovrinCli(PlenumCli):
             return False
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
-            return False
-        return True
-
-    @property
-    def hasAnyKey(self):
-        if not self.activeWallet.defaultId:
-            self.print("No key present in keyring")
-            self.printUsage("new key")
             return False
         return True
 
