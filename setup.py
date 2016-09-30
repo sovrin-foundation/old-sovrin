@@ -62,7 +62,8 @@ setup(
     data_files=[(
         (BASE_DIR, ['data/pool_transactions_sandbox', ])
     )],
-    install_requires=['base58', 'pyorient', 'plenum', 'ledger', 'semver'],
+    install_requires=['base58', 'pyorient', 'plenum', 'ledger', 'semver',
+                      'anoncreds'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest==3.0.2'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
