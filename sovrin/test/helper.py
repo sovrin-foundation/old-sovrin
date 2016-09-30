@@ -209,17 +209,6 @@ class Organization:
         self.wallet = Wallet(self.client)  # created only once per organization
         self.userWallets = {}  # type: Dict[str, Wallet]
 
-    # @property
-    # def client(self):
-    #     if self._client is None:
-    #         self._client = genTestClient(
-    # nodeReg=self.s.nodeReg.extractCliNodeReg(), tmpdir=self.s.tmpdir)
-    #         self.s.looper.addNextable(self._client)
-    #     return self._client
-
-    # def createUserWallet(self, userId: str):
-    #     self.userWallets[userId] = UserWallet(self.client)
-
     def removeUserWallet(self, userId: str):
         if userId in self.userWallets:
             del self.userWallets[userId]
@@ -433,12 +422,6 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
          assert creatorWallet._sponsored[nym].seqNo
 
     looper.run(eventually(check, timeout=2))
-    #
-    # return submitAndCheck(looper,
-    #                       creatorClient,
-    #                       creatorWallet,
-    #                       op,
-    #                       identifier=identifier)[0]
 
 
 def addUser(looper, creatorClient, creatorWallet, name):
@@ -474,16 +457,6 @@ def submitAndCheck(looper, client, wallet, op, identifier=None):
     reqs = wallet.preparePending()
     client.submitReqs(*reqs)
     return checkSubmitted(looper, client, optype, txnsBefore)
-
-
-# def addNym(ha, looper, nym, sponsNym, sponsor):
-#     op = {
-#         TARGET_NYM: nym,
-#         TXN_TYPE: NYM,
-#         ROLE: USER,
-#         DATA: json.dumps({'ha': ha})
-#     }
-#     submitAndCheck(looper, sponsor, op, identifier=sponsNym)
 
 
 def makePendingTxnsRequest(client, wallet):
