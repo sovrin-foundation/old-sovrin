@@ -131,7 +131,6 @@ class SovrinCli(PlenumCli):
             'show_file',
             'conn'
             'load_file',
-            'load_resp_file',  # TODO: temporary until agent thing is working
             'show_link',
             'sync_link',
             'show_claim',
@@ -211,7 +210,6 @@ class SovrinCli(PlenumCli):
                         self._genCredAction,
                         self._showFile,
                         self._loadFile,
-                        self._loadResponseFile,
                         self._showLink,
                         self._connectTo,
                         self._syncLink,
@@ -841,30 +839,13 @@ class SovrinCli(PlenumCli):
                   claimRequests, invitationData=invitationData)
         self.activeWallet.addLinkInvitation(li)
 
-    # TODO: This is tempoary, until agent is working
-    def _loadResponseFile(self, matchedVars):
-        if matchedVars.get('load_resp_file') == 'load response':
-            givenFilePath = matchedVars.get('file_path')
-            filePath = SovrinCli._getFilePath(givenFilePath)
-            if not filePath:
-                self.print("Given file does not exist")
-                msgs = ['load response <file path>']
-                self.printUsage(msgs)
-                return True
-
-            with open(filePath) as data_file:
-                respData = json.load(
-                    data_file, object_pairs_hook=collections.OrderedDict)
-                self.handleEndpointMessage(respData)
-            return True
-
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
             givenFilePath = matchedVars.get('file_path')
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exist")
-                msgs = ['show <file path>', 'load <file path>']
+                msgs = ['show <file-path>', 'load <file-path>']
                 self.printUsage(msgs)
                 return True
 
@@ -1092,7 +1073,7 @@ class SovrinCli(PlenumCli):
         self.printUsage(msgs)
 
     def _printShowAndLoadFileUsage(self):
-        msgs = ['show <link file path>', 'load <link file path>']
+        msgs = ['show <file-path>', 'load <file-path>']
         self.printUsage(msgs)
 
     def _printNoLinkFoundMsg(self):
@@ -1367,7 +1348,7 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exist")
-                msgs = ['show <file path>']
+                msgs = ['show <file-path>']
                 self.printUsage(msgs)
             else:
                 with open(filePath, 'r') as fin:
