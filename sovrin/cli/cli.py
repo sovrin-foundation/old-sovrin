@@ -978,7 +978,6 @@ class SovrinCli(PlenumCli):
                                value=None,
                                dest=nym,
                                ledgerStore=LedgerStore.RAW)
-            # req = attrib.getRequest(self.activeWallet.defaultId)
             req = self.activeWallet.requestAttribute(
                 attrib, sender=self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)

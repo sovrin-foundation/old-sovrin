@@ -1,8 +1,8 @@
 from typing import Dict, Union, Tuple
 
 from plenum.client.signer import Signer
+from plenum.common.log import getlogger
 from plenum.common.types import HA
-from plenum.common.util import getlogger
 
 from sovrin.client.client import Client
 

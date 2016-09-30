@@ -1,8 +1,8 @@
 import os
 import random
 
-from plenum.common.txn import NAME, VERSION
-from plenum.common.util import getlogger
+from plenum.common.log import getlogger
+from plenum.common.txn import NAME
 
 from anoncreds.test.conftest import staticPrimes
 

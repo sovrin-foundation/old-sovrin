@@ -5,13 +5,13 @@ import tempfile
 import logging
 
 # The following setup of logging needs to happen before everything else
+from plenum.common.log import getlogger
 from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.issuer import InMemoryAttrRepo
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
 
 from plenum.common.txn_util import createGenesisTxnFile
-from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
 from ioflo.aid.consoling import Console
 
 logging.root.handlers = []

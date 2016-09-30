@@ -7,10 +7,11 @@ from typing import Dict, Optional
 
 from ledger.util import F
 from plenum.common.error import fault
+from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
     DATA, RAW, ENC, HASH, ORIGIN
 from plenum.common.types import f
-from plenum.common.util import getlogger, error
+from plenum.common.util import error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
     STEWARD, ROLE, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF, isValidRole, \

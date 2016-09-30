@@ -8,6 +8,7 @@ from typing import Iterable, Union, Tuple
 
 import pyorient
 
+from plenum.common.log import getlogger
 from sovrin.anon_creds.issuer import Issuer
 from sovrin.anon_creds.prover import Prover
 from sovrin.anon_creds.verifier import Verifier
@@ -16,7 +17,7 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK, DATA
 from plenum.common.types import HA, Identifier
-from plenum.common.util import getMaxFailures, runall, getlogger
+from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
