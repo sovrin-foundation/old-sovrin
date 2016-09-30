@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+mv setup.py setup-st.py
+mv setup-dev.py setup.py
+
+python setup.py register -r pypitest
+python setup.py sdist upload -r pypitest
+
+python setup.py register -r pypi
+python setup.py sdist upload -r pypi
+
+mv setup.py setup-dev.py
+mv setup-st.py setup.py
