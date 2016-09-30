@@ -12,6 +12,7 @@ from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from sovrin.cli.helper import NEXT_AVAILABLE_COMMAND_USAGE
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
@@ -190,12 +191,12 @@ def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
 
 @pytest.fixture(scope="module")
 def usageLine():
-    return ["Usage:"]
+    return [NEXT_AVAILABLE_COMMAND_USAGE]
 
 
 @pytest.fixture(scope="module")
 def connectUsage(usageLine):
-    return usageLine + ["  connect (live|test)"]
+    return usageLine + ["connect (live|test)"]
 
 
 @pytest.fixture(scope="module")

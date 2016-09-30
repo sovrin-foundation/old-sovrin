@@ -34,7 +34,8 @@ from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
-from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted
+from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted, \
+    NEXT_AVAILABLE_COMMAND_USAGE
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ReceivedClaim
@@ -802,8 +803,8 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
-    def printUsage(self, msgs):
-        self.print("\nUsage:")
+    def printUsage(self, *msgs):
+        self.print("\n{}".format(NEXT_AVAILABLE_COMMAND_USAGE))
         for m in msgs:
             self.print('  {}'.format(m))
         self.print("\n")
@@ -939,21 +940,21 @@ class SovrinCli(PlenumCli):
         }
 
     def _pingToEndpoint(self, endPoint):
-        self.print("Ping to target endpoint: {} [Not Yet Implemented]".
-                   format(endPoint))
+        self.print("Pinging target endpoint: {}".format(endPoint))
+        self.print("    [Not Yet Implemented]")
 
     def _updateLinkWithLatestInfo(self, link: Link, reply):
         data = json.loads(reply.get(DATA))
         endPoint = data.get('endpoint')
         if endPoint:
             link.remoteEndPoint = endPoint
-            self.print('Endpoint received: {}'.format(endPoint))
+            self.print('    Endpoint received: {}'.format(endPoint))
             link.linkLastSynced = datetime.datetime.now()
-            self.print("Link {} synced".format(link.name))
+            self.print("    Link {} synced".format(link.name))
             self._pingToEndpoint(endPoint)
         else:
             link.remoteEndPoint = constant.NOT_AVAILABLE
-            self.print('Endpoint not available')
+            self.print('    Endpoint not available')
         self.activeWallet.addLinkInvitation(link)
 
     def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
@@ -971,7 +972,7 @@ class SovrinCli(PlenumCli):
 
     def _getTargetEndpoint(self, li, postSync):
         if self._isConnectedToAnyEnv():
-            self.print("Synchronizing...")
+            self.print("    Synchronizing...")
             nym = getCryptonym(li.remoteIdentifier)
             # req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
             attrib = Attribute(name=ENDPOINT,
@@ -1093,7 +1094,7 @@ class SovrinCli(PlenumCli):
         self.printUsage(msgs)
 
     def _printShowAndLoadFileUsage(self):
-        msgs = ['show <link file path>', 'load <link file path>']
+        msgs = ['show <link-file-path>', 'load <link-file-path>']
         self.printUsage(msgs)
 
     def _printNoLinkFoundMsg(self):
@@ -1413,7 +1414,7 @@ class SovrinCli(PlenumCli):
                     self.envs[envName].domainLedger
                 self.activeEnv = envName
                 self._buildClientIfNotExists(config)
-                self.print("Connecting to {}".format(envName), Token.BoldGreen)
+                self.print("Connecting to {}...".format(envName), Token.BoldGreen)
                 # Prompt has to be changed, so it show the environment too
                 self._setPrompt(self.currPromptText)
                 self.ensureClientConnected()

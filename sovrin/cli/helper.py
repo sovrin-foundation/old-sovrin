@@ -64,6 +64,7 @@ Environment = NamedTuple("Environment", [
     ("domainLedger", str)
 ])
 
+NEXT_AVAILABLE_COMMAND_USAGE = "Usage:"
 
 def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
     reply, err = client.replyIfConsensus(reqId)
