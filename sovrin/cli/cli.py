@@ -1043,7 +1043,7 @@ class SovrinCli(PlenumCli):
         self._sendReqToTargetEndpoint(op, link)
 
     def _acceptLinkPostSync(self, link: Link):
-        if link.isRemoteEndpointAvailable():
+        if link.isRemoteEndpointAvailable:
             self._sendAcceptInviteToTargetEndpoint(link)
         else:
             self.print("Remote endpoint not found, "
@@ -1052,7 +1052,7 @@ class SovrinCli(PlenumCli):
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
         if li:
-            if li.isAccepted():
+            if li.isAccepted:
                 self._printLinkAlreadyExcepted(li.name)
             else:
                 self.print("Invitation not yet verified.")
@@ -1063,7 +1063,7 @@ class SovrinCli(PlenumCli):
                     self.print("Attempting to sync...")
                     self._getTargetEndpoint(li, self._acceptLinkPostSync)
                 else:
-                    if li.isRemoteEndpointAvailable():
+                    if li.isRemoteEndpointAvailable:
                         self._sendAcceptInviteToTargetEndpoint(li)
                     else:
                         self.print("Invitation acceptance aborted.")
@@ -1163,8 +1163,8 @@ class SovrinCli(PlenumCli):
                 if li.name != linkName:
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
 
-                self.print("{}".format(li.getLinkInfoStr()))
-                if li.isAccepted():
+                self.print("{}".format(str(li)))
+                if li.isAccepted:
                     self._printShowAndReqClaimUsage(li.availableClaims.values())
                 else:
                     self._printSyncAndAcceptUsage(li.name)
