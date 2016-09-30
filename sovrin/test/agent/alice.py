@@ -2,9 +2,11 @@ import json
 from typing import Dict
 
 import os
+
+from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.txn import TYPE
-from plenum.common.util import getlogger, randomString
+from plenum.common.util import randomString
 from plenum.test.helper import genHa
 from sovrin.agent.agent import Agent
 from sovrin.agent.helper import processInvAccept

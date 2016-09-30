@@ -1,9 +1,10 @@
 from typing import Callable, Any, List, Dict, Tuple
 
+from plenum.common.log import getlogger
 from plenum.common.raet import getHaFromLocalEstate
 from plenum.common.stacked import SimpleStack
 from plenum.common.types import HA
-from plenum.common.util import getlogger, randomString
+from plenum.common.util import randomString
 from raet.raeting import AutoMode
 from raet.road.estating import RemoteEstate
 

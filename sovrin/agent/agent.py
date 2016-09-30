@@ -7,7 +7,9 @@ from typing import Tuple
 
 import asyncio
 
+from plenum.common.log import getlogger
 from plenum.common.looper import Looper
+from plenum.common.port_dispenser import genHa
 from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
@@ -22,8 +24,8 @@ from plenum.common.motor import Motor
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, isHex, cryptonymToHex, getlogger, \
-    randomString, genHa
+from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
+    randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
     ACCEPT_INVITE, REQUEST_CLAIM_ATTRS, CLAIM_ATTRS
@@ -558,7 +560,6 @@ class WalletedAgent(Agent):
                            seqNo=issuerKeySeqNo)
         key = (wallet.defaultId, credDefSeqNo)
         wallet._issuerPks[key] = ipk
-
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,

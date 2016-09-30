@@ -12,11 +12,12 @@ from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
+from plenum.common.log import getlogger
 from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, ORIGIN
 from sovrin.common.types import Request
 from plenum.common.types import Reply, RequestAck, RequestNack, f, \
     NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
-from plenum.common.util import getlogger, error
+from plenum.common.util import error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import TXN_TYPE, \
