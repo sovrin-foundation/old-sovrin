@@ -528,8 +528,7 @@ class WalletedAgent(Agent):
 
     def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
-        loop = asyncio.get_event_loop()
-        ensureReqCompleted(loop, req.reqId, self.client, clbk, *args)
+        ensureReqCompleted(self.loop, req.reqId, self.client, clbk, *args)
 
     def _getClaimsAttrsFor(self, nonce, attrNames):
         res = {}
@@ -539,7 +538,7 @@ class WalletedAgent(Agent):
                 res[nm] = attributes.get(nm)
         return res
 
-    def addClaimDefsToWallet(self, name, version, attrNames,
+    def addClaimDefs(self, name, version, attrNames,
                              staticPrime, credDefSeqNo, issuerKeySeqNo):
         csk = CredDefSecretKey(*staticPrime)
         sid = self.wallet.addCredDefSk(str(csk))

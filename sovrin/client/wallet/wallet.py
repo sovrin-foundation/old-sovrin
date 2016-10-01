@@ -67,7 +67,7 @@ class Wallet(PWallet, Sponsoring):
         self._credentials = {}      # type: Dict[str, Credential]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
         # TODO Rename to `_links`
-        self._links = {}  # type: Dict[str, Link]
+        self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
         self._issuerSks = {}

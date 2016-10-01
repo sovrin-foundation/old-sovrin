@@ -106,7 +106,7 @@ class FaberAgent(WalletedAgent):
         credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
         staticPrime = staticPrimes().get("prime1")
         attrNames = ["student_name", "ssn", "degree", "year", "status"]
-        super().addClaimDefsToWallet(name=name,
+        super().addClaimDefs(name=name,
                                      version=version,
                                      attrNames=attrNames,
                                      staticPrime=staticPrime,

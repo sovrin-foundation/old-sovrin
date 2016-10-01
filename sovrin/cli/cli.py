@@ -355,31 +355,26 @@ class SovrinCli(PlenumCli):
 
     def _addNym(self, nym, role, other_client_name=None):
         idy = Identity(nym, role=role)
-        alreadyAdded = False
         try:
             self.activeWallet.addSponsoredIdentity(idy)
         except Exception as e:
             if e.args[0] == 'identifier already added':
-                alreadyAdded = True
+                pass
             else:
                 raise e
-        if alreadyAdded:
-            self.print("Identity already added.")
-        else:
-            reqs = self.activeWallet.preparePending()
-            req, = self.activeClient.submitReqs(*reqs)
-            printStr = "Adding nym {}".format(nym)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
+        printStr = "Adding nym {}".format(nym)
 
-            if other_client_name:
-                printStr = printStr + " for " + other_client_name
-            self.print(printStr)
+        if other_client_name:
+            printStr = printStr + " for " + other_client_name
+        self.print(printStr)
 
-            def out(reply, error):
-                self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+        def out(reply, error):
+            self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
-            self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.reqId, self.activeClient, out)
-        return True
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                    req.reqId, self.activeClient, out)
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
         assert int(bool(raw)) + int(bool(enc)) + int(bool(hsh)) == 1
@@ -811,7 +806,7 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
-    def printUsage(self, *msgs):
+    def printUsage(self, msgs):
         self.print("\n{}".format(NEXT_AVAILABLE_COMMAND_USAGE))
         for m in msgs:
             self.print('  {}'.format(m))
@@ -931,8 +926,8 @@ class SovrinCli(PlenumCli):
         }
 
     def _pingToEndpoint(self, endPoint):
-        self.print("Pinging target endpoint: {}".format(endPoint))
-        self.print("    [Not Yet Implemented]")
+        self.print("    Pinging target endpoint: {}".format(endPoint))
+        self.print("        [Not Yet Implemented]")
 
     def _updateLinkWithLatestInfo(self, link: Link, reply):
         data = json.loads(reply.get(DATA))
@@ -1605,7 +1600,7 @@ class SovrinCli(PlenumCli):
     def hasAnyKey(self):
         if not self.activeWallet.defaultId:
             self.print("No key present in keyring")
-            self.printUsage("new key")
+            self.printUsage(["new key"])
             return False
         return True
 

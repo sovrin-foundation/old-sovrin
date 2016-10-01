@@ -65,6 +65,7 @@ Environment = NamedTuple("Environment", [
 
 NEXT_AVAILABLE_COMMAND_USAGE = "Usage:"
 
+
 def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
     reply, err = client.replyIfConsensus(reqId)
     if reply is None:
