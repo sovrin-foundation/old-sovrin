@@ -196,7 +196,7 @@ def usageLine():
 
 @pytest.fixture(scope="module")
 def connectUsage(usageLine):
-    return usageLine + ["connect (live|test)"]
+    return usageLine + ["connect <test|live>"]
 
 
 @pytest.fixture(scope="module")
@@ -500,7 +500,7 @@ def showClaimOut(usageLine):
             "year: {attr-year}",
             "status: {attr-status}"
             ] + usageLine + \
-           ["request claim {name}"]
+           ['request claim "{name}"']
 
 
 @pytest.fixture(scope="module")
@@ -521,6 +521,7 @@ def showAcceptedLinkWithClaimReqsOut(showAcceptedLinkOut,
            showLinkWithAvailableClaimsOut +\
            showLinkUsage
 
+
 @pytest.fixture(scope="module")
 def showAcceptedLinkWithoutAvailableClaimsOut(showAcceptedLinkOut,
                                         showLinkWithClaimReqOut,
@@ -531,8 +532,8 @@ def showAcceptedLinkWithoutAvailableClaimsOut(showAcceptedLinkOut,
 @pytest.fixture(scope="module")
 def showLinkUsage(usageLine):
     return usageLine + \
-    ['show claim {claims}',
-     'request claim {claims}']
+    ['show claim "{claims}"',
+     'request claim "{claims}"']
 
 
 @pytest.fixture(scope="module")

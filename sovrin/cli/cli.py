@@ -222,15 +222,49 @@ class SovrinCli(PlenumCli):
                         ])
         return actions
 
+    def _getShowFileUsage(self, filePath=None):
+        return ['show {}'.format(filePath or "<file-path>")]
+
+    def _getLoadFileUsage(self, filePath=None):
+        return ['load {}'.format(filePath or "<file-path>")]
+
+    def _getShowClaimReqUsage(self, claimReqName=None):
+        return ['show claim request "{}"'.format(
+            claimReqName or '<claim-request-name>')]
+
+    def _getShowClaimUsage(self, claimName=None):
+        return ['show claim "{}"'.format(claimName or "<claim-name>")]
+
+    def _getReqClaimUsage(self, claimName=None):
+        return ['request claim "{}"'.format(claimName or "<claim-name>")]
+
+    def _getShowLinkUsage(self, linkName=None):
+        return ['show link "{}"'.format(linkName or "<link-name>")]
+
+    def _getSyncLinkUsage(self, linkName=None):
+        return ['sync "{}"'.format(linkName or "<link-name>")]
+
+    def _getAcceptLinkUsage(self, linkName=None):
+        return ['accept invitation from "{}"'.format(linkName or "<link-name>")]
+
+    def _getPromptUsage(self):
+        return ["prompt <principal name>"]
+
+    @property
+    def allEnvNames(self):
+        return "|".join(sorted(self.envs.keys(),reverse=True))
+
+    def _getConnectUsage(self):
+        return ["connect <{}>".format(self.allEnvNames)]
+
     def _printShowClaimReqUsage(self):
-        msgs = ['show claim request <claim-request-name>']
-        self.printUsage(msgs)
+        self.printUsage(self._getShowClaimReqUsage())
 
     def _printShowAndReqClaimUsage(self, availableClaims):
         claimName = "|".join([cl.claimDefKey.name for cl in availableClaims])
         claimName = claimName or "<claim-name>"
-        msgs = ['show claim {}'.format(claimName),
-                'request claim {}'.format(claimName)]
+        msgs = self._getShowClaimUsage(claimName) + \
+               self._getReqClaimUsage(claimName)
         self.printUsage(msgs)
 
     def sendToAgent(self, msg: Any, endpoint: Tuple):
@@ -271,8 +305,7 @@ class SovrinCli(PlenumCli):
         self._printConnectUsage()
 
     def _printConnectUsage(self):
-        msgs = ["connect ({})".format("|".join(sorted(self.envs.keys())))]
-        self.printUsage(msgs)
+        self.printUsage(self._getConnectUsage())
 
     def newClient(self, clientName,
                   config=None):
@@ -375,6 +408,7 @@ class SovrinCli(PlenumCli):
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient, out)
+        return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
         assert int(bool(raw)) + int(bool(enc)) + int(bool(hsh)) == 1
@@ -806,6 +840,9 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
+    def printSuggestion(self, msgs):
+        self.printUsage(msgs)
+
     def printUsage(self, msgs):
         self.print("\n{}".format(NEXT_AVAILABLE_COMMAND_USAGE))
         for m in msgs:
@@ -851,7 +888,7 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exist")
-                msgs = ['show <file-path>', 'load <file-path>']
+                msgs = self._getShowFileUsage() + self._getLoadFileUsage()
                 self.printUsage(msgs)
                 return True
 
@@ -1018,7 +1055,7 @@ class SovrinCli(PlenumCli):
             "claimDefSeqNo": claim.claimDefSeqNo
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
-        op['signature'] = signature
+        op[f.SIG.nm] = signature
         # ip, port = link.remoteEndPoint.split(":")
         self._sendReqToTargetEndpoint(op, link)
 
@@ -1066,21 +1103,21 @@ class SovrinCli(PlenumCli):
         return name.replace('"', '')
 
     def _printSyncAndAcceptUsage(self, linkName):
-        msgs = ['sync "{}"'.format(linkName),
-                'accept invitation from "{}"'.format(linkName)]
-        self.printUsage(msgs)
+        msgs = self._getSyncLinkUsage(linkName) + \
+               self._getAcceptLinkUsage(linkName)
+        self.printSuggestion(msgs)
 
     def _printLinkAlreadyExcepted(self, linkName):
         self.print("Link {} is already accepted".format(linkName))
 
     def _printShowAndAcceptLinkUsage(self, linkName):
-        msgs = ['show link "{}"'.format(linkName),
-                'accept invitation from "{}"'.format(linkName)]
-        self.printUsage(msgs)
+        msgs = self._getShowLinkUsage(linkName) + \
+               self._getAcceptLinkUsage(linkName)
+        self.printSuggestion(msgs)
 
     def _printShowAndLoadFileUsage(self):
-        msgs = ['show <file-path>', 'load <file-path>']
-        self.printUsage(msgs)
+        msgs = self._getShowFileUsage() + self._getLoadFileUsage()
+        self.printSuggestion(msgs)
 
     def _printNoLinkFoundMsg(self):
         self.print("No matching link invitation(s) found in current keyring")
@@ -1276,8 +1313,7 @@ class SovrinCli(PlenumCli):
             self._showAvailableClaimIfExists(claimName)
 
     def _printRequestClaimMsg(self, claimName):
-        msgs = ['request claim {}'.format(claimName)]
-        self.printUsage(msgs)
+        self.printSuggestion(self._getReqClaimUsage(claimName))
 
     def _showReceivedClaimIfExists(self, claimName):
         matchingLink, rcvdClaim = \
@@ -1354,13 +1390,12 @@ class SovrinCli(PlenumCli):
             filePath = SovrinCli._getFilePath(givenFilePath)
             if not filePath:
                 self.print("Given file does not exist")
-                msgs = ['show <file-path>']
-                self.printUsage(msgs)
+                self.printUsage(self._getShowFileUsage())
             else:
                 with open(filePath, 'r') as fin:
                     self.print(fin.read())
-                msgs = ['load {}'.format(givenFilePath)]
-                self.printUsage(msgs)
+                msgs = self._getLoadFileUsage(givenFilePath)
+                self.printSuggestion(msgs)
             return True
 
     def canConnectToEnv(self, envName: str):
@@ -1515,59 +1550,59 @@ class SovrinCli(PlenumCli):
         super().print(msg, token=token, newline=newline)
 
     def printHelp(self):
-        self.print("""{}-CLI, a simple command-line interface for a {} sandbox.
-        Commands:
-            help - Shows this help message
-            help <command> - Shows the help message of <command>
-            new - creates one or more new nodes or clients
-            keyshare - manually starts key sharing of a node
-            status - Shows general status of the sandbox
-            status <node_name>|<client_name> - Shows specific status
-            list - Shows the list of commands you can run
-            license - Show the license
-            exit - exit the command-line interface ('quit' also works)
-            prompt <principal name> - Changes the prompt to <principal name>
-            principals (a person like Alice, an organization like Faber College, or an IoT-style thing)
-            load <invitation filename> - Creates the link, generates Identifier and signing keys
-            show <invitation filename> - Shows the info about the link invitation
-            show link <name> - Shows link info in case of one matching link, otherwise shows all the matching link <names>
-            connect <test> |<live> - Let's you connect to the respective environment
-            sync <link name> - Synchronizes the link between the endpoints""".
-                   format(self.properName, self.fullName))
+        self.print(
+            """{}-CLI, a simple command-line interface for a {} sandbox.
+    Commands:
+        help - Shows this help message
+        help <command> - Shows the help message of <command>
+        new - creates one or more new nodes or clients
+        keyshare - manually starts key sharing of a node
+        status - Shows general status of the sandbox
+        status <node_name>|<client_name> - Shows specific status
+        list - Shows the list of commands you can run
+        license - Show the license
+        prompt <principal name> - Changes the prompt to <principal name>
+        principals (a person like Alice, an organization like Faber College, or an IoT-style thing)
+        load <invitation filename> - Creates the link, generates Identifier and signing keys
+        show <invitation filename> - Shows the info about the link invitation
+        show link <name> - Shows link info in case of one matching link, otherwise shows all the matching link <names>
+        connect <{}> - Lets you connect to the respective environment
+        sync <link name> - Synchronizes the link between the endpoints
+        exit - exit the command-line interface ('quit' also works)
+        """.format(self.properName, self.fullName, self.allEnvNames))
 
     def createFunctionMappings(self):
         from collections import defaultdict
 
         def promptHelper():
-            self.print("""Changes the prompt to provided principal name
-                Usage: prompt <principal name>""")
+            self.print("Changes the prompt to provided principal name")
+            self.printUsage(self._getPromptUsage())
 
         def principalsHelper():
-            self.print("A person like Alice, an organization like Faber College, or an IoT-style thing")
+            self.print("A person like Alice, "
+                       "an organization like Faber College, "
+                       "or an IoT-style thing")
 
         def loadHelper():
-            self.print("""Creates the link, generates Identifier and signing keys
-                Usage: load <invitation filename>""")
-
-        def defaultHelper():
-            self.printHelp()
+            self.print("Creates the link, generates Identifier and signing keys")
+            self.printUsage(self._getLoadFileUsage("<invitation filename>"))
 
         def showHelper():
-            self.print("""Shows the info about the link invitation
-                Usage: show <invitation filename>""")
+            self.print("Shows the info about the link invitation")
+            self.printUsage(self._getShowFileUsage("<invitation filename>"))
 
         def showLinkHelper():
-            self.print("""Shows link info in case of one matching link, otherwise
-                shows all the matching links
-                Usage: show link <name>""")
+            self.print("Shows link info in case of one matching link, "
+                       "otherwise shows all the matching links")
+            self.printUsage(self._getShowLinkUsage())
 
         def connectHelper():
-            self.print("""Lets you connect to the respective environment
-                Usage: connect <test>|<live>""")
+            self.print("Lets you connect to the respective environment")
+            self.printUsage(self._getConnectUsage())
 
         def syncHelper():
-            self.print("""Synchronizes the link between the endpoints
-                Usage: sync <link name>""")
+            self.print("Synchronizes the link between the endpoints")
+            self.printUsage(self._getSyncLinkUsage())
 
         def defaultHelper():
             self.printHelp()
@@ -1593,14 +1628,6 @@ class SovrinCli(PlenumCli):
             return False
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
-            return False
-        return True
-
-    @property
-    def hasAnyKey(self):
-        if not self.activeWallet.defaultId:
-            self.print("No key present in keyring")
-            self.printUsage(["new key"])
             return False
         return True
 

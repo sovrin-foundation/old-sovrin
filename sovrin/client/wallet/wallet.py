@@ -337,8 +337,7 @@ class Wallet(PWallet, Sponsoring):
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO
-        print(result)
-        # for now, just print and move on
+        pass
 
     def _issuerKeyReply(self, result, preparedReq):
         data = result.get(DATA)
