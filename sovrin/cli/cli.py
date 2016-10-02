@@ -35,7 +35,7 @@ from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment, ensureReqCompleted, \
-    NEXT_AVAILABLE_COMMAND_USAGE
+    USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ReceivedClaim
@@ -260,12 +260,12 @@ class SovrinCli(PlenumCli):
     def _printShowClaimReqUsage(self):
         self.printUsage(self._getShowClaimReqUsage())
 
-    def _printShowAndReqClaimUsage(self, availableClaims):
+    def _printShowAndReqClaimSuggestion(self, availableClaims):
         claimName = "|".join([cl.claimDefKey.name for cl in availableClaims])
         claimName = claimName or "<claim-name>"
         msgs = self._getShowClaimUsage(claimName) + \
                self._getReqClaimUsage(claimName)
-        self.printUsage(msgs)
+        self.printSuggestion(msgs)
 
     def sendToAgent(self, msg: Any, endpoint: Tuple):
         if not self.agent:
@@ -338,7 +338,7 @@ class SovrinCli(PlenumCli):
                                         port=port)
             self._agent.registerObserver(self)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
-                                              self._printShowAndReqClaimUsage)
+                                              self._printShowAndReqClaimSuggestion)
             self.looper.add(self._agent)
         return self._agent
 
@@ -840,14 +840,18 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Status not in proof", Token.BoldOrange)
 
-    def printSuggestion(self, msgs):
-        self.printUsage(msgs)
-
-    def printUsage(self, msgs):
-        self.print("\n{}".format(NEXT_AVAILABLE_COMMAND_USAGE))
+    def printUsageMsgs(self, msgs):
         for m in msgs:
             self.print('  {}'.format(m))
         self.print("\n")
+
+    def printSuggestion(self, msgs):
+        self.print("\n{}".format(NEXT_COMMANDS_TO_TRY_TEXT))
+        self.printUsageMsgs(msgs)
+
+    def printUsage(self, msgs):
+        self.print("\n{}".format(USAGE_TEXT))
+        self.printUsageMsgs(msgs)
 
     def _loadInvitation(self, invitationData):
         # TODO: Lets not assume that the invitation file would contain these
@@ -1117,11 +1121,15 @@ class SovrinCli(PlenumCli):
 
     def _printShowAndLoadFileUsage(self):
         msgs = self._getShowFileUsage() + self._getLoadFileUsage()
+        self.printUsage(msgs)
+
+    def _printShowAndLoadFileSuggestion(self):
+        msgs = self._getShowFileUsage() + self._getLoadFileUsage()
         self.printSuggestion(msgs)
 
     def _printNoLinkFoundMsg(self):
         self.print("No matching link invitation(s) found in current keyring")
-        self._printShowAndLoadFileUsage()
+        self._printShowAndLoadFileSuggestion()
 
     def _isConnectedToAnyEnv(self):
         return self.activeEnv and self.activeClient.hasSufficientConnections
@@ -1188,7 +1196,7 @@ class SovrinCli(PlenumCli):
 
                 self.print("{}".format(str(li)))
                 if li.isAccepted:
-                    self._printShowAndReqClaimUsage(li.availableClaims.values())
+                    self._printShowAndReqClaimSuggestion(li.availableClaims.values())
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:

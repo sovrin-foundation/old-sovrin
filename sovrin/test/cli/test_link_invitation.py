@@ -1,5 +1,6 @@
 import pytest
 from plenum.test.eventually import eventually
+from sovrin.cli.helper import NEXT_COMMANDS_TO_TRY_TEXT
 
 from sovrin.client.wallet.link import constant
 from sovrin.common.txn import USER, ENDPOINT
@@ -24,7 +25,7 @@ def addNym(client, wallet, nym, role=USER):
 
 def checkIfEndpointReceived(aCli, linkName, expStr):
     assert expStr in aCli.lastCmdOutput
-    assert "Usage" in aCli.lastCmdOutput
+    assert NEXT_COMMANDS_TO_TRY_TEXT in aCli.lastCmdOutput
     assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
     assert 'accept invitation from "{}"'.format(linkName) in aCli.lastCmdOutput
     if "Endpoint received" in expStr:
