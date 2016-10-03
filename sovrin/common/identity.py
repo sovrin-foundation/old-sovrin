@@ -29,7 +29,7 @@ class Identity(GeneratesRequest):
         # revocation
         self.last_synced = last_synced
 
-        # seqence number of the latest key management transaction for this
+        # sequence number of the latest key management transaction for this
         # identifier
         self.seqNo = seqNo
 

@@ -37,6 +37,7 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import ATTR_NAMES
 from sovrin.common.util import verifySig, getConfig
 
+ALREADY_ACCEPTED_FIELD = 'alreadyAccepted'
 CLAIMS_LIST_FIELD = 'availableClaimsList'
 CLAIMS_FIELD = 'claims'
 REQ_MSG = "REQ_MSG"
@@ -253,29 +254,33 @@ class WalletedAgent(Agent):
         self.sendMessage(resp, destName=frm)
 
     @staticmethod
-    def getCommonMsg(type):
-        msg = {}
-        msg[TYPE] = type
+    def getCommonMsg(typ, data):
+        msg = {
+            TYPE: typ,
+            DATA: data
+        }
         return msg
 
     @staticmethod
-    def createAvailClaimListMsg(claimLists):
-        msg = WalletedAgent.getCommonMsg(AVAIL_CLAIM_LIST)
-        msg[CLAIMS_LIST_FIELD] = claimLists
-        return msg
+    def createAvailClaimListMsg(claimLists, alreadyAccepted=False):
+        data = {}
+        data[CLAIMS_LIST_FIELD] = claimLists
+        if alreadyAccepted:
+            data[ALREADY_ACCEPTED_FIELD] = alreadyAccepted
+
+        return WalletedAgent.getCommonMsg(AVAIL_CLAIM_LIST, data)
 
     @staticmethod
     def createClaimsAttrsMsg(claim):
-        msg = WalletedAgent.getCommonMsg(CLAIM_ATTRS)
-        msg[DATA] = claim
-        return msg
+        return WalletedAgent.getCommonMsg(CLAIM_ATTRS, claim)
 
     @staticmethod
     def createClaimsMsg(claim):
-        msg = WalletedAgent.getCommonMsg(CLAIMS)
         # TODO: Should be called CLAIM_FILED, no plural
-        msg[CLAIMS_FIELD] = claim
-        return msg
+        data = {
+            CLAIMS_FIELD: claim
+        }
+        return WalletedAgent.getCommonMsg(CLAIMS, data)
 
     def _eventHandler(self, msg):
         body, (frm, ha) = msg
@@ -322,10 +327,13 @@ class WalletedAgent(Agent):
                 self.notifyObservers("Response from {}:".format(li.name))
                 self.notifyObservers("    Signature accepted.")
                 self.notifyObservers("    Trust established.")
-                # Not sure how to know if the responder is a trust anchor or not
-                self.notifyObservers("    Identifier created in Sovrin.")
+                alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
+                if alreadyAccepted:
+                    self.notifyObservers("    Already accepted.")
+                else:
+                    self.notifyObservers("    Identifier created in Sovrin.")
                 availableClaims = []
-                for cl in body[CLAIMS_LIST_FIELD]:
+                for cl in body[DATA][CLAIMS_LIST_FIELD]:
                     name, version, claimDefSeqNo = cl[NAME], cl[VERSION], \
                                                    cl['claimDefSeqNo']
                     claimDefKey = ClaimDefKey(name, version, claimDefSeqNo,
@@ -366,7 +374,7 @@ class WalletedAgent(Agent):
         if isVerified:
             self.notifyObservers("Signature accepted.")
             identifier = body.get(IDENTIFIER)
-            claim = body[CLAIMS_FIELD]
+            claim = body[DATA][CLAIMS_FIELD]
             # for claim in body[CLAIMS_FIELD]:
             self.notifyObservers("Received {}.".format(claim[NAME]))
             li = self._getLinkByTarget(getCryptonym(identifier))
@@ -488,9 +496,10 @@ class WalletedAgent(Agent):
         if link:
             identifier = body.get(f.IDENTIFIER.nm)
             idy = Identity(identifier)
-            alreadyAdded = False
             try:
-                self.wallet.addSponsoredIdentity(idy)
+                pendingCount = self.wallet.addSponsoredIdentity(idy)
+                logger.debug("pending request count {}".format(pendingCount))
+                alreadyAdded = False
             except Exception as e:
                 if e.args[0] == 'identifier already added':
                     alreadyAdded = True
@@ -503,15 +512,16 @@ class WalletedAgent(Agent):
                     self.getAvailableClaimList())
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
-            logger.debug("sending to sovrin {}".format(identifier))
-            # Assuming there was only one pending request
             if alreadyAdded:
-                self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                                          "Already accepted",
-                                          link.verkey, frm)
                 sendClaimList()
+                self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                          "    Already accepted",
+                                          link.verkey, frm)
             else:
                 reqs = self.wallet.preparePending()
+                logger.debug("pending requests {}".format(reqs))
+                # Assuming there was only one pending request
+                logger.debug("sending to sovrin {}".format(reqs[0]))
                 self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
         # TODO: If I have the below exception thrown, somehow the
@@ -532,7 +542,7 @@ class WalletedAgent(Agent):
                 res[nm] = attributes.get(nm)
         return res
 
-    def addClaimDefsToWallet(self, name, version, attrNames,
+    def addClaimDefs(self, name, version, attrNames,
                              staticPrime, credDefSeqNo, issuerKeySeqNo):
         csk = CredDefSecretKey(*staticPrime)
         sid = self.wallet.addCredDefSk(str(csk))

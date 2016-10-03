@@ -134,6 +134,13 @@ class Node(PlenumNode):
                                            '{} should have one and only one of '
                                            '{}, {}, {}'
                                            .format(ATTRIB, RAW, ENC, HASH))
+            if RAW in dataKeys:
+                try:
+                    json.loads(msg[RAW])
+                except:
+                    raise InvalidClientRequest(identifier, reqId,
+                                               'raw attribute {} should be '
+                                               'JSON'.format(msg[RAW]))
 
             if not (not msg.get(TARGET_NYM) or
                         self.graphStore.hasNym(msg[TARGET_NYM])):
@@ -265,15 +272,18 @@ class Node(PlenumNode):
 
     def processGetAttrsReq(self, request: Request, frm: str):
         self.transmitToClient(RequestAck(request.reqId), frm)
-        attrNames = request.operation[RAW]
+        attrName = request.operation[RAW]
         nym = request.operation[TARGET_NYM]
-        attrs = self.graphStore.getRawAttrs(nym, attrNames)
+        attrWithSeqNo = self.graphStore.getRawAttrs(nym, attrName)
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)
         }
+        if attrWithSeqNo:
+            attr = {attrName: attrWithSeqNo[attrName][0]}
+            result[DATA] = json.dumps(attr)
+            result[F.seqNo.name] = attrWithSeqNo[attrName][1]
         result.update(request.operation)
-        result[DATA] = json.dumps(attrs)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,
@@ -323,7 +333,11 @@ class Node(PlenumNode):
          client requests it.
         """
         txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
+        # TODO: Remove below print once troubleshooting is done
+        print("####### 11111 {}".format(reply))
         self.sendReplyToClient(Reply(txnWithMerkleInfo))
+        # TODO: Remove below print once troubleshooting is done
+        print("####### 22222 {}".format(reply))
         reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
         self.storeTxnInGraph(reply.result)
 
@@ -368,12 +382,14 @@ class Node(PlenumNode):
 
     def sendReplyToClient(self, reply):
         identifier = reply.result.get(f.IDENTIFIER.nm)
+        reqId = reply.result.get(f.REQ_ID.nm)
         # In case of genesis transactions when no identifier is present
-        if identifier in self.clientIdentifiers:
-            self.transmitToClient(reply, self.clientIdentifiers[identifier])
+        key = (identifier, reqId)
+        if (identifier, reqId) in self.clientIdentifiers:
+            self.transmitToClient(reply, self.clientIdentifiers.pop(key))
         else:
-            logger.debug("Could not find identifier {} to send reply".
-                         format(identifier))
+            logger.debug("Could not find key {} to send reply".
+                         format(key))
 
     def addToLedger(self, txn):
         merkleInfo = self.primaryStorage.append(txn)
@@ -395,9 +411,9 @@ class Node(PlenumNode):
         if req.operation[TXN_TYPE] == NYM and \
                 self.graphStore.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
-            if req.identifier in self.clientIdentifiers:
+            if req.key in self.clientIdentifiers:
                 self.transmitToClient(RequestNack(req.reqId, reason),
-                                      self.clientIdentifiers[req.identifier])
+                                      self.clientIdentifiers.pop(req.key))
         else:
             reply = self.generateReply(int(ppTime), req)
             self.storeTxnAndSendToClient(reply)

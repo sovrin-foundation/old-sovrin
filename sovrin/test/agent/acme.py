@@ -88,7 +88,7 @@ class AcmeAgent(WalletedAgent):
         staticPrime = staticPrimes().get("prime1")
         attrNames = ["employee_name", "employee_status", "experience",
                      "salary_bracket"]
-        super().addClaimDefsToWallet(name="Job Application",
+        super().addClaimDefs(name="Job Application",
                                      version="0.1",
                                      attrNames=attrNames,
                                      staticPrime=staticPrime,
@@ -116,8 +116,9 @@ class AcmeAgent(WalletedAgent):
         wallet = self.wallet
         idr = wallet.defaultId
         for nonce, data in self._attributes.items():
-            link = Link(data.get("name"), idr, nonce=nonce)
+            link = Link(data.get("employee_name"), idr, nonce=nonce)
             wallet.addLinkInvitation(link)
+
 
     def bootstrap(self):
         self.addKeyIfNotAdded()

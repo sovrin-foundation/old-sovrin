@@ -63,6 +63,9 @@ Environment = NamedTuple("Environment", [
     ("domainLedger", str)
 ])
 
+NEXT_COMMANDS_TO_TRY_TEXT = "Try Next:"
+USAGE_TEXT = "Usage:"
+
 
 def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
     reply, err = client.replyIfConsensus(reqId)

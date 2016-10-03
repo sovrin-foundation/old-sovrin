@@ -4,14 +4,12 @@ import os
 
 import shutil
 from contextlib import ExitStack
+from typing import Dict
 from typing import Iterable, Union, Tuple
 
 import pyorient
 
 from plenum.common.log import getlogger
-from sovrin.anon_creds.issuer import Issuer
-from sovrin.anon_creds.prover import Prover
-from sovrin.anon_creds.verifier import Verifier
 
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
@@ -30,7 +28,6 @@ from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
 from plenum.test.testable import Spyable
-from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
 from sovrin.client.wallet.wallet import Wallet
@@ -341,24 +338,6 @@ class TestClient(Client, StackedTester, TestClientStorage):
         super().onStopping(*args, **kwargs)
 
 
-class TestAnonCredsRole(AnonCredsRole):
-    @property
-    def sovrinClientClass(self):
-        return TestClient
-
-
-class TestIssuer(TestAnonCredsRole, Issuer):
-    pass
-
-
-class TestProver(TestAnonCredsRole, Prover):
-    pass
-
-
-class TestVerifier(TestAnonCredsRole, Verifier):
-    pass
-
-
 def genTestClient(nodes: TestNodeSet = None,
                   nodeReg=None,
                   tmpdir=None,
@@ -369,14 +348,14 @@ def genTestClient(nodes: TestNodeSet = None,
                   usePoolLedger=False,
                   name: str=None) -> TestClient:
     testClient, wallet = genPlenumTestClient(nodes,
-                                     nodeReg,
-                                     tmpdir,
-                                     testClientClass,
-                                     verkey=verkey,
-                                     identifier=identifier,
-                                     bootstrapKeys=False,
-                                     usePoolLedger=usePoolLedger,
-                                     name=name)
+                                             nodeReg,
+                                             tmpdir,
+                                             testClientClass,
+                                             verkey=verkey,
+                                             identifier=identifier,
+                                             bootstrapKeys=False,
+                                             usePoolLedger=usePoolLedger,
+                                             name=name)
     testClient.peerHA = peerHA
     return testClient, wallet
 
@@ -419,7 +398,7 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
     creatorClient.submitReqs(*reqs)
 
     def check():
-         assert creatorWallet._sponsored[nym].seqNo
+        assert creatorWallet._sponsored[nym].seqNo
 
     looper.run(eventually(check, timeout=2))
 

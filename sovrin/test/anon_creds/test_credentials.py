@@ -48,18 +48,10 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     #
 
     definition = credDef.get(serFmt=SerFmt.base58)
-    op = {
-        TARGET_NYM: sponsorWallet.defaultId,
-        TXN_TYPE: GET_CRED_DEF,
-        DATA: {
-            NAME: definition[NAME],
-            VERSION: definition[VERSION]
-        }
-    }
-    req = userWalletA.signOp(op)
-    userWalletA.pendRequest(req)
-    reqs = userWalletA.preparePending()
-    curiousClient.submitReqs(*reqs)
+    credDefKey = (definition[NAME], definition[VERSION],
+                  sponsorWallet.defaultId)
+    req = userWalletA.requestCredDef(credDefKey, userWalletA.defaultId)
+    curiousClient.submitReqs(req)
 
     looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
                           req.reqId, nodeSet.f,

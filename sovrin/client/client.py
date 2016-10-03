@@ -1,19 +1,15 @@
 import json
 import traceback
 import uuid
-from _sha256 import sha256
-from base64 import b64decode
 from collections import deque
 from typing import Mapping, List, Dict, Union, Tuple, Optional, Callable
 
-import base58
 import pyorient
 
 from raet.raeting import AutoMode
 
 from plenum.common.error import fault
 from plenum.common.log import getlogger
-from sovrin.client import roles
 from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
 from plenum.common.startable import Status

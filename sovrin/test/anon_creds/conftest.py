@@ -118,7 +118,6 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     pending = sponsorWallet.addCredDef(credDef)
     assert pending == old + 1
     reqs = sponsorWallet.preparePending()
-    # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
     sponsor.submitReqs(*reqs)
 
     key = credDef.key()
@@ -128,13 +127,6 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
 
     looper.run(eventually(chk, retryWait=1, timeout=30))
     return sponsorWallet.getCredDef(key).seqNo
-
-    # DEPR
-    # op = {
-    #     TXN_TYPE: CRED_DEF,
-    #     DATA: data
-    # }
-    # return submitAndCheck(looper, sponsor, sponsorWallet, op)
 
 
 @pytest.fixture(scope="module")

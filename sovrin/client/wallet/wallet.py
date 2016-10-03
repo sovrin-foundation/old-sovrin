@@ -12,6 +12,7 @@ from typing import Optional
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
 from plenum.common.error import fault
+from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW, \
     ORIGIN
@@ -29,6 +30,9 @@ from sovrin.common.types import Request
 from anoncreds.protocol.utils import strToCharmInteger
 
 ENCODING = "utf-8"
+
+
+logger = getlogger()
 
 
 class Sponsoring:
@@ -66,8 +70,7 @@ class Wallet(PWallet, Sponsoring):
         self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        # TODO Rename to `_links`
-        self._links = {}  # type: Dict[str, Link]
+        self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
         self._issuerSks = {}
@@ -254,7 +257,6 @@ class Wallet(PWallet, Sponsoring):
         new = {}
         while self._pending:
             req, key = self._pending.pop()
-
             sreq = self.signRequest(req)
             new[req.identifier, req.reqId] = sreq, key
         self._prepared.update(new)
@@ -289,9 +291,11 @@ class Wallet(PWallet, Sponsoring):
         # number of the attribute txn too.
         _, attrKey = preparedReq
         attrib = self.getAttribute(AttributeKey(*attrKey))
-        # TODO: THE GET_ATTR reply should contain the sequence number of
-        # the ATTRIB transaction
-        # attrib.seqNo = result[F.seqNo.name]
+        if DATA in result:
+            attrib.value = result[DATA]
+            attrib.seqNo = result[F.seqNo.name]
+        else:
+            print("No attribute found")
 
     def _credDefReply(self, result, preparedReq):
         # TODO: Duplicate code from _attribReply, abstract this behavior,
@@ -312,7 +316,7 @@ class Wallet(PWallet, Sponsoring):
                               attrNames=data.get(ATTR_NAMES).split(","),
                               name=data[NAME],
                               version=data[VERSION],
-                              origin=data[ORIGIN],  # TODO should
+                              origin=data[ORIGIN],
                               typ=data[TYPE])
             self.addCredDef(credDef)
 

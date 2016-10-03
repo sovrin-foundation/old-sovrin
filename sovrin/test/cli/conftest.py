@@ -12,6 +12,7 @@ from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
@@ -130,11 +131,11 @@ def acmeMap(acmeAgentPort):
 
 
 @pytest.fixture(scope="module")
-def loadInviteOut(usageLine):
+def loadInviteOut(nextCommandsToTryUsageLine):
     return ["1 link invitation found for {inviter}.",
             "Creating Link for {inviter}.",
             "Generating Identifier and Signing key."] + \
-           usageLine + \
+           nextCommandsToTryUsageLine + \
            ['accept invitation from "{inviter}"',
             'show link "{inviter}"']
 
@@ -190,12 +191,16 @@ def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
 
 @pytest.fixture(scope="module")
 def usageLine():
-    return ["Usage:"]
+    return [USAGE_TEXT]
 
 
 @pytest.fixture(scope="module")
+def nextCommandsToTryUsageLine():
+    return [NEXT_COMMANDS_TO_TRY_TEXT]
+
+@pytest.fixture(scope="module")
 def connectUsage(usageLine):
-    return usageLine + ["  connect (live|test)"]
+    return usageLine + ["connect <test|live>"]
 
 
 @pytest.fixture(scope="module")
@@ -346,7 +351,6 @@ def endpointNotAvailable():
     return ["Endpoint not available"]
 
 
-
 @pytest.fixture(scope="module")
 def syncLinkOutEndsWith():
     return ["Link {inviter} synced"]
@@ -467,9 +471,10 @@ def reqClaimOut():
             "Requesting claim {name} from {inviter}..."]
 
 
-@pytest.fixture(scope="module")
-def reqClaimUsage(usageLine):
-    return usageLine + ["request claim {name}"]
+# @pytest.fixture(scope="module")
+# def reqClaimUsage(usageLine):
+#     return usageLine + ["request claim {name}"]
+
 
 @pytest.fixture(scope="module")
 def rcvdClaimOut():
@@ -486,7 +491,7 @@ def rcvdClaimOut():
     ]
 
 @pytest.fixture(scope="module")
-def showClaimOut(usageLine):
+def showClaimOut(nextCommandsToTryUsageLine):
     return ["Found claim {name} in link {inviter}",
             "Name: {name}",
             "Status: {status}",
@@ -498,8 +503,8 @@ def showClaimOut(usageLine):
             "degree: {attr-degree}",
             "year: {attr-year}",
             "status: {attr-status}"
-            ] + usageLine + \
-           ["request claim {name}"]
+            ] + nextCommandsToTryUsageLine + \
+           ['request claim "{name}"']
 
 
 @pytest.fixture(scope="module")
@@ -515,27 +520,28 @@ def showLinkWithAvailableClaimsOut():
 def showAcceptedLinkWithClaimReqsOut(showAcceptedLinkOut,
                                      showLinkWithClaimReqOut,
                                      showLinkWithAvailableClaimsOut,
-                                     showLinkUsage):
+                                     showLinkSuggestion):
     return showAcceptedLinkOut + showLinkWithClaimReqOut + \
-           showLinkWithAvailableClaimsOut +\
-           showLinkUsage
+           showLinkWithAvailableClaimsOut + \
+           showLinkSuggestion
+
 
 @pytest.fixture(scope="module")
 def showAcceptedLinkWithoutAvailableClaimsOut(showAcceptedLinkOut,
                                         showLinkWithClaimReqOut,
-                                        showLinkUsage):
-    return showAcceptedLinkOut + showLinkWithClaimReqOut + showLinkUsage
+                                        showLinkSuggestion):
+    return showAcceptedLinkOut + showLinkWithClaimReqOut + showLinkSuggestion
 
 
 @pytest.fixture(scope="module")
-def showLinkUsage(usageLine):
-    return usageLine + \
-    ['show claim {claims}',
-     'request claim {claims}']
+def showLinkSuggestion(nextCommandsToTryUsageLine):
+    return nextCommandsToTryUsageLine + \
+    ['show claim "{claims}"',
+     'request claim "{claims}"']
 
 
 @pytest.fixture(scope="module")
-def showAcceptedLinkOut(usageLine):
+def showAcceptedLinkOut():
     return [
             "Link",
             "Name: {inviter}",
@@ -547,7 +553,7 @@ def showAcceptedLinkOut(usageLine):
 
 
 @pytest.fixture(scope="module")
-def showLinkOut(usageLine):
+def showLinkOut(nextCommandsToTryUsageLine):
     return [
             "Link (not yet accepted)",
             "Name: {inviter}",
@@ -555,8 +561,8 @@ def showLinkOut(usageLine):
             "Target Verification key: <unknown, waiting for sync>",
             "Trust anchor: {inviter} (not yet written to Sovrin)",
             "Invitation nonce: {nonce}",
-            "Invitation status: not verified, target verkey unknown"]  + \
-           usageLine + \
+            "Invitation status: not verified, target verkey unknown"] + \
+           nextCommandsToTryUsageLine + \
            ['accept invitation from "{inviter}"',
             'sync "{inviter}"']
 

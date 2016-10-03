@@ -11,17 +11,6 @@ from sovrin.common.txn import CRED_DEF, GET_CRED_DEF, ATTR_NAMES, ISSUER_KEY, \
 from sovrin.common.types import Request
 
 
-# DEPR
-# class CredDefKey:
-#     def __init__(self,
-#                  name: str,
-#                  version: str,
-#                  origin: Optional[Identifier]=None):
-#         self.name = name
-#         self.version = version
-#         self.origin = origin    # author of the credential definition
-
-
 class HasSeqNo:
     @property
     def seqNo(self):
@@ -41,10 +30,6 @@ class CredDef(CredentialDefinition, HasSeqNo):
                  attrNames=None,
                  secretKey: Optional[str]=None,    # uid of the Cred Def secret key
                  typ: str=None,
-                 # DEPR
-                 # ip: str=None,
-                 # port: int=None,
-                 # keys: Dict=None
                  ):
         super().__init__(uid=seqNo,
                          attrNames=attrNames,
@@ -53,19 +38,6 @@ class CredDef(CredentialDefinition, HasSeqNo):
         self.typ = typ
         self.origin = origin
         self.secretKey = secretKey
-        # DEPR
-        # self.ip = ip
-        # self.port = port
-        # self.keys = keys
-        # self.seqNo = seqNo
-
-    # @property
-    # def seqNo(self):
-    #     return self.uid
-    #
-    # @seqNo.setter
-    # def seqNo(self, value):
-    #     self.uid = value
 
     def key(self):
         return self.name, self.version, self.origin
@@ -81,10 +53,6 @@ class CredDef(CredentialDefinition, HasSeqNo):
                     VERSION: self.version,
                     TYPE: self.typ,
                     ATTR_NAMES: ",".join(self.attrNames)
-                    # DEPR
-                    # IP: self.ip,
-                    # PORT: self.port,
-                    # KEYS: self.keys,
                 }
             }
             return Request(identifier=self.origin, operation=op)
@@ -121,14 +89,6 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     # TODO: Remove this late initialisation.
     def initPubKey(self, seqNo, N, R, S, Z):
         IssuerKey.__init__(self, seqNo, N, R, S, Z)
-
-    # @property
-    # def seqNo(self):
-    #     return self.uid
-    #
-    # @seqNo.setter
-    # def seqNo(self, value):
-    #     self.uid = value
 
     @property
     def key(self):

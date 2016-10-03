@@ -45,9 +45,9 @@ class Link:
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
         self.nonce = nonce or getNonce()
-        self.claimRequests = claimRequests
         self.invitationData = invitationData
 
+        self.claimRequests = claimRequests or []
         self.availableClaims = {}
         self.receivedClaims = {}
         self.targetVerkey = None
@@ -74,7 +74,8 @@ class Link:
 
     @property
     def isRemoteEndpointAvailable(self):
-        return self.remoteEndPoint and self.remoteEndPoint != constant.NOT_AVAILABLE
+        return self.remoteEndPoint and self.remoteEndPoint != \
+                                       constant.NOT_AVAILABLE
 
     @staticmethod
     def prettyDate(time=False):
@@ -128,7 +129,8 @@ class Link:
         trustAnchor = self.trustAnchor or ""
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
-        targetEndPoint = self.remoteEndPoint or constant.UNKNOWN_WAITING_FOR_SYNC
+        targetEndPoint = self.remoteEndPoint or \
+                         constant.UNKNOWN_WAITING_FOR_SYNC
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = Link.prettyDate(self.linkLastSynced)
 
@@ -160,7 +162,8 @@ class Link:
             'Trust anchor: ' + trustAnchor + ' ' + trustAnchorStatus + '\n' \
             'Verification key: ' + verKey + '\n' \
             'Signing key: <hidden>' '\n' \
-            'Target: ' + self.remoteIdentifier + '\n' \
+            'Target: ' + (self.remoteIdentifier or
+                          constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
             'Invitation nonce: ' + self.nonce + '\n' \
@@ -181,5 +184,6 @@ class Link:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
 
         linkItems = fixedLinkItems + optionalLinkItems
-        indentedLinkItems = constant.LINK_ITEM_PREFIX.join(linkItems.splitlines())
+        indentedLinkItems = constant.LINK_ITEM_PREFIX.join(
+            linkItems.splitlines())
         return fixedLinkHeading + indentedLinkItems

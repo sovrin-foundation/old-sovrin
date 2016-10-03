@@ -356,9 +356,11 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
 
     return userCli
 
+
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
-                                 faberAddedByPhil, syncedInviteAcceptedWithClaimsOut,
+                                 faberAddedByPhil,
+                                 syncedInviteAcceptedWithClaimsOut,
                                  faberLinkAdded, faberIsRunning,
                                  faberInviteSyncedWithEndpoint):
     acceptInvitation(be, do, aliceCli, faberMap, syncedInviteAcceptedWithClaimsOut)

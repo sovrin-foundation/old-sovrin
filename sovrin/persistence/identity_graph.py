@@ -293,12 +293,20 @@ class IdentityGraph(OrientDbGraphStore):
             format(Edges.HasAttribute, Vertices.Attribute, Vertices.Nym,
                    NYM, frm)
         allAttrsRecords = self.client.command(cmd)
+        attrVIds = [a._rid for a in allAttrsRecords]
+        seqNos = {}
+        if attrVIds:
+            edgeRecs = self.client.command("select expand(inE('{}')) from [{}]"
+                                           .format(Edges.AddsAttribute,
+                                                   ", ".join(attrVIds)))
+            seqNos = {str(rec._in): int(rec.oRecordData.get(F.seqNo.name))
+                      for rec in edgeRecs}
         result = {}
         for attrRec in allAttrsRecords:
             raw = json.loads(attrRec.oRecordData.get(RAW))
             key, value = raw.popitem()
             if len(attrNames) == 0 or key in attrNames:
-                result[key] = value
+                result[key] = [value, seqNos[attrRec._rid]]
         return result
 
     def getCredDef(self, frm, name, version):
