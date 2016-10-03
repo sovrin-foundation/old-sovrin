@@ -14,15 +14,23 @@ separately. Read below to see how.
 
 Sovrin also depends on a crypto library. The default configuration includes an example that uses Charm-Crypto. Instructions for installing Charm-Crypto can be found here: https://jhuisi.github.io/charm/install_source.html.
 
-### Installing Sovrin
-Check out this repo. Navigate to the root directory of the local repo and install Sovrin. Sovrin requires anonymous credentials library which requires a cryptographic framework called charm-crypto. 
-The steps to install charm-crypto are mentioned in our [Anonymous Credentials](https://github.com/evernym/anoncreds) repository. You just have to run `setup-charm.sh` script. It will require sudo privileges on the system.  
+### Pre-requisistes
+Sovrin requires anonymous credentials library which requires a cryptographic framework called charm-crypto.
+The steps to install charm-crypto are mentioned in our [Anonymous Credentials](https://github.com/evernym/anoncreds) repository. You just have to run `setup-charm.sh` script. It will require sudo privileges on the system.
 
+
+### Installing Sovrin
+Sovrin can be installed using pip by
+```
+pip install sovrin
+```
+
+Or to run the tests too, download this source by cloning this repo. Navigate to the root directory of the source and install Sovrin by    
 ```
 pip install -e .
 ```
 
-From here, you can play with the command-line interface by running sovrin from a terminal.
+Once installed, you can play with the command-line interface by running Sovrin from a terminal.
 
 Note: For Windows, we recommended using either [cmder](http://cmder.net/) or [conemu](https://conemu.github.io/).
 
@@ -30,7 +38,7 @@ Note: For Windows, we recommended using either [cmder](http://cmder.net/) or [co
 sovrin
 ```
 
-...or run the tests. 
+...or run the tests (if you have downloaded the source). 
 
 ```
 python -m sovrin.test
