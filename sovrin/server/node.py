@@ -134,6 +134,13 @@ class Node(PlenumNode):
                                            '{} should have one and only one of '
                                            '{}, {}, {}'
                                            .format(ATTRIB, RAW, ENC, HASH))
+            if RAW in dataKeys:
+                try:
+                    json.loads(msg[RAW])
+                except:
+                    raise InvalidClientRequest(identifier, reqId,
+                                               'raw attribute {} should be '
+                                               'JSON'.format(msg[RAW]))
 
             if not (not msg.get(TARGET_NYM) or
                         self.graphStore.hasNym(msg[TARGET_NYM])):
@@ -265,15 +272,18 @@ class Node(PlenumNode):
 
     def processGetAttrsReq(self, request: Request, frm: str):
         self.transmitToClient(RequestAck(request.reqId), frm)
-        attrNames = request.operation[RAW]
+        attrName = request.operation[RAW]
         nym = request.operation[TARGET_NYM]
-        attrs = self.graphStore.getRawAttrs(nym, attrNames)
+        attrWithSeqNo = self.graphStore.getRawAttrs(nym, attrName)
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)
         }
+        if attrWithSeqNo:
+            attr = {attrName: attrWithSeqNo[attrName][0]}
+            result[DATA] = json.dumps(attr)
+            result[F.seqNo.name] = attrWithSeqNo[attrName][1]
         result.update(request.operation)
-        result[DATA] = json.dumps(attrs)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,

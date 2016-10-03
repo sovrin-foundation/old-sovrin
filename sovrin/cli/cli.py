@@ -971,15 +971,17 @@ class SovrinCli(PlenumCli):
         self.print("        [Not Yet Implemented]")
 
     def _updateLinkWithLatestInfo(self, link: Link, reply):
-        data = json.loads(reply.get(DATA))
-        endPoint = data.get('endpoint')
-        if endPoint:
-            link.remoteEndPoint = endPoint
-            self.print('    Endpoint received: {}'.format(endPoint))
-            link.linkLastSynced = datetime.datetime.now()
-            self.print("    Link {} synced".format(link.name))
-            self._pingToEndpoint(endPoint)
-        else:
+        if DATA in reply and reply[DATA]:
+            data = json.loads(reply[DATA])
+            endPoint = data.get(ENDPOINT)
+            if endPoint:
+                link.remoteEndPoint = endPoint
+                self.print('    Endpoint received: {}'.format(endPoint))
+                link.linkLastSynced = datetime.datetime.now()
+                self.print("    Link {} synced".format(link.name))
+                self._pingToEndpoint(endPoint)
+
+        if not link.remoteEndPoint:
             link.remoteEndPoint = constant.NOT_AVAILABLE
             self.print('    Endpoint not available')
         self.activeWallet.addLinkInvitation(link)

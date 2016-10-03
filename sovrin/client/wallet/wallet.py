@@ -289,9 +289,11 @@ class Wallet(PWallet, Sponsoring):
         # number of the attribute txn too.
         _, attrKey = preparedReq
         attrib = self.getAttribute(AttributeKey(*attrKey))
-        # TODO: THE GET_ATTR reply should contain the sequence number of
-        # the ATTRIB transaction
-        # attrib.seqNo = result[F.seqNo.name]
+        if DATA in result:
+            attrib.value = result[DATA]
+            attrib.seqNo = result[F.seqNo.name]
+        else:
+            print("No attribute found")
 
     def _credDefReply(self, result, preparedReq):
         # TODO: Duplicate code from _attribReply, abstract this behavior,

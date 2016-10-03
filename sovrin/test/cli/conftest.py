@@ -351,7 +351,6 @@ def endpointNotAvailable():
     return ["Endpoint not available"]
 
 
-
 @pytest.fixture(scope="module")
 def syncLinkOutEndsWith():
     return ["Link {inviter} synced"]
