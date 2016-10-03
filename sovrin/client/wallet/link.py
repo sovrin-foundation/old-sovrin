@@ -1,7 +1,10 @@
-import datetime
 from typing import Dict
 
-from sovrin.common.util import getNonce
+from plenum.common.txn import NAME, NONCE
+from plenum.common.types import f
+from plenum.common.util import prettyDate
+from sovrin.common.exceptions import InvalidLinkException
+from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
 
 
 class constant:
@@ -36,7 +39,7 @@ class constant:
 class Link:
     def __init__(self, name, localIdentifier, trustAnchor=None,
                  remoteIdentifier=None, remoteEndPoint=None, nonce=None,
-                 claimRequests=None, invitationData: Dict=None):
+                 claimProofRequests=None, invitationData: Dict=None):
         self.name = name
         self.localIdentifier = localIdentifier
         self.verkey = self.localIdentifier.split(":")[-1]
@@ -47,79 +50,18 @@ class Link:
         self.nonce = nonce or getNonce()
         self.invitationData = invitationData
 
-        self.claimRequests = claimRequests or []
+        self.claimProofRequests = claimProofRequests or []
         self.availableClaims = {}
-        self.receivedClaims = {}
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
         self.linkLastSyncNo = None
-
-    def updateState(self, targetVerKey, linkStatus, linkLastSynced,
-                    linkLastSyncNo):
-        self.targetVerkey = targetVerKey
-        self.linkStatus = linkStatus
-        self.linkLastSynced = datetime.datetime.strptime(
-            linkLastSynced, "%Y-%m-%dT%H:%M:%S.%f") \
-            if linkLastSynced else None
-        self.linkLastSyncNo = linkLastSyncNo
-
-    def updateReceivedClaims(self, rcvdClaims):
-        for rc in rcvdClaims:
-            self.receivedClaims[rc.defKey.key] = rc
-
-    def updateAvailableClaims(self, availableClaims):
-        for ac in availableClaims:
-            self.availableClaims[ac.claimDefKey.key] = ac
 
     @property
     def isRemoteEndpointAvailable(self):
         return self.remoteEndPoint and self.remoteEndPoint != \
                                        constant.NOT_AVAILABLE
 
-    @staticmethod
-    def prettyDate(time=False):
-        """
-        Get a datetime object or a int() Epoch timestamp and return a
-        pretty string like 'an hour ago', 'Yesterday', '3 months ago',
-        'just now', etc
-        """
-        from datetime import datetime
-        now = datetime.now()
-        if time is None:
-            return constant.LINK_NOT_SYNCHRONIZED
-
-        if not isinstance(time, (int, datetime)):
-            raise RuntimeError("Cannot parse time")
-        if isinstance(time,int):
-            diff = now - datetime.fromtimestamp(time)
-        elif isinstance(time, datetime):
-            diff = now - time
-        else:
-            diff = now - now
-        second_diff = diff.seconds
-        day_diff = diff.days
-
-        if day_diff < 0:
-            return ''
-
-        if day_diff == 0:
-            if second_diff < 10:
-                return "just now"
-            if second_diff < 60:
-                return str(second_diff) + " seconds ago"
-            if second_diff < 120:
-                return "a minute ago"
-            if second_diff < 3600:
-                return str(int(second_diff / 60)) + " minutes ago"
-            if second_diff < 7200:
-                return "an hour ago"
-            if second_diff < 86400:
-                return str(int(second_diff / 3600)) + " hours ago"
-        if day_diff == 1:
-            return "Yesterday"
-        if day_diff < 7:
-            return str(day_diff) + " days ago"
 
     @property
     def isAccepted(self):
@@ -132,7 +74,8 @@ class Link:
         targetEndPoint = self.remoteEndPoint or \
                          constant.UNKNOWN_WAITING_FOR_SYNC
         linkStatus = 'not verified, target verkey unknown'
-        linkLastSynced = Link.prettyDate(self.linkLastSynced)
+        linkLastSynced = prettyDate(self.linkLastSynced) or \
+                         constant.LINK_NOT_SYNCHRONIZED
 
         if linkLastSynced != constant.LINK_NOT_SYNCHRONIZED and \
                         targetEndPoint == constant.UNKNOWN_WAITING_FOR_SYNC:
@@ -171,14 +114,14 @@ class Link:
             'Last synced: ' + linkLastSynced + '\n'
 
         optionalLinkItems = ""
-        if len(self.claimRequests) > 0:
+        if len(self.claimProofRequests) > 0:
             optionalLinkItems += "Claim Requests: {}". \
-                format(",".join([cr.name for cr in self.claimRequests]))
+                format(",".join([cr.name for cr in self.claimProofRequests]))
 
         if len(self.availableClaims) > 0:
             optionalLinkItems += "Available claims: {}".\
-                format(",".join([ac.claimDefKey.name
-                                 for ac in self.availableClaims.values()]))
+                format(",".join([ac.name
+                                 for ac in self.availableClaims]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
@@ -187,3 +130,29 @@ class Link:
         indentedLinkItems = constant.LINK_ITEM_PREFIX.join(
             linkItems.splitlines())
         return fixedLinkHeading + indentedLinkItems
+
+    @staticmethod
+    def validate(invitationData):
+
+        def checkIfFieldPresent(msg, searchInName, fieldName):
+            if not msg.get(fieldName):
+                raise InvalidLinkException(
+                    "Field not found in {}: {}".format(searchInName, fieldName))
+
+        checkIfFieldPresent(invitationData, 'given input', 'sig')
+        checkIfFieldPresent(invitationData, 'given input', 'link-invitation')
+        linkInvitation = invitationData.get("link-invitation")
+        linkInvitationReqFields = [f.IDENTIFIER.nm, NAME, NONCE]
+        for fn in linkInvitationReqFields:
+            checkIfFieldPresent(linkInvitation, 'link-invitation', fn)
+
+        # isVerified = False
+        # try:
+        #     isVerified = verifySig(linkInvitation.get(f.IDENTIFIER.nm),
+        #           linkInvitation.get("sig"),
+        #           getMsgWithoutSig(invitationData))
+        # except Exception:
+        #     isVerified = False
+        #
+        # if not isVerified:
+        #     raise InvalidLinkException("Signature Rejected")

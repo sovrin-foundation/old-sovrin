@@ -14,6 +14,7 @@ from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import ensureReqCompleted
+from sovrin.client.wallet.claim import ClaimAttr
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -30,8 +31,6 @@ from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
     ACCEPT_INVITE, REQUEST_CLAIM_ATTRS, CLAIM_ATTRS
 from sovrin.client.client import Client
-from sovrin.client.wallet.claim import AvailableClaimData, ReceivedClaim
-from sovrin.client.wallet.claim import ClaimDef, ClaimDefKey
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import ATTR_NAMES
@@ -336,27 +335,29 @@ class WalletedAgent(Agent):
                 for cl in body[DATA][CLAIMS_LIST_FIELD]:
                     name, version, claimDefSeqNo = cl[NAME], cl[VERSION], \
                                                    cl['claimDefSeqNo']
-                    claimDefKey = ClaimDefKey(name, version, claimDefSeqNo,
-                                              li.remoteIdentifier)
-                    availableClaims.append(AvailableClaimData(claimDefKey))
+                    credDefKey = CredDef(name=name, version=version,
+                                         origin=li.remoteIdentifier,
+                                         seqNo=claimDefSeqNo)
+                    availableClaims.append(credDefKey)
 
-                    if cl.get('definition', None):
-                        self.wallet.addClaimDef(
-                            ClaimDef(claimDefKey, cl['definition']))
-                    else:
+                    self.wallet.addCredDef(
+                        CredDef(name, version, li.remoteIdentifier,
+                                claimDefSeqNo, cl.get('attributes')))
+
+                    if not cl.get('attributes'):
                         # TODO: Go and get definition from Sovrin and store
                         # it in wallet's claim def store
                         raise NotImplementedError
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
                 li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                li.updateAvailableClaims(availableClaims)
+                li.availableClaims = availableClaims
 
                 self.wallet.addLinkInvitation(li)
 
                 if len(availableClaims) > 0:
                     self.notifyObservers("    Available claims: {}".
-                                         format(",".join([cl.claimDefKey.name
+                                         format(",".join([cl.name
                                                           for cl in availableClaims])))
                     self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
             else:
@@ -384,10 +385,7 @@ class WalletedAgent(Agent):
                     claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
                 issuerKeys = {}  # TODO: Need to decide how/where to get it
                 attributes = claim['attributes']  # TODO: Need to finalize this
-                rc = ReceivedClaim(
-                    ClaimDefKey(name, version, claimDefSeqNo, idr),
-                    issuerKeys,
-                    attributes)
+                rc = ClaimAttr(name, version, idr, claimDefSeqNo, attributes)
                 rc.dateOfIssue = datetime.now()
                 li.updateReceivedClaims([rc])
                 self.wallet.addLinkInvitation(li)
@@ -448,15 +446,12 @@ class WalletedAgent(Agent):
                 name, version, claimDefSeqNo, idr = \
                     claim[NAME], claim[VERSION], \
                     claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
-                issuerKeys = {}  # TODO: Need to decide how/where to get it
                 attributes = claim['attributes']  # TODO: Need to finalize this
-                rc = ReceivedClaim(
-                    ClaimDefKey(name, version, claimDefSeqNo, idr),
-                    issuerKeys,
+                # TODO: Need to decide about auth and issuer
+                rc = ClaimAttr(name, version, idr, claimDefSeqNo, idr,
                     attributes)
                 rc.dateOfIssue = datetime.now()
-                li.updateReceivedClaims([rc])
-                self.wallet.addLinkInvitation(li)
+                self.wallet.addCredAttr(rc)
             else:
                 self.notifyObservers("No matching link found")
 

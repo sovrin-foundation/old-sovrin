@@ -496,7 +496,6 @@ def showClaimOut(nextCommandsToTryUsageLine):
             "Name: {name}",
             "Status: {status}",
             "Version: {version}",
-            "Definition:",
             "Attributes:",
             "student_name: {attr-student_name}",
             "ssn: {attr-ssn}",

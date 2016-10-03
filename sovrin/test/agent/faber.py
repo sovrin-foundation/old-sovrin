@@ -79,10 +79,7 @@ class FaberAgent(WalletedAgent):
                 NAME: cd.name,
                 VERSION: cd.version,
                 "claimDefSeqNo": cd.seqNo,
-                "issuerKeySeqNo": ik.seqNo,
-                "definition": {
-                    "attributes": attrs
-                }
+                "attributes": attrs
             })
         return resp
 

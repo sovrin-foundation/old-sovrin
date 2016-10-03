@@ -24,6 +24,7 @@ def getMsgWithoutSig(msg, sigFieldName=f.SIG.nm):
             msgWithoutSig[k] = v
     return msgWithoutSig
 
+
 def verifySig(identifier, signature, msg) -> bool:
     key = cryptonymToHex(identifier) if not isHex(
         identifier) else identifier

@@ -18,7 +18,7 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     ORIGIN
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
-from sovrin.client.wallet.claim import ClaimDefKey, ClaimDef
+from sovrin.client.wallet.claim import ClaimAttr
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
@@ -69,10 +69,9 @@ class Wallet(PWallet, Sponsoring):
         self._credDefs = {}         # type: Dict[(str, str, str), CredDef]
         self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
-        self.lastKnownSeqs = {}     # type: Dict[str, int]
         self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
-        self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
+        self._claimAttrs = {}       # type: Dict[(str, str, str, str), ClaimAttr]
         self._issuerSks = {}
         self._issuerPks = {}
         # transactions not yet submitted
@@ -80,6 +79,7 @@ class Wallet(PWallet, Sponsoring):
 
         # pending transactions that have been prepared (probably submitted)
         self._prepared = {}         # type: Dict[(Identifier, int), Request]
+        self.lastKnownSeqs = {}     # type: Dict[str, int]
 
         self.replyHandler = {
             ATTRIB: self._attribReply,
@@ -101,23 +101,27 @@ class Wallet(PWallet, Sponsoring):
     def _isMatchingName(source, target):
         return source == target or source.lower() in target.lower()
 
-    def addClaimDef(self, cd: ClaimDef):
-        self._claimDefs[cd.key.key] = cd
+    def getClaimAttr(self, name, version, origin) -> ClaimAttr:
+        for ca in self._claimAttrs:
+            if ca.name == name and ca.version == version \
+                    and ca.origin == origin:
+                return ca
 
-    def getClaimDefByKey(self, key: ClaimDefKey):
-        return self._claimDefs.get(key.key)
+    def getCredDefByKey(self, name, version, origin):
+        return self._credDefs.get((name, version, origin))
 
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
         matched = []
 
-        for k, li in self._links.items():
-            for rc in li.receivedClaims.values():
-                commonAttr = (set(attributes.keys()) - set(matched)).\
-                    intersection(rc.values.keys())
-                if commonAttr:
-                    matchingLinkAndRcvdClaim.append((li, rc, commonAttr))
-                    matched.extend(commonAttr)
+        for ca in self._claimAttrs.values():
+            commonAttr = (set(attributes.keys()) - set(matched)).\
+                intersection(ca.attributes.keys())
+            if commonAttr:
+                for li in self._links.values():
+                    if ca.issuerId == li.remoteIdentifier:
+                        matchingLinkAndRcvdClaim.append((li, ca, commonAttr))
+                        matched.extend(commonAttr)
 
         return matchingLinkAndRcvdClaim
 
@@ -125,23 +129,24 @@ class Wallet(PWallet, Sponsoring):
     def getMatchingLinksWithAvailableClaim(self, claimName):
         matchingLinkAndAvailableClaim = []
         for k, li in self._links.items():
-            for ac in li.availableClaims.values():
-                if Wallet._isMatchingName(ac.claimDefKey.name, claimName):
+            for ac in li.availableClaims:
+                if Wallet._isMatchingName(ac.name, claimName):
                     matchingLinkAndAvailableClaim.append((li, ac))
         return matchingLinkAndAvailableClaim
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
-        for k, li in self._links.items():
-            for rc in li.receivedClaims.values():
-                if Wallet._isMatchingName(rc.defKey.name, claimName):
-                    matchingLinkAndReceivedClaim.append((li, rc))
+        for ca in self._claimAttrs.values():
+            if Wallet._isMatchingName(ca.name, claimName):
+                for li in self._links.values():
+                    if ca.issuerId == li.remoteIdentifier:
+                        matchingLinkAndReceivedClaim.append((li, ca))
         return matchingLinkAndReceivedClaim
 
     def getMatchingLinksWithClaimReq(self, claimReqName):
         matchingLinkAndClaimReq = []
         for k, li in self._links.items():
-            for cr in li.claimRequests:
+            for cr in li.claimProofRequests:
                 if Wallet._isMatchingName(cr.name, claimReqName):
                     matchingLinkAndClaimReq.append((li, cr))
         return matchingLinkAndClaimReq
@@ -173,6 +178,10 @@ class Wallet(PWallet, Sponsoring):
 
     def getAttributesForNym(self, idr: Identifier):
         return [a for a in self._attributes.values() if a.dest == idr]
+
+    def addCredAttr(self, claimAttr: ClaimAttr):
+        self._claimAttrs[
+            (claimAttr.name, claimAttr.version, claimAttr.issuerId)] = claimAttr
 
     def addCredDef(self, credDef: CredDef):
         """

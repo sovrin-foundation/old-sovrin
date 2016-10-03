@@ -8,6 +8,8 @@ from plenum.test.eventually import eventually
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.link import Link
+from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT, ATTR_NAMES
 from sovrin.test.cli.helper import getFileLines
 
@@ -17,6 +19,30 @@ from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import AttribDef, AttribType
 
+
+def getSampleLinkInvitation():
+    return {
+        "link-invitation": {
+            "name": "Acme Corp",
+            "identifier": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+            "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
+            "endpoint": "127.0.0.1:1213"
+        },
+        "claim-requests": [{
+            "name": "Job Application",
+            "version": "0.2",
+            "attributes": {
+                "first_name": "string",
+                "last_name": "string",
+                "phone_number": "string",
+                "degree": "string",
+                "status": "string",
+                "ssn": "string"
+            }
+        }],
+        "sig": "KDkI4XUePwEu1K01u0DpDsbeEfBnnBfwuw8e4DEPK+MdYXv"
+               "VsXdSmBJ7yEfQBm8bSJuj6/4CRNI39fFul6DcDA=="
+    }
 
 def prompt_is(prompt):
     def x(cli):
@@ -153,6 +179,22 @@ def testShowInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
     do('show {invite-not-exists}',  expect=fileNotExists, mapper=faberMap)
 
 
+def testLoadLinkInviteWithoutSig():
+    li = getSampleLinkInvitation()
+    del li["sig"]
+    with pytest.raises(InvalidLinkException) as excinfo:
+        Link.validate(li)
+    assert "Field not found in given input: sig" in str(excinfo.value)
+
+
+# def testLoadLinkInviteWithInvalidSig():
+#     li = getSampleLinkInvitation()
+#     li["sig"] = "invalidsignature"
+#     with pytest.raises(InvalidLinkException) as excinfo:
+#         Link.validate(li)
+#     assert "Signature Rejected" in str(excinfo.value)
+#
+
 def testShowFaberInvite(be, do, aliceCli, faberMap):
     be(aliceCli)
     inviteContents = getFileLines(faberMap.get("invite"))
@@ -263,7 +305,7 @@ def testShowSyncedFaberInvite(be, do, faberInviteSyncedWithoutEndpoint,
     be(aliceCLI)
 
     do('show link {inviter}',       expect=showSyncedLinkWithoutEndpointOut,
-                                    #not_expect=linkNotYetSynced,
+                                    not_expect=linkNotYetSynced,
                                     mapper=faberMap)
 
 
@@ -289,7 +331,6 @@ def acmeWithEndpointAdded(be, do, philCli, acmeAddedByPhil,
                                     expect=attrAddedOut,
                                     mapper=acmeMap)
     return philCli
-
 
 
 def testEndpointAddedForFaber(faberWithEndpointAdded):

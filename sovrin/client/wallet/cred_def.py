@@ -28,7 +28,7 @@ class CredDef(CredentialDefinition, HasSeqNo):
                  origin: Optional[Identifier] = None,
                  seqNo: Optional[int] = None,
                  attrNames=None,
-                 secretKey: Optional[str]=None,    # uid of the Cred Def secret key
+                 secretKey: Optional[str]=None,     # uid of the Cred Def secret key
                  typ: str=None,
                  ):
         super().__init__(uid=seqNo,
@@ -71,6 +71,21 @@ class CredDef(CredentialDefinition, HasSeqNo):
     def getRequest(self, requestAuthor: Identifier):
         if not self.seqNo:
             return Request(identifier=requestAuthor, operation=self._opForGet())
+
+    @property
+    def attributes(self):
+        return \
+            'Attributes:' + '\n      ' + \
+            format("\n      ".join(
+            ['{}: {}'.format(k, v)
+             for k, v in self.attrNames.items()]))
+
+    def __str__(self):
+        return """
+            Name: {}
+            Version: {}
+            {}
+        """.format(self.name, self.version, self.attributes)
 
 
 class IssuerPubKey(IssuerKey, HasSeqNo):
