@@ -23,8 +23,7 @@ class ClaimRequest:
             ['{}: {}'.format(k, v)
              for k,v in self.attributes.items()]))
 
-    # TODO: Rename to `serToStr` and make property
-    def getClaimReqInfoStr(self) -> str:
+    def __str__(self):
 
         fixedInfo = \
             'Name: ' + self.name + '\n' \
@@ -60,7 +59,7 @@ class AvailableClaimData:
             "claimDefSeqNo": self.claimDefKey.claimDefSeqNo,
         }
 
-    def getClaimInfoStr(self) -> str:
+    def __str__(self):
         fixedInfo = \
             'Name: ' + self.claimDefKey.name + '\n' \
             'Version: ' + self.claimDefKey.version + '\n' \
@@ -115,8 +114,7 @@ class ReceivedClaim:
             ['{}: {}'.format(k, v)
              for k, v in self.values.items()]))
 
-    # TODO: Rename to `serToStr` and make property
-    def getClaimInfoStr(self) -> str:
+    def __str__(self):
         fixedClaimItems = \
             '\n' \
             'Name: ' + self.defKey.name + '\n' \

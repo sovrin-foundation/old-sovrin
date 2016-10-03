@@ -51,7 +51,7 @@ Possible values: True|False
 
 If True, then OrientDB is required.
 '''
-ClientIdentityGraph = False
+ClientIdentityGraph = True
 
 '''
 The storage type clients use to store requests and replies. Possible values
@@ -59,7 +59,7 @@ are file and OrientDB.
 
 Possible values: "orientdb"|"file"
 '''
-ReqReplyStore = "file"
+ReqReplyStore = "orientdb"
 
 RAETLogLevel = "concise"
 RAETLogLevelCli = "mute"

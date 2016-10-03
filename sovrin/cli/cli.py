@@ -1331,7 +1331,7 @@ class SovrinCli(PlenumCli):
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
-            self.print(rcvdClaim.getClaimInfoStr())
+            self.print(str(rcvdClaim))
             return rcvdClaim
 
     def _showAvailableClaimIfExists(self, claimName):
@@ -1340,7 +1340,7 @@ class SovrinCli(PlenumCli):
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
-            self.print(availableClaim.getClaimInfoStr())
+            self.print(str(availableClaim))
             cd = self.activeWallet.getClaimDefByKey(availableClaim.claimDefKey)
             if cd:
                 self.print(cd.getClaimDefInfoStr())
