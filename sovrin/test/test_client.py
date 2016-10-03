@@ -236,25 +236,6 @@ def testSponsorGetAttrsForUser(checkAddAttribute):
     pass
 
 
-# DEPRECATED FUNCTIONALITY - HUMAN READABLE NAMES NOT SUPPORTED
-# def testSponsorAddsAliasForUser(addedSponsor, looper, sponsor, sponsorWallet):
-#     userSigner = SimpleSigner()
-#     txnId = createNym(looper, userSigner.verstr, sponsor, sponsorWallet)
-#
-#     sponsNym = sponsorWallet.defaultId
-#
-#     op = {
-#         TARGET_NYM: "jasonlaw",
-#         TXN_TYPE: NYM,
-#         # TODO: Should REFERENCE be symmetrically encrypted and the key
-#         # should then be disclosed in another transaction
-#         REFERENCE: txnId,
-#         # ROLE: USER  # DEPR
-#     }
-#
-#     submitAndCheck(looper, sponsor, sponsorWallet, op, identifier=sponsNym)
-#
-#
 def testNonSponsorCannotAddAttributeForUser(genned, nonSponsor, userIdA,
                                             looper, attributeData):
     client, wallet = nonSponsor
