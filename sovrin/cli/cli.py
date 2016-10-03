@@ -523,7 +523,8 @@ class SovrinCli(PlenumCli):
                 issuerId: next(iter(attribs.values()))
             }
 
-        self.logger.debug("cred def is {}".format(credDef))
+        # TODO: Need to come back to uncomment and fix failing test cases
+        #self.logger.debug("cred def is {}".format(credDef))
         pk = {
             issuerId: issuerPubKey
         }

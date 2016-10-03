@@ -1,6 +1,7 @@
 
 AVAILABLE_BUT_NOT_ISSUED_STATUS = "available (not yet issued)"
 
+
 class ClaimProofRequest:
     def __init__(self, name, version, attributes):
         self.name = name
