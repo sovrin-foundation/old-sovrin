@@ -820,7 +820,6 @@ class SovrinCli(PlenumCli):
                                                       proof[VERSION], issuer))
         issuerPubKey = self.activeWallet.getIssuerPublicKey(
             (issuer, credDef.seqNo))
-        # keys = credDef.keys
         pk = {
             issuer: issuerPubKey
         }
@@ -1062,7 +1061,6 @@ class SovrinCli(PlenumCli):
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
-        # ip, port = link.remoteEndPoint.split(":")
         self._sendReqToTargetEndpoint(op, link)
 
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
@@ -1220,12 +1218,12 @@ class SovrinCli(PlenumCli):
             self.print("{}".format(li))
         # TODO: Any suggestion in more than one link?
 
-    # TODO: Refactore following three methods
+    # TODO: Refactor following three methods
     # as most of the pattern looks similar
 
     def _getOneLinkAndClaimReq(self, claimReqName) -> \
             (Link, ClaimRequest):
-        matchingLinksWithClaimReq = self.activeWallet. \
+        matchingLinksWithClaimReq = self.activeWallet.\
             getMatchingLinksWithClaimReq(claimReqName)
 
         if len(matchingLinksWithClaimReq) == 0:
@@ -1241,7 +1239,7 @@ class SovrinCli(PlenumCli):
 
     def _getOneLinkAndAvailableClaim(self, claimName, printMsgs:bool=True) -> \
             (Link, AvailableClaimData):
-        matchingLinksWithAvailableClaim = self.activeWallet. \
+        matchingLinksWithAvailableClaim = self.activeWallet.\
             getMatchingLinksWithAvailableClaim(claimName)
 
         if len(matchingLinksWithAvailableClaim) == 0:
@@ -1259,7 +1257,7 @@ class SovrinCli(PlenumCli):
 
     def _getOneLinkAndReceivedClaim(self, claimName, printMsgs:bool=True) -> \
             (Link, ReceivedClaim):
-        matchingLinksWithRcvdClaim = self.activeWallet. \
+        matchingLinksWithRcvdClaim = self.activeWallet.\
             getMatchingLinksWithReceivedClaim(claimName)
 
         if len(matchingLinksWithRcvdClaim) == 0:
@@ -1299,7 +1297,6 @@ class SovrinCli(PlenumCli):
                            format(claimName, matchingLink.name))
                 cd = self.activeWallet.getClaimDefByKey(
                     availableClaim.claimDefKey)
-
                 if not cd:
                     if self._isConnectedToAnyEnv():
                         self.print("Getting Claim Definition from Sovrin...")
@@ -1481,7 +1478,6 @@ class SovrinCli(PlenumCli):
             credDef = self.activeWallet.getCredDef(credDefKey)
             issuerPubKey = self.activeWallet.getIssuerPublicKey(
                 (self.activeWallet.defaultId, credDef.seqNo))
-            # keys = credDef.keys
             pk = issuerPubKey
             attributes = self.attributeRepo.getAttributes(proverId).encoded()
             if attributes:

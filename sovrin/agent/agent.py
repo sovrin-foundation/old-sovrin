@@ -254,10 +254,11 @@ class WalletedAgent(Agent):
         self.sendMessage(resp, destName=frm)
 
     @staticmethod
-    def getCommonMsg(type, data):
-        msg = {}
-        msg[TYPE] = type
-        msg[DATA] = data
+    def getCommonMsg(typ, data):
+        msg = {
+            TYPE: typ,
+            DATA: data
+        }
         return msg
 
     @staticmethod
@@ -275,9 +276,10 @@ class WalletedAgent(Agent):
 
     @staticmethod
     def createClaimsMsg(claim):
-        data = {}
         # TODO: Should be called CLAIM_FILED, no plural
-        data[CLAIMS_FIELD] = claim
+        data = {
+            CLAIMS_FIELD: claim
+        }
         return WalletedAgent.getCommonMsg(CLAIMS, data)
 
     def _eventHandler(self, msg):
@@ -494,9 +496,10 @@ class WalletedAgent(Agent):
         if link:
             identifier = body.get(f.IDENTIFIER.nm)
             idy = Identity(identifier)
-            alreadyAdded = False
             try:
-                self.wallet.addSponsoredIdentity(idy)
+                pendingCount = self.wallet.addSponsoredIdentity(idy)
+                logger.debug("pending request count {}".format(pendingCount))
+                alreadyAdded = False
             except Exception as e:
                 if e.args[0] == 'identifier already added':
                     alreadyAdded = True
@@ -509,8 +512,6 @@ class WalletedAgent(Agent):
                     self.getAvailableClaimList())
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
-            logger.debug("sending to sovrin {}".format(identifier))
-            # Assuming there was only one pending request
             if alreadyAdded:
                 sendClaimList()
                 self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
@@ -518,6 +519,9 @@ class WalletedAgent(Agent):
                                           link.verkey, frm)
             else:
                 reqs = self.wallet.preparePending()
+                logger.debug("pending requests {}".format(reqs))
+                # Assuming there was only one pending request
+                logger.debug("sending to sovrin {}".format(reqs[0]))
                 self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
         # TODO: If I have the below exception thrown, somehow the
