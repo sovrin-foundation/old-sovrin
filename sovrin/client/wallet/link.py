@@ -57,6 +57,9 @@ class Link:
         self.linkLastSynced = None
         self.linkLastSyncNo = None
 
+    def key(self):
+        return self.name
+
     @property
     def isRemoteEndpointAvailable(self):
         return self.remoteEndPoint and self.remoteEndPoint != \

@@ -881,7 +881,7 @@ class SovrinCli(PlenumCli):
                   trustAnchor, remoteIdentifier,
                   remoteEndPoint, linkNonce,
                   claimProofRequests, invitationData=invitationData)
-        self.activeWallet.addLinkInvitation(li)
+        self.activeWallet.addLink(li)
 
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
@@ -986,11 +986,10 @@ class SovrinCli(PlenumCli):
         link.remoteEndPoint = endPoint
         link.linkLastSynced = datetime.datetime.now()
         self.print("    Link {} synced".format(link.name))
-        self.activeWallet.addLinkInvitation(link)
+        self.activeWallet.addLink(link)
 
         if endPoint != constant.NOT_AVAILABLE:
             self._pingToEndpoint(endPoint)
-
 
     def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
                                        link: Link):

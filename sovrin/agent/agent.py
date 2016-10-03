@@ -416,18 +416,20 @@ class WalletedAgent(Agent):
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
                                               availableClaims):
         identity = Identity(identifier=li.localIdentifier)
+        self.print("#### default id: {}".format(self.wallet.defaultId))
+        self.print("#### identifiers: {}".format(self.wallet.identifiers))
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
-        # self.client.submitReqs(req)
-        # self.notifyObservers("Synchronizing...")
+        self.client.submitReqs(req)
+        self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
             self.notifyObservers("Confirmed identifier written to Sovrin.")
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE, availableClaims)
 
-        # self.loop.call_later(.2, ensureReqCompleted, self.loop,
-        #                             req.reqId, self.client, getNymReply,
-        #                             availableClaims, li)
+        self.loop.call_later(.2, ensureReqCompleted, self.loop,
+                                    req.reqId, self.client, getNymReply,
+                                    availableClaims, li)
 
     def _reqClaim(self, msg):
         pass
