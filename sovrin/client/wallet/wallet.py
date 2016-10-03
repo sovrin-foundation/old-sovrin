@@ -12,6 +12,7 @@ from typing import Optional
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
 from plenum.common.error import fault
+from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW, \
     ORIGIN
@@ -29,6 +30,9 @@ from sovrin.common.types import Request
 from anoncreds.protocol.utils import strToCharmInteger
 
 ENCODING = "utf-8"
+
+
+logger = getlogger()
 
 
 class Sponsoring:
@@ -66,7 +70,6 @@ class Wallet(PWallet, Sponsoring):
         self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
         self.lastKnownSeqs = {}     # type: Dict[str, int]
-        # TODO Rename to `_links`
         self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
         self._claimDefs = {}        # type: Dict[ClaimDefKey, ClaimDef]
@@ -314,11 +317,12 @@ class Wallet(PWallet, Sponsoring):
                               attrNames=data.get(ATTR_NAMES).split(","),
                               name=data[NAME],
                               version=data[VERSION],
-                              origin=data[ORIGIN],  # TODO should
+                              origin=data[ORIGIN],
                               typ=data[TYPE])
             self.addCredDef(credDef)
 
     def _nymReply(self, result, preparedReq):
+        logger.debug("Wallet processing NYM: {}".format(result))
         target = result[TARGET_NYM]
         idy = self._sponsored.get(target)
         if idy:
