@@ -12,10 +12,10 @@ Python, and as such, requires Python version 3.5.0 or later. Plenum also
 depends on libsodium, an awesome crypto library. These need to be installed
 separately. Read below to see how.
 
-Sovrin also depends on a crypto library. The default configuration includes an example that uses Charm-Crypto. Instructions for installing Charm-Crypto can be found here: https://jhuisi.github.io/charm/install_source.html.
 
 ### Pre-requisistes
-Sovrin requires anonymous credentials library which requires a cryptographic framework called charm-crypto.
+Sovrin requires anonymous credentials library which requires a cryptographic library.
+The default configuration includes an example that uses Charm-Crypto framework.
 The steps to install charm-crypto are mentioned in our [Anonymous Credentials](https://github.com/evernym/anoncreds) repository. You just have to run `setup-charm.sh` script. It will require sudo privileges on the system.
 
 
