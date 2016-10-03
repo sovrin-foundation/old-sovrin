@@ -1292,6 +1292,9 @@ class SovrinCli(PlenumCli):
                 matchedVars.get('claim_name'))
             matchingLink, availableClaim = \
                 self._getOneLinkAndAvailableClaim(claimName)
+            # TODO: This has a problem. Even when you have more than one claims
+            # that match `claimName`, `matchingLink` would be None and
+            # "No matching claim ..." would be printed too
             if matchingLink:
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
