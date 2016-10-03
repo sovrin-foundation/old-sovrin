@@ -333,7 +333,11 @@ class Node(PlenumNode):
          client requests it.
         """
         txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
+        # TODO: Remove below print once troubleshooting is done
+        print("####### 11111 {}".format(reply))
         self.sendReplyToClient(Reply(txnWithMerkleInfo))
+        # TODO: Remove below print once troubleshooting is done
+        print("####### 22222 {}".format(reply))
         reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
         self.storeTxnInGraph(reply.result)
 
