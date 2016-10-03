@@ -5,22 +5,17 @@ from sovrin.cli.helper import NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.wallet.link import constant
 from sovrin.common.txn import USER, ENDPOINT
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, getLinkInvitation
-from sovrin.test.helper import makeNymRequest, addRawAttribute
+from sovrin.test.helper import addRawAttribute
 
 
 @pytest.fixture(scope="module")
 def aliceConnected(aliceCLI, be, do, poolNodesCreated):
     # Done to initialise a wallet.
-    # TODO: a wallet should not be required for connecting, right?
     be(aliceCLI)
     do("new key")
 
     ensureConnectedToTestEnv(aliceCLI)
     return aliceCLI
-
-
-def addNym(client, wallet, nym, role=USER):
-    return makeNymRequest(client, wallet, nym, role)
 
 
 def checkIfEndpointReceived(aCli, linkName, expStr):
