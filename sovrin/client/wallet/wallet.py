@@ -257,7 +257,6 @@ class Wallet(PWallet, Sponsoring):
         new = {}
         while self._pending:
             req, key = self._pending.pop()
-
             sreq = self.signRequest(req)
             new[req.identifier, req.reqId] = sreq, key
         self._prepared.update(new)
@@ -322,7 +321,6 @@ class Wallet(PWallet, Sponsoring):
             self.addCredDef(credDef)
 
     def _nymReply(self, result, preparedReq):
-        logger.debug("Wallet processing NYM: {}".format(result))
         target = result[TARGET_NYM]
         idy = self._sponsored.get(target)
         if idy:

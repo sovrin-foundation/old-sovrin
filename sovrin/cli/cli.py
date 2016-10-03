@@ -1363,7 +1363,7 @@ class SovrinCli(PlenumCli):
                     attributesWithValue[k] = v or ''
 
         claimReq.attributes = attributesWithValue
-        self.print(claimReq.getClaimReqInfoStr())
+        self.print(str(claimReq))
 
         for ml, rc, commonAttrs in matchingLinkAndRcvdClaims:
             self.print('\n      Claim proof ({} v{} from {})'.format(
@@ -1441,7 +1441,7 @@ class SovrinCli(PlenumCli):
                     self.envs[envName].domainLedger
                 self.activeEnv = envName
                 self._buildClientIfNotExists(config)
-                self.print("Connecting to {}...".format(envName), Token.BoldGreen)
+                self.print("Connecting to {}...".format(envName), Token.BoldBlue)
                 # Prompt has to be changed, so it show the environment too
                 self._setPrompt(self.currPromptText)
                 self.ensureClientConnected()
@@ -1514,7 +1514,7 @@ class SovrinCli(PlenumCli):
 
     def ensureClientConnected(self):
         if self._isConnectedToAnyEnv():
-            self.print("Connected to {}".format(self.activeEnv), Token.BoldBlue)
+            self.print("Connected to {}".format(self.activeEnv), Token.BoldGreen)
         else:
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 

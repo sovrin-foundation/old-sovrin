@@ -382,12 +382,14 @@ class Node(PlenumNode):
 
     def sendReplyToClient(self, reply):
         identifier = reply.result.get(f.IDENTIFIER.nm)
+        reqId = reply.result.get(f.REQ_ID.nm)
         # In case of genesis transactions when no identifier is present
-        if identifier in self.clientIdentifiers:
-            self.transmitToClient(reply, self.clientIdentifiers[identifier])
+        key = (identifier, reqId)
+        if (identifier, reqId) in self.clientIdentifiers:
+            self.transmitToClient(reply, self.clientIdentifiers.pop(key))
         else:
-            logger.debug("Could not find identifier {} to send reply".
-                         format(identifier))
+            logger.debug("Could not find key {} to send reply".
+                         format(key))
 
     def addToLedger(self, txn):
         merkleInfo = self.primaryStorage.append(txn)
@@ -409,9 +411,9 @@ class Node(PlenumNode):
         if req.operation[TXN_TYPE] == NYM and \
                 self.graphStore.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
-            if req.identifier in self.clientIdentifiers:
+            if req.key in self.clientIdentifiers:
                 self.transmitToClient(RequestNack(req.reqId, reason),
-                                      self.clientIdentifiers[req.identifier])
+                                      self.clientIdentifiers.pop(req.key))
         else:
             reply = self.generateReply(int(ppTime), req)
             self.storeTxnAndSendToClient(reply)
