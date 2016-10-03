@@ -295,7 +295,7 @@ class Wallet(PWallet, Sponsoring):
             attrib.value = result[DATA]
             attrib.seqNo = result[F.seqNo.name]
         else:
-            print("No attribute found")
+            logger.debug("No attribute found")
 
     def _credDefReply(self, result, preparedReq):
         # TODO: Duplicate code from _attribReply, abstract this behavior,

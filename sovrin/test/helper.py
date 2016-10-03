@@ -444,19 +444,6 @@ def makePendingTxnsRequest(client, wallet):
     client.submitReqs(*prepared)
 
 
-def makeNymRequest(client, wallet, nym, role):
-    op = {
-        TARGET_NYM: nym,
-        TXN_TYPE: NYM,
-        ROLE: role
-    }
-    req = wallet.signOp(op)
-    # TODO: This looks boilerplate
-    wallet.pendRequest(req)
-    reqs = wallet.preparePending()
-    return client.submitReqs(*reqs)
-
-
 def makeGetNymRequest(client, wallet, nym):
     op = {
         TARGET_NYM: nym,

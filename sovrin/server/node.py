@@ -333,11 +333,7 @@ class Node(PlenumNode):
          client requests it.
         """
         txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
-        # TODO: Remove below print once troubleshooting is done
-        print("####### 11111 {}".format(reply))
         self.sendReplyToClient(Reply(txnWithMerkleInfo))
-        # TODO: Remove below print once troubleshooting is done
-        print("####### 22222 {}".format(reply))
         reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
         self.storeTxnInGraph(reply.result)
 
@@ -385,8 +381,8 @@ class Node(PlenumNode):
         reqId = reply.result.get(f.REQ_ID.nm)
         # In case of genesis transactions when no identifier is present
         key = (identifier, reqId)
-        if (identifier, reqId) in self.clientIdentifiers:
-            self.transmitToClient(reply, self.clientIdentifiers.pop(key))
+        if (identifier, reqId) in self.requestSender:
+            self.transmitToClient(reply, self.requestSender.pop(key))
         else:
             logger.debug("Could not find key {} to send reply".
                          format(key))
@@ -411,9 +407,9 @@ class Node(PlenumNode):
         if req.operation[TXN_TYPE] == NYM and \
                 self.graphStore.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
-            if req.key in self.clientIdentifiers:
+            if req.key in self.requestSender:
                 self.transmitToClient(RequestNack(req.reqId, reason),
-                                      self.clientIdentifiers.pop(req.key))
+                                      self.requestSender.pop(req.key))
         else:
             reply = self.generateReply(int(ppTime), req)
             self.storeTxnAndSendToClient(reply)
