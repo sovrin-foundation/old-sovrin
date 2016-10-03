@@ -12,7 +12,7 @@ to understand how to work with the code. Note that setup instructions are
 still changing hour-by-hour as we identify
 install preconditions.
 
-
+----
    Copyright 2016 Sovrin Foundation
 
    Licensed under the Apache License, Version 2.0 (the "License");
