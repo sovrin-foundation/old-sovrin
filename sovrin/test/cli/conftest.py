@@ -240,8 +240,8 @@ def syncedInviteAcceptedOutWithoutClaims():
         "Signature accepted.",
         "Trust established.",
         "Identifier created in Sovrin.",
-        # "Synchronizing...",
-        # "Confirmed identifier written to Sovrin."
+        "Synchronizing...",
+        "Confirmed identifier written to Sovrin."
     ]
 
 
@@ -252,12 +252,13 @@ def syncedInviteAcceptedWithClaimsOut(syncedInviteAcceptedOutWithoutClaims):
     ]
 
 @pytest.fixture(scope="module")
-def unsycedAcceptedInviteAcceptedWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
+def unsycedAcceptedInviteWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
     return [
         "Invitation not yet verified",
         "Attempting to sync...",
         "Synchronizing...",
-    ] + syncedInviteAcceptedOutWithoutClaims
+    ] + syncedInviteAcceptedOutWithoutClaims + \
+           ["Confirmed identifier written to Sovrin."]
 
 @pytest.fixture(scope="module")
 def unsycedAlreadyAcceptedInviteAcceptedOut():
@@ -497,11 +498,11 @@ def showClaimOut(nextCommandsToTryUsageLine):
             "Status: {status}",
             "Version: {version}",
             "Attributes:",
-            "student_name: {attr-student_name}",
-            "ssn: {attr-ssn}",
-            "degree: {attr-degree}",
-            "year: {attr-year}",
-            "status: {attr-status}"
+            "student_name",
+            "ssn",
+            "degree",
+            "year",
+            "status"
             ] + nextCommandsToTryUsageLine + \
            ['request claim "{name}"']
 

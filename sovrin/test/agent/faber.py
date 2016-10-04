@@ -134,7 +134,7 @@ class FaberAgent(WalletedAgent):
         idr = wallet.defaultId
         for nonce, data in self._attributes.items():
             link = Link(data.get("student_name"), idr, nonce=nonce)
-            wallet.addLinkInvitation(link)
+            wallet.addLink(link)
 
     def bootstrap(self):
         self.addKeyIfNotAdded()

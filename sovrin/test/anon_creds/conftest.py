@@ -120,7 +120,7 @@ def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
     reqs = sponsorWallet.preparePending()
     sponsor.submitReqs(*reqs)
 
-    key = credDef.key()
+    key = credDef.key
 
     def chk():
         assert sponsorWallet.getCredDef(key).seqNo is not None

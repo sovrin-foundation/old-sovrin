@@ -39,6 +39,7 @@ class CredDef(CredentialDefinition, HasSeqNo):
         self.origin = origin
         self.secretKey = secretKey
 
+    @property
     def key(self):
         return self.name, self.version, self.origin
 
@@ -77,8 +78,8 @@ class CredDef(CredentialDefinition, HasSeqNo):
         return \
             'Attributes:' + '\n      ' + \
             format("\n      ".join(
-            ['{}: {}'.format(k, v)
-             for k, v in self.attrNames.items()]))
+            ['{}'.format(k)
+             for k in self.attrNames]))
 
     def __str__(self):
         return """

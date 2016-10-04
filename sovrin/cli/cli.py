@@ -1341,7 +1341,8 @@ class SovrinCli(PlenumCli):
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
-            cd = self.activeWallet.getCredDefByKey(ac.name, ac.version, ac.origin)
+            cd = self.activeWallet.getCredDefByKey(ac.name, ac.version,
+                                                   ac.origin)
             ca = self.activeWallet.getClaimAttr(ac.name, ac.version, ac.origin)
             if ca:
                 self.print("Status: {}".format(ca.dateOfIssue))

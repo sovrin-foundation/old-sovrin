@@ -1,4 +1,5 @@
 import asyncio
+import json
 import uuid
 
 from datetime import datetime
@@ -7,6 +8,7 @@ from typing import Tuple
 
 import asyncio
 
+from ledger.util import F
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.port_dispenser import genHa
@@ -23,7 +25,8 @@ from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
-from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION
+from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
+    ORIGIN
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
@@ -315,6 +318,40 @@ class WalletedAgent(Agent):
         self.notifyObservers("Error ({}) occurred while processing this "
                              "msg: {}".format(body[DATA], body[REQ_MSG]))
 
+    def _fetchAllAvailableClaimsInWallet(self, li, availableClaims):
+
+        fetchedCount = 0
+
+        def postFetchCredDef(reply, err, li, totalCount):
+            nonlocal fetchedCount
+            fetchedCount += 1
+
+            data = json.loads(reply.get(DATA))
+            credDef = CredDef(seqNo=data.get(F.seqNo.name),
+                    attrNames=data.get(ATTR_NAMES).split(","),
+                    name=data[NAME],
+                    version=data[VERSION],
+                    origin=data[ORIGIN],
+                    typ=data[TYPE])
+            self.wallet._credDefs[credDef.key] = credDef
+            if fetchedCount == totalCount:
+                li.availableClaims = availableClaims
+                self.notifyObservers("    Available claims: {}".
+                                     format(",".join([cl.name
+                                                      for cl in
+                                                      availableClaims])))
+                self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
+
+        for ac in availableClaims:
+            req = self.wallet.requestCredDef((ac.name, ac.version, ac.origin),
+                                             sender=self.wallet.defaultId)
+
+            self.client.submitReqs(req)
+
+            self.loop.call_later(.2, ensureReqCompleted, self.loop,
+                                 req.reqId, self.client, postFetchCredDef,
+                                 li, len(availableClaims))
+
     def _handleAcceptInviteResponse(self, msg):
         body, (frm, ha) = msg
         isVerified = self._isVerified(body)
@@ -331,6 +368,9 @@ class WalletedAgent(Agent):
                     self.notifyObservers("    Already accepted.")
                 else:
                     self.notifyObservers("    Identifier created in Sovrin.")
+
+                li.linkStatus = constant.LINK_STATUS_ACCEPTED
+                li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
                 availableClaims = []
                 for cl in body[DATA][CLAIMS_LIST_FIELD]:
                     name, version, claimDefSeqNo = cl[NAME], cl[VERSION], \
@@ -340,27 +380,9 @@ class WalletedAgent(Agent):
                                          seqNo=claimDefSeqNo)
                     availableClaims.append(credDefKey)
 
-                    self.wallet.requestCredDef((name, version,
-                                                li.remoteIdentifier),
-                                               sender=self.wallet.defaultId)
-                    # TODO: Now wait to fetch the cred def from Sovrin
-
-                    if not cl.get('attributes'):
-                        # TODO: Go and get definition from Sovrin and store
-                        # it in wallet's claim def store
-                        raise NotImplementedError
-
-                li.linkStatus = constant.LINK_STATUS_ACCEPTED
-                li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                li.availableClaims = availableClaims
-
-                self.wallet.addLinkInvitation(li)
-
                 if len(availableClaims) > 0:
-                    self.notifyObservers("    Available claims: {}".
-                                         format(",".join([cl.name
-                                                          for cl in availableClaims])))
-                    self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
+                    li.availableClaims = availableClaims
+                    self._fetchAllAvailableClaimsInWallet(li, availableClaims)
             else:
                 self.notifyObservers("No matching link found")
 
@@ -388,8 +410,7 @@ class WalletedAgent(Agent):
                 attributes = claim['attributes']  # TODO: Need to finalize this
                 rc = ClaimAttr(name, version, idr, claimDefSeqNo, attributes)
                 rc.dateOfIssue = datetime.now()
-                li.updateReceivedClaims([rc])
-                self.wallet.addLinkInvitation(li)
+                self.wallet.addLink(li)
             else:
                 self.notifyObservers("No matching link found")
 
@@ -423,8 +444,10 @@ class WalletedAgent(Agent):
         self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li):
+            self.notifyObservers("Synchronizing...")
             self.notifyObservers("Confirmed identifier written to Sovrin.")
-            self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE, availableClaims)
+            self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
+                                      availableClaims=availableClaims)
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop,
                                     req.reqId, self.client, getNymReply,

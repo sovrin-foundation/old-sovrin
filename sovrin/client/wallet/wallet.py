@@ -190,10 +190,10 @@ class Wallet(PWallet, Sponsoring):
         :param credDef: credDef to add
         :return: number of pending txns
         """
-        self._credDefs[credDef.key()] = credDef
+        self._credDefs[credDef.key] = credDef
         req = credDef.request
         if req:
-            self.pendRequest(req, credDef.key())
+            self.pendRequest(req, credDef.key)
         return len(self._pending)
 
     def getCredDef(self, key=None, seqNo=None):
@@ -329,7 +329,7 @@ class Wallet(PWallet, Sponsoring):
                               version=data[VERSION],
                               origin=data[ORIGIN],
                               typ=data[TYPE])
-            self.addCredDef(credDef)
+            self._credDefs[credDef.key] = credDef
 
     def _nymReply(self, result, preparedReq):
         target = result[TARGET_NYM]
@@ -391,9 +391,6 @@ class Wallet(PWallet, Sponsoring):
 
     def pendRequest(self, req, key=None):
         self._pending.appendleft((req, key))
-
-    def addLinkInvitation(self, linkInvitation):
-        self._links[linkInvitation.name] = linkInvitation
 
     def getLinkInvitationByTarget(self, target: str) -> Link:
         for k, li in self._links.items():
