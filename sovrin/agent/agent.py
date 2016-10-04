@@ -325,25 +325,15 @@ class WalletedAgent(Agent):
         def postFetchCredDef(reply, err, li, totalCount):
             nonlocal fetchedCount
             fetchedCount += 1
-
-            data = json.loads(reply.get(DATA))
-            credDef = CredDef(seqNo=data.get(F.seqNo.name),
-                    attrNames=data.get(ATTR_NAMES).split(","),
-                    name=data[NAME],
-                    version=data[VERSION],
-                    origin=data[ORIGIN],
-                    typ=data[TYPE])
-            self.wallet._credDefs[credDef.key] = credDef
             if fetchedCount == totalCount:
-                li.availableClaims = availableClaims
                 self.notifyObservers("    Available claims: {}".
-                                     format(",".join([cl.name
-                                                      for cl in
+                                     format(",".join([n
+                                                      for n, _, _ in
                                                       availableClaims])))
                 self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
 
-        for ac in availableClaims:
-            req = self.wallet.requestCredDef((ac.name, ac.version, ac.origin),
+        for name, version, origin in availableClaims:
+            req = self.wallet.requestCredDef((name, version, origin),
                                              sender=self.wallet.defaultId)
 
             self.client.submitReqs(req)
@@ -373,15 +363,16 @@ class WalletedAgent(Agent):
                 li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
                 availableClaims = []
                 for cl in body[DATA][CLAIMS_LIST_FIELD]:
-                    name, version, claimDefSeqNo = cl[NAME], cl[VERSION], \
-                                                   cl['claimDefSeqNo']
-                    credDefKey = CredDef(name=name, version=version,
-                                         origin=li.remoteIdentifier,
-                                         seqNo=claimDefSeqNo)
-                    availableClaims.append(credDefKey)
-
-                if len(availableClaims) > 0:
-                    li.availableClaims = availableClaims
+                    if not self.wallet.getCredDef(cl['claimDefSeqNo']):
+                        name, version = cl[NAME], cl[VERSION]
+                        availableClaims.append((name, version,
+                                                li.remoteIdentifier))
+                # TODO: Handle case where agent can send claims in batches.
+                # So consider a scenario where first time an accept invite is
+                # sent, agent sends 2 claims and the second time accept
+                # invite is sent, agent sends 3 claims.
+                if availableClaims:
+                    li.availableClaims.extend(availableClaims)
                     self._fetchAllAvailableClaimsInWallet(li, availableClaims)
             else:
                 self.notifyObservers("No matching link found")

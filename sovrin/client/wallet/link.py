@@ -51,7 +51,7 @@ class Link:
         self.invitationData = invitationData
 
         self.claimProofRequests = claimProofRequests or []
-        self.availableClaims = {}
+        self.availableClaims = []
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
@@ -92,9 +92,6 @@ class Link:
         # TODO: The verkey would be same as the local identifier until we
         # support key rotation
         verKey = constant.SIGNER_VER_KEY_SAME_AS_ID
-        # if self.signerVerKey:
-        #     verKey = self.signerVerKey
-
         fixedLinkHeading = "Link "
         if not self.isAccepted:
             fixedLinkHeading += "(not yet accepted)"
@@ -123,8 +120,8 @@ class Link:
 
         if len(self.availableClaims) > 0:
             optionalLinkItems += "Available claims: {}".\
-                format(",".join([ac.name
-                                 for ac in self.availableClaims]))
+                format(",".join([name
+                                 for name, _, _ in self.availableClaims]))
 
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
@@ -148,14 +145,3 @@ class Link:
         linkInvitationReqFields = [f.IDENTIFIER.nm, NAME, NONCE]
         for fn in linkInvitationReqFields:
             checkIfFieldPresent(linkInvitation, 'link-invitation', fn)
-
-        # isVerified = False
-        # try:
-        #     isVerified = verifySig(linkInvitation.get(f.IDENTIFIER.nm),
-        #           linkInvitation.get("sig"),
-        #           getMsgWithoutSig(invitationData))
-        # except Exception:
-        #     isVerified = False
-        #
-        # if not isVerified:
-        #     raise InvalidLinkException("Signature Rejected")

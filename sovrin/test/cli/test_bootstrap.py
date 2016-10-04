@@ -414,17 +414,17 @@ def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
 
 
 # TODO: If we uncomment this test case, few of the below fails
-# def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
-#                                         unsycedAlreadyAcceptedInviteAcceptedOut,
-#                                         aliceAcceptedFaberInvitation):
-#
-#     li = aliceCli.activeWallet.getLinkInvitationByTarget(
-#         faberCli.activeWallet.defaultId)
-#     li.linkStatus = None
-#     be(aliceCli)
-#
-#     acceptInvitation(be, do, aliceCli, faberMap,
-#                      unsycedAlreadyAcceptedInviteAcceptedOut)
+def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
+                                        unsycedAlreadyAcceptedInviteAcceptedOut,
+                                        aliceAcceptedFaberInvitation):
+
+    li = aliceCli.activeWallet.getLinkInvitationByTarget(
+        faberCli.activeWallet.defaultId)
+    li.linkStatus = None
+    be(aliceCli)
+
+    acceptInvitation(be, do, aliceCli, faberMap,
+                     unsycedAlreadyAcceptedInviteAcceptedOut)
 
 
 def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,
@@ -466,7 +466,6 @@ def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
 
 
 def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
-                           # faberAddedClaimDefAndIssuerKeys,
                            faberIsRunning,
                            aliceAcceptedFaberInvitation
                            ):

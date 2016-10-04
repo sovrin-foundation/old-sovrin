@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from ledger.util import F
 
 from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
@@ -44,8 +45,6 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     # else that client class doesn't gets reloaded
     # and hence it doesn't get updated with correct plugin class/methods
     # and it gives error (for permanent solution bug is created: #130181205).
-    # from sovrin.test.helper import genTestClient
-    #
 
     definition = credDef.get(serFmt=SerFmt.base58)
     credDefKey = (definition[NAME], definition[VERSION],
@@ -62,14 +61,13 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     assert recvdCredDef[NAME] == definition[NAME]
     assert recvdCredDef[VERSION] == definition[VERSION]
     assert recvdCredDef[ATTR_NAMES].split(",") == definition[ATTR_NAMES]
-    # TODO: Check whether cred def is added to wallet and then compare cred def
-    # retrieved from wallet
+    credDef = userWalletA.getCredDef(seqNo=recvdCredDef[F.seqNo.name])
+    assert credDef.attrNames == definition[ATTR_NAMES]
 
 
 def testGetIssuerKey(credentialDefinitionAdded, userWalletA, tdir,
                           nodeSet, looper, sponsorWallet, credDef,
                      issuerPublicKeysAdded, curiousClient):
-    # TODO: Complete this
     key = (sponsorWallet.defaultId, credentialDefinitionAdded)
     req = userWalletA.requestIssuerKey(key,
                                        userWalletA.defaultId)

@@ -259,7 +259,7 @@ class SovrinCli(PlenumCli):
         self.printUsage(self._getShowClaimReqUsage())
 
     def _printShowAndReqClaimSuggestion(self, availableClaims):
-        claimName = "|".join([cl.name for cl in availableClaims])
+        claimName = "|".join([n for n, _, _ in availableClaims])
         claimName = claimName or "<claim-name>"
         msgs = self._getShowClaimUsage(claimName) + \
                self._getReqClaimUsage(claimName)
@@ -270,6 +270,7 @@ class SovrinCli(PlenumCli):
             return
 
         self.agent.connectTo(endpoint)
+
         # TODO: Refactor this
         def _send():
             self.agent.sendMessage(msg, destHa=endpoint)
@@ -1058,12 +1059,12 @@ class SovrinCli(PlenumCli):
         ip, port = link.remoteEndPoint.split(":")
         self.sendToAgent(op, (ip, int(port)))
 
-    def _sendReqClaimToTargetEndpoint(self, link: Link, claim):
+    def _sendReqClaimToTargetEndpoint(self, link: Link, claimDefSeqNo):
         op = {
             f.IDENTIFIER.nm: link.verkey,
             NONCE: link.nonce,
             TYPE: REQUEST_CLAIM_ATTRS,
-            "claimDefSeqNo": claim.seqNo
+            "claimDefSeqNo": claimDefSeqNo
         }
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
@@ -1254,7 +1255,7 @@ class SovrinCli(PlenumCli):
             return None, None
 
         if len(matchingLinksWithAvailableClaim) > 1:
-            linkNames = [ml.name for ml, cl in matchingLinksWithAvailableClaim]
+            linkNames = [ml.name for ml, _ in matchingLinksWithAvailableClaim]
             if printMsgs:
                 self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
             return None, None
@@ -1301,11 +1302,12 @@ class SovrinCli(PlenumCli):
             if matchingLink:
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
-                cd = self.activeWallet.getCredDefByKey(
-                    ac.name, ac.version, ac.origin)
+                # name, version, origin = ac
+                cd = self.activeWallet.getCredDef(key=ac)
                 if not cd:
                     if self._isConnectedToAnyEnv():
                         self.print("Getting Claim Definition from Sovrin...")
+                        # TODO: This is wrong.
                         self.activeWallet.requestIssuerKey(
                             (ac.origin, ac.seqNo), matchingLink.verkey)
                     else:
@@ -1313,7 +1315,7 @@ class SovrinCli(PlenumCli):
 
                 self.print("Requesting claim {} from {}...".format(
                     claimName, matchingLink.name))
-                self._sendReqClaimToTargetEndpoint(matchingLink, ac)
+                self._sendReqClaimToTargetEndpoint(matchingLink, cd.seqNo)
             else:
                 self.print("No matching claim(s) found "
                            "in any links in current keyring")
@@ -1341,9 +1343,9 @@ class SovrinCli(PlenumCli):
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
-            cd = self.activeWallet.getCredDefByKey(ac.name, ac.version,
-                                                   ac.origin)
-            ca = self.activeWallet.getClaimAttr(ac.name, ac.version, ac.origin)
+            name, version, origin = ac
+            cd = self.activeWallet.getCredDef(key=ac)
+            ca = self.activeWallet.getClaimAttr(name, version, origin)
             if ca:
                 self.print("Status: {}".format(ca.dateOfIssue))
             else:

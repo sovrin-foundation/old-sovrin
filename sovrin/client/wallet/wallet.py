@@ -107,9 +107,6 @@ class Wallet(PWallet, Sponsoring):
                     and ca.origin == origin:
                 return ca
 
-    def getCredDefByKey(self, name, version, origin):
-        return self._credDefs.get((name, version, origin))
-
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
         matched = []
@@ -129,9 +126,9 @@ class Wallet(PWallet, Sponsoring):
     def getMatchingLinksWithAvailableClaim(self, claimName):
         matchingLinkAndAvailableClaim = []
         for k, li in self._links.items():
-            for ac in li.availableClaims:
-                if Wallet._isMatchingName(ac.name, claimName):
-                    matchingLinkAndAvailableClaim.append((li, ac))
+            for cl in li.availableClaims:
+                if Wallet._isMatchingName(cl[0], claimName):
+                    matchingLinkAndAvailableClaim.append((li, cl))
         return matchingLinkAndAvailableClaim
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
@@ -322,6 +319,8 @@ class Wallet(PWallet, Sponsoring):
         if credDef:
             if not credDef.seqNo:
                 credDef.seqNo = data.get(F.seqNo.name)
+                credDef.attrNames = data[ATTR_NAMES].split(",")
+                credDef.typ = data[TYPE]
         else:
             credDef = CredDef(seqNo=data.get(F.seqNo.name),
                               attrNames=data.get(ATTR_NAMES).split(","),
