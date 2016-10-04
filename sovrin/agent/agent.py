@@ -340,9 +340,10 @@ class WalletedAgent(Agent):
                                          seqNo=claimDefSeqNo)
                     availableClaims.append(credDefKey)
 
-                    self.wallet.addCredDef(
-                        CredDef(name, version, li.remoteIdentifier,
-                                claimDefSeqNo, cl.get('attributes')))
+                    self.wallet.requestCredDef((name, version,
+                                                li.remoteIdentifier),
+                                               sender=self.wallet.defaultId)
+                    # TODO: Now wait to fetch the cred def from Sovrin
 
                     if not cl.get('attributes'):
                         # TODO: Go and get definition from Sovrin and store
@@ -415,9 +416,7 @@ class WalletedAgent(Agent):
 
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link,
                                               availableClaims):
-        identity = Identity(identifier=li.localIdentifier)
-        self.print("#### default id: {}".format(self.wallet.defaultId))
-        self.print("#### identifiers: {}".format(self.wallet.identifiers))
+        identity = Identity(identifier=li.verkey)
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
         self.client.submitReqs(req)

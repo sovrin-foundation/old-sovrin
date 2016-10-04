@@ -156,6 +156,7 @@ class Wallet(PWallet, Sponsoring):
 
     def addAttribute(self, attrib: Attribute):
         """
+        Used to create a new attribute on Sovrin
         :param attrib: attribute to add
         :return: number of pending txns
         """
@@ -185,6 +186,7 @@ class Wallet(PWallet, Sponsoring):
 
     def addCredDef(self, credDef: CredDef):
         """
+        Used to create a new cred def on Sovrin
         :param credDef: credDef to add
         :return: number of pending txns
         """
@@ -410,6 +412,7 @@ class Wallet(PWallet, Sponsoring):
 
     def requestAttribute(self, attrib: Attribute, sender):
         """
+        Used to get a raw attribute from Sovrin
         :param attrib: attribute to add
         :return: number of pending txns
         """
@@ -419,12 +422,14 @@ class Wallet(PWallet, Sponsoring):
             return self.prepReq(req, key=attrib.key())
 
     def requestIdentity(self, identity: Identity, sender):
+        # Used to get a nym from Sovrin
         self.knownIds[identity.identifier] = identity
         req = identity.getRequest(sender)
         if req:
             return self.prepReq(req)
 
     def requestCredDef(self, credDefKey, sender):
+        # Used to get a cred def from Sovrin
         name, version, origin = credDefKey
         credDef = CredDef(name=name, version=version, origin=origin)
         self._credDefs[credDefKey] = credDef
@@ -433,6 +438,7 @@ class Wallet(PWallet, Sponsoring):
             return self.prepReq(req)
 
     def requestIssuerKey(self, issuerKey, sender):
+        # Used to get a issuer key from Sovrin
         origin, claimDefSeqNo = issuerKey
         isPk = IssuerPubKey(origin=origin, claimDefSeqNo=claimDefSeqNo)
         self._issuerPks[issuerKey] = isPk
@@ -457,6 +463,7 @@ class Wallet(PWallet, Sponsoring):
         return self._issuerSks.get(uid)
 
     def addIssuerPublicKey(self, issuerPk):
+        # Add an issuer key on Sovrin
         self._issuerPks[issuerPk.key] = issuerPk
         req = issuerPk.request
         if req:
