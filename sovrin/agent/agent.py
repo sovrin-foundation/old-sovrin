@@ -339,10 +339,10 @@ class WalletedAgent(Agent):
         # TODO: Find a better name
         def postAllFetched():
             if fetchedCount == len(availableClaims):
-                self.notifyObservers("    Available claims: {}".
-                                     format(",".join([n
-                                                      for n, _, _ in
-                                                      availableClaims])))
+                if len(availableClaims) > 0:
+                    self.notifyObservers("    Available claims: {}".
+                                         format(",".join(
+                        [n for n, _, _ in availableClaims])))
                 self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
         postAllFetched()
 
@@ -438,15 +438,14 @@ class WalletedAgent(Agent):
         self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
-        def getNymReply(reply, err, availableClaims, li):
-            self.notifyObservers("Synchronizing...")
+        def getNymReply(reply, err, availableClaims):
             self.notifyObservers("Confirmed identifier written to Sovrin.")
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
                                       availableClaims=availableClaims)
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop,
                                     req.reqId, self.client, getNymReply,
-                                    availableClaims, li)
+                                    availableClaims)
 
     def _reqClaim(self, msg):
         pass
@@ -458,7 +457,6 @@ class WalletedAgent(Agent):
             self.notifyObservers("Signature accepted.")
             identifier = body.get(IDENTIFIER)
             claim = body[DATA]
-            # for claim in body[CLAIMS_FIELD]:
             self.notifyObservers("Received {}.".format(claim[NAME]))
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:

@@ -127,14 +127,14 @@ class Wallet(PWallet, Sponsoring):
         matchingLinkAndAvailableClaim = []
         for k, li in self._links.items():
             for cl in li.availableClaims:
-                if Wallet._isMatchingName(cl[0], claimName):
+                if Wallet._isMatchingName(claimName, cl[0]):
                     matchingLinkAndAvailableClaim.append((li, cl))
         return matchingLinkAndAvailableClaim
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
         for ca in self._claimAttrs.values():
-            if Wallet._isMatchingName(ca.name, claimName):
+            if Wallet._isMatchingName(claimName, ca.name):
                 for li in self._links.values():
                     if ca.issuerId == li.remoteIdentifier:
                         matchingLinkAndReceivedClaim.append((li, ca))
@@ -143,9 +143,9 @@ class Wallet(PWallet, Sponsoring):
     def getMatchingLinksWithClaimReq(self, claimReqName):
         matchingLinkAndClaimReq = []
         for k, li in self._links.items():
-            for cr in li.claimProofRequests:
-                if Wallet._isMatchingName(cr.name, claimReqName):
-                    matchingLinkAndClaimReq.append((li, cr))
+            for cpr in li.claimProofRequests:
+                if Wallet._isMatchingName(claimReqName, cpr.name):
+                    matchingLinkAndClaimReq.append((li, cpr))
         return matchingLinkAndClaimReq
 
     def _buildClaimKey(self, providerIdr, claimName):

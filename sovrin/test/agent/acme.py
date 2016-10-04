@@ -29,8 +29,10 @@ class AcmeAgent(WalletedAgent):
 
         super().__init__('Acme Corp', basedirpath, client, wallet, port)
 
+        # TODO: The cred def seq no and issuer seq no needs to be changed
+        # based on deployment environment
         self._seqNos = {
-            ("Job-Certificate", "0.1"): (None, None)
+            ("Job-Certificate", "0.1"): (13, 14)
         }
 
         self._attributes = {
