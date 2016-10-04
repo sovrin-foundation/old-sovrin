@@ -435,8 +435,6 @@ class WalletedAgent(Agent):
         identity = Identity(identifier=li.verkey)
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
-        logger.info("######### identifier to be checked if added: {} "
-              "(verkey: {})".format(li.localIdentifier, li.verkey))
         self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
@@ -512,7 +510,6 @@ class WalletedAgent(Agent):
         if link:
             identifier = body.get(f.IDENTIFIER.nm)
             idy = Identity(identifier)
-            logger.info("######### identifier to be added: {}".format(identifier))
             try:
                 pendingCount = self.wallet.addSponsoredIdentity(idy)
                 logger.debug("pending request count {}".format(pendingCount))
