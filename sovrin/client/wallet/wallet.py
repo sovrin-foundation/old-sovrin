@@ -131,17 +131,24 @@ class Wallet(PWallet, Sponsoring):
 
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
-        matched = []
-
-        # for ca in self._claimAttrs.values():
-        #     commonAttr = (set(attributes.keys()) - set(matched)).\
-        #         intersection(ca.attributes.keys())
-        #     if commonAttr:
-        #         for li in self._links.values():
-        #             if ca.issuerId == li.remoteIdentifier:
-        #                 matchingLinkAndRcvdClaim.append((li, ca, commonAttr))
-        #                 matched.extend(commonAttr)
-
+        matched = set()
+        attrNames = set(attributes.keys())
+        for li in self._links.values():
+            issuerAttributes = self.attributesFrom.get(li.remoteIdentifier)
+            if issuerAttributes:
+                commonAttrs = (attrNames.difference(matched).intersection(
+                    set(issuerAttributes.keys())))
+                if commonAttrs:
+                    for nm, ver, origin in li.availableClaims:
+                        cd = self.getCredDef(key=(nm, ver, origin))
+                        if cd and cd.seqNo and set(cd.attrNames).intersection(
+                                commonAttrs):
+                            matchingLinkAndRcvdClaim.append((li,
+                                                             (nm, ver, origin),
+                                                             commonAttrs,
+                                                             issuerAttributes))
+                            matched.update(commonAttrs)
+                            break
         return matchingLinkAndRcvdClaim
 
     # TODO: Few of the below methods have duplicate code, need to refactor it

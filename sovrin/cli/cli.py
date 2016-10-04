@@ -520,40 +520,6 @@ class SovrinCli(PlenumCli):
     # TODO: rename this method
     def _sendCredReqToIssuer(self, reply, err, credName,
                                            credVersion, issuerId, proverId):
-        # credDef = self.activeWallet.getCredDef((credName, credVersion, issuerId))
-        # issuerPubKey = self.activeWallet.getIssuerPublicKey((issuerId, credDef.seqNo))
-
-        # def getEncodedAttrs(issuerId):
-        #     attributes = self.attributeRepo.getAttributes(issuerId)
-        #     attribTypes = []
-        #     for nm in attributes.keys():
-        #         attribTypes.append(AttribType(nm, encode=True))
-        #     attribsDef = AttribDef(self.name, attribTypes)
-        #     attribs = attribsDef.attribs(**attributes).encoded()
-        #     return {
-        #         issuerId: next(iter(attribs.values()))
-        #     }
-
-        # TODO: Need to come back to uncomment and fix failing test cases
-        #self.logger.debug("cred def is {}".format(credDef))
-        # pk = {
-        #     issuerId: issuerPubKey
-        # }
-        # masterSecret = self.activeWallet.masterSecret
-        #
-        # proofBuilder = ProofBuilder(pk, masterSecret)
-        # proofBuilder.setParams(encodedAttrs=getEncodedAttrs(issuerId))
-
-        # if not masterSecret:
-        #     self.activeWallet.addMasterSecret(
-        #         str(proofBuilder.masterSecret))
-
-        #TODO: Should probably be persisting proof objects
-        # self.activeWallet.proofBuilders[proofBuilder.id] = (proofBuilder,
-        #                                                     credName,
-        #                                                     credVersion,
-        #                                                     issuerId)
-
         proofBuilder = self.newProofBuilder(credName, credVersion, issuerId)
         u = proofBuilder.U[issuerId]
         self.setProofBuilderAttrs(proofBuilder, issuerId)
@@ -1439,14 +1405,22 @@ class SovrinCli(PlenumCli):
                 self.print("Status: {}".format(datetime.datetime.now()))
             else:
                 self.print("Status: available (not yet issued)")
+            if cd:
+                self.print('Name: {}\nVersion: {}\n'.format(name, version))
 
-            if ca:
-                self.print(str(ca))
-            elif cd:
-                self.print(str(cd))
-            else:
-                # TODO: get claim def and store it in wallet and show it
+            if not (ca or cd):
                 raise NotImplementedError
+            else:
+                self.print("Attributes: \n")
+            attrs = []
+            if not ca:
+                if cd:
+                    attrs = [(n, '') for n in cd.attrNames]
+            else:
+                attrs = [(n, ': {}'.format(v)) for n, v in ca.items()]
+            if attrs:
+                for n, v in attrs:
+                    self.print('{}{}\n'.format(n, v))
             self._printRequestClaimMsg(claimName)
             return ac
         else:
@@ -1459,19 +1433,19 @@ class SovrinCli(PlenumCli):
 
         attributesWithValue = {}
         for k, v in claimProofReq.attributes.items():
-            for ml, rc, commonAttrs in matchingLinkAndRcvdClaims:
+            for ml, _, commonAttrs, allAttrs in matchingLinkAndRcvdClaims:
                 if k in commonAttrs:
-                    attributesWithValue[k] = rc.attributes[k]
+                    attributesWithValue[k] = allAttrs[k]
                 else:
                     attributesWithValue[k] = v or ''
 
         claimProofReq.attributes = attributesWithValue
         self.print(str(claimProofReq))
 
-        for ml, rc, commonAttrs in matchingLinkAndRcvdClaims:
+        for ml, (name, ver, _), commonAttrs, allAttrs in matchingLinkAndRcvdClaims:
             self.print('\n      Claim proof ({} v{} from {})'.format(
-                rc.name, rc.version, ml.name))
-            for k, v in rc.attributes.items():
+                name, ver, ml.name))
+            for k, v in allAttrs.items():
                 self.print('        ' + k + ': ' + v + ' (verifiable)')
 
     def _showClaimReq(self, matchedVars):
