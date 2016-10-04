@@ -1025,7 +1025,6 @@ class SovrinCli(PlenumCli):
         if self._isConnectedToAnyEnv():
             self.print("    Synchronizing...")
             nym = getCryptonym(li.remoteIdentifier)
-            # req = self.activeClient.doGetAttributeTxn(nym, ENDPOINT)[0]
             attrib = Attribute(name=ENDPOINT,
                                value=None,
                                dest=nym,
@@ -1041,7 +1040,6 @@ class SovrinCli(PlenumCli):
                                         postSync,
                                         li)
         else:
-
             if not self.activeEnv:
                 self.print("Cannot sync because not connected. "
                            "Please connect first.")

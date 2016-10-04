@@ -29,8 +29,10 @@ class FaberAgent(WalletedAgent):
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
+        # TODO: The cred def seq no and issuer seq no needs to be changed
+        # based on deployment environment
         self._seqNos = {
-            ("Transcript", "1.2"): (None, None)
+            ("Transcript", "1.2"): (8, 9)
         }
         self._attributes = {
             "b1134a647eb818069c089e7694f63e6d": {
@@ -72,14 +74,10 @@ class FaberAgent(WalletedAgent):
         acl = self.wallet.getAvailableClaimList()
         resp = []
         for cd, ik in acl:
-            attrs = {}
-            for a in cd.attrNames:
-                attrs[a] = "string"
             resp.append({
                 NAME: cd.name,
                 VERSION: cd.version,
-                "claimDefSeqNo": cd.seqNo,
-                "attributes": attrs
+                "claimDefSeqNo": cd.seqNo
             })
         return resp
 

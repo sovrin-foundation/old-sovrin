@@ -623,24 +623,49 @@ def testShowClaimReqNotExists(be, do, aliceCli, acmeMap, claimReqNotExists):
                                     mapper=acmeMap)
 
 
-def testShowJobApplicationClaimReq(be, do, aliceCli, acmeMap,
-                                   showJobAppClaimReqOut,
-                                   jobApplicationClaimReqMap,
-                                   transcriptClaimAttrValueMap,
-                                   aliceAcceptedAcmeJobInvitation):
-    be(aliceCli)
+def claimReqShown(be, do, userCli, agentMap,
+                                   claimReqOut,
+                                   claimReqMap,
+                                   claimAttrValueMap):
+    be(userCli)
 
     mapping = {
         "set-attr-first_name": "",
         "set-attr-last_name": "",
         "set-attr-phone_number": ""
     }
-    mapping.update(acmeMap)
-    mapping.update(jobApplicationClaimReqMap)
-    mapping.update(transcriptClaimAttrValueMap)
+    mapping.update(agentMap)
+    mapping.update(claimReqMap)
+    mapping.update(claimAttrValueMap)
     do("show claim request {claim-req-to-show}",
-                                    expect=showJobAppClaimReqOut,
+                                    expect=claimReqOut,
                                     mapper=mapping)
+
+
+def testShowJobAppClaimReqWithShortName(be, do, aliceCli, acmeMap,
+                                   showJobAppClaimReqOut,
+                                   jobApplicationClaimReqMap,
+                                   transcriptClaimAttrValueMap,
+                                   aliceAcceptedAcmeJobInvitation):
+    newAcmeMap = {}
+    newAcmeMap.update(acmeMap)
+    newAcmeMap["claim-req-to-show"] = "Job"
+
+    claimReqShown(be, do, aliceCli, newAcmeMap,
+                                   showJobAppClaimReqOut,
+                                   jobApplicationClaimReqMap,
+                                   transcriptClaimAttrValueMap)
+
+
+def testShowJobAppilcationClaimReq(be, do, aliceCli, acmeMap,
+                                   showJobAppClaimReqOut,
+                                   jobApplicationClaimReqMap,
+                                   transcriptClaimAttrValueMap,
+                                   aliceAcceptedAcmeJobInvitation):
+    claimReqShown(be, do, aliceCli, acmeMap,
+                                   showJobAppClaimReqOut,
+                                   jobApplicationClaimReqMap,
+                                   transcriptClaimAttrValueMap)
 
 
 def testSetAttrWithoutContext(be, do, faberCli):

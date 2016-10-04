@@ -71,7 +71,6 @@ class Wallet(PWallet, Sponsoring):
         self._credentials = {}      # type: Dict[str, Credential]
         self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
-        # self._claimAttrs = {}       # type: Dict[(str, str, str, str), ClaimAttr]
 
         # Attributes this wallet has for others. Think of an Issuer's attribute
         #  repo containing attributes for different Provers. Key is a nonce and
@@ -156,7 +155,7 @@ class Wallet(PWallet, Sponsoring):
         matchingLinkAndAvailableClaim = []
         for k, li in self._links.items():
             for cl in li.availableClaims:
-                if Wallet._isMatchingName(cl[0], claimName):
+                if Wallet._isMatchingName(claimName, cl[0]):
                     matchingLinkAndAvailableClaim.append((li, cl))
         return matchingLinkAndAvailableClaim
 
@@ -172,9 +171,9 @@ class Wallet(PWallet, Sponsoring):
     def getMatchingLinksWithClaimReq(self, claimReqName):
         matchingLinkAndClaimReq = []
         for k, li in self._links.items():
-            for cr in li.claimProofRequests:
-                if Wallet._isMatchingName(cr.name, claimReqName):
-                    matchingLinkAndClaimReq.append((li, cr))
+            for cpr in li.claimProofRequests:
+                if Wallet._isMatchingName(claimReqName, cpr.name):
+                    matchingLinkAndClaimReq.append((li, cpr))
         return matchingLinkAndClaimReq
 
     def _buildClaimKey(self, providerIdr, claimName):
@@ -211,10 +210,6 @@ class Wallet(PWallet, Sponsoring):
         if frm not in self.attributesFrom:
             self.attributesFrom[frm] = {}
         self.attributesFrom[frm].update(attrs)
-
-    # def addCredAttr(self, claimAttr: ClaimAttr):
-    #     self._claimAttrs[
-    #         (claimAttr.name, claimAttr.version, claimAttr.issuerId)] = claimAttr
 
     def addCredDef(self, credDef: CredDef):
         """
