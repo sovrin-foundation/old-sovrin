@@ -322,15 +322,10 @@ class WalletedAgent(Agent):
 
         fetchedCount = 0
 
-        def postFetchCredDef(reply, err, li, totalCount):
+        def postFetchCredDef(reply, err):
             nonlocal fetchedCount
             fetchedCount += 1
-            if fetchedCount == totalCount:
-                self.notifyObservers("    Available claims: {}".
-                                     format(",".join([n
-                                                      for n, _, _ in
-                                                      availableClaims])))
-                self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
+            postAllFetched()
 
         for name, version, origin in availableClaims:
             req = self.wallet.requestCredDef((name, version, origin),
@@ -339,8 +334,17 @@ class WalletedAgent(Agent):
             self.client.submitReqs(req)
 
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client, postFetchCredDef,
-                                 li, len(availableClaims))
+                                 req.reqId, self.client, postFetchCredDef)
+
+        # TODO: Find a better name
+        def postAllFetched():
+            if fetchedCount == len(availableClaims):
+                self.notifyObservers("    Available claims: {}".
+                                     format(",".join([n
+                                                      for n, _, _ in
+                                                      availableClaims])))
+                self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
+        postAllFetched()
 
     def _handleAcceptInviteResponse(self, msg):
         body, (frm, ha) = msg
@@ -373,7 +377,7 @@ class WalletedAgent(Agent):
                 # invite is sent, agent sends 3 claims.
                 if availableClaims:
                     li.availableClaims.extend(availableClaims)
-                    self._fetchAllAvailableClaimsInWallet(li, availableClaims)
+                self._fetchAllAvailableClaimsInWallet(li, availableClaims)
             else:
                 self.notifyObservers("No matching link found")
 
