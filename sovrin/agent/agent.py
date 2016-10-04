@@ -438,7 +438,7 @@ class WalletedAgent(Agent):
         self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
-        def getNymReply(reply, err, availableClaims, li):
+        def getNymReply(reply, err, availableClaims):
             self.notifyObservers("Synchronizing...")
             self.notifyObservers("Confirmed identifier written to Sovrin.")
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
@@ -446,7 +446,7 @@ class WalletedAgent(Agent):
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop,
                                     req.reqId, self.client, getNymReply,
-                                    availableClaims, li)
+                                    availableClaims)
 
     def _reqClaim(self, msg):
         pass
