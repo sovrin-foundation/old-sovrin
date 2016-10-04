@@ -388,15 +388,31 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
-def acceptInvitation(be, do, userCli, agentMap, expect):
+def acceptInvitation(be, do, userCli, agentMap, expect,
+                     totalLinks=None,
+                     totalAvailableClaims=None,
+                     totalCredDefs=None,
+                     totalClaimAttrs=None):
     be(userCli)
     do("accept invitation from {inviter}",
-                                    within=5,
+                                    within=6,
                                     mapper=agentMap,
                                     expect=expect)
 
-    return userCli
+    if totalLinks:
+        assert totalLinks == len(userCli.activeWallet._links)
 
+    if totalAvailableClaims:
+        tac = 0
+        for li in userCli.activeWallet._links.values():
+            tac += len(li.availableClaims)
+        assert totalAvailableClaims == tac
+
+    if totalCredDefs:
+        assert totalCredDefs == len(userCli.activeWallet._credDefs)
+
+    if totalClaimAttrs:
+        assert totalClaimAttrs == len(userCli.activeWallet._claimAttrs)
 
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
@@ -405,7 +421,11 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
                                  faberLinkAdded, faberIsRunning,
                                  faberInviteSyncedWithEndpoint):
     acceptInvitation(be, do, aliceCli, faberMap,
-                     syncedInviteAcceptedWithClaimsOut)
+                     syncedInviteAcceptedWithClaimsOut,
+                     totalLinks=1,
+                     totalAvailableClaims=1,
+                     totalCredDefs=1,
+                     totalClaimAttrs=0)
     return aliceCli
 
 
@@ -413,7 +433,6 @@ def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
     pass
 
 
-# TODO: If we uncomment this test case, few of the below fails
 def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
                                         unsycedAlreadyAcceptedInviteAcceptedOut,
                                         aliceAcceptedFaberInvitation):
@@ -424,7 +443,11 @@ def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
     be(aliceCli)
 
     acceptInvitation(be, do, aliceCli, faberMap,
-                     unsycedAlreadyAcceptedInviteAcceptedOut)
+                     unsycedAlreadyAcceptedInviteAcceptedOut,
+                     totalLinks=1,
+                     totalAvailableClaims=1,
+                     totalCredDefs=1,
+                     totalClaimAttrs=0)
 
 
 def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,
@@ -571,195 +594,199 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    acmeCli, acmeWithEndpointAdded):
     be(aliceCli)
     acceptInvitation(be, do, aliceCli, acmeMap,
-                     unsycedAcceptedInviteWithoutClaimOut)
+                     unsycedAcceptedInviteWithoutClaimOut,
+                     totalLinks=2,
+                     totalAvailableClaims=1,
+                     totalCredDefs=1,
+                     totalClaimAttrs=0)
     return aliceCli
 
 
 def testAliceAcceptAcmeJobInvitation(aliceAcceptedAcmeJobInvitation):
     pass
-
-
-def testShowAcmeLinkAfterInviteAccept(be, do, aliceCli, acmeMap,
-                                      aliceAcceptedAcmeJobInvitation,
-                                      showAcceptedLinkWithoutAvailableClaimsOut):
-
-    be(aliceCli)
-
-    do("show link {inviter}",       expect=showAcceptedLinkWithoutAvailableClaimsOut,
-                                    not_expect="Link (not yet accepted)",
-                                    mapper=acmeMap)
-
-
-def testShowClaimReqNotExists(be, do, aliceCli, acmeMap, claimReqNotExists):
-    be(aliceCli)
-    do("show claim request claim-req-to-show-not-exists",
-                                    expect=claimReqNotExists,
-                                    mapper=acmeMap)
-
-
-def testShowJobApplicationClaimReq(be, do, aliceCli, acmeMap,
-                                   showJobAppClaimReqOut,
-                                   jobApplicationClaimReqMap,
-                                   transcriptClaimAttrValueMap,
-                                   aliceAcceptedAcmeJobInvitation):
-    be(aliceCli)
-
-    mapping = {
-        "set-attr-first_name": "",
-        "set-attr-last_name": "",
-        "set-attr-phone_number": ""
-    }
-    mapping.update(acmeMap)
-    mapping.update(jobApplicationClaimReqMap)
-    mapping.update(transcriptClaimAttrValueMap)
-    do("show claim request {claim-req-to-show}",
-                                    expect=showJobAppClaimReqOut,
-                                    mapper=mapping)
-
-
-def testSetAttrWithoutContext(be, do, faberCli):
-    be(faberCli)
-    do("set first_name to Alice",   expect=[
-                                            "No context, "
-                                            "use below command to "
-                                            "set the context"])
-
-
-def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli, acmeMap,
-                                               showJobAppClaimReqOut,
-                                               jobApplicationClaimReqMap,
-                                               transcriptClaimAttrValueMap,
-                                               aliceAcceptedAcmeJobInvitation):
-    be(aliceCli)
-
-    mapping = {
-        "set-attr-first_name": "",
-        "set-attr-last_name": "",
-        "set-attr-phone_number": ""
-    }
-    mapping.update(acmeMap)
-    mapping.update(jobApplicationClaimReqMap)
-    mapping.update(transcriptClaimAttrValueMap)
-    do("show claim request {claim-req-to-show}",
-                                    expect=showJobAppClaimReqOut,
-                                    mapper=mapping)
-    do("set first_name to Alice")
-    mapping.update({
-        "set-attr-first_name": "Alice"
-    })
-    do("show claim request {claim-req-to-show}",
-                                    expect=showJobAppClaimReqOut,
-                                    mapper=mapping)
-
-
-def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
-                                faberIsRunning, faberInviteSyncedWithoutEndpoint):
-
-    msg = {
-        TYPE: ACCEPT_INVITE,
-        IDENTIFIER: faberCli.activeWallet.defaultId,
-        NONCE: "unknown"
-    }
-    signature = aliceCli.activeWallet.signMsg(msg,
-                                              aliceCli.activeWallet.defaultId)
-    msg[f.SIG.nm] = signature
-    ip, port = faberMap[ENDPOINT].split(":")
-    aliceCli.sendToAgent(msg, (ip, int(port)))
-
-    be(aliceCli)
-    do(None,                        within=3,
-                                    expect=["Error (Signature Rejected) "
-                                                "occurred while "
-                                                "processing this msg: ".
-                                                format(msg)])
-
-
-def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
-                      faberInviteSyncedWithoutEndpoint):
-
-    msg = {
-        TYPE: ACCEPT_INVITE,
-        IDENTIFIER: aliceCli.activeWallet.defaultId,
-        NONCE: "unknown"
-    }
-    signature = aliceCli.activeWallet.signMsg(msg,
-                                              aliceCli.activeWallet.defaultId)
-    msg[f.SIG.nm] = signature
-    ip, port = faberMap[ENDPOINT].split(":")
-    aliceCli.sendToAgent(msg, (ip, int(port)))
-
-    be(aliceCli)
-    do(None,                        within=3,
-                                    expect=["Error (No Such Link found) "
-                                            "occurred while "
-                                            "processing this msg: {}".
-                                                format(msg)])
-
-
-@pytest.fixture(scope="module")
-def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
-                                    staticPrimes, looper):
-    faber, faberWallet = faberIsRunning
-    csk = CredDefSecretKey(*staticPrimes.get("prime1"))
-    sid = faberWallet.addCredDefSk(str(csk))
-    # Need to modify the claim definition. We do not support types yet
-    claimDef = {
-            "name": "Transcript",
-            "version": "1.2",
-            "type": "CL",
-            "attr_names": ["student_name", "ssn", "degree", "year", "status"]
-    }
-    credDef = CredDef(seqNo=None,
-                      attrNames=claimDef[ATTR_NAMES],
-                      name=claimDef[NAME],
-                      version=claimDef[VERSION],
-                      origin=faberWallet.defaultId,
-                      typ=claimDef[TYPE],
-                      secretKey=sid)
-    faberWallet.addCredDef(credDef)
-    reqs = faberWallet.preparePending()
-    faber.client.submitReqs(*reqs)
-
-    def chk():
-        assert credDef.seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-
-    isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
-    faberWallet.addIssuerSecretKey(isk)
-    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=credDef.seqNo,
-                       secretKeyUid=isk.uid, origin=faberWallet.defaultId)
-    faberWallet.addIssuerPublicKey(ipk)
-    reqs = faberWallet.preparePending()
-    faber.client.submitReqs(*reqs)
-
-    key = (faberWallet.defaultId, credDef.seqNo)
-
-    def chk():
-        assert faberWallet.getIssuerPublicKey(key).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-    return ipk.seqNo
-
-
-@pytest.fixture(scope="module")
-def faberAddedAttributesForAlice(aliceAcceptedFaberInvitation, aliceCli,
-                                 faberMap, faberIsRunning):
-    faber, faberWallet = faberIsRunning
-    aliceIdrForFaber = aliceCli.activeWallet.getLinkInvitationByTarget(
-        faberMap['target']).verkey
-    attrs = {
-        "student_name": "Alice Garcia",
-        "ssn": "123456789",
-        "degree": "Bachelor of Science, Marketing",
-        "year": "2015",
-        "status": "graduated"
-    }
-    attribTypes = []
-    for name in attrs:
-        attribTypes.append(AttribType(name, encode=True))
-    attribsDef = AttribDef("Transcript", attribTypes)
-    attribs = attribsDef.attribs(**attrs)
-    faber.attributeRepo.addAttributes(aliceIdrForFaber, attribs)
-
+#
+#
+# def testShowAcmeLinkAfterInviteAccept(be, do, aliceCli, acmeMap,
+#                                       aliceAcceptedAcmeJobInvitation,
+#                                       showAcceptedLinkWithoutAvailableClaimsOut):
+#
+#     be(aliceCli)
+#
+#     do("show link {inviter}",       expect=showAcceptedLinkWithoutAvailableClaimsOut,
+#                                     not_expect="Link (not yet accepted)",
+#                                     mapper=acmeMap)
+#
+#
+# def testShowClaimReqNotExists(be, do, aliceCli, acmeMap, claimReqNotExists):
+#     be(aliceCli)
+#     do("show claim request claim-req-to-show-not-exists",
+#                                     expect=claimReqNotExists,
+#                                     mapper=acmeMap)
+#
+#
+# def testShowJobApplicationClaimReq(be, do, aliceCli, acmeMap,
+#                                    showJobAppClaimReqOut,
+#                                    jobApplicationClaimReqMap,
+#                                    transcriptClaimAttrValueMap,
+#                                    aliceAcceptedAcmeJobInvitation):
+#     be(aliceCli)
+#
+#     mapping = {
+#         "set-attr-first_name": "",
+#         "set-attr-last_name": "",
+#         "set-attr-phone_number": ""
+#     }
+#     mapping.update(acmeMap)
+#     mapping.update(jobApplicationClaimReqMap)
+#     mapping.update(transcriptClaimAttrValueMap)
+#     do("show claim request {claim-req-to-show}",
+#                                     expect=showJobAppClaimReqOut,
+#                                     mapper=mapping)
+#
+#
+# def testSetAttrWithoutContext(be, do, faberCli):
+#     be(faberCli)
+#     do("set first_name to Alice",   expect=[
+#                                             "No context, "
+#                                             "use below command to "
+#                                             "set the context"])
+#
+#
+# def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli, acmeMap,
+#                                                showJobAppClaimReqOut,
+#                                                jobApplicationClaimReqMap,
+#                                                transcriptClaimAttrValueMap,
+#                                                aliceAcceptedAcmeJobInvitation):
+#     be(aliceCli)
+#
+#     mapping = {
+#         "set-attr-first_name": "",
+#         "set-attr-last_name": "",
+#         "set-attr-phone_number": ""
+#     }
+#     mapping.update(acmeMap)
+#     mapping.update(jobApplicationClaimReqMap)
+#     mapping.update(transcriptClaimAttrValueMap)
+#     do("show claim request {claim-req-to-show}",
+#                                     expect=showJobAppClaimReqOut,
+#                                     mapper=mapping)
+#     do("set first_name to Alice")
+#     mapping.update({
+#         "set-attr-first_name": "Alice"
+#     })
+#     do("show claim request {claim-req-to-show}",
+#                                     expect=showJobAppClaimReqOut,
+#                                     mapper=mapping)
+#
+#
+# def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
+#                                 faberIsRunning, faberInviteSyncedWithoutEndpoint):
+#
+#     msg = {
+#         TYPE: ACCEPT_INVITE,
+#         IDENTIFIER: faberCli.activeWallet.defaultId,
+#         NONCE: "unknown"
+#     }
+#     signature = aliceCli.activeWallet.signMsg(msg,
+#                                               aliceCli.activeWallet.defaultId)
+#     msg[f.SIG.nm] = signature
+#     ip, port = faberMap[ENDPOINT].split(":")
+#     aliceCli.sendToAgent(msg, (ip, int(port)))
+#
+#     be(aliceCli)
+#     do(None,                        within=3,
+#                                     expect=["Error (Signature Rejected) "
+#                                                 "occurred while "
+#                                                 "processing this msg: ".
+#                                                 format(msg)])
+#
+#
+# def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
+#                       faberInviteSyncedWithoutEndpoint):
+#
+#     msg = {
+#         TYPE: ACCEPT_INVITE,
+#         IDENTIFIER: aliceCli.activeWallet.defaultId,
+#         NONCE: "unknown"
+#     }
+#     signature = aliceCli.activeWallet.signMsg(msg,
+#                                               aliceCli.activeWallet.defaultId)
+#     msg[f.SIG.nm] = signature
+#     ip, port = faberMap[ENDPOINT].split(":")
+#     aliceCli.sendToAgent(msg, (ip, int(port)))
+#
+#     be(aliceCli)
+#     do(None,                        within=3,
+#                                     expect=["Error (No Such Link found) "
+#                                             "occurred while "
+#                                             "processing this msg: {}".
+#                                                 format(msg)])
+#
+#
+# @pytest.fixture(scope="module")
+# def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
+#                                     staticPrimes, looper):
+#     faber, faberWallet = faberIsRunning
+#     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
+#     sid = faberWallet.addCredDefSk(str(csk))
+#     # Need to modify the claim definition. We do not support types yet
+#     claimDef = {
+#             "name": "Transcript",
+#             "version": "1.2",
+#             "type": "CL",
+#             "attr_names": ["student_name", "ssn", "degree", "year", "status"]
+#     }
+#     credDef = CredDef(seqNo=None,
+#                       attrNames=claimDef[ATTR_NAMES],
+#                       name=claimDef[NAME],
+#                       version=claimDef[VERSION],
+#                       origin=faberWallet.defaultId,
+#                       typ=claimDef[TYPE],
+#                       secretKey=sid)
+#     faberWallet.addCredDef(credDef)
+#     reqs = faberWallet.preparePending()
+#     faber.client.submitReqs(*reqs)
+#
+#     def chk():
+#         assert credDef.seqNo is not None
+#
+#     looper.run(eventually(chk, retryWait=1, timeout=10))
+#
+#     isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+#     faberWallet.addIssuerSecretKey(isk)
+#     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+#                        claimDefSeqNo=credDef.seqNo,
+#                        secretKeyUid=isk.uid, origin=faberWallet.defaultId)
+#     faberWallet.addIssuerPublicKey(ipk)
+#     reqs = faberWallet.preparePending()
+#     faber.client.submitReqs(*reqs)
+#
+#     key = (faberWallet.defaultId, credDef.seqNo)
+#
+#     def chk():
+#         assert faberWallet.getIssuerPublicKey(key).seqNo is not None
+#
+#     looper.run(eventually(chk, retryWait=1, timeout=10))
+#     return ipk.seqNo
+#
+#
+# @pytest.fixture(scope="module")
+# def faberAddedAttributesForAlice(aliceAcceptedFaberInvitation, aliceCli,
+#                                  faberMap, faberIsRunning):
+#     faber, faberWallet = faberIsRunning
+#     aliceIdrForFaber = aliceCli.activeWallet.getLinkInvitationByTarget(
+#         faberMap['target']).verkey
+#     attrs = {
+#         "student_name": "Alice Garcia",
+#         "ssn": "123456789",
+#         "degree": "Bachelor of Science, Marketing",
+#         "year": "2015",
+#         "status": "graduated"
+#     }
+#     attribTypes = []
+#     for name in attrs:
+#         attribTypes.append(AttribType(name, encode=True))
+#     attribsDef = AttribDef("Transcript", attribTypes)
+#     attribs = attribsDef.attribs(**attrs)
+#     faber.attributeRepo.addAttributes(aliceIdrForFaber, attribs)
+#

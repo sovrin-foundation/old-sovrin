@@ -1085,6 +1085,7 @@ class SovrinCli(PlenumCli):
 
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
+
         if li:
             if li.isAccepted:
                 self._printLinkAlreadyExcepted(li.name)
