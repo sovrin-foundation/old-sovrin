@@ -1148,7 +1148,7 @@ class SovrinCli(PlenumCli):
     def _printLinkAlreadyExcepted(self, linkName):
         self.print("Link {} is already accepted".format(linkName))
 
-    def _printShowAndAcceptLinkUsage(self, linkName):
+    def _printShowAndAcceptLinkUsage(self, linkName=None):
         msgs = self._getShowLinkUsage(linkName) + \
                self._getAcceptLinkUsage(linkName)
         self.printSuggestion(msgs)
@@ -1209,7 +1209,7 @@ class SovrinCli(PlenumCli):
                 self.print("{}".format(li.name))
         self.print("\nRe enter the command with more specific "
                    "link invitation name")
-        self._printShowAndLoadFileUsage()
+        self._printShowAndAcceptLinkUsage()
 
     def _showLink(self, matchedVars):
         if matchedVars.get('show_link') == 'show link':
