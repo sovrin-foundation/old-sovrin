@@ -530,9 +530,8 @@ def showAcceptedLinkWithClaimReqsOut(showAcceptedLinkOut,
 
 @pytest.fixture(scope="module")
 def showAcceptedLinkWithoutAvailableClaimsOut(showAcceptedLinkOut,
-                                        showLinkWithClaimReqOut,
-                                        showLinkSuggestion):
-    return showAcceptedLinkOut + showLinkWithClaimReqOut + showLinkSuggestion
+                                        showLinkWithClaimReqOut):
+    return showAcceptedLinkOut + showLinkWithClaimReqOut
 
 
 @pytest.fixture(scope="module")
