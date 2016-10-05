@@ -339,15 +339,19 @@ class Wallet(PWallet, Sponsoring):
             raise NotImplementedError
 
     def _getNymReply(self, result, preparedReq):
-        data = json.loads(result.get(DATA))
-        nym = data.get(TARGET_NYM)
-        idy = self.knownIds.get(nym)
-        if idy:
-            idy.role = data.get(ROLE)
-            idy.sponsor = data.get(f.IDENTIFIER.nm)
-            idy.last_synced = datetime.datetime.utcnow()
-            # TODO: THE GET_NYM reply should contain the sequence number of
-            # the NYM transaction
+        jsonData = result.get(DATA)
+        if jsonData:
+            data = json.loads(jsonData)
+            nym = data.get(TARGET_NYM)
+            idy = self.knownIds.get(nym)
+            if idy:
+                idy.role = data.get(ROLE)
+                idy.sponsor = data.get(f.IDENTIFIER.nm)
+                idy.last_synced = datetime.datetime.utcnow()
+                # TODO: THE GET_NYM reply should contain the sequence number of
+                # the NYM transaction
+        else:
+            raise NotImplementedError("'Data' in reply was None")
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO

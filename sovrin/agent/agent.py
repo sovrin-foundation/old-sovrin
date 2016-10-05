@@ -516,6 +516,8 @@ class WalletedAgent(Agent):
                 if e.args[0] == 'identifier already added':
                     alreadyAdded = True
                 else:
+                    logger.warning("Exception raised while adding nym, "
+                                   "error was: {}".format(e.args[0]))
                     raise e
 
             def sendClaimList(reply=None, error=None):

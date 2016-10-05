@@ -258,12 +258,13 @@ class SovrinCli(PlenumCli):
     def _printShowClaimReqUsage(self):
         self.printUsage(self._getShowClaimReqUsage())
 
-    def _printShowAndReqClaimSuggestion(self, availableClaims):
-        claimName = "|".join([n for n, _, _ in availableClaims])
-        claimName = claimName or "<claim-name>"
-        msgs = self._getShowClaimUsage(claimName) + \
-               self._getReqClaimUsage(claimName)
-        self.printSuggestion(msgs)
+    def _printSuggestionForAcceptedLink(self, availableClaims):
+        if len(availableClaims) > 0:
+            claimName = "|".join([n for n, _, _ in availableClaims])
+            claimName = claimName or "<claim-name>"
+            msgs = self._getShowClaimUsage(claimName) + \
+                   self._getReqClaimUsage(claimName)
+            self.printSuggestion(msgs)
 
     def sendToAgent(self, msg: Any, endpoint: Tuple):
         if not self.agent:
@@ -337,7 +338,7 @@ class SovrinCli(PlenumCli):
                                         port=port)
             self._agent.registerObserver(self)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
-                                              self._printShowAndReqClaimSuggestion)
+                                              self._printSuggestionForAcceptedLink)
             self.looper.add(self._agent)
         return self._agent
 
@@ -1202,7 +1203,7 @@ class SovrinCli(PlenumCli):
 
                 self.print("{}".format(str(li)))
                 if li.isAccepted:
-                    self._printShowAndReqClaimSuggestion(li.availableClaims)
+                    self._printSuggestionForAcceptedLink(li.availableClaims)
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:
@@ -1302,6 +1303,10 @@ class SovrinCli(PlenumCli):
             # that match `claimName`, `matchingLink` would be None and
             # "No matching claim ..." would be printed too
             if matchingLink:
+                if matchingLink.name != claimName:
+                    self.print('Expanding {} to "{}"'.format(
+                        claimName, matchingLink.name))
+
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
                 # name, version, origin = ac

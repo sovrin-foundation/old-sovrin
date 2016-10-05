@@ -82,11 +82,10 @@ class CredDef(CredentialDefinition, HasSeqNo):
              for k in self.attrNames]))
 
     def __str__(self):
-        return """
-            Name: {}
-            Version: {}
-            {}
-        """.format(self.name, self.version, self.attributes)
+        return \
+            'Name: ' + self.name + '\n' + \
+            'Version: ' + self.version + '\n' + \
+            self.attributes
 
 
 class IssuerPubKey(IssuerKey, HasSeqNo):
