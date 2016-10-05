@@ -29,7 +29,7 @@ class ClaimProofRequest:
         fixedInfo = \
             'Status: Requested' + '\n' \
             'Name: ' + self.name + '\n' \
-            'Version: ' + self.version
+            'Version: ' + self.version + '\n'
 
 
         return fixedInfo + self.attributeValues

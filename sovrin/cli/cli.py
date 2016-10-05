@@ -219,6 +219,13 @@ class SovrinCli(PlenumCli):
                         ])
         return actions
 
+    def _getSetAttrUsage(self):
+        return ['set <attr-name> to <attr-value>']
+
+    def _getSendClaimProofReqUsage(self, claimProofReqName=None):
+        return ['send claim request {}'.format(
+            claimProofReqName or "<claim-req-name>")]
+
     def _getShowFileUsage(self, filePath=None):
         return ['show {}'.format(filePath or "<file-path>")]
 
@@ -254,16 +261,26 @@ class SovrinCli(PlenumCli):
     def _getConnectUsage(self):
         return ["connect <{}>".format(self.allEnvNames)]
 
+    def _printPostShowClaimReqSuggestion(self, claimProofReqName):
+        msgs = self._getSetAttrUsage() + \
+               self._getSendClaimProofReqUsage(claimProofReqName)
+        self.printSuggestion(msgs)
+
     def _printShowClaimReqUsage(self):
         self.printUsage(self._getShowClaimReqUsage())
 
-    def _printSuggestionForAcceptedLink(self, availableClaims):
+    def _printSuggestionForAcceptedLink(self, availableClaims,
+                                        claimProofReqs):
         if len(availableClaims) > 0:
             claimName = "|".join([n for n, _, _ in availableClaims])
             claimName = claimName or "<claim-name>"
             msgs = self._getShowClaimUsage(claimName) + \
                    self._getReqClaimUsage(claimName)
             self.printSuggestion(msgs)
+        elif len(claimProofReqs) > 0:
+            self._printShowClaimReqUsage()
+        else:
+            self.print("")
 
     def sendToAgent(self, msg: Any, endpoint: Tuple):
         if not self.agent:
@@ -1214,7 +1231,8 @@ class SovrinCli(PlenumCli):
 
                 self.print("{}".format(str(li)))
                 if li.isAccepted:
-                    self._printSuggestionForAcceptedLink(li.availableClaims)
+                    self._printSuggestionForAcceptedLink(li.availableClaims,
+                                                         li.claimProofRequests)
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:
@@ -1297,7 +1315,7 @@ class SovrinCli(PlenumCli):
             attrValue = matchedVars.get('attr_value')
             curLink, curClaimReq = self.curContext
             if curClaimReq:
-                curClaimReq.attributes[attrName] = attrValue
+                curClaimReq.attributes[attrName] = attrValue + ' (self-claim)'
             else:
                 self.print("No context, use below command to set the context")
                 self._printShowClaimReqUsage()
@@ -1351,6 +1369,7 @@ class SovrinCli(PlenumCli):
             self.print("Attributes:")
             for n, v in attributes.items():
                 self.print('    {}: {}'.format(n, v))
+            self.print("")
             return rcvdClaim
 
     def _showAvailableClaimIfExists(self, claimName):
@@ -1426,6 +1445,7 @@ class SovrinCli(PlenumCli):
                 self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
                 self._showMatchingClaimProof(claimReq)
+                self._printPostShowClaimReqSuggestion(claimReq.name)
             return True
 
     def _showClaim(self, matchedVars):
@@ -1433,6 +1453,7 @@ class SovrinCli(PlenumCli):
             claimName = SovrinCli.removeDoubleQuotes(
                 matchedVars.get('claim_name'))
             self._showReceivedOrAvailableClaim(claimName)
+
             return True
 
     def _showFile(self, matchedVars):

@@ -390,7 +390,7 @@ class WalletedAgent(Agent):
             self.notifyObservers("Signature accepted.")
             identifier = body.get(IDENTIFIER)
             claim = body[DATA]
-            self.notifyObservers("Received {}.".format(claim[NAME]))
+            self.notifyObservers("Received {}.\n".format(claim[NAME]))
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 name, version, idr = \
@@ -434,13 +434,14 @@ class WalletedAgent(Agent):
         self.client.submitReqs(req)
         self.notifyObservers("Synchronizing...")
 
-        def getNymReply(reply, err, availableClaims):
+        def getNymReply(reply, err, availableClaims, li: Link):
             self.notifyObservers("    Confirmed identifier written to Sovrin.")
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
-                                      availableClaims=availableClaims)
+                                      availableClaims=availableClaims,
+                                      claimProofReqs=li.claimProofRequests)
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
-                             self.client, getNymReply, availableClaims)
+                             self.client, getNymReply, availableClaims, li)
 
     def _reqClaim(self, msg):
         body, (frm, ha) = msg
