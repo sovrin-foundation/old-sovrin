@@ -553,18 +553,18 @@ class WalletedAgent(Agent):
             ATTR_NAMES: attrNames
         }
         wallet = self.wallet
-        credDef = ClaimDef(seqNo=credDefSeqNo,
+        claimDef = ClaimDef(seqNo=credDefSeqNo,
                            attrNames=claimDef[ATTR_NAMES],
                            name=claimDef[NAME],
                            version=claimDef[VERSION],
                            origin=wallet.defaultId,
                            typ=claimDef[TYPE],
                            secretKey=sid)
-        wallet._credDefs[(name, version, wallet.defaultId)] = credDef
-        isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+        wallet._claimDefs[(name, version, wallet.defaultId)] = claimDef
+        isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
         self.wallet.addIssuerSecretKey(isk)
         ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                           claimDefSeqNo=credDef.seqNo,
+                           claimDefSeqNo=claimDef.seqNo,
                            secretKeyUid=isk.uid, origin=wallet.defaultId,
                            seqNo=issuerKeySeqNo)
         key = (wallet.defaultId, credDefSeqNo)

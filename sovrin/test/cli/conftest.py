@@ -739,35 +739,35 @@ def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
             "type": "CL",
             "attr_names": ["student_name", "ssn", "degree", "year", "status"]
     }
-    credDef = ClaimDef(seqNo=None,
+    claimDef = ClaimDef(seqNo=None,
                        attrNames=claimDef[ATTR_NAMES],
                        name=claimDef[NAME],
                        version=claimDef[VERSION],
                        origin=faberWallet.defaultId,
                        typ=claimDef[TYPE],
                        secretKey=sid)
-    faberWallet.addClaimDef(credDef)
+    faberWallet.addClaimDef(claimDef)
     reqs = faberWallet.preparePending()
     faber.client.submitReqs(*reqs)
 
     def chk():
-        assert credDef.seqNo is not None
+        assert claimDef.seqNo is not None
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
-    isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
     faberWallet.addIssuerSecretKey(isk)
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=credDef.seqNo,
+                       claimDefSeqNo=claimDef.seqNo,
                        secretKeyUid=isk.uid, origin=faberWallet.defaultId)
     faberWallet.addIssuerPublicKey(ipk)
     reqs = faberWallet.preparePending()
     faber.client.submitReqs(*reqs)
 
-    key = (faberWallet.defaultId, credDef.seqNo)
+    key = (faberWallet.defaultId, claimDef.seqNo)
 
     def chk():
         assert faberWallet.getIssuerPublicKey(key).seqNo is not None
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
-    return credDef.seqNo, ipk.seqNo
+    return claimDef.seqNo, ipk.seqNo

@@ -65,7 +65,7 @@ class Wallet(PWallet, Sponsoring):
 
         self._credMasterSecret = None
         self._attributes = {}       # type: Dict[(str, Identifier, Optional[Identifier]), Attribute]
-        self._credDefs = {}         # type: Dict[(str, str, str), ClaimDef]
+        self._claimDefs = {}         # type: Dict[(str, str, str), ClaimDef]
         self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
         self._links = {}            # type: Dict[str, Link]
@@ -95,8 +95,8 @@ class Wallet(PWallet, Sponsoring):
         self.replyHandler = {
             ATTRIB: self._attribReply,
             GET_ATTR: self._getAttrReply,
-            CRED_DEF: self._credDefReply,
-            GET_CRED_DEF: self._getCredDefReply,
+            CRED_DEF: self._claimDefReply,
+            GET_CRED_DEF: self._getClaimDefReply,
             NYM: self._nymReply,
             GET_NYM: self._getNymReply,
             GET_TXNS: self._getTxnsReply,
@@ -220,10 +220,10 @@ class Wallet(PWallet, Sponsoring):
     def addClaimDef(self, claimDef: ClaimDef):
         """
         Used to create a new cred def on Sovrin
-        :param claimDef: credDef to add
+        :param claimDef: claimDef to add
         :return: number of pending txns
         """
-        self._credDefs[claimDef.key] = claimDef
+        self._claimDefs[claimDef.key] = claimDef
         req = claimDef.request
         if req:
             self.pendRequest(req, claimDef.key)
@@ -232,9 +232,9 @@ class Wallet(PWallet, Sponsoring):
     def getClaimDef(self, key=None, seqNo=None):
         assert key or seqNo
         if key:
-            return self._credDefs.get(key)
+            return self._claimDefs.get(key)
         else:
-            for _, cd in self._credDefs.items():
+            for _, cd in self._claimDefs.items():
                 if cd.seqNo == seqNo:
                     return cd
 
@@ -341,30 +341,30 @@ class Wallet(PWallet, Sponsoring):
         else:
             logger.debug("No attribute found")
 
-    def _credDefReply(self, result, preparedReq):
+    def _claimDefReply(self, result, preparedReq):
         # TODO: Duplicate code from _attribReply, abstract this behavior,
         # Have a mixin like `HasSeqNo`
         _, key = preparedReq
-        credDef = self.getClaimDef(key)
-        credDef.seqNo = result[F.seqNo.name]
+        claimDef = self.getClaimDef(key)
+        claimDef.seqNo = result[F.seqNo.name]
 
-    def _getCredDefReply(self, result, preparedReq):
+    def _getClaimDefReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
-        credDef = self.getClaimDef((data.get(NAME), data.get(VERSION),
+        claimDef = self.getClaimDef((data.get(NAME), data.get(VERSION),
                                     data.get(ORIGIN)))
-        if credDef:
-            if not credDef.seqNo:
-                credDef.seqNo = data.get(F.seqNo.name)
-                credDef.attrNames = data[ATTR_NAMES].split(",")
-                credDef.typ = data[TYPE]
+        if claimDef:
+            if not claimDef.seqNo:
+                claimDef.seqNo = data.get(F.seqNo.name)
+                claimDef.attrNames = data[ATTR_NAMES].split(",")
+                claimDef.typ = data[TYPE]
         else:
-            credDef = ClaimDef(seqNo=data.get(F.seqNo.name),
+            claimDef = ClaimDef(seqNo=data.get(F.seqNo.name),
                                attrNames=data.get(ATTR_NAMES).split(","),
                                name=data[NAME],
                                version=data[VERSION],
                                origin=data[ORIGIN],
                                typ=data[TYPE])
-            self._credDefs[credDef.key] = credDef
+            self._claimDefs[claimDef.key] = claimDef
 
     def _nymReply(self, result, preparedReq):
         target = result[TARGET_NYM]
@@ -470,9 +470,9 @@ class Wallet(PWallet, Sponsoring):
     def requestCredDef(self, credDefKey, sender):
         # Used to get a cred def from Sovrin
         name, version, origin = credDefKey
-        credDef = ClaimDef(name=name, version=version, origin=origin)
-        self._credDefs[credDefKey] = credDef
-        req = credDef.getRequest(sender)
+        claimDef = ClaimDef(name=name, version=version, origin=origin)
+        self._claimDefs[credDefKey] = claimDef
+        req = claimDef.getRequest(sender)
         if req:
             return self.prepReq(req)
 
@@ -527,7 +527,7 @@ class Wallet(PWallet, Sponsoring):
 
     def getAvailableClaimList(self):
         resp = []
-        for k, v in self._credDefs.items():
+        for k, v in self._claimDefs.items():
             ipk = self.getIssuerPublicKeyForClaimDef(v.seqNo)
             resp.append((v, ipk))
         return resp

@@ -106,9 +106,9 @@ def dateTimeEncoding(obj):
     raise TypeError('Not sure how to serialize %s' % (obj,))
 
 
-def getCredDefTxnData(credDef):
-    credDef = credDef.get()
-    keys = credDef[KEYS]
+def getCredDefTxnData(claimDef):
+    claimDef = claimDef.get()
+    keys = claimDef[KEYS]
     keys["R"].pop("0")
     keys = {
         "master_secret_rand": int(keys.get("master_secret_rand")),
@@ -117,8 +117,8 @@ def getCredDefTxnData(credDef):
         "Z": int(keys.get("Z")),
         "attributes": {k: int(v) for k, v in keys["R"].items()}
     }
-    credDef[KEYS] = json.dumps(keys)
-    return credDef
+    claimDef[KEYS] = json.dumps(keys)
+    return claimDef
 
 
 def getNonce(length=32):

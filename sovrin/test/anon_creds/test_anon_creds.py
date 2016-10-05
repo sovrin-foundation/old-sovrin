@@ -153,8 +153,7 @@ def testAnonCredFlow(genned,
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
     pending = issuerWallet.addClaimDef(credDef)
     reqs = issuerWallet.preparePending()
-    # op = {TXN_TYPE: CRED_DEF,
-    #       DATA: getCredDefTxnData(credDef)}
+
     logger.display("Issuer: Writing credential definition to "
                    "Sovrin Ledger...")
     issuerC.submitReqs(*reqs)
