@@ -37,28 +37,28 @@ class FaberAgent(WalletedAgent):
         self._attributes = {
             "b1134a647eb818069c089e7694f63e6d": {
                 "student_name": "Alice Garcia",
-                "ssn": "123456789",
+                "ssn": "123-45-6789",
                 "degree": "Bachelor of Science, Marketing",
                 "year": "2015",
                 "status": "graduated"
             },
             "2a2eb72eca8b404e8d412c5bf79f2640": {
                 "student_name": "Carol Atkinson",
-                "ssn": "783412695",
+                "ssn": "783-41-2695",
                 "degree": "Bachelor of Science, Physics",
                 "year": "2012",
                 "status": "graduated"
             },
             "7513d1397e87cada4214e2a650f603eb": {
                 "student_name": "Frank Jeffrey",
-                "ssn": "996541211",
+                "ssn": "996-54-1211",
                 "degree": "Bachelor of Arts, History",
                 "year": "2013",
                 "status": "dropped"
             },
             "710b78be79f29fc81335abaa4ee1c5e8": {
                 "student_name": "Craig Richards",
-                "ssn": "151445876",
+                "ssn": "151-44-5876",
                 "degree": "MBA, Finance",
                 "year": "2014",
                 "status": "graduated"

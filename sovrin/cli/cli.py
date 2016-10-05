@@ -485,8 +485,7 @@ class SovrinCli(PlenumCli):
             req = self.activeWallet.requestIssuerKey((origin, reference),
                                                      self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
-            self.print("Getting Keys for the Claim Definition from Sovrin",
-                       Token.BoldBlue)
+            self.print("Getting Keys for the Claim Definition from Sovrin")
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         req.reqId, self.activeClient,
                                         clbk, *args)
@@ -1059,7 +1058,7 @@ class SovrinCli(PlenumCli):
                                                likelyMatchedLinks)
             return None
         li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
-        if li.name != linkName:
+        if SovrinCli.isNotMatching(linkName, li.name):
             self.print('Expanding {} to "{}"'.format(linkName, li.name))
         return li
 
@@ -1147,6 +1146,10 @@ class SovrinCli(PlenumCli):
         li = self._getOneLinkForFurtherProcessing(linkName)
         if li:
             self._getTargetEndpoint(li, self._printUsagePostSync)
+
+    @staticmethod
+    def isNotMatching(source, target):
+        return source.lower() != target.lower()
 
     @staticmethod
     def removeDoubleQuotes(name):
@@ -1237,7 +1240,7 @@ class SovrinCli(PlenumCli):
             if totalFound == 1:
                 li = self._getOneLink(exactlyMatchedLinks, likelyMatchedLinks)
 
-                if li.name != linkName:
+                if SovrinCli.isNotMatching(linkName, li.name):
                     self.print('Expanding {} to "{}"'.format(linkName, li.name))
 
                 self.print("{}".format(str(li)))
@@ -1339,16 +1342,16 @@ class SovrinCli(PlenumCli):
             matchingLink, ac = \
                 self._getOneLinkAndAvailableClaim(claimName, printMsgs=False)
             if matchingLink:
-                if matchingLink.name != claimName:
+                name, version, origin = ac
+                if SovrinCli.isNotMatching(claimName, name):
                     self.print('Expanding {} to "{}"'.format(
-                        claimName, matchingLink.name))
-
+                        claimName, name))
                 self.print("Found claim {} in link {}".
                            format(claimName, matchingLink.name))
                 if not self._isConnectedToAnyEnv():
                     self._printNotConnectedEnvMessage()
                     return True
-                name, version, origin = ac
+
                 self._getCredDefIsrKeyAndExecuteCallback(origin, name,
                                                          version,
                                                          self.sendReqClaim,
@@ -1387,12 +1390,13 @@ class SovrinCli(PlenumCli):
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
-            self.print('Name: {}\nVersion: {}\n'.format(claimName, rcvdClaim[1]))
+
             # TODO: Figure out how to get time of issuance
             self.print("Status: {}".format(datetime.datetime.now()))
-            self.print("Attributes: \n")
+            self.print('Name: {}\nVersion: {}'.format(claimName, rcvdClaim[1]))
+            self.print("Attributes:")
             for n, v in attributes.items():
-                self.print('{}: {}\n'.format(n, v))
+                self.print('    {}: {}'.format(n, v))
             return rcvdClaim
 
     def _showAvailableClaimIfExists(self, claimName):

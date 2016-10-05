@@ -407,7 +407,7 @@ def showClaimNotFoundOut():
 def transcriptClaimAttrValueMap():
     return {
         "attr-student_name": "Alice Garcia",
-        "attr-ssn": "123456789",
+        "attr-ssn": "123-45-6789",
         "attr-degree": "Bachelor of Science, Marketing",
         "attr-year": "2015",
         "attr-status": "graduated"
@@ -720,7 +720,8 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
                    faberWallet, faberAddedByPhil):
     faber, faberWallet = runningFaber(emptyLooper, tdirWithPoolTxns,
                                       faberAgentPort, faberWallet)
-    cdSeqNo, iskSeqNo = faberAddedClaimDefAndIssuerKeys(emptyLooper, faber, faberWallet)
+    cdSeqNo, iskSeqNo = faberAddedClaimDefAndIssuerKeys(emptyLooper, faber,
+                                                        faberWallet)
     faber._seqNos = {
         ("Transcript", "1.2"): (cdSeqNo, iskSeqNo)
     }

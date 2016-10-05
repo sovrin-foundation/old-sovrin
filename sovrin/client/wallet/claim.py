@@ -27,8 +27,9 @@ class ClaimProofRequest:
     def __str__(self):
 
         fixedInfo = \
+            'Status: Requested' + '\n' \
             'Name: ' + self.name + '\n' \
-            'Version: ' + self.version + '\n' \
-            'Status: Requested' + '\n'
+            'Version: ' + self.version
+
 
         return fixedInfo + self.attributeValues

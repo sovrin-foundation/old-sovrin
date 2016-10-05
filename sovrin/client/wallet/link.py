@@ -110,8 +110,7 @@ class Link:
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
             'Invitation nonce: ' + self.nonce + '\n' \
-            'Invitation status: ' + linkStatus + '\n' \
-            'Last synced: ' + linkLastSynced + '\n'
+            'Invitation status: ' + linkStatus + '\n'
 
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
@@ -126,7 +125,11 @@ class Link:
         if self.linkLastSyncNo:
             optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
 
-        linkItems = fixedLinkItems + optionalLinkItems
+        fixedEndingLines = \
+            '\n' \
+            'Last synced: ' + linkLastSynced
+
+        linkItems = fixedLinkItems + optionalLinkItems + fixedEndingLines
         indentedLinkItems = constant.LINK_ITEM_PREFIX.join(
             linkItems.splitlines())
         return fixedLinkHeading + indentedLinkItems
