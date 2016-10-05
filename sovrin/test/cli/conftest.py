@@ -13,7 +13,7 @@ from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
 from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest
@@ -731,7 +731,7 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
 
 def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
     csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    sid = faberWallet.addCredDefSk(str(csk))
+    sid = faberWallet.addClaimDefSk(str(csk))
     # Need to modify the claim definition. We do not support types yet
     claimDef = {
             "name": "Transcript",
@@ -739,35 +739,35 @@ def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
             "type": "CL",
             "attr_names": ["student_name", "ssn", "degree", "year", "status"]
     }
-    credDef = CredDef(seqNo=None,
-                      attrNames=claimDef[ATTR_NAMES],
-                      name=claimDef[NAME],
-                      version=claimDef[VERSION],
-                      origin=faberWallet.defaultId,
-                      typ=claimDef[TYPE],
-                      secretKey=sid)
-    faberWallet.addCredDef(credDef)
+    claimDef = ClaimDef(seqNo=None,
+                       attrNames=claimDef[ATTR_NAMES],
+                       name=claimDef[NAME],
+                       version=claimDef[VERSION],
+                       origin=faberWallet.defaultId,
+                       typ=claimDef[TYPE],
+                       secretKey=sid)
+    faberWallet.addClaimDef(claimDef)
     reqs = faberWallet.preparePending()
     faber.client.submitReqs(*reqs)
 
     def chk():
-        assert credDef.seqNo is not None
+        assert claimDef.seqNo is not None
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
 
-    isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
+    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
     faberWallet.addIssuerSecretKey(isk)
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=credDef.seqNo,
+                       claimDefSeqNo=claimDef.seqNo,
                        secretKeyUid=isk.uid, origin=faberWallet.defaultId)
     faberWallet.addIssuerPublicKey(ipk)
     reqs = faberWallet.preparePending()
     faber.client.submitReqs(*reqs)
 
-    key = (faberWallet.defaultId, credDef.seqNo)
+    key = (faberWallet.defaultId, claimDef.seqNo)
 
     def chk():
         assert faberWallet.getIssuerPublicKey(key).seqNo is not None
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
-    return credDef.seqNo, ipk.seqNo
+    return claimDef.seqNo, ipk.seqNo

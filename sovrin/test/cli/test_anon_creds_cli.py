@@ -200,17 +200,17 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
     origin = byuAddsCredDef
     key = (*credDefNameVersion, origin)
-    credDef = byuCLI.activeWallet.getCredDef(key=key)
-    cmd = ("send ISSUER_KEY reference={}" .format(credDef.seqNo))
+    claimDef = byuCLI.activeWallet.getClaimDef(key=key)
+    cmd = ("send ISSUER_KEY reference={}" .format(claimDef.seqNo))
     checkCmdValid(byuCLI, cmd)
 
     def checkIsKAdded():
-        assert byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+        assert byuCLI.activeWallet.getIssuerPublicKey((origin, claimDef.seqNo))
         output = byuCLI.lastCmdOutput
         assert "issuer key is published" in output
 
     byuCLI.looper.run(eventually(checkIsKAdded, retryWait=1, timeout=15))
-    return byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+    return byuCLI.activeWallet.getIssuerPublicKey((origin, claimDef.seqNo))
 
 
 @pytest.fixture(scope="module")

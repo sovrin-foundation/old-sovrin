@@ -7,7 +7,7 @@ from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
 from plenum.test.eventually import eventually
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.link import Link
 from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT, ATTR_NAMES
@@ -412,7 +412,7 @@ def acceptInvitation(be, do, userCli, agentMap, expect,
         assert totalAvailableClaims == tac
 
     if totalCredDefs:
-        assert totalCredDefs == len(userCli.activeWallet._credDefs)
+        assert totalCredDefs == len(userCli.activeWallet._claimDefs)
 
     if totalClaimAttrs:
         assert totalClaimAttrs == len(userCli.activeWallet._claimAttrs)
@@ -512,7 +512,7 @@ def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
     assert len(links) == 1
     faberId = links[0].remoteIdentifier
     name, version = transcriptClaimMap["name"], transcriptClaimMap["version"]
-    aliceCli.activeWallet._credDefs.pop((name, version, faberId))
+    aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
     do("request claim {name}",      within=5,
                                     expect=reqClaimOut1,
                                     mapper=transcriptClaimMap)

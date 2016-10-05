@@ -9,7 +9,7 @@ from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.common.util import getConfig
 from sovrin.test.helper import createNym, _newWallet
 
@@ -88,54 +88,53 @@ def attrNames():
 
 
 @pytest.fixture(scope="module")
-def credDef(attrNames):
-    # ip, port = genHa()
+def claimDef(attrNames):
     return CredDefModule.CredDef(str(uuid.uuid4()), attrNames, name='name1',
                                  version='version1')
 
 
 @pytest.fixture(scope="module")
-def credDefSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
+def claimDefSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir, nodeSet,
                           staticPrimes):
     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
-    return sponsorWallet.addCredDefSk(str(csk))
+    return sponsorWallet.addClaimDefSk(str(csk))
 
 
 @pytest.fixture(scope="module")
-def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorWallet, looper, tdir, nodeSet, attrNames,
-                              credDef, credDefSecretKeyAdded):
+def claimDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
+                         sponsorWallet, looper, tdir, nodeSet, attrNames,
+                         claimDef, claimDefSecretKeyAdded):
     old = sponsorWallet.pendingCount
-    data = credDef.get(serFmt=SerFmt.base58)
-    credDef = CredDef(seqNo=None,
-                      attrNames=attrNames,
-                      name=data[NAME],
-                      version=data[VERSION],
-                      origin=sponsorWallet.defaultId,
-                      typ=data[TYPE],
-                      secretKey=credDefSecretKeyAdded)
-    pending = sponsorWallet.addCredDef(credDef)
+    data = claimDef.get(serFmt=SerFmt.base58)
+    claimDef = ClaimDef(seqNo=None,
+                        attrNames=attrNames,
+                        name=data[NAME],
+                        version=data[VERSION],
+                        origin=sponsorWallet.defaultId,
+                        typ=data[TYPE],
+                        secretKey=claimDefSecretKeyAdded)
+    pending = sponsorWallet.addClaimDef(claimDef)
     assert pending == old + 1
     reqs = sponsorWallet.preparePending()
     sponsor.submitReqs(*reqs)
 
-    key = credDef.key
+    key = claimDef.key
 
     def chk():
-        assert sponsorWallet.getCredDef(key).seqNo is not None
+        assert sponsorWallet.getClaimDef(key).seqNo is not None
 
     looper.run(eventually(chk, retryWait=1, timeout=30))
-    return sponsorWallet.getCredDef(key).seqNo
+    return sponsorWallet.getClaimDef(key).seqNo
 
 
 @pytest.fixture(scope="module")
 def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir, nodeSet,
-                          staticPrimes, credDefSecretKeyAdded,
-                         credentialDefinitionAdded):
-    csk = CredDefSecretKey.fromStr(sponsorWallet.getCredDefSk(credDefSecretKeyAdded))
-    cd = sponsorWallet.getCredDef(seqNo=credentialDefinitionAdded)
+                          staticPrimes, claimDefSecretKeyAdded,
+                         claimDefinitionAdded):
+    csk = CredDefSecretKey.fromStr(sponsorWallet.getClaimDefSk(claimDefSecretKeyAdded))
+    cd = sponsorWallet.getClaimDef(seqNo=claimDefinitionAdded)
     # This uid would be updated with the sequence number of the transaction
     # which writes the public key on Sovrin
     isk = IssuerSecretKey(cd, csk, uid=str(uuid.uuid4()))
@@ -146,18 +145,18 @@ def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
 @pytest.fixture(scope="module")
 def issuerPublicKeysAdded(genned, updatedSteward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir, nodeSet,
-                          staticPrimes, credentialDefinitionAdded,
+                          staticPrimes, claimDefinitionAdded,
                           issuerSecretKeyAdded):
     isk = sponsorWallet.getIssuerSecretKey(issuerSecretKeyAdded)
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=credentialDefinitionAdded,
+                       claimDefSeqNo=claimDefinitionAdded,
                        secretKeyUid=isk.uid, origin=sponsorWallet.defaultId)
     sponsorWallet.addIssuerPublicKey(ipk)
     reqs = sponsorWallet.preparePending()
-    # sponsor.registerObserver(sponsorWallet.handleIncomingReply)
     sponsor.submitReqs(*reqs)
 
-    key = (sponsorWallet.defaultId, credentialDefinitionAdded)
+    key = (sponsorWallet.defaultId, claimDefinitionAdded)
+
     def chk():
         assert sponsorWallet.getIssuerPublicKey(key).seqNo is not None
 

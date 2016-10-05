@@ -21,7 +21,7 @@ def curiousClient(userWalletA, nodeSet, looper, tdir):
     return client
 
 
-def testIssuerWritesCredDef(credentialDefinitionAdded):
+def testIssuerWritesCredDef(claimDefinitionAdded):
     """
     A credential definition is added
     """
@@ -35,8 +35,8 @@ def testIssuerWritesPublicKey(issuerPublicKeysAdded):
     pass
 
 
-def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
-                          nodeSet, looper, sponsorWallet, credDef, curiousClient):
+def testProverGetsCredDef(claimDefinitionAdded, userWalletA, tdir,
+                          nodeSet, looper, sponsorWallet, claimDef, curiousClient):
     """
     A credential definition is received
     """
@@ -46,7 +46,7 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     # and hence it doesn't get updated with correct plugin class/methods
     # and it gives error (for permanent solution bug is created: #130181205).
 
-    definition = credDef.get(serFmt=SerFmt.base58)
+    definition = claimDef.get(serFmt=SerFmt.base58)
     credDefKey = (definition[NAME], definition[VERSION],
                   sponsorWallet.defaultId)
     req = userWalletA.requestCredDef(credDefKey, userWalletA.defaultId)
@@ -61,14 +61,14 @@ def testProverGetsCredDef(credentialDefinitionAdded, userWalletA, tdir,
     assert recvdCredDef[NAME] == definition[NAME]
     assert recvdCredDef[VERSION] == definition[VERSION]
     assert recvdCredDef[ATTR_NAMES].split(",") == definition[ATTR_NAMES]
-    credDef = userWalletA.getCredDef(seqNo=recvdCredDef[F.seqNo.name])
-    assert credDef.attrNames == definition[ATTR_NAMES]
+    claimDef = userWalletA.getClaimDef(seqNo=recvdCredDef[F.seqNo.name])
+    assert claimDef.attrNames == definition[ATTR_NAMES]
 
 
-def testGetIssuerKey(credentialDefinitionAdded, userWalletA, tdir,
-                          nodeSet, looper, sponsorWallet, credDef,
+def testGetIssuerKey(claimDefinitionAdded, userWalletA, tdir,
+                     nodeSet, looper, sponsorWallet, claimDef,
                      issuerPublicKeysAdded, curiousClient):
-    key = (sponsorWallet.defaultId, credentialDefinitionAdded)
+    key = (sponsorWallet.defaultId, claimDefinitionAdded)
     req = userWalletA.requestIssuerKey(key,
                                        userWalletA.defaultId)
     curiousClient.submitReqs(req)
