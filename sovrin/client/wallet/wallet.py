@@ -66,7 +66,7 @@ class Wallet(PWallet, Sponsoring):
         self._credMasterSecret = None
         self._attributes = {}       # type: Dict[(str, Identifier, Optional[Identifier]), Attribute]
         self._claimDefs = {}         # type: Dict[(str, str, str), ClaimDef]
-        self._credDefSks = {}       # type: Dict[(str, str, str), CredDefSk]
+        self._claimDefSks = {}       # type: Dict[(str, str, str), ClaimDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
         self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
@@ -238,13 +238,13 @@ class Wallet(PWallet, Sponsoring):
                 if cd.seqNo == seqNo:
                     return cd
 
-    def addClaimDefSk(self, credDefSk):
+    def addClaimDefSk(self, claimDefSk):
         uid = str(uuid.uuid4())
-        self._credDefSks[uid] = credDefSk
+        self._claimDefSks[uid] = claimDefSk
         return uid
 
     def getClaimDefSk(self, uid):
-        return self._credDefSks.get(uid)
+        return self._claimDefSks.get(uid)
 
     def addCredential(self, cred: Credential):
         self._credentials[cred.key()] = cred
@@ -359,11 +359,11 @@ class Wallet(PWallet, Sponsoring):
                 claimDef.typ = data[TYPE]
         else:
             claimDef = ClaimDef(seqNo=data.get(F.seqNo.name),
-                               attrNames=data.get(ATTR_NAMES).split(","),
-                               name=data[NAME],
-                               version=data[VERSION],
-                               origin=data[ORIGIN],
-                               typ=data[TYPE])
+                                attrNames=data.get(ATTR_NAMES).split(","),
+                                name=data[NAME],
+                                version=data[VERSION],
+                                origin=data[ORIGIN],
+                                typ=data[TYPE])
             self._claimDefs[claimDef.key] = claimDef
 
     def _nymReply(self, result, preparedReq):
@@ -467,11 +467,11 @@ class Wallet(PWallet, Sponsoring):
         if req:
             return self.prepReq(req)
 
-    def requestCredDef(self, credDefKey, sender):
+    def requestClaimDef(self, claimDefKey, sender):
         # Used to get a cred def from Sovrin
-        name, version, origin = credDefKey
+        name, version, origin = claimDefKey
         claimDef = ClaimDef(name=name, version=version, origin=origin)
-        self._claimDefs[credDefKey] = claimDef
+        self._claimDefs[claimDefKey] = claimDef
         req = claimDef.getRequest(sender)
         if req:
             return self.prepReq(req)

@@ -4,11 +4,10 @@ import pytest
 from ledger.util import F
 
 from anoncreds.protocol.types import SerFmt
-from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
-    KEYS
+from plenum.common.txn import NAME, VERSION, DATA
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
-from sovrin.common.txn import GET_CRED_DEF, ATTR_NAMES
+from sovrin.common.txn import ATTR_NAMES
 
 
 @pytest.fixture(scope="module")
@@ -49,7 +48,7 @@ def testProverGetsCredDef(claimDefinitionAdded, userWalletA, tdir,
     definition = claimDef.get(serFmt=SerFmt.base58)
     credDefKey = (definition[NAME], definition[VERSION],
                   sponsorWallet.defaultId)
-    req = userWalletA.requestCredDef(credDefKey, userWalletA.defaultId)
+    req = userWalletA.requestClaimDef(credDefKey, userWalletA.defaultId)
     curiousClient.submitReqs(req)
 
     looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
