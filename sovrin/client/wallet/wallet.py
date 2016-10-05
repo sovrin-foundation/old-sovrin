@@ -18,7 +18,6 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     ORIGIN
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
-from sovrin.client.wallet.claim import ClaimAttr
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
@@ -113,7 +112,7 @@ class Wallet(PWallet, Sponsoring):
     def _isMatchingName(needle, haystack):
         return needle.lower() in haystack.lower()
 
-    def getClaimAttrs(self, claimDefKey) -> ClaimAttr:
+    def getClaimAttrs(self, claimDefKey) -> Dict:
         # TODO: The issuer can be different than the author of the claim
         # definition. But assuming that issuer is the author of the claim
         # definition for now
@@ -124,15 +123,15 @@ class Wallet(PWallet, Sponsoring):
                     in claimDef.attrNames}
         return {}
 
-    def getMachingRcvdClaims(self, attributes):
+    def getMatchingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
         matched = set()
         attrNames = set(attributes.keys())
         for li in self._links.values():
-            issuerAttributes = self.attributesFrom.get(li.remoteIdentifier)
-            if issuerAttributes:
+            issuedAttributes = self.attributesFrom.get(li.remoteIdentifier)
+            if issuedAttributes:
                 commonAttrs = (attrNames.difference(matched).intersection(
-                    set(issuerAttributes.keys())))
+                    set(issuedAttributes.keys())))
                 if commonAttrs:
                     for nm, ver, origin in li.availableClaims:
                         cd = self.getCredDef(key=(nm, ver, origin))
@@ -141,10 +140,15 @@ class Wallet(PWallet, Sponsoring):
                             matchingLinkAndRcvdClaim.append((li,
                                                              (nm, ver, origin),
                                                              commonAttrs,
-                                                             issuerAttributes))
+                                                             issuedAttributes))
                             matched.update(commonAttrs)
                             break
         return matchingLinkAndRcvdClaim
+
+    # TODO: The names getMatchingLinksWithAvailableClaim and
+    # getMatchingLinksWithReceivedClaim should be fixed. Difference between
+    # `AvailableClaim` and `ReceivedClaim` is that for ReceivedClaim we
+    # have attribute values from issuer.
 
     # TODO: Few of the below methods have duplicate code, need to refactor it
     def getMatchingLinksWithAvailableClaim(self, claimName):
@@ -157,11 +161,17 @@ class Wallet(PWallet, Sponsoring):
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
-        # for ca in self._claimAttrs.values():
-        #     if Wallet._isMatchingName(ca.name, claimName):
-        #         for li in self._links.values():
-        #             if ca.issuerId == li.remoteIdentifier:
-        #                 matchingLinkAndReceivedClaim.append((li, ca))
+        for k, li in self._links.items():
+            for cl in li.availableClaims:
+                if Wallet._isMatchingName(claimName, cl[0]):
+                    claimDef = self.getCredDef(key=cl)
+                    issuedAttributes = self.attributesFrom.get(
+                        li.remoteIdentifier)
+                    if issuedAttributes:
+                        claimAttrs = set(claimDef.attrNames)
+                        if claimAttrs.intersection(issuedAttributes.keys()):
+                            matchingLinkAndReceivedClaim.append(
+                                (li, cl, {k: issuedAttributes[k] for k in claimAttrs}))
         return matchingLinkAndReceivedClaim
 
     def getMatchingLinksWithClaimReq(self, claimReqName):
@@ -434,7 +444,8 @@ class Wallet(PWallet, Sponsoring):
     def getMatchingLinkInvitations(self, name: str):
         allMatched = []
         for k, v in self._links.items():
-            if name == k or name.lower() in k.lower():
+            if self._isMatchingName(name, k):
+            # if name == k or name.lower() in k.lower():
                 allMatched.append(v)
         return allMatched
 
