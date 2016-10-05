@@ -200,7 +200,7 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
     origin = byuAddsCredDef
     key = (*credDefNameVersion, origin)
-    credDef = byuCLI.activeWallet.getCredDef(key=key)
+    credDef = byuCLI.activeWallet.getClaimDef(key=key)
     cmd = ("send ISSUER_KEY reference={}" .format(credDef.seqNo))
     checkCmdValid(byuCLI, cmd)
 

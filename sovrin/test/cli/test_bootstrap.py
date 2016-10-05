@@ -7,7 +7,7 @@ from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
 from plenum.test.eventually import eventually
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.link import Link
 from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT, ATTR_NAMES

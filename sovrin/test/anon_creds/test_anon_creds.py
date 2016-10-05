@@ -4,7 +4,7 @@ import pytest
 from plenum.common.log import DISPLAY_LOG_LEVEL, setupLogging, \
     DemoHandler, getlogger
 from plenum.test.eventually import eventually
-from sovrin.client.wallet.cred_def import CredDef
+from sovrin.client.wallet.claim_def import ClaimDef
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.test.conftest import staticPrimes
@@ -136,13 +136,13 @@ def testAnonCredFlow(genned,
     # Issuer publishes credential definition to Sovrin ledger
 
     csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    cskId = issuerWallet.addCredDefSk(str(csk))
-    credDef = CredDef(seqNo=None,
-                      attrNames=attrNames,
-                      name=name1,
-                      version=version1,
-                      origin=issuerWallet.defaultId,
-                      secretKey=cskId)
+    cskId = issuerWallet.addClaimDefSk(str(csk))
+    credDef = ClaimDef(seqNo=None,
+                       attrNames=attrNames,
+                       name=name1,
+                       version=version1,
+                       origin=issuerWallet.defaultId,
+                       secretKey=cskId)
     # credDef = issuer.addNewCredDef(attrNames, name1, version1,
     #                                p_prime="prime1", q_prime="prime1", ip=ip,
     #                                port=port)
@@ -151,7 +151,7 @@ def testAnonCredFlow(genned,
                    " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
-    pending = issuerWallet.addCredDef(credDef)
+    pending = issuerWallet.addClaimDef(credDef)
     reqs = issuerWallet.preparePending()
     # op = {TXN_TYPE: CRED_DEF,
     #       DATA: getCredDefTxnData(credDef)}
@@ -160,9 +160,9 @@ def testAnonCredFlow(genned,
     issuerC.submitReqs(*reqs)
 
     def chk():
-        assert issuerWallet.getCredDef((name1,
-                                        version1,
-                                        issuerWallet.defaultId)).seqNo is not None
+        assert issuerWallet.getClaimDef((name1,
+                                         version1,
+                                         issuerWallet.defaultId)).seqNo is not None
 
     looper.run(eventually(chk, retryWait=.1, timeout=30))
 

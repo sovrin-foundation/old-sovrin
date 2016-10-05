@@ -21,6 +21,6 @@ def testCredDefSecretKey(tdir, staticPrimes):
 
     wallet = Wallet("testWallet")
     # cdsk = CredDefSk(name, version, serializedSk)
-    wallet.addCredDefSk(str(sk))
-    stored = wallet.getCredDefSk(CredDefKey(name, version))
+    wallet.addClaimDefSk(str(sk))
+    stored = wallet.getClaimDefSk(CredDefKey(name, version))
     assert serializedSk == stored.secretKey

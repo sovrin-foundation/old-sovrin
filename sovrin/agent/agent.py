@@ -15,7 +15,7 @@ from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.issuer import Issuer
 from sovrin.cli.helper import ensureReqCompleted, getEncodedAttrs
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
 
@@ -363,7 +363,7 @@ class WalletedAgent(Agent):
                 li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
                 availableClaims = []
                 for cl in body[DATA][CLAIMS_LIST_FIELD]:
-                    if not self.wallet.getCredDef(seqNo=cl['claimDefSeqNo']):
+                    if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
                         name, version = cl[NAME], cl[VERSION]
                         availableClaims.append((name, version,
                                                 li.remoteIdentifier))
@@ -452,13 +452,13 @@ class WalletedAgent(Agent):
             version = body[VERSION]
             origin = body[ORIGIN]
             uValue = strToCharmInteger(body['U'])
-            claimDef = self.wallet.getCredDef(key=(name, version, origin))
+            claimDef = self.wallet.getClaimDef(key=(name, version, origin))
             attributes = self._getClaimsAttrsFor(link.nonce,
                                                  claimDef.attrNames)
             encodedAttrs = list(getEncodedAttrs(link.verkey,
                                                 attributes).values())[0]
             sk = CredDefSecretKey.fromStr(
-                self.wallet.getCredDefSk(claimDef.secretKey))
+                self.wallet.getClaimDefSk(claimDef.secretKey))
             pk = self.wallet.getIssuerPublicKeyForClaimDef(claimDef.seqNo)
             cred = Issuer.generateCredential(uValue, encodedAttrs, pk, sk)
             claimDetails = {
@@ -544,7 +544,7 @@ class WalletedAgent(Agent):
     def addClaimDefs(self, name, version, attrNames,
                              staticPrime, credDefSeqNo, issuerKeySeqNo):
         csk = CredDefSecretKey(*staticPrime)
-        sid = self.wallet.addCredDefSk(str(csk))
+        sid = self.wallet.addClaimDefSk(str(csk))
         # Need to modify the claim definition. We do not support types yet
         claimDef = {
             NAME: name,
@@ -553,13 +553,13 @@ class WalletedAgent(Agent):
             ATTR_NAMES: attrNames
         }
         wallet = self.wallet
-        credDef = CredDef(seqNo=credDefSeqNo,
-                          attrNames=claimDef[ATTR_NAMES],
-                          name=claimDef[NAME],
-                          version=claimDef[VERSION],
-                          origin=wallet.defaultId,
-                          typ=claimDef[TYPE],
-                          secretKey=sid)
+        credDef = ClaimDef(seqNo=credDefSeqNo,
+                           attrNames=claimDef[ATTR_NAMES],
+                           name=claimDef[NAME],
+                           version=claimDef[VERSION],
+                           origin=wallet.defaultId,
+                           typ=claimDef[TYPE],
+                           secretKey=sid)
         wallet._credDefs[(name, version, wallet.defaultId)] = credDef
         isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
         self.wallet.addIssuerSecretKey(isk)

@@ -21,7 +21,7 @@ class HasSeqNo:
         self.uid = value
 
 
-class CredDef(CredentialDefinition, HasSeqNo):
+class ClaimDef(CredentialDefinition, HasSeqNo):
     def __init__(self,
                  name: str,
                  version: str,

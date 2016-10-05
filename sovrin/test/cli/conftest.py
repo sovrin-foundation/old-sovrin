@@ -13,7 +13,7 @@ from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
-from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
 from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest
@@ -731,7 +731,7 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
 
 def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
     csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    sid = faberWallet.addCredDefSk(str(csk))
+    sid = faberWallet.addClaimDefSk(str(csk))
     # Need to modify the claim definition. We do not support types yet
     claimDef = {
             "name": "Transcript",
@@ -739,14 +739,14 @@ def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
             "type": "CL",
             "attr_names": ["student_name", "ssn", "degree", "year", "status"]
     }
-    credDef = CredDef(seqNo=None,
-                      attrNames=claimDef[ATTR_NAMES],
-                      name=claimDef[NAME],
-                      version=claimDef[VERSION],
-                      origin=faberWallet.defaultId,
-                      typ=claimDef[TYPE],
-                      secretKey=sid)
-    faberWallet.addCredDef(credDef)
+    credDef = ClaimDef(seqNo=None,
+                       attrNames=claimDef[ATTR_NAMES],
+                       name=claimDef[NAME],
+                       version=claimDef[VERSION],
+                       origin=faberWallet.defaultId,
+                       typ=claimDef[TYPE],
+                       secretKey=sid)
+    faberWallet.addClaimDef(credDef)
     reqs = faberWallet.preparePending()
     faber.client.submitReqs(*reqs)
 
