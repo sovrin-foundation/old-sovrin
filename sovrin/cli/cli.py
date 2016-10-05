@@ -300,8 +300,10 @@ class SovrinCli(PlenumCli):
         nodesAdded = super().newNode(nodeName)
         return nodesAdded
 
-    def _printNotConnectedEnvMessage(self):
-        self.print("Not connected to Sovrin network. Please connect first.")
+    def _printNotConnectedEnvMessage(self,
+                                     prefix="Not connected to Sovrin network"):
+
+        self.print("{}. Please connect first.".format(prefix))
         self._printConnectUsage()
 
     def _printConnectUsage(self):
@@ -999,10 +1001,8 @@ class SovrinCli(PlenumCli):
         if DATA in reply and reply[DATA]:
             data = json.loads(reply[DATA])
             endPoint = data.get(ENDPOINT)
-            self.print('    Endpoint received: {}'.format(endPoint))
         else:
-            endPoint = constant.NOT_AVAILABLE
-            self.print('    Endpoint not available')
+            endPoint = link.remoteEndPoint or constant.NOT_AVAILABLE
 
         link.remoteEndPoint = endPoint
         link.linkLastSynced = datetime.datetime.now()
@@ -1045,12 +1045,11 @@ class SovrinCli(PlenumCli):
                                         li)
         else:
             if not self.activeEnv:
-                self.print("Cannot sync because not connected. "
-                           "Please connect first.")
-                self._printConnectUsage()
+                self._printNotConnectedEnvMessage(
+                    "Cannot sync because not connected")
             elif not self.activeClient.hasSufficientConnections:
                 self.print("Cannot sync because not connected. "
-                           "Please check if Sovrin network is running.")
+                           "Please confirm if Sovrin network is running.")
 
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
@@ -1146,8 +1145,8 @@ class SovrinCli(PlenumCli):
                         self._sendAcceptInviteToTargetEndpoint(li)
                     else:
                         self.print("Invitation acceptance aborted.")
-                        self.print("Cannot sync because not connected")
-                        self._printNotConnectedEnvMessage()
+                        self._printNotConnectedEnvMessage(
+                            "Cannot sync because not connected")
 
     def _syncLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
@@ -1601,7 +1600,7 @@ class SovrinCli(PlenumCli):
 
     def ensureClientConnected(self):
         if self._isConnectedToAnyEnv():
-            self.print("Connected to {}".format(self.activeEnv), Token.BoldBlue)
+            self.print("Connected to {}.".format(self.activeEnv), Token.BoldBlue)
         else:
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 

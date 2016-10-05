@@ -365,14 +365,14 @@ def syncLinkOutStartsWith():
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithEndpoint(syncLinkOutStartsWith, endpointReceived,
+def syncLinkOutWithEndpoint(syncLinkOutStartsWith,
                             syncLinkOutEndsWith):
-    return syncLinkOutStartsWith + endpointReceived + syncLinkOutEndsWith
+    return syncLinkOutStartsWith + syncLinkOutEndsWith
 
 
 @pytest.fixture(scope="module")
-def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith, endpointNotAvailable):
-    return syncLinkOutStartsWith + endpointNotAvailable
+def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith):
+    return syncLinkOutStartsWith
 
 
 @pytest.fixture(scope="module")
@@ -384,7 +384,7 @@ def showSyncedLinkWithEndpointOut(showLinkOut):
 
 @pytest.fixture(scope="module")
 def showSyncedLinkWithoutEndpointOut(showLinkOut):
-    return showLinkOut + ["Target endpoint: Not Available"]
+    return showLinkOut
 
 
 @pytest.fixture(scope="module")
