@@ -500,6 +500,21 @@ def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
                                     mapper=transcriptClaimMap)
 
 
+def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
+                    transcriptClaimMap, reqClaimOut1, faberIsRunning,
+                                                  aliceAcceptedFaberInvitation):
+    be(aliceCli)
+    inviter = transcriptClaimMap["inviter"]
+    links = aliceCli.activeWallet.getMatchingLinkInvitations(inviter)
+    assert len(links) == 1
+    faberId = links[0].remoteIdentifier
+    name, version = transcriptClaimMap["name"], transcriptClaimMap["version"]
+    aliceCli.activeWallet._credDefs.pop((name, version, faberId))
+    do("request claim {name}",
+                                    expect=reqClaimOut1,
+                                    mapper=transcriptClaimMap)
+
+
 def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
                                        faberInviteSyncedWithEndpoint):
     faber, _ = faberIsRunning
@@ -746,72 +761,3 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
                                             "occurred while "
                                             "processing this msg: {}".
                                                 format(msg)])
-
-
-# @pytest.fixture(scope="module")
-# def faberAddedClaimDefAndIssuerKeys(faberAddedByPhil, faberIsRunning,
-#                                     staticPrimes, looper):
-#     faber, faberWallet = faberIsRunning
-#     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
-#     sid = faberWallet.addCredDefSk(str(csk))
-#     # Need to modify the claim definition. We do not support types yet
-#     claimDef = {
-#             "name": "Transcript",
-#             "version": "1.2",
-#             "type": "CL",
-#             "attr_names": ["student_name", "ssn", "degree", "year", "status"]
-#     }
-#     credDef = CredDef(seqNo=None,
-#                       attrNames=claimDef[ATTR_NAMES],
-#                       name=claimDef[NAME],
-#                       version=claimDef[VERSION],
-#                       origin=faberWallet.defaultId,
-#                       typ=claimDef[TYPE],
-#                       secretKey=sid)
-#     faberWallet.addCredDef(credDef)
-#     reqs = faberWallet.preparePending()
-#     faber.client.submitReqs(*reqs)
-#
-#     def chk():
-#         assert credDef.seqNo is not None
-#
-#     looper.run(eventually(chk, retryWait=1, timeout=10))
-#
-#     isk = IssuerSecretKey(credDef, csk, uid=str(uuid.uuid4()))
-#     faberWallet.addIssuerSecretKey(isk)
-#     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-#                        claimDefSeqNo=credDef.seqNo,
-#                        secretKeyUid=isk.uid, origin=faberWallet.defaultId)
-#     faberWallet.addIssuerPublicKey(ipk)
-#     reqs = faberWallet.preparePending()
-#     faber.client.submitReqs(*reqs)
-#
-#     key = (faberWallet.defaultId, credDef.seqNo)
-#
-#     def chk():
-#         assert faberWallet.getIssuerPublicKey(key).seqNo is not None
-#
-#     looper.run(eventually(chk, retryWait=1, timeout=10))
-#     return ipk.seqNo
-#
-#
-# @pytest.fixture(scope="module")
-# def faberAddedAttributesForAlice(aliceAcceptedFaberInvitation, aliceCli,
-#                                  faberMap, faberIsRunning):
-#     faber, faberWallet = faberIsRunning
-#     aliceIdrForFaber = aliceCli.activeWallet.getLinkInvitationByTarget(
-#         faberMap['target']).verkey
-#     attrs = {
-#         "student_name": "Alice Garcia",
-#         "ssn": "123456789",
-#         "degree": "Bachelor of Science, Marketing",
-#         "year": "2015",
-#         "status": "graduated"
-#     }
-#     attribTypes = []
-#     for name in attrs:
-#         attribTypes.append(AttribType(name, encode=True))
-#     attribsDef = AttribDef("Transcript", attribTypes)
-#     attribs = attribsDef.attribs(**attrs)
-#     faber.attributeRepo.addAttributes(aliceIdrForFaber, attribs)
-

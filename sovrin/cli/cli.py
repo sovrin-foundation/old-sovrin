@@ -483,9 +483,10 @@ class SovrinCli(PlenumCli):
             req = self.activeWallet.requestIssuerKey((origin, reference),
                                                      self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
-            self.print("Getting issuer key for cred def {}".
-                       format(reference), Token.BoldBlue)
-
+            # self.print("Getting issuer key for cred def {}".
+            #            format(reference), Token.BoldBlue)
+            self.print("Getting Keys for the Claim Definition from Sovrin",
+                       Token.BoldBlue)
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         req.reqId, self.activeClient,
                                         clbk, *args)
@@ -507,8 +508,10 @@ class SovrinCli(PlenumCli):
             req = self.activeWallet.requestCredDef(credDefKey,
                                                    self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
-            self.print("Getting cred def {} version {} for {}".
-                       format(credName, credVersion, dest), Token.BoldBlue)
+            # self.print("Getting cred def {} version {} for {}".
+            #            format(credName, credVersion, dest), Token.BoldBlue)
+            self.print("Getting Claim Definition from Sovrin: {} {}"
+                       .format(credName, credVersion), Token.BoldBlue)
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                         req.reqId, self.activeClient,
                                         _getKey)

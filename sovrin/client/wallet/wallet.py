@@ -110,14 +110,10 @@ class Wallet(PWallet, Sponsoring):
         return len(self._pending)
 
     @staticmethod
-    def _isMatchingName(source, target):
-        return source == target or source.lower() in target.lower()
+    def _isMatchingName(needle, haystack):
+        return needle.lower() in haystack.lower()
 
     def getClaimAttrs(self, claimDefKey) -> ClaimAttr:
-        # for ca in self._claimAttrs:
-        #     if ca.name == name and ca.version == version \
-        #             and ca.origin == origin:
-        #         return ca
         # TODO: The issuer can be different than the author of the claim
         # definition. But assuming that issuer is the author of the claim
         # definition for now
