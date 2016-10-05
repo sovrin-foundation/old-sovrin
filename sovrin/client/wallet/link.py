@@ -118,7 +118,7 @@ class Link:
             optionalLinkItems += "Claim Requests: {}". \
                 format(",".join([cr.name for cr in self.claimProofRequests]))
 
-        if len(self.availableClaims) > 0:
+        if self.availableClaims:
             optionalLinkItems += "Available claims: {}".\
                 format(",".join([name
                                  for name, _, _ in self.availableClaims]))

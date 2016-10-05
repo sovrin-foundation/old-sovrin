@@ -71,7 +71,19 @@ class Wallet(PWallet, Sponsoring):
         self._credentials = {}      # type: Dict[str, Credential]
         self._links = {}            # type: Dict[str, Link]
         self.knownIds = {}          # type: Dict[str, Identifier]
-        self._claimAttrs = {}       # type: Dict[(str, str, str, str), ClaimAttr]
+
+        # Attributes this wallet has for others. Think of an Issuer's attribute
+        #  repo containing attributes for different Provers. Key is a nonce and
+        #  value is a map of attributes
+        self.attributesFor = {}     # type: Dict[str, Dict]
+
+        # Attributes this wallet has from others. Think of an Prover's
+        # attribute repo containing attributes from different Issuers. Key is a
+        # identifier and value is a map of attributes
+        self.attributesFrom = {}    # type: Dict[str, Dict]
+
+        self.proofBuilders = {}
+
         self._issuerSks = {}
         self._issuerPks = {}
         # transactions not yet submitted
@@ -101,25 +113,41 @@ class Wallet(PWallet, Sponsoring):
     def _isMatchingName(source, target):
         return source == target or source.lower() in target.lower()
 
-    def getClaimAttr(self, name, version, origin) -> ClaimAttr:
-        for ca in self._claimAttrs:
-            if ca.name == name and ca.version == version \
-                    and ca.origin == origin:
-                return ca
+    def getClaimAttrs(self, claimDefKey) -> ClaimAttr:
+        # for ca in self._claimAttrs:
+        #     if ca.name == name and ca.version == version \
+        #             and ca.origin == origin:
+        #         return ca
+        # TODO: The issuer can be different than the author of the claim
+        # definition. But assuming that issuer is the author of the claim
+        # definition for now
+        issuerId = claimDefKey[2]
+        claimDef = self.getCredDef(key=claimDefKey)
+        if claimDef and claimDef.attrNames and issuerId in self.attributesFrom:
+            return {nm: self.attributesFrom[issuerId].get(nm) for nm
+                    in claimDef.attrNames}
+        return {}
 
     def getMachingRcvdClaims(self, attributes):
         matchingLinkAndRcvdClaim = []
-        matched = []
-
-        for ca in self._claimAttrs.values():
-            commonAttr = (set(attributes.keys()) - set(matched)).\
-                intersection(ca.attributes.keys())
-            if commonAttr:
-                for li in self._links.values():
-                    if ca.issuerId == li.remoteIdentifier:
-                        matchingLinkAndRcvdClaim.append((li, ca, commonAttr))
-                        matched.extend(commonAttr)
-
+        matched = set()
+        attrNames = set(attributes.keys())
+        for li in self._links.values():
+            issuerAttributes = self.attributesFrom.get(li.remoteIdentifier)
+            if issuerAttributes:
+                commonAttrs = (attrNames.difference(matched).intersection(
+                    set(issuerAttributes.keys())))
+                if commonAttrs:
+                    for nm, ver, origin in li.availableClaims:
+                        cd = self.getCredDef(key=(nm, ver, origin))
+                        if cd and cd.seqNo and set(cd.attrNames).intersection(
+                                commonAttrs):
+                            matchingLinkAndRcvdClaim.append((li,
+                                                             (nm, ver, origin),
+                                                             commonAttrs,
+                                                             issuerAttributes))
+                            matched.update(commonAttrs)
+                            break
         return matchingLinkAndRcvdClaim
 
     # TODO: Few of the below methods have duplicate code, need to refactor it
@@ -133,11 +161,11 @@ class Wallet(PWallet, Sponsoring):
 
     def getMatchingLinksWithReceivedClaim(self, claimName):
         matchingLinkAndReceivedClaim = []
-        for ca in self._claimAttrs.values():
-            if Wallet._isMatchingName(claimName, ca.name):
-                for li in self._links.values():
-                    if ca.issuerId == li.remoteIdentifier:
-                        matchingLinkAndReceivedClaim.append((li, ca))
+        # for ca in self._claimAttrs.values():
+        #     if Wallet._isMatchingName(ca.name, claimName):
+        #         for li in self._links.values():
+        #             if ca.issuerId == li.remoteIdentifier:
+        #                 matchingLinkAndReceivedClaim.append((li, ca))
         return matchingLinkAndReceivedClaim
 
     def getMatchingLinksWithClaimReq(self, claimReqName):
@@ -177,9 +205,11 @@ class Wallet(PWallet, Sponsoring):
     def getAttributesForNym(self, idr: Identifier):
         return [a for a in self._attributes.values() if a.dest == idr]
 
-    def addCredAttr(self, claimAttr: ClaimAttr):
-        self._claimAttrs[
-            (claimAttr.name, claimAttr.version, claimAttr.issuerId)] = claimAttr
+    def addAttrFrom(self, frm, attrs):
+        assert isinstance(attrs, dict)
+        if frm not in self.attributesFrom:
+            self.attributesFrom[frm] = {}
+        self.attributesFrom[frm].update(attrs)
 
     def addCredDef(self, credDef: CredDef):
         """
@@ -370,7 +400,7 @@ class Wallet(PWallet, Sponsoring):
     def _getIssuerKeyReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
         key = data.get(ORIGIN), data.get(REFERENCE)
-        isPk = self.getIssuerPublicKey(key)
+        isPk = self.getIssuerPublicKey(key=key)
         keys = data.get(DATA)
         for k in ('N', 'S', 'Z'):
             keys[k] = strToCharmInteger(keys[k])
@@ -381,7 +411,8 @@ class Wallet(PWallet, Sponsoring):
 
     def _getMatchingIssuerKey(self, data):
         for key, pk in self._issuerPks.items():
-            if str(pk.N) == data.get("N") and str(pk.S) == data.get("S") and str(pk.Z) == data.get("Z"):
+            if str(pk.N) == data.get("N") and str(pk.S) == data.get("S") and \
+                            str(pk.Z) == data.get("Z"):
                 matches = 0
                 for k, v in pk.R.items():
                     if str(pk.R.get(k)) == data.get("R").get(k):
@@ -470,7 +501,14 @@ class Wallet(PWallet, Sponsoring):
             self.pendRequest(req, None)
         return len(self._pending)
 
-    def getIssuerPublicKey(self, key):
+    def getIssuerPublicKey(self, key=None, seqNo=None):
+        assert key or seqNo
+        if key:
+            return self._issuerPks.get(key)
+        else:
+            for _, pk in self._issuerPks.items():
+                if pk.seqNo == seqNo:
+                    return pk
         return self._issuerPks.get(key)
 
     def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo):

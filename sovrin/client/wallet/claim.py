@@ -34,6 +34,7 @@ class ClaimProofRequest:
         return fixedInfo + self.attributeValues
 
 
+# TODO: Remove this class.
 class ClaimAttr:
 
     def __init__(self, name, version, author, seqNo, issuerId, attributes):

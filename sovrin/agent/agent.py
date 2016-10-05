@@ -460,15 +460,15 @@ class WalletedAgent(Agent):
             self.notifyObservers("Received {}.".format(claim[NAME]))
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
-                name, version, claimDefSeqNo, idr = \
-                    claim[NAME], claim[VERSION], \
-                    claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
+                name, version, idr = \
+                    claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
                 attributes = claim['attributes']  # TODO: Need to finalize this
                 # TODO: Need to decide about auth and issuer
-                rc = ClaimAttr(name, version, idr, claimDefSeqNo, idr,
-                    attributes)
-                rc.dateOfIssue = datetime.now()
-                self.wallet.addCredAttr(rc)
+                # rc = ClaimAttr(name, version, idr, claimDefSeqNo, idr,
+                #     attributes)
+                # rc.dateOfIssue = datetime.now()
+                # self.wallet.addCredAttr(rc)
+                self.wallet.addAttrFrom(idr, attributes)
             else:
                 self.notifyObservers("No matching link found")
 
@@ -476,15 +476,19 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
-            claimDefSeqNo = body["claimDefSeqNo"]
-            claimDef = self.wallet.getCredDef(seqNo=claimDefSeqNo)
+            # claimDefSeqNo = body["claimDefSeqNo"]
+            # claimDef = self.wallet.getCredDef(seqNo=claimDefSeqNo)
+            name = body[NAME]
+            version = body[VERSION]
+            origin = body[ORIGIN]
+            claimDef = self.wallet.getCredDef(key=(name, version, origin))
             attributes = self._getClaimsAttrsFor(link.nonce,
                                                  claimDef.attrNames)
             claimDetails = {
                 NAME: claimDef.name,
                 VERSION: claimDef.version,
                 'attributes': attributes,
-                'claimDefSeqNo': claimDefSeqNo,
+                # 'claimDefSeqNo': claimDefSeqNo,
                 f.IDENTIFIER.nm: claimDef.origin
             }
             # # TODO: Need to have u value from alice and generate credential
@@ -533,7 +537,6 @@ class WalletedAgent(Agent):
                                           link.verkey, frm)
             else:
                 reqs = self.wallet.preparePending()
-                logger.debug("pending requests {}".format(reqs))
                 # Assuming there was only one pending request
                 logger.debug("sending to sovrin {}".format(reqs[0]))
                 self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
@@ -555,6 +558,9 @@ class WalletedAgent(Agent):
             for nm in attrNames:
                 res[nm] = attributes.get(nm)
         return res
+
+    def getAttributes(self, nonce):
+        raise NotImplementedError
 
     def addClaimDefs(self, name, version, attrNames,
                              staticPrime, credDefSeqNo, issuerKeySeqNo):
