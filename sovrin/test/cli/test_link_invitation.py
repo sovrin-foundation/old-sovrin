@@ -19,7 +19,6 @@ def aliceConnected(aliceCLI, be, do, poolNodesCreated):
 
 
 def checkIfEndpointReceived(aCli, linkName, expStr):
-    assert expStr in aCli.lastCmdOutput
     assert NEXT_COMMANDS_TO_TRY_TEXT in aCli.lastCmdOutput
     assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
     assert 'accept invitation from "{}"'.format(linkName) in aCli.lastCmdOutput

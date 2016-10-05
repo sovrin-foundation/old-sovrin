@@ -437,7 +437,7 @@ class WalletedAgent(Agent):
         self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims):
-            self.notifyObservers("Confirmed identifier written to Sovrin.")
+            self.notifyObservers("    Confirmed identifier written to Sovrin.")
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
                                       availableClaims=availableClaims)
 
