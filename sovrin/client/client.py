@@ -14,7 +14,7 @@ from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
-from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK
+from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK, REQNACK
 from plenum.common.types import OP_FIELD_NAME, f, HA
 from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
@@ -96,8 +96,10 @@ class Client(PlenumClient):
         # excludeGetTxns = (msg.get(OP_FIELD_NAME) == REPLY and
         #                   msg[f.RESULT.nm].get(TXN_TYPE) == GET_TXNS)
         excludeReqAcks = msg.get(OP_FIELD_NAME) == REQACK
+        excludeReqNacks = msg.get(OP_FIELD_NAME) == REQNACK
         excludeReply = msg.get(OP_FIELD_NAME) == REPLY
-        excludeFromCli = excludeFromCli or excludeReqAcks or excludeReply
+        excludeFromCli = excludeFromCli or excludeReqAcks or excludeReqNacks \
+                         or excludeReply
         super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))

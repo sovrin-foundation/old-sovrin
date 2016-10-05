@@ -42,7 +42,7 @@ from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link import Link, constant
-from sovrin.client.wallet.claim import ClaimProofRequest, ClaimAttr
+from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.common.exceptions import InvalidLinkException
 
 from sovrin.common.identity import Identity
@@ -483,8 +483,6 @@ class SovrinCli(PlenumCli):
             req = self.activeWallet.requestIssuerKey((origin, reference),
                                                      self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
-            # self.print("Getting issuer key for cred def {}".
-            #            format(reference), Token.BoldBlue)
             self.print("Getting Keys for the Claim Definition from Sovrin",
                        Token.BoldBlue)
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
@@ -508,8 +506,6 @@ class SovrinCli(PlenumCli):
             req = self.activeWallet.requestCredDef(credDefKey,
                                                    self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
-            # self.print("Getting cred def {} version {} for {}".
-            #            format(credName, credVersion, dest), Token.BoldBlue)
             self.print("Getting Claim Definition from Sovrin: {} {}"
                        .format(credName, credVersion), Token.BoldBlue)
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
@@ -547,12 +543,11 @@ class SovrinCli(PlenumCli):
             issuerId: issuerPubKey
         }
         masterSecret = self.activeWallet.masterSecret
-        if masterSecret:
-            masterSecret = int(masterSecret)
+        # if masterSecret:
+        #     masterSecret = int(masterSecret)
         proofBuilder = ProofBuilder(pk, masterSecret)
         if not masterSecret:
-            self.activeWallet.addMasterSecret(
-                str(proofBuilder.masterSecret))
+            self.activeWallet.addMasterSecret(proofBuilder.masterSecret)
         self.activeWallet.proofBuilders[proofBuilder.id] = (proofBuilder,
                                                             credName,
                                                             credVersion,
@@ -1308,20 +1303,20 @@ class SovrinCli(PlenumCli):
         return matchingLinksWithAvailableClaim[0]
 
     def _getOneLinkAndReceivedClaim(self, claimName, printMsgs:bool=True) -> \
-            (Link, ClaimAttr):
+            (Link, Tuple, Dict):
         matchingLinksWithRcvdClaim = self.activeWallet.\
             getMatchingLinksWithReceivedClaim(claimName)
 
         if len(matchingLinksWithRcvdClaim) == 0:
             if printMsgs:
                 self._printNoClaimFoundMsg()
-            return None, None
+            return None, None, None
 
         if len(matchingLinksWithRcvdClaim) > 1:
-            linkNames = [ml.name for ml, cl in matchingLinksWithRcvdClaim]
+            linkNames = [ml.name for ml, _, _ in matchingLinksWithRcvdClaim]
             if printMsgs:
                 self._printMoreThanOneLinkFoundForRequest(claimName, linkNames)
-            return None, None
+            return None, None, None
 
         return matchingLinksWithRcvdClaim[0]
 
@@ -1388,12 +1383,17 @@ class SovrinCli(PlenumCli):
         self.printSuggestion(self._getReqClaimUsage(claimName))
 
     def _showReceivedClaimIfExists(self, claimName):
-        matchingLink, rcvdClaim = \
+        matchingLink, rcvdClaim, attributes = \
             self._getOneLinkAndReceivedClaim(claimName, printMsgs=False)
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
-            self.print(str(rcvdClaim))
+            self.print('Name: {}\nVersion: {}\n'.format(claimName, rcvdClaim[1]))
+            # TODO: Figure out how to get time of issuance
+            self.print("Status: {}".format(datetime.datetime.now()))
+            self.print("Attributes: \n")
+            for n, v in attributes.items():
+                self.print('{}: {}\n'.format(n, v))
             return rcvdClaim
 
     def _showAvailableClaimIfExists(self, claimName):
@@ -1435,7 +1435,7 @@ class SovrinCli(PlenumCli):
 
     def _showMatchingClaimProof(self, claimProofReq: ClaimProofRequest):
         matchingLinkAndRcvdClaims = \
-            self.activeWallet.getMachingRcvdClaims(claimProofReq.attributes)
+            self.activeWallet.getMatchingRcvdClaims(claimProofReq.attributes)
 
         attributesWithValue = {}
         for k, v in claimProofReq.attributes.items():

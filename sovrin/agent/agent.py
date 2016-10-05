@@ -8,7 +8,6 @@ from typing import Tuple
 
 import asyncio
 
-from ledger.util import F
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.port_dispenser import genHa
@@ -16,7 +15,6 @@ from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import ensureReqCompleted
-from sovrin.client.wallet.claim import ClaimAttr
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -72,7 +70,7 @@ class Agent(Motor, AgentNet):
                           msgHandler=self.handleEndpointMessage)
 
         # Client used to connect to Sovrin and forward on owner's txns
-        self.client = client
+        self.client = client  # type: Client
 
         # known identifiers of this agent's owner
         self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
@@ -198,7 +196,7 @@ class WalletedAgent(Agent):
         }
 
     @property
-    def wallet(self):
+    def wallet(self) -> Wallet:
         return self._wallet
 
     @wallet.setter
@@ -403,8 +401,8 @@ class WalletedAgent(Agent):
                     claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
                 issuerKeys = {}  # TODO: Need to decide how/where to get it
                 attributes = claim['attributes']  # TODO: Need to finalize this
-                rc = ClaimAttr(name, version, idr, claimDefSeqNo, attributes)
-                rc.dateOfIssue = datetime.now()
+                # rc = ClaimAttr(name, version, idr, claimDefSeqNo, attributes)
+                # rc.dateOfIssue = datetime.now()
                 self.wallet.addLink(li)
             else:
                 self.notifyObservers("No matching link found")
