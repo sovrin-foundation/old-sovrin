@@ -1,5 +1,6 @@
 from typing import NamedTuple
 
+from anoncreds.protocol.types import AttribDef, AttribType
 from sovrin.cli.constants import \
     CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX, \
     CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX, SEND_NYM_FORMATTED_REG_EX, \
@@ -77,3 +78,14 @@ def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
         # TODO: Do something which makes reply and error optional in the
         # callback.
         clbk(reply, err, *args)
+
+
+def getEncodedAttrs(issuerId, attributes):
+    attribTypes = []
+    for nm in attributes.keys():
+        attribTypes.append(AttribType(nm, encode=True))
+    attribsDef = AttribDef(issuerId, attribTypes)
+    attribs = attribsDef.attribs(**attributes).encoded()
+    return {
+        issuerId: next(iter(attribs.values()))
+    }

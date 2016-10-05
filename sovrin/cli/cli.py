@@ -25,8 +25,7 @@ from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN, ATTRIBUTES
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
 from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM_ATTRS, \
-    REQUEST_CLAIM
+from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttrRepo
@@ -35,7 +34,7 @@ from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment, \
-    ensureReqCompleted, USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
+    ensureReqCompleted, USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT, getEncodedAttrs
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.cred_def import IssuerPubKey, CredDef
@@ -555,20 +554,9 @@ class SovrinCli(PlenumCli):
                                                             issuerId)
         return proofBuilder
 
-    @staticmethod
-    def _getEncodedAttrs(issuerId, attributes):
-        attribTypes = []
-        for nm in attributes.keys():
-            attribTypes.append(AttribType(nm, encode=True))
-        attribsDef = AttribDef(issuerId, attribTypes)
-        attribs = attribsDef.attribs(**attributes).encoded()
-        return {
-            issuerId: next(iter(attribs.values()))
-        }
-
     def setProofBuilderAttrs(self, pb, issuerId):
         attributes = self.attributeRepo.getAttributes(issuerId)
-        pb.setParams(encodedAttrs=self._getEncodedAttrs(issuerId, attributes))
+        pb.setParams(encodedAttrs=getEncodedAttrs(issuerId, attributes))
 
     @staticmethod
     def pKFromCredDef(keys):
@@ -816,7 +804,7 @@ class SovrinCli(PlenumCli):
 
     @staticmethod
     def getCryptoInteger(x):
-        return strToCharmInteger(x)
+        return strToCharmInteger(x) if isinstance(x, str) else x
 
     def _verifyProofAction(self, matchedVars):
         if matchedVars.get('verif_proof') == 'verify status is':
@@ -1088,25 +1076,6 @@ class SovrinCli(PlenumCli):
             name, link.name))
         self._sendReqToTargetEndpoint(op, link)
 
-    def _sendReqClaimAttrs(self, link: Link, claimDefKey):
-        # TODO: This makes it 2 round trips, combine getting claim attribute
-        # and claim in one request
-        name, version, origin = claimDefKey
-        op = {
-            NONCE: link.nonce,
-            TYPE: REQUEST_CLAIM_ATTRS,
-            NAME: name,
-            VERSION: version,
-            ORIGIN: origin
-            # "claimDefSeqNo": claimDefSeqNo
-        }
-        signature = self.activeWallet.signMsg(op, link.verkey)
-        op[f.SIG.nm] = signature
-        # TODO: Change print to req claim attr
-        self.print("Requesting claim {} from {}...".format(
-            name, link.name))
-        self._sendReqToTargetEndpoint(op, link)
-
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
         op = {
             TYPE: ACCEPT_INVITE
@@ -1357,21 +1326,6 @@ class SovrinCli(PlenumCli):
                                                          self.sendReqClaim,
                                                          matchingLink,
                                                          (name, version, origin))
-                self._sendReqClaimAttrs(matchingLink, ac)
-
-                # TODO: Request claim attrs from Issuer agent. Get cred def and issuer keys from sovrin. Prepare U and send claim (credential) request to agent
-
-                # cd = self.activeWallet.getCredDef(key=ac)
-                # if not cd:
-                #     if self._isConnectedToAnyEnv():
-                #         self.print("Getting Claim Definition from Sovrin...")
-                #         # TODO: This is wrong.
-                #         self.activeWallet.requestIssuerKey(
-                #             (ac.origin, ac.seqNo), matchingLink.verkey)
-                #     else:
-                #         self._printNotConnectedEnvMessage()
-                #
-                # self._sendReqClaimAttrs(matchingLink, ac)
             else:
                 self.print("No matching claim(s) found "
                            "in any links in current keyring")
@@ -1566,9 +1520,9 @@ class SovrinCli(PlenumCli):
             uValue = matchedVars.get('u_value')
             credDefKey = (credName, credVersion, self.activeWallet.defaultId)
             credDef = self.activeWallet.getCredDef(credDefKey)
-            issuerPubKey = self.activeWallet.getIssuerPublicKey(
-                (self.activeWallet.defaultId, credDef.seqNo))
-            pk = issuerPubKey
+            # pk = self.activeWallet.getIssuerPublicKey(
+            #     (self.activeWallet.defaultId, credDef.seqNo))
+            pk = self.activeWallet.getIssuerPublicKeyForClaimDef(credDef.seqNo)
             attributes = self.attributeRepo.getAttributes(proverId).encoded()
             if attributes:
                 attributes = list(attributes.values())[0]

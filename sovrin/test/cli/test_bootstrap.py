@@ -498,7 +498,7 @@ def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
                            ):
     be(aliceCli)
 
-    do("request claim {name}",
+    do("request claim {name}",      within=5,
                                     expect=reqClaimOut,
                                     mapper=transcriptClaimMap)
 
@@ -513,7 +513,7 @@ def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
     faberId = links[0].remoteIdentifier
     name, version = transcriptClaimMap["name"], transcriptClaimMap["version"]
     aliceCli.activeWallet._credDefs.pop((name, version, faberId))
-    do("request claim {name}",
+    do("request claim {name}",      within=5,
                                     expect=reqClaimOut1,
                                     mapper=transcriptClaimMap)
 
@@ -524,7 +524,7 @@ def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
 
-    msg = WalletedAgent.createClaimsMsg(faber.getClaimList())
+    msg = WalletedAgent.createClaimMsg(faber.getClaimList())
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
 
     reqClaimResp = getSignedRespMsg(msg, aliceSigner)

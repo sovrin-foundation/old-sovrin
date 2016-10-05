@@ -1,5 +1,3 @@
-import asyncio
-import json
 import uuid
 
 from datetime import datetime
@@ -8,13 +6,15 @@ from typing import Tuple
 
 import asyncio
 
+from anoncreds.protocol.utils import strToCharmInteger
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.port_dispenser import genHa
 from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from sovrin.cli.helper import ensureReqCompleted
+from anoncreds.protocol.issuer import Issuer
+from sovrin.cli.helper import ensureReqCompleted, getEncodedAttrs
 from sovrin.client.wallet.cred_def import CredDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -29,8 +29,8 @@ from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
 from sovrin.agent.agent_net import AgentNet
-from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIMS, REQUEST_CLAIM, \
-    ACCEPT_INVITE, REQUEST_CLAIM_ATTRS, CLAIM_ATTRS
+from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
+    ACCEPT_INVITE
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
@@ -187,11 +187,9 @@ class WalletedAgent(Agent):
         self.msgHandlers = {
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
-            CLAIMS: self._handleReqClaimResponse,
+            CLAIM: self._handleReqClaimResponse,
             ACCEPT_INVITE: self._acceptInvite,
-            REQUEST_CLAIM_ATTRS: self._returnClaimAttrs,
             REQUEST_CLAIM: self._reqClaim,
-            CLAIM_ATTRS: self._handleClaimAttrs,
             EVENT: self._eventHandler
         }
 
@@ -214,7 +212,6 @@ class WalletedAgent(Agent):
             TYPE: ERROR,
             DATA: errorMsg,
             REQ_MSG: reqBody,
-
         }
         return invalidSigResp
 
@@ -263,24 +260,25 @@ class WalletedAgent(Agent):
 
     @staticmethod
     def createAvailClaimListMsg(claimLists, alreadyAccepted=False):
-        data = {}
-        data[CLAIMS_LIST_FIELD] = claimLists
+        data = {
+            CLAIMS_LIST_FIELD: claimLists
+        }
         if alreadyAccepted:
             data[ALREADY_ACCEPTED_FIELD] = alreadyAccepted
 
         return WalletedAgent.getCommonMsg(AVAIL_CLAIM_LIST, data)
 
-    @staticmethod
-    def createClaimsAttrsMsg(claim):
-        return WalletedAgent.getCommonMsg(CLAIM_ATTRS, claim)
+    # @staticmethod
+    # def createClaimsAttrsMsg(claim):
+    #     return WalletedAgent.getCommonMsg(CLAIM_ATTRS, claim)
 
     @staticmethod
-    def createClaimsMsg(claim):
+    def createClaimMsg(claim):
         # TODO: Should be called CLAIM_FILED, no plural
-        data = {
-            CLAIMS_FIELD: claim
-        }
-        return WalletedAgent.getCommonMsg(CLAIMS, data)
+        # data = {
+        #     CLAIMS_FIELD: claim
+        # }
+        return WalletedAgent.getCommonMsg(CLAIM, claim)
 
     def _eventHandler(self, msg):
         body, (frm, ha) = msg
@@ -337,7 +335,7 @@ class WalletedAgent(Agent):
         # TODO: Find a better name
         def postAllFetched():
             if fetchedCount == len(availableClaims):
-                if len(availableClaims) > 0:
+                if availableClaims:
                     self.notifyObservers("    Available claims: {}".
                                          format(",".join(
                         [n for n, _, _ in availableClaims])))
@@ -391,19 +389,19 @@ class WalletedAgent(Agent):
         if isVerified:
             self.notifyObservers("Signature accepted.")
             identifier = body.get(IDENTIFIER)
-            claim = body[DATA][CLAIMS_FIELD]
-            # for claim in body[CLAIMS_FIELD]:
+            claim = body[DATA]
             self.notifyObservers("Received {}.".format(claim[NAME]))
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
-                name, version, claimDefSeqNo, idr = \
-                    claim[NAME], claim[VERSION], \
-                    claim['claimDefSeqNo'], claim[f.IDENTIFIER.nm]
-                issuerKeys = {}  # TODO: Need to decide how/where to get it
+                name, version, idr = \
+                    claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
                 attributes = claim['attributes']  # TODO: Need to finalize this
-                # rc = ClaimAttr(name, version, idr, claimDefSeqNo, attributes)
+                # TODO: Need to decide about auth and issuer
+                # rc = ClaimAttr(name, version, idr, claimDefSeqNo, idr,
+                #     attributes)
                 # rc.dateOfIssue = datetime.now()
-                self.wallet.addLink(li)
+                # self.wallet.addCredAttr(rc)
+                self.wallet.addAttrFrom(idr, attributes)
             else:
                 self.notifyObservers("No matching link found")
 
@@ -441,36 +439,10 @@ class WalletedAgent(Agent):
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
                                       availableClaims=availableClaims)
 
-        self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                    req.reqId, self.client, getNymReply,
-                                    availableClaims)
+        self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
+                             self.client, getNymReply, availableClaims)
 
     def _reqClaim(self, msg):
-        pass
-
-    def _handleClaimAttrs(self, msg):
-        body, (frm, ha) = msg
-        isVerified = self._isVerified(body)
-        if isVerified:
-            self.notifyObservers("Signature accepted.")
-            identifier = body.get(IDENTIFIER)
-            claim = body[DATA]
-            self.notifyObservers("Received {}.".format(claim[NAME]))
-            li = self._getLinkByTarget(getCryptonym(identifier))
-            if li:
-                name, version, idr = \
-                    claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
-                attributes = claim['attributes']  # TODO: Need to finalize this
-                # TODO: Need to decide about auth and issuer
-                # rc = ClaimAttr(name, version, idr, claimDefSeqNo, idr,
-                #     attributes)
-                # rc.dateOfIssue = datetime.now()
-                # self.wallet.addCredAttr(rc)
-                self.wallet.addAttrFrom(idr, attributes)
-            else:
-                self.notifyObservers("No matching link found")
-
-    def _returnClaimAttrs(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
@@ -479,19 +451,28 @@ class WalletedAgent(Agent):
             name = body[NAME]
             version = body[VERSION]
             origin = body[ORIGIN]
+            uValue = strToCharmInteger(body['U'])
             claimDef = self.wallet.getCredDef(key=(name, version, origin))
             attributes = self._getClaimsAttrsFor(link.nonce,
                                                  claimDef.attrNames)
+            encodedAttrs = list(getEncodedAttrs(link.verkey,
+                                                attributes).values())[0]
+            sk = CredDefSecretKey.fromStr(
+                self.wallet.getCredDefSk(claimDef.secretKey))
+            pk = self.wallet.getIssuerPublicKeyForClaimDef(claimDef.seqNo)
+            cred = Issuer.generateCredential(uValue, encodedAttrs, pk, sk)
             claimDetails = {
                 NAME: claimDef.name,
                 VERSION: claimDef.version,
                 'attributes': attributes,
                 # 'claimDefSeqNo': claimDefSeqNo,
-                f.IDENTIFIER.nm: claimDef.origin
+                # TODO: the name should not be identifier but origin
+                f.IDENTIFIER.nm: claimDef.origin,
+                'A': str(cred[0]),
+                'e': str(cred[1]),
+                'vprimeprime': str(cred[2])
             }
-            # # TODO: Need to have u value from alice and generate credential
-
-            resp = self.createClaimsAttrsMsg(claimDetails)
+            resp = self.createClaimMsg(claimDetails)
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
         else:
             raise NotImplementedError
