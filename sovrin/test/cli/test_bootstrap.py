@@ -397,7 +397,8 @@ def acceptInvitation(be, do, userCli, agentMap, expect,
     do("accept invitation from {inviter}",
                                     within=10,
                                     mapper=agentMap,
-                                    expect=expect)
+                                    expect=expect,
+                                    not_expect="Observer threw an exception")
 
     if totalLinks:
         assert totalLinks == len(userCli.activeWallet._links)

@@ -32,7 +32,7 @@ class AcmeAgent(WalletedAgent):
         # TODO: The cred def seq no and issuer seq no needs to be changed
         # based on deployment environment
         self._seqNos = {
-            ("Job-Certificate", "0.1"): (14, 15)
+            ("Job-Certificate", "0.1"): (12, 13)
         }
 
         self._attributes = {

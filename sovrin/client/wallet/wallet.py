@@ -362,6 +362,7 @@ class Wallet(PWallet, Sponsoring):
         if idy:
             idy.seqNo = result[F.seqNo.name]
         else:
+            logger.error("Target {} not found in sponsored".format(target))
             raise NotImplementedError
 
     def _getNymReply(self, result, preparedReq):

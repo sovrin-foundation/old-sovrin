@@ -1403,31 +1403,35 @@ class SovrinCli(PlenumCli):
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
             name, version, origin = ac
-            cd = self.activeWallet.getCredDef(key=ac)
-            ca = self.activeWallet.getClaimAttrs(ac)
-            if ca:
+            credDef = self.activeWallet.getCredDef(key=ac)
+            claimAttr = self.activeWallet.getClaimAttrs(ac)
+            if claimAttr:
                 #TODO: Figure out how to get time of issuance
                 # self.print("Status: {}".format(ca.dateOfIssue))
                 self.print("Status: {}".format(datetime.datetime.now()))
             else:
                 self.print("Status: available (not yet issued)")
-            if cd:
-                self.print('Name: {}\nVersion: {}\n'.format(name, version))
 
-            if not (ca or cd):
+            if credDef:
+                self.print('Name: {}\nVersion: {}'.format(name, version))
+
+            if not (claimAttr or credDef):
                 raise NotImplementedError
             else:
-                self.print("Attributes: \n")
+                self.print("Attributes:")
+
             attrs = []
-            if not ca:
-                if cd:
-                    attrs = [(n, '') for n in cd.attrNames]
+            if not claimAttr:
+                if credDef:
+                    attrs = [(n, '') for n in credDef.attrNames]
             else:
-                attrs = [(n, ': {}'.format(v)) for n, v in ca.items()]
+                attrs = [(n, ': {}'.format(v)) for n, v in claimAttr.items()]
             if attrs:
                 for n, v in attrs:
-                    self.print('{}{}\n'.format(n, v))
-            self._printRequestClaimMsg(claimName)
+                    self.print('    {}{}'.format(n, v))
+
+            if not claimAttr:
+                self._printRequestClaimMsg(claimName)
             return ac
         else:
             self.print("No matching claim(s) found "
