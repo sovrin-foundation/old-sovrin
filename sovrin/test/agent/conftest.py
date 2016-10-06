@@ -112,7 +112,7 @@ def faberLinkAdded(faberIsRunning):
     link = Link("Alice", idr, nonce="b1134a647eb818069c089e7694f63e6d")
     # TODO rename to addLink
     wallet.addLink(link)
-    assert wallet.getMatchingLinkInvitations("Alice")
+    assert wallet.getMatchingLinks("Alice")
     return link
 
 
@@ -123,5 +123,5 @@ def acmeLinkAdded(acmeIsRunning):
     link = Link("Acme", idr, nonce="57fbf9dc8c8e6acde33de98c6d747b28c")
     # TODO rename to addLink
     wallet.addLink(link)
-    assert wallet.getMatchingLinkInvitations("Acme")
+    assert wallet.getMatchingLinks("Acme")
     return link

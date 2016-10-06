@@ -103,6 +103,6 @@ def getFileLines(path):
 
 
 def getLinkInvitation(name, wallet) -> Link:
-    existingLinkInvites = wallet.getMatchingLinkInvitations(name)
+    existingLinkInvites = wallet.getMatchingLinks(name)
     li = existingLinkInvites[0]
     return li

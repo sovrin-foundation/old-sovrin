@@ -129,6 +129,8 @@ SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
                     '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_./]+)' \
                     '\s*)'
 
+SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) \s+ (?P<claim_name>[A-Za-z0-9-" ]+) \s+ to (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -156,3 +158,4 @@ SHOW_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REG_EX)
 REQUEST_CLAIM_FORMATTED_REG_EX = getPipedRegEx(REQUEST_CLAIM_REG_EX)
 SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
 SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)
+SEND_CLAIM__FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)

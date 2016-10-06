@@ -508,7 +508,7 @@ def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
                                                   aliceAcceptedFaberInvitation):
     be(aliceCli)
     inviter = transcriptClaimMap["inviter"]
-    links = aliceCli.activeWallet.getMatchingLinkInvitations(inviter)
+    links = aliceCli.activeWallet.getMatchingLinks(inviter)
     assert len(links) == 1
     faberId = links[0].remoteIdentifier
     name, version = transcriptClaimMap["name"], transcriptClaimMap["version"]
@@ -694,7 +694,8 @@ def testSetAttrWithoutContext(be, do, faberCli):
                                             "set the context"])
 
 
-def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli, acmeMap,
+@pytest.fixture(scope="module")
+def aliceSelfAttestsAttributes(be, do, aliceCli, acmeMap,
                                                showJobAppClaimReqOut,
                                                jobApplicationClaimReqMap,
                                                transcriptClaimAttrValueMap,
@@ -710,15 +711,23 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli, acmeMap,
     mapping.update(jobApplicationClaimReqMap)
     mapping.update(transcriptClaimAttrValueMap)
     do("show claim request {claim-req-to-show}",
-                                    expect=showJobAppClaimReqOut,
-                                    mapper=mapping)
+       expect=showJobAppClaimReqOut,
+       mapper=mapping)
     do("set first_name to Alice")
+    do("set last_name to Garcia")
     mapping.update({
-        "set-attr-first_name": "Alice"
+        "set-attr-first_name": "Alice",
+        "set-attr-last_name": "Garcia"
     })
+    return mapping
+
+
+def testShowJobApplicationClaimReqAfterSetAttr(do,
+                                               showJobAppClaimReqOut,
+                                               aliceSelfAttestsAttributes):
     do("show claim request {claim-req-to-show}",
                                     expect=showJobAppClaimReqOut,
-                                    mapper=mapping)
+                                    mapper=aliceSelfAttestsAttributes)
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
@@ -764,3 +773,14 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
                                             "occurred while "
                                             "processing this msg: {}".
                                                 format(msg)])
+
+
+def testAliceSendClaimProofToAcme(be, do, aliceCli, acmeMap,
+                                    aliceAcceptedAcmeJobInvitation,
+                                  aliceRequestedFaberTranscriptClaim,
+                                  aliceSelfAttestsAttributes):
+    be(aliceCli)
+
+    do("send claim {claim-req-to-match} to {inviter}",  within=3,
+                                expect=["Received response from Acme Corp"],
+                                mapper=acmeMap)

@@ -9,6 +9,8 @@ import os
 from typing import Tuple, Union
 
 import libnacl.secret
+
+from anoncreds.protocol.types import AttribType, AttribDef
 from plenum.common.signing import serializeForSig
 from plenum.common.txn import KEYS
 from plenum.common.types import f
@@ -124,3 +126,14 @@ def getCredDefTxnData(claimDef):
 def getNonce(length=32):
     hexChars = [hex(i)[2:] for i in range(0, 16)]
     return "".join([random.choice(hexChars) for i in range(length)])
+
+
+def getEncodedAttrs(issuerId, attributes):
+    attribTypes = []
+    for nm in attributes.keys():
+        attribTypes.append(AttribType(nm, encode=True))
+    attribsDef = AttribDef(issuerId, attribTypes)
+    attribs = attribsDef.attribs(**attributes).encoded()
+    return {
+        issuerId: next(iter(attribs.values()))
+    }
