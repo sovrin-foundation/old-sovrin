@@ -10,14 +10,16 @@ from typing import Dict
 from typing import Optional
 
 from ledger.util import F
+
+from anoncreds.protocol.proof_builder import ProofBuilder
 from plenum.client.wallet import Wallet as PWallet
-from plenum.common.error import fault
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, IP, PORT, KEYS, TYPE, NYM, STEWARD, ROLE, RAW, \
+    IDENTIFIER, NAME, VERSION, TYPE, NYM, STEWARD, ROLE, RAW, \
     ORIGIN
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
+from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
@@ -27,6 +29,7 @@ from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
 from anoncreds.protocol.utils import strToCharmInteger
+from sovrin.common.util import getEncodedAttrs
 
 ENCODING = "utf-8"
 
@@ -81,6 +84,9 @@ class Wallet(PWallet, Sponsoring):
         # identifier and value is a map of attributes
         self.attributesFrom = {}    # type: Dict[str, Dict]
 
+        # TODO: Shouldnt proof builders be uniquely identified by claim def
+        # and issuerId
+        # TODO: Create claim objects
         self.proofBuilders = {}
 
         self._issuerSks = {}
@@ -171,19 +177,55 @@ class Wallet(PWallet, Sponsoring):
                         claimAttrs = set(claimDef.attrNames)
                         if claimAttrs.intersection(issuedAttributes.keys()):
                             matchingLinkAndReceivedClaim.append(
-                                (li, cl, {k: issuedAttributes[k] for k in claimAttrs}))
+                                (li, cl, {k: issuedAttributes[k] for k in
+                                          claimAttrs}))
         return matchingLinkAndReceivedClaim
 
-    def getMatchingLinksWithClaimReq(self, claimReqName):
+    def getMatchingLinksWithClaimReq(self, claimReqName, linkName=None):
         matchingLinkAndClaimReq = []
         for k, li in self._links.items():
             for cpr in li.claimProofRequests:
                 if Wallet._isMatchingName(claimReqName, cpr.name):
-                    matchingLinkAndClaimReq.append((li, cpr))
+                    if linkName is None or Wallet._isMatchingName(linkName,
+                                                                  li.name):
+                        matchingLinkAndClaimReq.append((li, cpr))
         return matchingLinkAndClaimReq
 
-    def _buildClaimKey(self, providerIdr, claimName):
-        return providerIdr + ":" + claimName
+    def buildClaimProof(self, nonce, cpr: ClaimProofRequest):
+        # Assuming building proof from a single claim
+        attrNames = set(cpr.attributes.keys())
+        matchedAttrs = set()
+        issuerId = None
+        for iid, attributes in self.attributesFrom.items():
+            commonAttrs = attrNames.intersection(set(attributes.keys()))
+            if len(matchedAttrs) < len(commonAttrs):
+                matchedAttrs = commonAttrs
+                issuerId = iid
+        for pid, (pb, _, _, _) in self.proofBuilders.items():
+            if not pb.credential:
+                continue
+            if issuerId in pb.credDefPks:
+                if not pb.encodedAttrs or issuerId not in pb.encodedAttrs:
+                    self.setProofBuilderAttributes(pb)
+                    if issuerId not in pb.encodedAttrs:
+                        raise Exception("Attributes not present")
+                revealedAttrs = list(matchedAttrs)
+                proof = ProofBuilder.prepareProofAsDict(issuer=issuerId,
+                                                        credDefPks=pb.credDefPks,
+                                                        masterSecret=pb.masterSecret,
+                                                        creds={issuerId: pb.credential},
+                                                        revealedAttrs=revealedAttrs,
+                                                        nonce=nonce,
+                                                        encodedAttrs=pb.encodedAttrs)
+                return proof, revealedAttrs
+
+    def setProofBuilderAttributes(self, pb: ProofBuilder):
+        if pb.encodedAttrs is None:
+            pb.encodedAttrs = {}
+        for iid, pk in pb.credDefPks.items():
+            if iid in self.attributesFrom:
+                attributes = self.attributesFrom[iid]
+                pb.encodedAttrs.update(getEncodedAttrs(iid, attributes))
 
     def addAttribute(self, attrib: Attribute):
         """
@@ -256,7 +298,7 @@ class Wallet(PWallet, Sponsoring):
         self._credMasterSecret = masterSecret
 
     def addLink(self, link: Link):
-        self._links[link.key()] = link
+        self._links[link.key] = link
 
     def getLink(self, name):
         return self._links.get(name)
@@ -441,11 +483,10 @@ class Wallet(PWallet, Sponsoring):
     def getLinkInvitation(self, name: str):
         return self._links.get(name)
 
-    def getMatchingLinkInvitations(self, name: str):
+    def getMatchingLinks(self, name: str):
         allMatched = []
         for k, v in self._links.items():
             if self._isMatchingName(name, k):
-            # if name == k or name.lower() in k.lower():
                 allMatched.append(v)
         return allMatched
 
@@ -532,3 +573,8 @@ class Wallet(PWallet, Sponsoring):
             resp.append((v, ipk))
         return resp
 
+    def addCredentialToProofBuilder(self, claimDefKey, issuerId, credential):
+        for pb, name, version, origin in self.proofBuilders.values():
+            if (name, version, origin) == claimDefKey and issuerId in pb.U:
+                pb.setCredential(credential)
+                return

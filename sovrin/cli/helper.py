@@ -1,6 +1,5 @@
 from typing import NamedTuple
 
-from anoncreds.protocol.types import AttribDef, AttribType
 from sovrin.cli.constants import \
     CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX, \
     CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX, SEND_NYM_FORMATTED_REG_EX, \
@@ -18,7 +17,7 @@ from sovrin.cli.constants import \
     ACCEPT_LINK_FORMATTED_REG_EX, SHOW_CLAIM_FORMATTED_REG_EX, \
     REQUEST_CLAIM_FORMATTED_REG_EX, SHOW_CLAIM_REQ_FORMATTED_REG_EX, \
     SET_ATTRIBUTE_FORMATTED_REG_EX, \
-    SEND_ISSUER_KEY_FORMATTED_REG_EX
+    SEND_ISSUER_KEY_FORMATTED_REG_EX, SEND_CLAIM__FORMATTED_REG_EX
 
 
 def getNewClientGrams():
@@ -55,7 +54,8 @@ def getNewClientGrams():
         SHOW_CLAIM_REQ_FORMATTED_REG_EX,
         SHOW_CLAIM_FORMATTED_REG_EX,
         REQUEST_CLAIM_FORMATTED_REG_EX,
-        SET_ATTRIBUTE_FORMATTED_REG_EX
+        SET_ATTRIBUTE_FORMATTED_REG_EX,
+        SEND_CLAIM__FORMATTED_REG_EX
     ]
 
 
@@ -78,14 +78,3 @@ def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
         # TODO: Do something which makes reply and error optional in the
         # callback.
         clbk(reply, err, *args)
-
-
-def getEncodedAttrs(issuerId, attributes):
-    attribTypes = []
-    for nm in attributes.keys():
-        attribTypes.append(AttribType(nm, encode=True))
-    attribsDef = AttribDef(issuerId, attribTypes)
-    attribs = attribsDef.attribs(**attributes).encoded()
-    return {
-        issuerId: next(iter(attribs.values()))
-    }

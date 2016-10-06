@@ -12,64 +12,64 @@ def grammar():
     return compile("".join(grams))
 
 
-def test_send_nym_with_role(grammar):
+def testSendNymWithRole(grammar):
     getMatchedVariables(grammar, 'send NYM dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= role=SPONSOR')
 
 
-def test_send_nym_without_role(grammar):
+def testSendNymWithoutRole(grammar):
     getMatchedVariables(grammar, 'send NYM dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU=')
 
 
-def test_send_attrib_reg_ex(grammar):
+def testSendAttribRegEx(grammar):
     getMatchedVariables(grammar, 'send ATTRIB dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= raw={"legal org": "BRIGHAM YOUNG UNIVERSITY, PROVO, UT", "email":"mail@byu.edu"}')
 
 
-def test_init_attr_repo_reg_ex(grammar):
+def testInitAttrRepoRegEx(grammar):
     getMatchedVariables(grammar, "initialize mock attribute repo")
 
 
-def test_add_attr_reg_ex(grammar):
+def testAddAttrRegEx(grammar):
     getMatchedVariables(grammar, "add attribute first_name=Tyler,last_name=Ruff,birth_date=12/17/1991,undergrad=True,postgrad=True,expiry_date=12/31/2101 for Tyler")
 
 
-def test_add_attr_prover_reg_ex(grammar):
+def testAddAttrProverRegEx(grammar):
     getMatchedVariables(grammar, "attribute known to BYU first_name=Tyler, last_name=Ruff, birth_date=12/17/1991, undergrad=True, postgrad=True, expiry_date=12/31/2101")
 
 
-def test_send_issuer_key_reg_ex(grammar):
+def testSendIssuerKeyRegEx(grammar):
     getMatchedVariables(grammar, "send ISSUER_KEY reference=15")
 
 
-def test_req_cred_reg_ex(grammar):
+def testReqCredRegEx(grammar):
     getMatchedVariables(grammar,
                    "request credential Degree version 1.0 from o7NzafnAlkhNaEM5njaH+I7Y19BEbEORmFB13p87zhM= for Tyler")
     getMatchedVariables(grammar,
                         "request credential Degree version 1.0 from utNKIOcuy796g3jc+cQclAYn2/NUWRtyy/4q+EvZqQM= for Tyler")
 
 
-def test_gen_cred_reg_ex(grammar):
+def testGenCredRegEx(grammar):
     getMatchedVariables(grammar, "generate credential for Tyler for Degree version 1.0 with uvalue")
 
 
-def test_store_cred_reg_ex(grammar):
+def testStoreCredRegEx(grammar):
     getMatchedVariables(grammar, "store credential A=avalue, e=evalue, vprimeprime=vprimevalue for credential cred-id as tyler-degree")
 
 
-def test_list_cred_reg_ex(grammar):
+def testListCredRegEx(grammar):
     getMatchedVariables(grammar, "list CRED")
 
 
-def test_gen_verif_nonce_reg_ex(grammar):
+def testGenVerifNonceRegEx(grammar):
     getMatchedVariables(grammar, "generate verification nonce")
 
 
-def test_prep_proof_reg_ex(grammar):
+def testPrepProofRegEx(grammar):
     getMatchedVariables(grammar,
                         "prepare proof of degree using nonce "
                         "mynonce for undergrad")
 
 
-def test_verify_proof_reg_ex(grammar):
+def testVerifyProofRegEx(grammar):
     getMatchedVariables(grammar,
                         "verify status is undergrad in proof degreeproof")
 
@@ -112,7 +112,7 @@ def testShowLinkRegEx(grammar):
                                   "link_name": "faber college "})
 
 
-def test_connect_reg_ex(grammar):
+def testConnectRegEx(grammar):
     getMatchedVariables(grammar, "connect dummy")
     getMatchedVariables(grammar, "connect test")
     getMatchedVariables(grammar, "connect live")
@@ -174,8 +174,13 @@ def testClaimReqRegEx(grammar):
     assertCliTokens(matchedVars, {"show_claim_req": "show claim request",
                                   "claim_req_name": "Job-Application "})
 
+
 def testSetAttribute(grammar):
     matchedVars = getMatchedVariables(
         grammar, "set first_name to Alice")
     assertCliTokens(matchedVars, {
         "set_attr": "set", "attr_name": "first_name", "attr_value": "Alice"})
+
+
+def testSendClaim(grammar):
+    getMatchedVariables(grammar, 'send claim Job-Application to Acme')

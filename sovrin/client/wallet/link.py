@@ -57,6 +57,10 @@ class Link:
         self.linkLastSynced = None
         self.linkLastSyncNo = None
 
+    def __repr__(self):
+        return self.key
+
+    @property
     def key(self):
         return self.name
 
@@ -64,7 +68,6 @@ class Link:
     def isRemoteEndpointAvailable(self):
         return self.remoteEndPoint and self.remoteEndPoint != \
                                        constant.NOT_AVAILABLE
-
 
     @property
     def isAccepted(self):

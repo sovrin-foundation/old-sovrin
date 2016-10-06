@@ -1,11 +1,12 @@
 import uuid
 
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Any
 from typing import Tuple
 
 import asyncio
 
+from anoncreds.protocol.types import Credential
 from anoncreds.protocol.utils import strToCharmInteger
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
@@ -14,7 +15,7 @@ from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.issuer import Issuer
-from sovrin.cli.helper import ensureReqCompleted, getEncodedAttrs
+from sovrin.cli.helper import ensureReqCompleted
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -30,12 +31,12 @@ from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
-    ACCEPT_INVITE
+    ACCEPT_INVITE, CLAIM_PROOF
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import ATTR_NAMES
-from sovrin.common.util import verifySig, getConfig
+from sovrin.common.util import verifySig, getConfig, getEncodedAttrs
 
 ALREADY_ACCEPTED_FIELD = 'alreadyAccepted'
 CLAIMS_LIST_FIELD = 'availableClaimsList'
@@ -190,6 +191,7 @@ class WalletedAgent(Agent):
             CLAIM: self._handleReqClaimResponse,
             ACCEPT_INVITE: self._acceptInvite,
             REQUEST_CLAIM: self._reqClaim,
+            CLAIM_PROOF: self.claimProof,
             EVENT: self._eventHandler
         }
 
@@ -381,13 +383,16 @@ class WalletedAgent(Agent):
             if li:
                 name, version, idr = \
                     claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
-                attributes = claim['attributes']  # TODO: Need to finalize this
-                # TODO: Need to decide about auth and issuer
-                # rc = ClaimAttr(name, version, idr, claimDefSeqNo, idr,
-                #     attributes)
-                # rc.dateOfIssue = datetime.now()
-                # self.wallet.addCredAttr(rc)
+                attributes = claim['attributes']
                 self.wallet.addAttrFrom(idr, attributes)
+                data = body['data']
+                credential = Credential(*(strToCharmInteger(x) for x in
+                                          [data['A'], data['e'],
+                                           data['vprimeprime']]))
+                self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
+                                                  data[f.IDENTIFIER.nm]),
+                                                 data[f.IDENTIFIER.nm],
+                                                 credential)
             else:
                 self.notifyObservers("No matching link found")
 
@@ -462,6 +467,9 @@ class WalletedAgent(Agent):
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
         else:
             raise NotImplementedError
+
+    def claimProof(self, msg: Any):
+        pass
 
     def notifyToRemoteCaller(self, event, msg, identifier, frm):
         resp = {

@@ -31,5 +31,10 @@ class ClaimProofRequest:
             'Name: ' + self.name + '\n' \
             'Version: ' + self.version + '\n'
 
-
         return fixedInfo + self.attributeValues
+
+
+class Claim:
+    def __init__(self, issuerId, issuerPubKey):
+        self.issuerId = issuerId
+        self.issuerPubKey = issuerPubKey
