@@ -422,9 +422,10 @@ class WalletedAgent(Agent):
 
         def getNymReply(reply, err, availableClaims, li: Link):
             self.notifyObservers("    Confirmed identifier written to Sovrin.")
+            availableClaimNames = [n for n, _, _ in availableClaims]
             self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
-                                      availableClaims=availableClaims,
-                                      claimProofReqs=li.claimProofRequests)
+                                      availableClaimNames=availableClaimNames,
+                                      claimProofReqsCount=len(li.claimProofRequests))
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
                              self.client, getNymReply, availableClaims, li)

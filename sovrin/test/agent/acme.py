@@ -90,7 +90,7 @@ class AcmeAgent(WalletedAgent):
         staticPrime = staticPrimes().get("prime1")
         attrNames = ["employee_name", "employee_status", "experience",
                      "salary_bracket"]
-        super().addClaimDefs(name="Job Application",
+        super().addClaimDefs(name="Job-Application",
                                      version="0.1",
                                      attrNames=attrNames,
                                      staticPrime=staticPrime,

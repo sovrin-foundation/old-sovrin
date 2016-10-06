@@ -2602,7 +2602,7 @@ transactions...
 Submitted.
 ```
 
-## Acme Corp Defines a Job Application
+## Acme Corp Defines a Job-Application
 
 A
 similar
@@ -2622,7 +2622,7 @@ acme
 acme > new
 claim
 definition
-name = "Job Application"
+name = "Job-Application"
 version = "0.1"
 attributes = {
     "first_name": "string",

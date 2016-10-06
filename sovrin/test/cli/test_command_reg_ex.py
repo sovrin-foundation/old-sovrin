@@ -165,14 +165,14 @@ def testRequestClaimRegEx(grammar):
 
 def testClaimReqRegEx(grammar):
     matchedVars = getMatchedVariables(grammar,
-                                      "show claim request Job Application")
+                                      "show claim request Job-Application")
     assertCliTokens(matchedVars, {"show_claim_req": "show claim request",
-                                  "claim_req_name": "Job Application"})
+                                  "claim_req_name": "Job-Application"})
 
     matchedVars = getMatchedVariables(grammar,
-                                      "show claim request Job Application ")
+                                      "show claim request Job-Application ")
     assertCliTokens(matchedVars, {"show_claim_req": "show claim request",
-                                  "claim_req_name": "Job Application "})
+                                  "claim_req_name": "Job-Application "})
 
 def testSetAttribute(grammar):
     matchedVars = getMatchedVariables(

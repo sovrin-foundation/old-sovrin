@@ -29,7 +29,7 @@ def getSampleLinkInvitation():
             "endpoint": "127.0.0.1:1213"
         },
         "claim-requests": [{
-            "name": "Job Application",
+            "name": "Job-Application",
             "version": "0.2",
             "attributes": {
                 "first_name": "string",

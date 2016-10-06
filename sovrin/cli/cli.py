@@ -269,15 +269,15 @@ class SovrinCli(PlenumCli):
     def _printShowClaimReqUsage(self):
         self.printUsage(self._getShowClaimReqUsage())
 
-    def _printSuggestionForAcceptedLink(self, availableClaims,
-                                        claimProofReqs):
-        if len(availableClaims) > 0:
-            claimName = "|".join([n for n, _, _ in availableClaims])
+    def _printSuggestionPostAcceptLink(self, availableClaimNames,
+                                       claimProofReqsCount):
+        if len(availableClaimNames) > 0:
+            claimName = "|".join([n for n in availableClaimNames])
             claimName = claimName or "<claim-name>"
             msgs = self._getShowClaimUsage(claimName) + \
                    self._getReqClaimUsage(claimName)
             self.printSuggestion(msgs)
-        elif len(claimProofReqs) > 0:
+        elif claimProofReqsCount > 0:
             self._printShowClaimReqUsage()
         else:
             self.print("")
@@ -356,7 +356,7 @@ class SovrinCli(PlenumCli):
                                         port=port)
             self._agent.registerObserver(self)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
-                                              self._printSuggestionForAcceptedLink)
+                                              self._printSuggestionPostAcceptLink)
             self.looper.add(self._agent)
         return self._agent
 
@@ -1229,8 +1229,9 @@ class SovrinCli(PlenumCli):
 
                 self.print("{}".format(str(li)))
                 if li.isAccepted:
-                    self._printSuggestionForAcceptedLink(li.availableClaims,
-                                                         li.claimProofRequests)
+                    acn = [n for n, _, _ in li.availableClaims]
+                    self._printSuggestionPostAcceptLink(
+                        acn, len(li.claimProofRequests))
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:
