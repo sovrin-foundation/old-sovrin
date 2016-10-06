@@ -837,7 +837,8 @@ class SovrinCli(PlenumCli):
 
     def _verifyProof(self, status, proof):
         self._getCredDefIsrKeyAndExecuteCallback(proof["issuer"], proof[NAME],
-                                                 proof[VERSION], self.doVerification,
+                                                 proof[VERSION],
+                                                 self.doVerification,
                                                  status, proof)
 
     def doVerification(self, reply, err, status, proof):
@@ -1379,15 +1380,26 @@ class SovrinCli(PlenumCli):
                 else:
                     link = links[0]
                     claimPrfReq = reqs[0][1]
-                    proof, revealedAttrs = self.activeWallet.buildClaimProof(
-                        int(link.nonce, 16), claimPrfReq)
+                    proof, verifiableAttrs, claimDefSeqNo,issuerKeySeqNo = \
+                        self.activeWallet.buildClaimProof(int(link.nonce, 16),
+                                                          claimPrfReq)
+                    _, curClaimReq = self.curContext
+                    # TODO: curClaimReq should have only self attested
+                    # attributes set and they should not have self-claim
+                    # as suffix.
+                    selfAttestedAttrs = {n: v for n, v in
+                                         curClaimReq.attributes.items()
+                                         if n not in verifiableAttrs}
                     op = {
                         NAME: claimPrfReq.name,
                         VERSION: claimPrfReq.version,
                         NONCE: link.nonce,
                         TYPE: CLAIM_PROOF,
                         'proof': proof,
-                        'revealedAttrs': revealedAttrs
+                        'verifiableAttrs': verifiableAttrs,
+                        'selfAttestedAttrs': selfAttestedAttrs,
+                        'claimDefSeqNo': claimDefSeqNo,
+                        'issuerKeySeqNo': issuerKeySeqNo,
                     }
                     signature = self.activeWallet.signMsg(op, link.verkey)
                     op[f.SIG.nm] = signature

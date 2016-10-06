@@ -217,7 +217,9 @@ class Wallet(PWallet, Sponsoring):
                                                         revealedAttrs=revealedAttrs,
                                                         nonce=nonce,
                                                         encodedAttrs=pb.encodedAttrs)
-                return proof, revealedAttrs
+                pk = pb.credDefPks[issuerId]
+                issuerPubKey = self.getIssuerPublicKey(seqNo=pk.uid)
+                return proof, revealedAttrs, issuerPubKey.claimDefSeqNo, pk.uid
 
     def setProofBuilderAttributes(self, pb: ProofBuilder):
         if pb.encodedAttrs is None:

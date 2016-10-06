@@ -8,6 +8,7 @@ import asyncio
 
 from anoncreds.protocol.types import Credential
 from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.protocol.verifier import Verifier
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.port_dispenser import genHa
@@ -469,7 +470,15 @@ class WalletedAgent(Agent):
             raise NotImplementedError
 
     def claimProof(self, msg: Any):
-        pass
+        body, (frm, ha) = msg
+        link = self.verifyAndGetLink(msg)
+        if link:
+            revealedAttrs = body['verifiableAttrs']
+            proof = body['proof']
+            nonce = int(body[NONCE], 16)
+            claimDefSeqNo = body['claimDefSeqNo'],
+            issuerKeySeqNo = body['issuerKeySeqNo']
+            # result =Verifier.verifyProof(pk, proof, nonce, attrs, revealedAttrs)
 
     def notifyToRemoteCaller(self, event, msg, identifier, frm):
         resp = {
