@@ -200,8 +200,7 @@ code, downloading
 a
 transcript
 package
-from a published
-
+from a published 
 URL, etc.)
 
 Faber
@@ -472,9 +471,7 @@ either
 this:
 
 ```
-$ pip
-install
-sovrin
+$ pip install sovrin
 ```
 
 ... or ( if you
@@ -482,9 +479,7 @@ are
 docker - centric):
 
 ```
-$ docker
-run - it
-sovrinfoundation / sovrin
+$ docker run-it sovrinfoundation / sovrin
 ```
 
 If
@@ -578,15 +573,9 @@ prompt, like
 this:
 
 ```
-Sovrin - CLI
-version
-1.17(c)
-2016
-Evernym, Inc.
-Type
-'help'
-for more information.
-    sovrin >
+Sovrin - CLI version 1.17(c) 2016 Evernym, Inc.
+Type 'help' for more information.
+sovrin> 
 ```
 
 We’re
@@ -641,9 +630,8 @@ the
 prompt:
 
 ```
-sovrin > prompt
-ALICE
-ALICE >
+sovrin>  prompt ALICE
+ALICE> 
 ```
 
 The
@@ -662,14 +650,11 @@ tries
 it:
 
 ```
-ALICE > status
-Not
-connected
-to
-Sovrin
-network.
+ALICE> status
+Not connected to Sovrin network.
+ 
 Usage:
-connect(test | live)
+    connect(test | live)
 ```
 
 Alice
@@ -704,8 +689,7 @@ file as if we had downloaded it from Faber.(Remember, in normal usage,
 Alice’s Sovrin app would be doing a lot of these steps automatically.)
 
 ```
-ALICE > show
-sample / faber - invitation.sovrin
+ALICE> show sample/faber-invitation.sovrin
 {
     "link-invitation": {
         "name": "Faber College",
@@ -716,6 +700,9 @@ sample / faber - invitation.sovrin
     "sig":
         "6d773c27a26eed5f67e4c745d552027bb70171bba5e5ecf681e53c429e7a23af58cd7fa0bfb085dda86aba6984605bdabb062a38178f78897a9a4b9653d46f5a"
 }
+ 
+Try Next:
+  load sample/faber-invitation.sovrin
 ```
 
 Alice
@@ -747,26 +734,14 @@ load
 command:
 
 ```
-ALICE > load
-sample / faber - invitation.sovrin
-1
-Link
-invitation
-found
-for Faber College.
-    Preparing
-    link
-    for Faber College.
-        Generating
-    identifier and signing
-    key.
+ALICE> load sample/faber-invitation.sovrin
+1 Link invitation found for Faber College.
+Creating link for Faber College.
+Generating identifier and signing key.
+ 
 Usage:
-accept
-invitation
-"Faber College"
-show
-link
-"Faber College"
+    accept invitation "Faber College"
+    show link "Faber College"
 ```
 
 This
@@ -788,9 +763,7 @@ invitation.She
 types:
 
 ```
-ALICE > show
-link
-Faber
+ALICE> show link Faber
 ```
 
 Unlike
@@ -800,56 +773,23 @@ command
 for files, this one asks Sovrin to show a link.More details are exposed:
 
 ```
-Expanding
-Faber
-to
-"Faber College"
-Link(not yet
-accepted)
-Name: Faber
-College
-Identifier: cid - 1:CvEDw...Xy5
-Trust
-anchor: Faber
-College(not yet
-written
-to
-Sovrin)
-Verification
-key: < same as local
-identifier >
-Signing
-key: < hidden >
-Target: cid - 1:d0ba0..
-.352
-Target
-Verification
-key: < unknown, waiting
-for sync >
-    Target
-    endpoint: < unknown, waiting
-    for sync >
-        Invitation
-    nonce: b1134a647eb818069c089e7694f63e6d
-Invitation
-status: not verified, target
-verkey
-unknown
-Last
-synced: < this
-link
-has
-not yet
-been
-synchronized >
+Expanding Faber to "Faber College"
+Link(not yet accepted)
+    Name: Faber College
+    Identifier: cid - 1:CvEDw...Xy5
+    Trust anchor: Faber College(not yet written to Sovrin)
+    Verification key: < same as local identifier >
+    Signing key: < hidden >
+    Target: cid - 1:d0ba0...352
+    Target Verification key: < unknown, waiting for sync >
+    Target endpoint: < unknown, waiting for sync >
+    Invitation nonce: b1134a647eb818069c089e7694f63e6d
+    Invitation status: not verified, target verkey unknown
+    Last synced: < this link has not yet been synchronized >
+     
 Usage:
-accept
-invitation
-from
-
-"Faber College"
-sync
-"Faber College"
+    accept invitation from "Faber College"
+    sync "Faber College"
 ```
 
 You’ll
@@ -869,8 +809,7 @@ a
 time.
 
 ```
-Name: Faber
-College
+Name: Faber College
 ```
 
 This is a
@@ -899,12 +838,7 @@ relationships, Alice reduces the ability for others to correlate her
 activities across multiple interactions.
 
 ```
-Trust
-anchor: Faber
-College(not yet
-written
-to
-Sovrin)
+Trust anchor: Faber College(not yet written to Sovrin)
 ```
 
 This
@@ -936,9 +870,7 @@ Alice’s identity--but Alice’s identity will not be captive to Faber College
 in any way.
 
 ```
-Verification
-key: < same as local
-identifier >
+Verification key: < same as local identifier >
 ```
 
 Alice’s ** _verification
@@ -1040,8 +972,7 @@ for Sovrin.Combining the Identifier and Verification key values, we know what
 sort of cryptography we’re going to use to talk to Faber.
 
 ```
-Signing
-key: < hidden >
+Signing key: < hidden >
 ```
 
 A
@@ -1062,8 +993,7 @@ impersonate Alice.If this key is ever compromised, Alice can replace it with
     a new one using several methods not covered here.
 
 ```
-Target: cid - 1:d0ba0..
-.352
+Target: cid - 1:d0ba0...352
 ```
 
 ** _Target_ ** is the
@@ -1098,11 +1028,8 @@ interactions
 with Faber College are authentic.
 
 ```
-Target
-Verification
-key: < unknown, waiting
-for sync >
-    ```
+Target Verification key: < unknown, waiting for sync >
+```
 
 Communication
 from the target
@@ -1177,10 +1104,8 @@ all.Until Alice connects to Sovrin, she won’t be able to trust communication
 from Faber College.
 
 ```
-Target
-endpoint: < unknown, waiting
-for sync >
-    ```
+Target endpoint: < unknown, waiting for sync >
+```
 
 Targets
 can
@@ -1219,8 +1144,7 @@ endpoints
 for now.
 
 ```
-Invitation
-nonce: b1134a647eb818069c089e7694f63e6d
+Invitation nonce: b1134a647eb818069c089e7694f63e6d
 ```
 
 This is just
@@ -1255,11 +1179,7 @@ acceptance
 with a prior invitation.
 
 ```
-Invitation
-status: not verified, target
-verification
-key
-unknown
+Invitation status: not verified, target verification key unknown
 ```
 
 Invitations
@@ -1300,13 +1220,7 @@ we
 sync.
 
 ```
-Last
-synced: < this
-link
-has
-not yet
-been
-synchronized >
+Last synced: < this link has not yet been synchronized >
 ```
 A
 link
@@ -1332,29 +1246,15 @@ invitation
 from Faber College.
 
 ```
-ALICE > accept
-invitation
-from Faber
+ALICE> accept invitation from Faber
 
-Invitation
-not yet
-verified.
-Link
-not yet
-synchronized.Attempting
-to
-sync...
-Cannot
-sync
-because
-not connected.Please
-connect
-first.
-Invitation
-acceptance
-aborted.
+Invitation not yet verified.
+Link not yet synchronized.
+Invitation acceptance aborted.
+Cannot sync because not connected.Please connect first.
+ 
 Usage:
-connect(test | live)
+    connect(test | live)
 ```
 
 In
@@ -1419,9 +1319,8 @@ network
 for the demo.
 
 ```
-ALICE > connect
-test
-Connected.
+ALICE> connect test
+Connected to test.
 ```
 
 Alice
@@ -1437,36 +1336,26 @@ she
 succeeds.
 
 ```
-ALICE > accept
-invitation
-from Faber
-
-Invitation
-not yet
-verified.
-Link
-not yet
-synchronized.Attempting
-to
-sync...
+ALICE> accept invitation from Faber
+Expanding faber to "Faber College"
+Invitation not yet verified.
+Link not yet synchronized.
+Attempting to sync...
+    Synchronizing...
+    Link Faber College synced
+    Pinging target endpoint: <faber's endpoint>
+        [Not Yet Implemented]
+Response from Faber College:
+    Signature accepted.
+    Trust established.
+    Identifier created in Sovrin.
+    Available claims: Transcript
 Synchronizing...
-Link
-Faber
-College
-Synced.
-Response
-from Faber College
-
-(1.2
-s.):
-Signature
-accepted.
-Trust
-established.
-Identifier
-created in Sovrin.
-Available
-claim: Transcript
+    Confirmed identifier written to Sovrin.
+ 
+Try Next:
+  show claim "Transcript"
+  request claim "Transcript"
 ```
 
 Accepting
@@ -1494,29 +1383,25 @@ it
 again.
 
 ```
-ALICE > show
-link
-Faber
-...
-Target
-Verification
-key: < same as target >
-Target
-endpoint: 198.47
-.11
-.98:7944
-Trust
-anchor: Faber
-College(confirmed)
-...
-Invitation
-status: accepted
-Available
-claims: Transcript
-Last
-synced: 12
-seconds
-ago
+ALICE> show link Faber
+Expanding faber to "Faber College"
+Link 
+    Name: Faber College
+    Identifier: cid-1:eSdEPqQ4WAFKDr/065BsFVlnJG/eliF1+1mxTeTCzxY=
+    Trust anchor: Faber College (confirmed)
+    Verification key: <same as local identifier>
+    Signing key: <hidden>
+    Target: 3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=
+    Target Verification key: <same as target>
+    Target endpoint: <faber's endpoint>
+    Invitation nonce: b1134a647eb818069c089e7694f63e6d
+    Invitation status: Accepted
+    Available claims: Transcript
+    Last synced: 10 seconds ago
+ 
+Try Next:
+  show claim "Transcript"
+  request claim "Transcript"
 ```
 
 Notice
@@ -1573,10 +1458,8 @@ command is not yet
 implemented.)
 
 ```
-ALICE > ping
-Faber
-Success: 145.2
-ms
+ALICE> ping Faber
+Success: 145.2 ms
 ```
 
 Alice
@@ -1790,26 +1673,18 @@ asks
 for more information:
 
 ```
-ALICE > show
-claim
-Transcript
-Found
-claim
-Transcript in link
-Faber
-College.
+ALICE> show claim Transcript
+Found claim Transcript in link Faber College.
+Status: available(not yet issued)
 Name: Transcript
-Status: available(not yet
-issued)
 Version: 1.2
-Definition:
 Attributes:
-first_name(string)
-last_name(string)
-ssn(string)
-degree(string)
-year(int)
-status(string)
+    first_name
+    last_name
+    ssn
+    degree
+    year
+    status
 ```
 
 Alice
@@ -1830,30 +1705,12 @@ the "not yet issued" note means that the transcript has not been delivered to
 Alice in a usable form.To get the transcript, Alice needs to request it.
 
 ```
-ALICE > request
-claim
-Transcript
-Found
-claim
-Transcript in link
-Faber
-College.
-Getting
-Claim
-Definition
-from Sovrin....
-
-Getting
-Keys
-for the Claim Definition from Sovrin....
-Requesting
-claim
-Transcript
-from Faber College
-
-...
-Received
-Transcript.
+ALICE> request claim Transcript
+Found claim Transcript in link Faber College.
+Getting Claim Definition from Sovrin....
+Getting Keys for the Claim Definition from Sovrin....
+Requesting claim Transcript from Faber College ...
+Received Transcript.
 ```
 
 Now
@@ -1891,27 +1748,18 @@ more
 details:
 
 ```
-ALICE > show
-claim
-Transcript
-Found
-claim
-Transcript in link
-Faber
-College.
+ALICE> show claim Transcript 
+Found claim Transcript in link Faber College.
+Status: issued 2016-07-15
 Name: Transcript
-Status: issued
-2016 - 07 - 15
 Version: 1.2
 Attributes:
-first_name: Alice
-last_name: Gonzales
-ssn: 123 - 45 - 6789
-degree: Bachelor
-of
-Science, Marketing
-year: 2012
-status: graduated
+    first_name: Alice
+    last_name: Gonzales
+    ssn: 123-45-6789
+    degree: Bachelor of Science, Marketing
+    year: 2012
+    status: graduated
 ```
 
 # Apply for a job
@@ -1930,8 +1778,7 @@ approximately the same things that we did when Alice was accepting Faber
 College’s link invitation:
 
 ```
-ALICE > show
-scripts / samples / acme - invitation.sovrin
+ALICE> show sample/acme-job-application.sovrin
 {
     "link-invitation": {
         "name": "Acme Corp",
@@ -1947,6 +1794,9 @@ scripts / samples / acme - invitation.sovrin
     "sig":
         "c745d552027bb706d773c27a26eed5f67e453c429e7a23af171bba5e5ecf681e58cd7fa0bfb5bdabb062a38178f78897a0854609a4b9653d46f5adda86aba698"
 }
+ 
+Try Next:
+  load sample/acme-job-application.sovrin
 ```
 
 Notice
@@ -2050,73 +1900,45 @@ connection
 with Acme:
 
 ```
-ALICE > load
-samples / acme - invitation.sovrin
-1
-link
-invitation
-found
-for Acme Corp.
-    Preparing
-    Link
-    for Acme Corp.
-
-ALICE > show
-link
-Acme
-Expanding
-Acme
-to
-"Acme Corp"
+ALICE> load sample/acme-job-application.sovrin
+1 link invitation found for Acme Corp.
+Creating Link for Acme Corp.
+Generating Identifier and Signing key.
+ 
+ALICE> show link Acme
+Expanding Acme to "Acme Corp"
 Link
-Name: Acme
-Corp
-Identifier: cid - 2:31
-Blx...kMBct
-Verification
-key: < same as local
-identifier >
-Signing
-key: < hidden >
-Target: cid - 2:2
-abcc53ae...e12dc
-Target
-Verification
-key: 2
-abcc53ae2b74e83c55076157c22f47040e5d666c6675d9a59e18d319bfe12dc
-Target
-endpoint: 123.79
-.56
-.188:7870
-Invitation
-nonce: 57
-fbf9dc8c8e6acde33de98c6d747b28c
-Invitation
-status: not verified
-Claim
-requests: Job
-Application
-Last
-synced: < this
-link
-has
-not yet
-been
-synchronized >
+    Name: Acme Corp
+    Identifier: cid - 2:31Blx...kMBct
+    Verification key: < same as local identifier >
+    Signing key: < hidden >
+    Target: cid - 2:2abcc53ae...e12dc
+    Target Verification key: 2abcc53ae2b74e83c55076157c22f47040e5d666c6675d9a59e18d319bfe12dc
+    Target endpoint: <acme's endpoint>
+    Invitation nonce: 57fbf9dc8c8e6acde33de98c6d747b28c
+    Invitation status: not verified
+    Claim requests: Job-Application
+    Last synced: < this link has not yet been synchronized >
+ 
+ALICE> accept invitation from Acme
 
-ALICE > accept
-invitation
-from Acme
+Expanding acme to "Acme Corp"
+Invitation not yet verified.
+Link not yet synchronized.
+Attempting to sync...
+    Synchronizing...
+    Link Acme Corp synced
+    Pinging target endpoint: <acme's endpoint>
+        [Not Yet Implemented]
+Response from Acme Corp:
+    Signature accepted.
+    Trust established.
+    Identifier created in Sovrin.
+Synchronizing...
+    Confirmed identifier written to Sovrin.
 
-Response
-from Acme Corp
-
-(880
-ms.):
-Signature
-accepted.
-Trust
-established.
+Usage:
+  show claim request "<claim-request-name>"
 ```
 
 Notice
@@ -2135,37 +1957,29 @@ claims
 filled in:
 
 ```
-ALICE > show
-claim
-request
-Job - Application
-Found
-claim
-request
-Job
-Application in link
-Acme
-Corp.
-Name: Job
-Application
-Status: requested
-Version: 0.1
+ALICE> show claim request Job-Application
+Found claim request "Job-Application" in link "Acme Corp"
+Status: Requested
+Name: Job-Application
+Version: 0.2
 Attributes:
-first_name:
-last_name:
-phone_number:
-Claim
-proof(Transcript
-v1
-.2
-from Faber College)
-first_name: Alice(verifiable)
-last_name: Gonzales(verifiable)
-ssn: 123 - 45 - 6789(verifiable)
-degree: Bachelor
-of
-Science, Marketing(verifiable)
-status: graduated(verifiable)
+      ssn: 123-45-6789
+      last_name: string
+      status: graduated
+      phone_number: string
+      first_name: string
+      degree: Bachelor of Science, Marketing
+
+      Claim proof (Transcript v1.2 from Faber College)
+        student_name: Alice Garcia (verifiable)
+        status: graduated (verifiable)
+        ssn: 123-45-6789 (verifiable)
+        year: 2015 (verifiable)
+        degree: Bachelor of Science, Marketing (verifiable)
+
+Try Next:
+  set <attr-name> to <attr-value>
+  send claim request Job-Application
 ```
 
 Alice
@@ -2249,18 +2063,9 @@ allow Alice to provide a first name that’s a nickname, for example.) Alice
 therefore adds the extra attributes now:
 
 ```
-ALICE > set
-first_name
-to
-Sally
-ALICE > set
-last_name
-to
-Gonzales
-ALICE > set
-phone_number
-to
-123 - 555 - 1212
+ALICE> set first_name to Sally
+ALICE> set last_name to Gonzales
+ALICE> set phone_number to 123-555-1212
 ```
 
 Alice
@@ -2276,35 +2081,29 @@ like
 now.
 
 ```
-ALICE > show
-claim
-request
-Job - Application
-Found
-claim
-request
-Job - Application in link
-Acme
-Corp.
-Name: Job - Application
-Status: requested
-Version: 0.1
+ALICE> show claim request Job-Application
+Found claim request "Job-Application" in link "Acme Corp"
+Status: Requested
+Name: Job-Application
+Version: 0.2
 Attributes:
-first_name: Sally(self - claim)
-last_name: Gonzales(self - claim)
-phone_number: 123 - 555 - 1212(self - claim)
-Claim
-proof(Transcript
-v1
-.2
-from Faber College)
-first_name: Alice(verifiable)
-last_name: Gonzales(verifiable)
-ssn: 123 - 45 - 6789(verifiable)
-degree: Bachelor
-of
-Science, Marketing(verifiable)
-status: graduated(verifiable)
+      ssn: 123-45-6789
+      last_name: Gonzales (self-claim)
+      status: graduated
+      phone_number: 123-555-1212 (self-claim)
+      first_name: Sally (self-claim)
+      degree: Bachelor of Science, Marketing
+
+      Claim proof (Transcript v1.2 from Faber College)
+        student_name: Alice Garcia (verifiable)
+        status: graduated (verifiable)
+        ssn: 123-45-6789 (verifiable)
+        year: 2015 (verifiable)
+        degree: Bachelor of Science, Marketing (verifiable)
+
+Try Next:
+  set <attr-name> to <attr-value>
+  send claim request Job-Application
 ```
 
 She
@@ -2313,22 +2112,11 @@ to
 submit.
 
 ```
-ALICE > send
-claim
-Job - Application
-to
-Acme
-Received
-response
-from Acme Corp:
-Your
-Job
-Application
-has
-been
-received.Thank
-you
-for your submission.We will be in touch.
+ALICE> send claim Job-Application to Acme
+Received response from Acme Corp:
+Your Job Application has been received.
+Thank you for your submission.
+We will be in touch.
 ```
 
 It
@@ -2363,33 +2151,21 @@ link
 with Acme a week later, she sees that a new claim is available:
 
 ```
-ALICE > show
-link
-Acme
-...
-Target
-Verification
-key: < same as target >
-Target
-endpoint: 123.34
-.56
-.188:7870
-Trust
-anchor: Acme
-Corp(confirmed)
-...
-Invitation
-status: accepted
-Available
-claims: Job - Certificate
-Last
-synced: 13
-seconds
-ago
-Last
-sync
-seq
-no: 587942
+ALICE> show link Acme
+Expanding Acme to "Acme Corp"
+Link
+    Name: Acme Corp
+    Identifier: cid - 2:31Blx...kMBct
+    Verification key: < same as local identifier >
+    Signing key: < hidden >
+    Target: cid - 2:2abcc53ae...e12dc
+    Target Verification key: 2abcc53ae2b74e83c55076157c22f47040e5d666c6675d9a59e18d319bfe12dc
+    Target endpoint: <acme's endpoint>
+    Invitation nonce: 57fbf9dc8c8e6acde33de98c6d747b28c
+    Invitation status: Accepted
+    Claim requests: Job-Application
+    Available claims: Job-Certificate
+    Last synced: 20 seconds ago
 ```
 
 ## Apply for a loan
@@ -2408,24 +2184,16 @@ Job-Certificate claim offered by Acme.Alice goes through a familiar sequence
 of interactions.First she inspects the claim:
 
 ```
-ALICE > show
-claim
-Job - Certificate
-Found
-claim
-Job - Certificate in link
-Acme
-Corp.
-Name: Job - Certificate
-Status: available(not yet
-issued)
+ALICE> show claim Job-Certificate
+Found claim Job-Certificate in link Acme Corp.
+Status: available(not yet issued)
+Name: Job-Certificate
 Version: 0.1
-Definition:
 Attributes:
-employee_name(string)
-employement_status(string)
-experience(string)
-salary_slab(string)
+    employee_name
+    employement_status
+    experience
+    salary_slab
 ```
 
 Next, she
@@ -2433,30 +2201,14 @@ requests
 it:
 
 ```
-ALICE > request
-claim
-Job - Certificate
-Found
-claim
-Job - Certificate in link
-Acme
-Corp.
-Getting
-Claim
-Definition
-from Sovrin....
+ALICE> request claim Job-Certificate
+Found claim Job-Certificate in link Acme Corp.
+Getting Claim Definition from Sovrin....
+Getting Keys for the Claim Definition from Sovrin....
+Requesting claim Job-Certificate from Acme Corp ...
+Received Job-Certificate.
+```
 
-Getting
-Keys
-for the Claim Definition from Sovrin....
-Requesting
-claim
-Job - Certificate
-from Acme Corp
-
-...
-Received
-Job - Certificate.
 The
 Job - Certificate
 has
@@ -2466,27 +2218,18 @@ now
 has
 it in her
 possession.
-ALICE > show
-claim
-Job - Certificate
-Found
-claim
-Job - Certificate in link
-Acme
-Corp.
-Name: Job - Certificate
-Status: issued
-2016 - 0
-8 - 15
+
+```
+ALICE> show claim Job-Certificate
+Found claim Job-Certificate in link Acme Corp.
+Status: issued 2016-08-15
+Name: Job-Certificate
 Version: 0.1
 Attributes:
-employee_name: Alice
-Gonzales
-employement_status: Permanent
-experience: 5
-years
-salary_slab: between $50, 000
-to $100, 000
+    employee_name: Sally Gonzales
+    employement_status: Permanent
+    experience: 5 years
+    salary_slab: between $50, 000 to $100, 000
 ```
 
 She
@@ -2556,11 +2299,9 @@ issued
 with reference to a known schema.
 
 ```
-faber > use
-Claim - Defs - Keyring
-faber > new
-claim
-definition
+faber> use Claim-Defs-Keyring
+ 
+faber> new claim definition
 name = "Transcript"
 version = "1.2"
 attributes = {
@@ -2570,33 +2311,16 @@ attributes = {
     "year": "int",
     "status": "string"
 }
-Claim
-definition
-Transcript
-v1
-.2
-added
-to
-Claim - Defs - Keyring
-faber > add
-keys
-of
-type
-CL
-for claim definition Transcript version 1.2
-Keys
-added
-faber > show
-pending
-2
-pending
+
+Claim definition Transcript v1 .2 added to Claim-Defs-Keyring
+ 
+faber> add keys of type CL for claim definition Transcript version 1.2
+Keys added
+ 
+faber> show pending 2 pending
 ...
 ...
-faber > submit
-pending
-Submitting
-2
-transactions...
+faber> submit pending Submitting 2 transactions...
 ....
 ....
 Submitted.
@@ -2617,11 +2341,9 @@ Application.
 
 ```
 $ sovrin
-sovrin > prompt
+sovrin> prompt
 acme
-acme > new
-claim
-definition
+acme> new claim definition
 name = "Job-Application"
 version = "0.1"
 attributes = {
@@ -2640,23 +2362,12 @@ attributes = {
         }
     }]
 }
-Claim
-definition
-Job
-Application
-v0
-.1
-added
-acme > show
-pending
-1
-pending
+
+Claim definition Job-Application v0 .1 added
+ 
+acme> show pending 1 pending
 ...
-acme > submit
-pending
-Submitting
-2
-transactions...
+acme> submit pending Submitting 2 transactions...
 ....
 ....
 Submitted.
