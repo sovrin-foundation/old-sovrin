@@ -14,6 +14,7 @@ from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 import sovrin.test.random_data as randomData
+from sovrin.test.agent.helper import getAgentCmdLineParams
 
 logger = getlogger()
 
@@ -28,17 +29,17 @@ class AcmeAgent(WalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        super().__init__('Acme Corp', basedirpath, client, wallet, port)
+        portParam, credDefSeqParam, issuerSeqNoParam = getAgentCmdLineParams()
+
+        super().__init__('Acme Corp', basedirpath, client, wallet,
+                         portParam or port)
 
         credDefSeqNo = 12
         issuerSeqNo = 13
-        if len(sys.argv) == 2 and sys.argv[1]:
-            credDefSeqNo = int(sys.argv[1])
-        if len(sys.argv) == 3 and sys.argv[2]:
-            credDefSeqNo, issuerSeqNo = int(sys.argv[1]), int(sys.argv[2])
 
         self._seqNos = {
-            ("Job-Certificate", "0.1"): (credDefSeqNo, issuerSeqNo)
+            ("Job-Certificate", "0.1"): (credDefSeqParam or credDefSeqNo,
+                                         issuerSeqNoParam or issuerSeqNo)
         }
 
         self._attributes = {

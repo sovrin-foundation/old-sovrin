@@ -15,6 +15,7 @@ from sovrin.common.util import getConfig
 import sovrin.test.random_data as randomData
 
 from anoncreds.test.conftest import staticPrimes
+from sovrin.test.agent.helper import getAgentCmdLineParams
 
 logger = getlogger()
 
@@ -29,18 +30,17 @@ class FaberAgent(WalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        super().__init__('Faber College', basedirpath, client, wallet, port)
+        portParam, credDefSeqParam, issuerSeqNoParam = getAgentCmdLineParams()
+
+        super().__init__('Faber College', basedirpath, client, wallet,
+                         portParam or port)
 
         credDefSeqNo = 10
         issuerSeqNo = 11
-        if len(sys.argv) == 2 and sys.argv[1]:
-            credDefSeqNo = int(sys.argv[1])
-        if len(sys.argv) == 3 and sys.argv[2]:
-            credDefSeqNo, issuerSeqNo = int(sys.argv[1]), int(sys.argv[2])
-
 
         self._seqNos = {
-            ("Transcript", "1.2"): (credDefSeqNo, issuerSeqNo)
+            ("Transcript", "1.2"): (credDefSeqParam or credDefSeqNo,
+                                    issuerSeqNoParam or issuerSeqNo)
         }
         self._attributes = {
             "b1134a647eb818069c089e7694f63e6d": {

@@ -1416,7 +1416,7 @@ class SovrinCli(PlenumCli):
         matchingLinkAndRcvdClaims = \
             self.activeWallet.getMatchingRcvdClaims(claimProofReq.attributes)
 
-        attributesWithValue = {}
+        attributesWithValue = claimProofReq.attributes
         for k, v in claimProofReq.attributes.items():
             for ml, _, commonAttrs, allAttrs in matchingLinkAndRcvdClaims:
                 if k in commonAttrs:
