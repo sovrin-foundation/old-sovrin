@@ -268,16 +268,8 @@ class WalletedAgent(Agent):
 
         return WalletedAgent.getCommonMsg(AVAIL_CLAIM_LIST, data)
 
-    # @staticmethod
-    # def createClaimsAttrsMsg(claim):
-    #     return WalletedAgent.getCommonMsg(CLAIM_ATTRS, claim)
-
     @staticmethod
     def createClaimMsg(claim):
-        # TODO: Should be called CLAIM_FILED, no plural
-        # data = {
-        #     CLAIMS_FIELD: claim
-        # }
         return WalletedAgent.getCommonMsg(CLAIM, claim)
 
     def _eventHandler(self, msg):
@@ -324,8 +316,8 @@ class WalletedAgent(Agent):
             postAllFetched()
 
         for name, version, origin in availableClaims:
-            req = self.wallet.requestCredDef((name, version, origin),
-                                             sender=self.wallet.defaultId)
+            req = self.wallet.requestClaimDef((name, version, origin),
+                                              sender=self.wallet.defaultId)
 
             self.client.submitReqs(req)
 
@@ -376,12 +368,6 @@ class WalletedAgent(Agent):
                 self._fetchAllAvailableClaimsInWallet(li, availableClaims)
             else:
                 self.notifyObservers("No matching link found")
-
-    def _handleRequestClaimResponse(self, msg):
-        body, (frm, ha) = msg
-        isVerified = self._isVerified(body)
-        if isVerified:
-            raise NotImplementedError
 
     def _handleReqClaimResponse(self, msg):
         body, (frm, ha) = msg
@@ -447,17 +433,16 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
-            # claimDefSeqNo = body["claimDefSeqNo"]
-            # claimDef = self.wallet.getCredDef(seqNo=claimDefSeqNo)
             name = body[NAME]
             version = body[VERSION]
             origin = body[ORIGIN]
+            # TODO: Need to do validation
             uValue = strToCharmInteger(body['U'])
             claimDef = self.wallet.getClaimDef(key=(name, version, origin))
             attributes = self._getClaimsAttrsFor(link.nonce,
                                                  claimDef.attrNames)
-            encodedAttrs = list(getEncodedAttrs(link.verkey,
-                                                attributes).values())[0]
+            encodedAttrs = next(iter(getEncodedAttrs(link.verkey,
+                                                attributes).values()))
             sk = CredDefSecretKey.fromStr(
                 self.wallet.getClaimDefSk(claimDef.secretKey))
             pk = self.wallet.getIssuerPublicKeyForClaimDef(claimDef.seqNo)
@@ -466,7 +451,6 @@ class WalletedAgent(Agent):
                 NAME: claimDef.name,
                 VERSION: claimDef.version,
                 'attributes': attributes,
-                # 'claimDefSeqNo': claimDefSeqNo,
                 # TODO: the name should not be identifier but origin
                 f.IDENTIFIER.nm: claimDef.origin,
                 'A': str(cred[0]),

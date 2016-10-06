@@ -73,10 +73,6 @@ def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
     pNym = proverWallet.defaultId
     vNym = verifierWallet.defaultId
 
-    # DEPR
-    # for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
-    #     addNym(ha, looper, nym, sponsNym, sponsor)
-
     for nym in (iNym, pNym, vNym):
         createNym(looper, nym, sponsor, sponsorWallet)
 

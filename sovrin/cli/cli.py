@@ -520,7 +520,7 @@ class SovrinCli(PlenumCli):
         claimDefKey = (credName, credVersion, dest)
         claimDef = self.activeWallet.getClaimDef(key=claimDefKey)
         if not (claimDef and claimDef.seqNo):
-            req = self.activeWallet.requestCredDef(claimDefKey,
+            req = self.activeWallet.requestClaimDef(claimDefKey,
                                                    self.activeWallet.defaultId)
             self.activeClient.submitReqs(req)
             self.print("Getting Claim Definition from Sovrin: {} {}"
@@ -534,7 +534,6 @@ class SovrinCli(PlenumCli):
 
     # callback function which once gets reply for GET_CRED_DEF will
     # send the proper command/msg to issuer
-    # TODO: rename this method
     def _printCredReq(self, reply, err, credName,
                       credVersion, issuerId, proverId):
         proofBuilder = self.newProofBuilder(credName, credVersion, issuerId)
