@@ -7,6 +7,8 @@ from setuptools import setup, find_packages, __version__
 from pip.req import parse_requirements
 from shutil import copyfile
 
+from sovrin.common.plugin_helper import writeAnonCredPlugin
+
 v = sys.version_info
 if sys.version_info < (3, 5):
     msg = "FAIL: Requires Python 3.5 or later, " \
@@ -42,6 +44,7 @@ IDENTITY_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "transactions_local")
 
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR)
+
 
 setup(
     name='sovrin',
@@ -86,3 +89,4 @@ copyfile(os.path.join(DATA_DIR, "pool_transactions_sandbox"), POOL_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)
+writeAnonCredPlugin(BASE_DIR)
