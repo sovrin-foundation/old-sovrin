@@ -1,6 +1,7 @@
 import os
 import random
 
+import sys
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME
 from plenum.common.txn import VERSION
@@ -29,10 +30,17 @@ class FaberAgent(WalletedAgent):
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
         super().__init__('Faber College', basedirpath, client, wallet, port)
-        # TODO: The cred def seq no and issuer seq no needs to be changed
-        # based on deployment environment
+
+        credDefSeqNo = 10
+        issuerSeqNo = 11
+        if len(sys.argv) == 2 and sys.argv[1]:
+            credDefSeqNo = int(sys.argv[1])
+        if len(sys.argv) == 3 and sys.argv[2]:
+            credDefSeqNo, issuerSeqNo = int(sys.argv[1]), int(sys.argv[2])
+
+
         self._seqNos = {
-            ("Transcript", "1.2"): (10, 11)
+            ("Transcript", "1.2"): (credDefSeqNo, issuerSeqNo)
         }
         self._attributes = {
             "b1134a647eb818069c089e7694f63e6d": {

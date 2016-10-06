@@ -1,6 +1,7 @@
 import os
 import random
 
+import sys
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME
 
@@ -29,10 +30,15 @@ class AcmeAgent(WalletedAgent):
 
         super().__init__('Acme Corp', basedirpath, client, wallet, port)
 
-        # TODO: The cred def seq no and issuer seq no needs to be changed
-        # based on deployment environment
+        credDefSeqNo = 12
+        issuerSeqNo = 13
+        if len(sys.argv) == 2 and sys.argv[1]:
+            credDefSeqNo = int(sys.argv[1])
+        if len(sys.argv) == 3 and sys.argv[2]:
+            credDefSeqNo, issuerSeqNo = int(sys.argv[1]), int(sys.argv[2])
+
         self._seqNos = {
-            ("Job-Certificate", "0.1"): (12, 13)
+            ("Job-Certificate", "0.1"): (credDefSeqNo, issuerSeqNo)
         }
 
         self._attributes = {
