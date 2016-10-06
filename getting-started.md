@@ -479,7 +479,7 @@ are
 docker - centric):
 
 ```
-$ docker run-it sovrinfoundation / sovrin
+$ docker run-it sovrinfoundation/sovrin
 ```
 
 If
@@ -630,7 +630,7 @@ the
 prompt:
 
 ```
-sovrin>  prompt ALICE
+sovrin> prompt ALICE
 ALICE> 
 ```
 
