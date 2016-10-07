@@ -16,9 +16,9 @@ TXNS = "Txns"
 
 ENC_TYPE = "encType"
 SKEY = "secretKey"
-REFERENCE = "reference"
+REF = "ref"
 
-allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE, RAW,
+allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
              ENC, HASH, ALIAS)
 reqOpKeys = (TXN_TYPE,)
 
@@ -57,8 +57,8 @@ fields = {NYM: ([TARGET_NYM], [ROLE]),
           ATTRIB: ([], [RAW, ENC, HASH]),
           CRED_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
           GET_CRED_DEF: ([], []),
-          ISSUER_KEY: ([REFERENCE, DATA]),
-          GET_ISSUER_KEY: ([REFERENCE, ORIGIN])
+          ISSUER_KEY: ([REF, DATA]),
+          GET_ISSUER_KEY: ([REF, ORIGIN])
           }
 
 validTxnTypes = {NYM,
@@ -209,7 +209,7 @@ def getTxnOrderedFields():
         (ENC, (str, str)),
         (HASH, (str, str)),
         (ROLE, (str, str)),
-        (REFERENCE, (str, str))
+        (REF, (str, str))
     ])
 
 

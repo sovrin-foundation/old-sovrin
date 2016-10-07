@@ -25,7 +25,7 @@ from sovrin.common.txn import TXN_TYPE, \
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
-    ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
+    ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -293,10 +293,7 @@ class Node(PlenumNode):
     def processGetIssuerKeyReq(self, request: Request, frm: str):
         self.transmitToClient(RequestAck(request.reqId), frm)
         keys = self.graphStore.getIssuerKeys(request.operation[ORIGIN],
-                                            request.operation[REFERENCE])
-        # attrNames = request.operation[RAW]
-        # nym = request.operation[TARGET_NYM]
-        # attrs = self.graphStore.getRawAttrs(nym, attrNames)
+                                             request.operation[REF])
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)

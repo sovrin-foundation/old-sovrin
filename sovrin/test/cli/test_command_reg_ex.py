@@ -37,7 +37,7 @@ def testAddAttrProverRegEx(grammar):
 
 
 def testSendIssuerKeyRegEx(grammar):
-    getMatchedVariables(grammar, "send ISSUER_KEY reference=15")
+    getMatchedVariables(grammar, "send ISSUER_KEY ref=15")
 
 
 def testReqCredRegEx(grammar):

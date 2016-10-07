@@ -124,6 +124,7 @@ def acmeMap(acmeAgentPort):
             "endpointAttr": json.dumps({ENDPOINT: endpoint}),
             "claim-requests" : "Job-Application",
             "claim-req-to-show": "Job-Application",
+            "claim-ver-req-to-show": "0.2",
             "claim-req-to-match": "Job-Application",
             "claims": "<claim-name>",
             "rcvd-claim-transcript-provider": "Faber College",
@@ -481,11 +482,6 @@ def reqClaimOut1():
     return ["Found claim {name} in link {inviter}",
             "Requesting claim {name} from {inviter}...",
                 "Getting Claim Definition from Sovrin"]
-
-
-# @pytest.fixture(scope="module")
-# def reqClaimUsage(usageLine):
-#     return usageLine + ["request claim {name}"]
 
 
 @pytest.fixture(scope="module")

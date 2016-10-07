@@ -718,9 +718,11 @@ def aliceSelfAttestsAttributes(be, do, aliceCli, acmeMap,
        mapper=mapping)
     do("set first_name to Alice")
     do("set last_name to Garcia")
+    do("set phone_number to 123-555-1212")
     mapping.update({
         "set-attr-first_name": "Alice",
-        "set-attr-last_name": "Garcia"
+        "set-attr-last_name": "Garcia",
+        "set-attr-phone_number": "123-555-1212"
     })
     return mapping
 
@@ -784,6 +786,8 @@ def testAliceSendClaimProofToAcme(be, do, aliceCli, acmeMap,
                                   aliceSelfAttestsAttributes):
     be(aliceCli)
 
-    do("send claim {claim-req-to-match} to {inviter}",  within=3,
-                                expect=["Received response from Acme Corp"],
+    do("send claim {claim-req-to-match} to {inviter}",  within=5,
+                                expect=["Your claim {claim-req-to-match} "
+                                        "{claim-ver-req-to-show} has been received"
+                                        " and verified"],
                                 mapper=acmeMap)

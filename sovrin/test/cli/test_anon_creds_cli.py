@@ -8,7 +8,7 @@ from plenum.common.txn import NAME, VERSION, ORIGIN
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     checkClientConnected
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REFERENCE
+from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REF
 from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
     ensureNymAdded
 
@@ -201,7 +201,7 @@ def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
     origin = byuAddsCredDef
     key = (*credDefNameVersion, origin)
     claimDef = byuCLI.activeWallet.getClaimDef(key=key)
-    cmd = ("send ISSUER_KEY reference={}" .format(claimDef.seqNo))
+    cmd = ("send ISSUER_KEY ref={}" .format(claimDef.seqNo))
     checkCmdValid(byuCLI, cmd)
 
     def checkIsKAdded():

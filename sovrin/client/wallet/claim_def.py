@@ -7,7 +7,7 @@ from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, TARGET_NYM, TYPE,\
     ORIGIN
 from plenum.common.types import Identifier
 from sovrin.common.txn import CRED_DEF, GET_CRED_DEF, ATTR_NAMES, ISSUER_KEY, \
-    GET_ISSUER_KEY, REFERENCE
+    GET_ISSUER_KEY, REF
 from sovrin.common.types import Request
 
 
@@ -116,7 +116,7 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
             R_str = {k: str(v) for k, v in self.R.items()}
             op = {
                 TXN_TYPE: ISSUER_KEY,
-                REFERENCE: self.claimDefSeqNo,
+                REF: self.claimDefSeqNo,
                 DATA: {
                     "N": str(self.N),
                     "R": R_str,
@@ -129,7 +129,7 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     def _opForGet(self):
         op = {
             TXN_TYPE: GET_ISSUER_KEY,
-            REFERENCE: self.claimDefSeqNo,
+            REF: self.claimDefSeqNo,
             ORIGIN: self.origin
         }
         return op

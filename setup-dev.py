@@ -67,8 +67,7 @@ setup(
     tests_require=['pytest==3.0.2'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
              'scripts/start_sovrin_node',
-             'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys',
-             'sovrin/test/agent/faber.py', 'sovrin/test/agent/acme.py']
+             'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys']
 )
 
 if not os.path.exists(CONFIG_FILE):

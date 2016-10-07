@@ -34,7 +34,7 @@ from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
 from sovrin.cli.helper import getNewClientGrams, Environment, \
-    ensureReqCompleted, USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
+    USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
@@ -46,8 +46,9 @@ from sovrin.common.exceptions import InvalidLinkException
 
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
-    SPONSOR, TXN_ID, REFERENCE, USER, getTxnOrderedFields, ENDPOINT
-from sovrin.common.util import getConfig, getEncodedAttrs
+    SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields, ENDPOINT
+from sovrin.common.util import getConfig, getEncodedAttrs, ensureReqCompleted, \
+    getCredDefIsrKeyAndExecuteCallback
 from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
@@ -104,7 +105,7 @@ class SovrinCli(PlenumCli):
         self.verifier = Verifier(randomString(), MemoryCredDefStore(),
                                  MemoryIssuerKeyStore())
         _, port = self.nextAvailableClientAddr()
-        self.curContext = (None, None)  # Current Link, Current Claim Req
+        self.curContext = (None, None, {})  # Current Link, Current Claim Req, set attributes
         self._agent = None
 
     @property
@@ -498,45 +499,6 @@ class SovrinCli(PlenumCli):
             self.print("Reference {} not found".format(reference),
                        Token.BoldOrange)
 
-    def _getIssuerKeyAndExecuteClbk(self, origin, reference, clbk, *args):
-        ipk = self.activeWallet.getIssuerPublicKey(key=(origin, reference))
-        if not (ipk and ipk.seqNo):
-            req = self.activeWallet.requestIssuerKey((origin, reference),
-                                                     self.activeWallet.defaultId)
-            self.activeClient.submitReqs(req)
-            self.print("Getting Keys for the Claim Definition from Sovrin")
-            self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.reqId, self.activeClient,
-                                        clbk, *args)
-        else:
-            # Since reply and error will be none
-            clbk(None, None, *args)
-
-    def _getCredDefIsrKeyAndExecuteCallback(self, dest, credName,
-                                            credVersion, clbk, *args):
-        def _getKey(result, error):
-            data = json.loads(result.get(DATA))
-            origin = data.get(ORIGIN)
-            seqNo = data.get(F.seqNo.name)
-            self._getIssuerKeyAndExecuteClbk(origin, seqNo, clbk, *args)
-
-        claimDefKey = (credName, credVersion, dest)
-        claimDef = self.activeWallet.getClaimDef(key=claimDefKey)
-        if not (claimDef and claimDef.seqNo):
-            req = self.activeWallet.requestClaimDef(claimDefKey,
-                                                   self.activeWallet.defaultId)
-            self.activeClient.submitReqs(req)
-            self.print("Getting Claim Definition from Sovrin: {} {}"
-                       .format(credName, credVersion), Token.BoldBlue)
-            self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.reqId, self.activeClient,
-                                        _getKey)
-        else:
-            self._getIssuerKeyAndExecuteClbk(claimDef.origin, claimDef.seqNo,
-                                             clbk, *args)
-
-    # callback function which once gets reply for GET_CRED_DEF will
-    # send the proper command/msg to issuer
     def _printCredReq(self, reply, err, credName,
                       credVersion, issuerId, proverId):
         # TODO: Should check for an existing proof builder if that exists for
@@ -728,7 +690,7 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('send_isr_key') == 'send ISSUER_KEY':
             if not self.canMakeSovrinRequest:
                 return True
-            reference = int(matchedVars.get(REFERENCE))
+            reference = int(matchedVars.get(REF))
             ipk = self._buildIssuerKey(self.activeWallet.defaultId,
                                              reference)
             if ipk:
@@ -754,14 +716,19 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('req_cred') == 'request credential':
             if not self.canMakeSovrinRequest:
                 return True
-            dest = matchedVars.get('issuer_id')
+            origin = matchedVars.get('issuer_id')
             credName = matchedVars.get('cred_name')
             proverName = matchedVars.get('prover_id')
             credVersion = matchedVars.get('version')
-            self._getCredDefIsrKeyAndExecuteCallback(dest, credName, credVersion,
+            claimDefKey = (credName, credVersion, origin)
+            getCredDefIsrKeyAndExecuteCallback(self.activeWallet,
+                                                   self.activeClient,
+                                                   self.print,
+                                                   self.looper.loop,
+                                               claimDefKey,
                                                      self._printCredReq,
-                                                     credName,
-                                                     credVersion, dest, proverName)
+                                               credName, credVersion, origin,
+                                               proverName)
             return True
 
     def _listCredAction(self, matchedVars):
@@ -836,8 +803,12 @@ class SovrinCli(PlenumCli):
             return True
 
     def _verifyProof(self, status, proof):
-        self._getCredDefIsrKeyAndExecuteCallback(proof["issuer"], proof[NAME],
-                                                 proof[VERSION],
+        claimDefKey = (proof[NAME], proof[VERSION], proof["issuer"])
+        getCredDefIsrKeyAndExecuteCallback(self.activeWallet,
+                                                   self.activeClient,
+                                                   self.print,
+                                                   self.looper.loop,
+                                           claimDefKey,
                                                  self.doVerification,
                                                  status, proof)
 
@@ -1327,9 +1298,9 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('set_attr') == 'set':
             attrName = matchedVars.get('attr_name')
             attrValue = matchedVars.get('attr_value')
-            curLink, curClaimReq = self.curContext
+            curLink, curClaimReq, selfAttestedAttrs = self.curContext
             if curClaimReq:
-                curClaimReq.attributes[attrName] = attrValue + ' (self-claim)'
+                selfAttestedAttrs[attrName] = attrValue
             else:
                 self.print("No context, use below command to set the context")
                 self._printShowClaimReqUsage()
@@ -1352,11 +1323,15 @@ class SovrinCli(PlenumCli):
                 if not self._isConnectedToAnyEnv():
                     self._printNotConnectedEnvMessage()
                     return True
-                self._getCredDefIsrKeyAndExecuteCallback(origin, name,
-                                                         version,
-                                                         self.sendReqClaim,
-                                                         matchingLink,
-                                                         (name, version, origin))
+                claimDefKey = (name, version, origin)
+                getCredDefIsrKeyAndExecuteCallback(self.activeWallet,
+                                                   self.activeClient,
+                                                   self.print,
+                                                   self.looper.loop,
+                                                   claimDefKey,
+                                                   self.sendReqClaim,
+                                                   matchingLink,
+                                                   claimDefKey)
             else:
                 self.print("No matching claim(s) found "
                            "in any links in current keyring")
@@ -1380,26 +1355,22 @@ class SovrinCli(PlenumCli):
                 else:
                     link = links[0]
                     claimPrfReq = reqs[0][1]
-                    proof, verifiableAttrs, claimDefSeqNo,issuerKeySeqNo = \
+                    proof, encodedAttrs, verifiableAttrs, claimDefKey = \
                         self.activeWallet.buildClaimProof(int(link.nonce, 16),
                                                           claimPrfReq)
-                    _, curClaimReq = self.curContext
-                    # TODO: curClaimReq should have only self attested
-                    # attributes set and they should not have self-claim
-                    # as suffix.
-                    selfAttestedAttrs = {n: v for n, v in
-                                         curClaimReq.attributes.items()
-                                         if n not in verifiableAttrs}
+                    _, curClaimReq, selfAttestedAttrs = self.curContext
+                    for iid, attrs in encodedAttrs.items():
+                        encodedAttrs[iid] = {n: str(v) for n, v in attrs.items()}
                     op = {
                         NAME: claimPrfReq.name,
                         VERSION: claimPrfReq.version,
                         NONCE: link.nonce,
                         TYPE: CLAIM_PROOF,
                         'proof': proof,
+                        'encodedAttrs': encodedAttrs,
                         'verifiableAttrs': verifiableAttrs,
                         'selfAttestedAttrs': selfAttestedAttrs,
-                        'claimDefSeqNo': claimDefSeqNo,
-                        'issuerKeySeqNo': issuerKeySeqNo,
+                        'claimDefKey': list(claimDefKey)
                     }
                     signature = self.activeWallet.signMsg(op, link.verkey)
                     op[f.SIG.nm] = signature
@@ -1470,7 +1441,7 @@ class SovrinCli(PlenumCli):
             self.print("No matching claim(s) found "
                        "in any links in current keyring")
 
-    def _showMatchingClaimProof(self, claimProofReq: ClaimProofRequest):
+    def _showMatchingClaimProof(self, claimProofReq: ClaimProofRequest, selfAttestedAttrs):
         matchingLinkAndRcvdClaims = \
             self.activeWallet.getMatchingRcvdClaims(claimProofReq.attributes)
 
@@ -1480,7 +1451,7 @@ class SovrinCli(PlenumCli):
                 if k in commonAttrs:
                     attributesWithValue[k] = allAttrs[k]
                 else:
-                    attributesWithValue[k] = v or ''
+                    attributesWithValue[k] = selfAttestedAttrs.get(k, v)
 
         claimProofReq.attributes = attributesWithValue
         self.print(str(claimProofReq))
@@ -1497,11 +1468,15 @@ class SovrinCli(PlenumCli):
                 matchedVars.get('claim_req_name'))
             matchingLink, claimReq = \
                 self._getOneLinkAndClaimReq(claimReqName)
-            if matchingLink:
-                self.curContext = matchingLink, claimReq
+            if matchingLink and claimReq:
+                if matchingLink == self.curContext[0] and claimReq == self.curContext[1]:
+                    matchingLink, claimReq, attributes = self.curContext
+                else:
+                    attributes = {}
+                    self.curContext = matchingLink, claimReq, attributes
                 self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
-                self._showMatchingClaimProof(claimReq)
+                self._showMatchingClaimProof(claimReq, attributes)
                 self._printPostShowClaimReqSuggestion(claimReq.name)
             return True
 
@@ -1665,7 +1640,7 @@ class SovrinCli(PlenumCli):
             TXN_TYPE: NYM,
             # TODO: Should REFERENCE be symmetrically encrypted and the key
             # should then be disclosed in another transaction
-            REFERENCE: txnId,
+            REF: txnId,
             ROLE: USER
         }
         self.print("Adding alias {}".format(alias), Token.BoldBlue)

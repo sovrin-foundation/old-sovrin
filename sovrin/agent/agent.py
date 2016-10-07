@@ -1,12 +1,15 @@
 import json
 import uuid
 
-from datetime import datetime
 from typing import Dict, Any
 from typing import Tuple
 
 import asyncio
 
+from ledger.util import F
+
+from anoncreds.protocol.issuer_key import IssuerKey
+from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.types import Credential
 from anoncreds.protocol.utils import strToCharmInteger
 from anoncreds.protocol.verifier import Verifier
@@ -17,7 +20,6 @@ from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.issuer import Issuer
-from sovrin.cli.helper import ensureReqCompleted
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -33,12 +35,14 @@ from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
-    ACCEPT_INVITE, CLAIM_PROOF
+    ACCEPT_INVITE, CLAIM_PROOF, CLAIM_PROOF_STATUS
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import ATTR_NAMES
-from sovrin.common.util import verifySig, getConfig, getEncodedAttrs
+from sovrin.common.txn import ATTR_NAMES, REF
+from sovrin.common.util import verifySig, getConfig, getEncodedAttrs, \
+    charmDictToStringDict, stringDictToCharmDict, ensureReqCompleted, \
+    getCredDefIsrKeyAndExecuteCallback
 
 ALREADY_ACCEPTED_FIELD = 'alreadyAccepted'
 CLAIMS_LIST_FIELD = 'availableClaimsList'
@@ -193,8 +197,9 @@ class WalletedAgent(Agent):
             CLAIM: self._handleReqClaimResponse,
             ACCEPT_INVITE: self._acceptInvite,
             REQUEST_CLAIM: self._reqClaim,
-            CLAIM_PROOF: self.claimProof,
-            EVENT: self._eventHandler
+            CLAIM_PROOF: self.verifyClaimProof,
+            EVENT: self._eventHandler,
+            CLAIM_PROOF_STATUS: self.handleClaimProofStatus
         }
 
     @property
@@ -391,6 +396,7 @@ class WalletedAgent(Agent):
                 credential = Credential(*(strToCharmInteger(x) for x in
                                           [data['A'], data['e'],
                                            data['vprimeprime']]))
+
                 self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
                                                   data[f.IDENTIFIER.nm]),
                                                  data[f.IDENTIFIER.nm],
@@ -475,16 +481,54 @@ class WalletedAgent(Agent):
         else:
             raise NotImplementedError
 
-    def claimProof(self, msg: Any):
+    def verifyClaimProof(self, msg: Any):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
-            revealedAttrs = body['verifiableAttrs']
             proof = body['proof']
+            encodedAttrs = body['encodedAttrs']
+            # TODO: Use stringDictToCharmDict
+            for iid, attrs in encodedAttrs.items():
+                encodedAttrs[iid] = {n: strToCharmInteger(v) for n, v in
+                                     attrs.items()}
+            revealedAttrs = body['verifiableAttrs']
             nonce = int(body[NONCE], 16)
-            claimDefSeqNo = body['claimDefSeqNo'],
-            issuerKeySeqNo = body['issuerKeySeqNo']
-            # result =Verifier.verifyProof(pk, proof, nonce, attrs, revealedAttrs)
+            claimDefKey = body['claimDefKey']
+
+            def verify(reply, error):
+                # TODO: Do json validation
+                nonlocal proof, nonce, body
+                data = json.loads(reply.get(DATA))
+                pk = data.get(DATA)
+                pk = stringDictToCharmDict(pk)
+                pk['R'] = stringDictToCharmDict(pk['R'])
+                proof = ProofBuilder.prepareProofFromDict({
+                    'issuer': data[ORIGIN], 'proof': proof
+                })
+                ipk = {
+                    data[ORIGIN]: IssuerKey(data.get(REF), **pk)
+                }
+                result = Verifier.verifyProof(ipk, proof, nonce,
+                                              encodedAttrs,
+                                              revealedAttrs)
+                resp = {
+                    TYPE: CLAIM_PROOF_STATUS,
+                    DATA:
+                        "Your claim {} {} has been received and {}".
+                            format(body[NAME], body[VERSION],
+                                   "verified" if result else "not-verified"),
+                }
+                self.signAndSendToCaller(resp, link.localIdentifier, frm)
+
+            # self._getCredDefIsrKeyAndExecuteCallback(tuple(claimDefKey), verify)
+            getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
+                                               self.loop, tuple(claimDefKey),
+                                               verify)
+
+    def handleClaimProofStatus(self, msg: Any):
+        body, (frm, ha) = msg
+        data = body.get(DATA)
+        self.notifyObservers(data)
 
     def notifyToRemoteCaller(self, event, msg, identifier, frm):
         resp = {

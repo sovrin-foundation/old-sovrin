@@ -40,7 +40,7 @@ SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)" \
                        "\s+(?P<keys_key>keys=)\s*(?P<keys>[a-zA-Z-_,\s]+)\s*)"
 
 SEND_ISSUER_KEY_REG_EX = "(\s*(?P<send_isr_key>send\s+ISSUER_KEY)" \
-                       "\s+(?P<ref_key>reference=)\s*(?P<reference>[0-9]+)\s*)"
+                       "\s+(?P<ref_key>ref=)\s*(?P<ref>[0-9]+)\s*)"
 
 REQ_CRED_REG_EX = \
     "(\s*(?P<req_cred>request\s+credential) " \

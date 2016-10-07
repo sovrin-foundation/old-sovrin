@@ -11,6 +11,7 @@ from typing import Optional
 
 from ledger.util import F
 
+import anoncreds.protocol.types as ATypes
 from anoncreds.protocol.proof_builder import ProofBuilder
 from plenum.client.wallet import Wallet as PWallet
 from plenum.common.log import getlogger
@@ -24,7 +25,7 @@ from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
-    GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
+    GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
@@ -219,7 +220,9 @@ class Wallet(PWallet, Sponsoring):
                                                         encodedAttrs=pb.encodedAttrs)
                 pk = pb.credDefPks[issuerId]
                 issuerPubKey = self.getIssuerPublicKey(seqNo=pk.uid)
-                return proof, revealedAttrs, issuerPubKey.claimDefSeqNo, pk.uid
+                claimDef = self.getClaimDef(seqNo=issuerPubKey.claimDefSeqNo)
+                return proof, {issuerId: pb.encodedAttrs.get(issuerId)}, \
+                       revealedAttrs, claimDef.key
 
     def setProofBuilderAttributes(self, pb: ProofBuilder):
         if pb.encodedAttrs is None:
@@ -440,7 +443,7 @@ class Wallet(PWallet, Sponsoring):
 
     def _issuerKeyReply(self, result, preparedReq):
         data = result.get(DATA)
-        ref = result.get(REFERENCE)
+        ref = result.get(REF)
         key = self._getMatchingIssuerKey(data)
         if key and self._issuerPks[key].claimDefSeqNo == ref:
             self._issuerPks[key].seqNo = result.get(F.seqNo.name)
@@ -450,7 +453,7 @@ class Wallet(PWallet, Sponsoring):
 
     def _getIssuerKeyReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
-        key = data.get(ORIGIN), data.get(REFERENCE)
+        key = data.get(ORIGIN), data.get(REF)
         isPk = self.getIssuerPublicKey(key=key)
         keys = data.get(DATA)
         for k in ('N', 'S', 'Z'):
@@ -578,5 +581,7 @@ class Wallet(PWallet, Sponsoring):
     def addCredentialToProofBuilder(self, claimDefKey, issuerId, credential):
         for pb, name, version, origin in self.proofBuilders.values():
             if (name, version, origin) == claimDefKey and issuerId in pb.U:
+                credential = ATypes.Credential(credential.A, credential.e,
+                                        pb.vprime[issuerId] + credential.v)
                 pb.setCredential(credential)
                 return

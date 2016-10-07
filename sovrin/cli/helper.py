@@ -67,14 +67,3 @@ Environment = NamedTuple("Environment", [
 NEXT_COMMANDS_TO_TRY_TEXT = "Try Next:"
 USAGE_TEXT = "Usage:"
 
-
-# TODO: Should have a timeout
-def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
-    reply, err = client.replyIfConsensus(reqId)
-    if reply is None:
-        loop.call_later(.2, ensureReqCompleted, loop,
-                             reqId, client, clbk, *args)
-    elif clbk:
-        # TODO: Do something which makes reply and error optional in the
-        # callback.
-        clbk(reply, err, *args)
