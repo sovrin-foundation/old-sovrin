@@ -5,13 +5,13 @@ import tempfile
 import logging
 
 # The following setup of logging needs to happen before everything else
+from plenum.common.log import getlogger
 from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.issuer import InMemoryAttrRepo
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
 
 from plenum.common.txn_util import createGenesisTxnFile
-from plenum.common.util import getlogger, setupLogging, DISPLAY_LOG_LEVEL
 from ioflo.aid.consoling import Console
 
 logging.root.handlers = []
@@ -28,15 +28,20 @@ from plenum.test.helper import genHa, ensureElectionsDone, \
     checkNodesConnected, genNodeReg
 
 from sovrin.test.helper import genTestClient, submitAndCheck, createNym, \
-    addNym, TestNodeSet
+    TestNodeSet, _newWallet, makePendingTxnsRequest
 from sovrin.common.txn import CRED_DEF, SPONSOR, getTxnOrderedFields
 from sovrin.test.conftest import genesisTxns
 from sovrin.common.util import getCredDefTxnData, getConfig
+import sovrin.anon_creds.issuer as IssuerModule
+import sovrin.anon_creds.prover as ProverModule
+import sovrin.anon_creds.proof_builder as ProofBuilderModule
+import sovrin.anon_creds.verifier as VerifierModule
+
 
 config = getConfig()
 
 
-attributes = {
+rawAttributes = {
     "first_name": "John",
     "last_name": "Doe",
     "birth_date": "1970-01-01",
@@ -45,20 +50,24 @@ attributes = {
     "postgrad": "False"
 }
 
-attrNames = tuple(attributes.keys())
+attrNames = tuple(rawAttributes.keys())
+
+attrTypes = [IssuerModule.AttribType(name, encode=True) for name in attrNames]
+attrDefs = IssuerModule.AttribDef('BYU', attrTypes)
+attributes = attrDefs.attribs(**rawAttributes)
 
 dataDir = '/tmp/data'
 if os.path.exists(dataDir):
     shutil.rmtree(dataDir)
 tdir = tempfile.TemporaryDirectory().name
 
-stewardSigner = SimpleSigner()
-sponsorSigner = SimpleSigner()
-issuerSigner = SimpleSigner()
-proverSigner = SimpleSigner()
-verifierSigner = SimpleSigner()
+stewardWallet = _newWallet()
+sponsorWallet = _newWallet()
+issuerWallet = _newWallet()
+proverWallet = _newWallet()
+verifierWallet = _newWallet()
 
-createGenesisTxnFile(genesisTxns(stewardSigner), tdir,
+createGenesisTxnFile(genesisTxns(stewardWallet), tdir,
                              config.domainTransactionsFile,
                              getTxnOrderedFields())
 
@@ -80,74 +89,79 @@ for node in nodes:
 looper.run(checkNodesConnected(nodes))
 ensureElectionsDone(looper=looper, nodes=nodes, retryWait=1, timeout=30)
 
-steward = genTestClient(nodes, signer=stewardSigner, tmpdir=tdir)
-whitelistClient(nodes, steward.name)
+steward, _ = genTestClient(nodes, tmpdir=tdir)
+# whitelistClient(nodes, steward.name)
+steward.registerObserver(stewardWallet.handleIncomingReply)
 looper.add(steward)
 looper.run(steward.ensureConnectedToNodes())
-steward.requestPendingTxns()
+makePendingTxnsRequest(steward, stewardWallet)
 
-createNym(looper, sponsorSigner.verstr, steward, stewardSigner, SPONSOR)
 
-sponsor = genTestClient(nodes, signer=sponsorSigner, tmpdir=tdir)
-whitelistClient(nodes, sponsor.name)
+createNym(looper, sponsorWallet.defaultId, steward, stewardWallet, SPONSOR)
+
+sponsor, _ = genTestClient(nodes, tmpdir=tdir)
+sponsor.registerObserver(sponsorWallet.handleIncomingReply)
+# whitelistClient(nodes, sponsor.name)
 looper.add(sponsor)
 looper.run(sponsor.ensureConnectedToNodes())
+makePendingTxnsRequest(sponsor, sponsorWallet)
+
+iNym = issuerWallet.defaultId
+pNym = proverWallet.defaultId
+vNym = verifierWallet.defaultId
 
 
-sponsNym = sponsorSigner.verstr
-iNym = issuerSigner.verstr
-pNym = proverSigner.verstr
-vNym = verifierSigner.verstr
+for nym in (iNym, pNym, vNym):
+    createNym(looper, nym, sponsor, sponsorWallet)
+
 issuerHA = genHa()
 proverHA = genHa()
 verifierHA = genHa()
 
-for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
-    addNym(ha, looper, nym, sponsNym, sponsor)
-
 
 def runAnonCredFlow():
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
-    issuer = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
-    prover = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
-    verifier = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
+    issuerC, _ = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
+    proverC, _ = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
+    verifierC, _ = genTestClient(nodes, tmpdir=tdir, peerHA=genHa())
 
-    looper.add(issuer)
-    looper.add(prover)
-    looper.add(verifier)
-    looper.run(issuer.ensureConnectedToNodes(),
-               prover.ensureConnectedToNodes(),
-               verifier.ensureConnectedToNodes())
+    looper.add(issuerC)
+    looper.add(proverC)
+    looper.add(verifierC)
+    looper.run(issuerC.ensureConnectedToNodes(),
+               proverC.ensureConnectedToNodes(),
+               verifierC.ensureConnectedToNodes())
     # Adding signers
-    issuer.signers[issuerSigner.identifier] = issuerSigner
+    # issuer.signers[issuerWallet.defaultId] = issuerSigner
     logger.display("Key pair for Issuer created \n"
                 "Public key is {} \n"
-                "Private key is stored on disk\n".format(issuerSigner.verstr))
-    prover.signers[proverSigner.identifier] = proverSigner
+                "Private key is stored on disk\n".format(issuerWallet.defaultId))
+    # prover.signers[proverWallet.defaultId] = proverSigner
     input()
     logger.display("Key pair for Prover created \n"
                 "Public key is {} \n"
-                "Private key is stored on disk\n".format(proverSigner.verstr))
-    verifier.signers[verifierSigner.identifier] = verifierSigner
+                "Private key is stored on disk\n".format(proverWallet.defaultId))
+    # verifier.signers[verifierWallet.defaultId] = verifierSigner
     input()
     logger.display("Key pair for Verifier created \n"
                 "Public key is {} \n"
                 "Private key is stored on disk\n".format(
-        verifierSigner.verstr))
+        verifierWallet.defaultId))
 
     # Issuer's attribute repository
     attrRepo = InMemoryAttrRepo()
-    attrRepo.attributes = {proverSigner.identifier: attributes}
-    issuer.attributeRepo = attrRepo
+    attrRepo.attributes = {proverWallet.defaultId: attributes}
+    # issuer.attributeRepo = attrRepo
     name1 = "Qualifications"
     version1 = "1.0"
-    ip = issuer.peerHA[0]
-    port = issuer.peerHA[1]
-    issuerId = issuerSigner.identifier
-    proverId = proverSigner.identifier
-    verifierId = verifierSigner.identifier
+    ip = issuerC.peerHA[0]
+    port = issuerC.peerHA[1]
+    issuerId = issuerWallet.defaultId
+    proverId = proverWallet.defaultId
+    verifierId = verifierWallet.defaultId
     interactionId = 'LOGIN-1'
 
+    issuer = IssuerModule.Issuer(issuerId, attrRepo)
     # Issuer publishes credential definition to Sovrin ledger
     credDef = issuer.addNewCredDef(attrNames, name1, version1, ip=ip, port=port)
     # issuer.credentialDefinitions = {(name1, version1): credDef}
@@ -157,11 +171,11 @@ def runAnonCredFlow():
     print("Credential definition: ")
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
     input()
-    op = {ORIGIN: issuerSigner.verstr, TXN_TYPE: CRED_DEF, DATA:
+    op = {ORIGIN: issuerWallet.defaultId, TXN_TYPE: CRED_DEF, DATA:
         getCredDefTxnData(credDef)}
     logger.display("Issuer: Writing credential definition to "
                 "Sovrin Ledger...")
-    submitAndCheck(looper, issuer, op, identifier=issuerSigner.identifier)
+    submitAndCheck(looper, issuer, op, identifier=issuerWallet.defaultId)
 
     # Prover requests Issuer for credential (out of band)
     input()
@@ -169,7 +183,8 @@ def runAnonCredFlow():
     # Issuer issues a credential for prover
     input()
     logger.display("Issuer: Creating credential for "
-                "{}".format(proverSigner.verstr))
+                "{}".format(proverWallet.defaultId))
+    prover = ProverModule.Prover(proverId)
 
     encodedAttributes = {issuerId: CredDef.getEncodedAttrs(attributes)}
     pk = {
@@ -180,12 +195,13 @@ def runAnonCredFlow():
     cred = issuer.createCred(proverId, name1, version1, proofBuilder.U[issuerId])
     input()
     logger.display("Prover: Received credential from "
-                "{}".format(issuerSigner.verstr))
+                "{}".format(issuerWallet.defaultId))
 
     # Prover intends to prove certain attributes to a Verifier
     # Verifier issues a nonce
     input()
     logger.display("Prover: Requesting Nonce from verifier…")
+    verifier = VerifierModule.Verifier(verifierId)
     logger.display("Verifier: Nonce received from prover"
                 " {}".format(proverId))
     nonce = verifier.generateNonce(interactionId)

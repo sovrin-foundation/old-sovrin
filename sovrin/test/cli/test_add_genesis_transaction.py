@@ -1,6 +1,6 @@
 from plenum.test.cli.helper import checkCmdValid
 from sovrin.common.txn import STEWARD, NYM
-from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE
+from sovrin.common.txn import TARGET_NYM, ROLE
 
 
 def testAddGenesisTransactions(cli):

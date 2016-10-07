@@ -1,0 +1,21 @@
+{
+  "link-invitation": {
+    "name": "Acme Corp",
+    "identifier": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+    "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
+    "endpoint": "127.0.0.1:1213"
+  },
+  "claim-requests": [{
+    "name": "Job-Application",
+    "version": "0.2",
+    "attributes": {
+        "first_name": "string",
+        "last_name": "string",
+        "phone_number": "string",
+        "degree": "string",
+        "status": "string",
+        "ssn": "string"
+    }
+  }],
+  "sig": "KDkI4XUePwEu1K01u0DpDsbeEfBnnBfwuw8e4DEPK+MdYXvVsXdSmBJ7yEfQBm8bSJuj6/4CRNI39fFul6DcDA=="
+}

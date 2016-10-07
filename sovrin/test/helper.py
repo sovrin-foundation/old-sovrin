@@ -4,35 +4,36 @@ import os
 
 import shutil
 from contextlib import ExitStack
+from typing import Dict
 from typing import Iterable, Union, Tuple
 
 import pyorient
 
-from sovrin.anon_creds.issuer import Issuer
-from sovrin.anon_creds.prover import Prover
-from sovrin.anon_creds.verifier import Verifier
+from plenum.common.log import getlogger
 
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import REQACK, DATA
-from plenum.common.types import HA
-from plenum.common.util import getMaxFailures, runall, getlogger
+from plenum.common.types import HA, Identifier
+from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkNodesConnected, \
-    checkNodesAreReady, checkSufficientRepliesRecvd, checkLastClientReqForNode,\
+    checkNodesAreReady, checkSufficientRepliesRecvd, \
+    checkLastClientReqForNode, \
     buildCompletedTxnFromReply, TestStack, TestNodeCore, StackedTester
 from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
 from plenum.test.testable import Spyable
-from sovrin.client.anoncreds_role import AnonCredsRole
 from sovrin.client.client import Client
-from sovrin.client.wallet import Wallet
+from sovrin.client.wallet.attribute import LedgerStore, Attribute
+from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
-    TXN_ID, USER
+    TXN_ID, GET_NYM
 from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
@@ -177,8 +178,9 @@ class Scenario(ExitStack):
                              timeout=10)
         return req
 
-    async def sendAndCheckAcks(self, op, count: int=1, org=None):
-        baseline = self.copyOfInBox()  # baseline of client inBox so we can net it out
+    async def sendAndCheckAcks(self, op, count: int = 1, org=None):
+        baseline = self.copyOfInBox()  # baseline of client inBox so we can
+        # net it out
         req = await self.send(op, org)
         await self.checkAcks(count=count, minusInBox=baseline)
         return req
@@ -204,16 +206,6 @@ class Organization:
         self.wallet = Wallet(self.client)  # created only once per organization
         self.userWallets = {}  # type: Dict[str, Wallet]
 
-    # @property
-    # def client(self):
-    #     if self._client is None:
-    #         self._client = genTestClient(nodeReg=self.s.nodeReg.extractCliNodeReg(), tmpdir=self.s.tmpdir)
-    #         self.s.looper.addNextable(self._client)
-    #     return self._client
-
-    # def createUserWallet(self, userId: str):
-    #     self.userWallets[userId] = UserWallet(self.client)
-
     def removeUserWallet(self, userId: str):
         if userId in self.userWallets:
             del self.userWallets[userId]
@@ -221,7 +213,7 @@ class Organization:
             raise ValueError("No wallet exists for this user id")
 
     def addTxnsForCompletedRequestsInWallet(self, reqs: Iterable, wallet:
-                                            Wallet):
+    Wallet):
         for req in reqs:
             reply, status = self.client.getReply(req.reqId)
             if status == "CONFIRMED":
@@ -239,7 +231,6 @@ class Organization:
 
 
 class TempStorage:
-
     def cleanupDataLocation(self):
         loc = self.dataLocation
         try:
@@ -288,13 +279,13 @@ class TestNode(TempStorage, TestNodeCore, Node):
 
 class TestNodeSet(PlenumTestNodeSet):
     def __init__(self,
-                 names: Iterable[str]=None,
-                 count: int=None,
+                 names: Iterable[str] = None,
+                 count: int = None,
                  nodeReg=None,
                  tmpdir=None,
                  keyshare=True,
                  primaryDecider=None,
-                 pluginPaths: Iterable[str]=None,
+                 pluginPaths: Iterable[str] = None,
                  testNodeClass=TestNode):
         super().__init__(names, count, nodeReg, tmpdir, keyshare,
                          primaryDecider=primaryDecider,
@@ -322,10 +313,10 @@ class TestClientStorage:
                 logger.debug("Dropped db {}".format(self.name))
             except Exception as ex:
                 logger.debug("Error while dropping db {}: {}".format(self.name,
-                                                                 ex))
+                                                                     ex))
 
 
-@Spyable(methods=[Client.handleOneNodeMsg, Client.requestPendingTxns])
+@Spyable(methods=[Client.handleOneNodeMsg])
 class TestClient(Client, StackedTester, TestClientStorage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -338,63 +329,52 @@ class TestClient(Client, StackedTester, TestClientStorage):
     def _getOrientDbStore(self):
         config = getConfig()
         return OrientDbStore(user=config.OrientDB["user"],
-                              password=config.OrientDB["password"],
-                              dbName=self.name,
-                              storageType=pyorient.STORAGE_TYPE_MEMORY)
+                             password=config.OrientDB["password"],
+                             dbName=self.name,
+                             storageType=pyorient.STORAGE_TYPE_MEMORY)
 
     def onStopping(self, *args, **kwargs):
         self.cleanupDataLocation()
         super().onStopping(*args, **kwargs)
 
 
-class TestAnonCredsRole(AnonCredsRole):
-    @property
-    def sovrinClientClass(self):
-        return TestClient
-
-
-class TestIssuer(TestAnonCredsRole, Issuer):
-    pass
-
-
-class TestProver(TestAnonCredsRole, Prover):
-    pass
-
-
-class TestVerifier(TestAnonCredsRole, Verifier):
-    pass
-
-
-def genTestClient(nodes: TestNodeSet=None,
+def genTestClient(nodes: TestNodeSet = None,
                   nodeReg=None,
                   tmpdir=None,
-                  signer=None,
-                  peerHA: Union[HA, Tuple[str, int]]=None,
+                  identifier: Identifier = None,
+                  verkey: str = None,
+                  peerHA: Union[HA, Tuple[str, int]] = None,
                   testClientClass=TestClient,
-                  usePoolLedger=False) -> TestClient:
-    testClient = genPlenumTestClient(nodes,
-                               nodeReg,
-                               tmpdir,
-                               signer,
-                               testClientClass,
-                               bootstrapKeys=False,
-                               usePoolLedger=usePoolLedger)
+                  usePoolLedger=False,
+                  name: str=None) -> TestClient:
+    testClient, wallet = genPlenumTestClient(nodes,
+                                             nodeReg,
+                                             tmpdir,
+                                             testClientClass,
+                                             verkey=verkey,
+                                             identifier=identifier,
+                                             bootstrapKeys=False,
+                                             usePoolLedger=usePoolLedger,
+                                             name=name)
     testClient.peerHA = peerHA
-    return testClient
+    return testClient, wallet
 
 
 def genConnectedTestClient(looper,
-                           nodes: TestNodeSet=None,
+                           nodes: TestNodeSet = None,
                            nodeReg=None,
                            tmpdir=None,
-                           signer=None) -> TestClient:
-    c = genTestClient(nodes, nodeReg=nodeReg, tmpdir=tmpdir, signer=signer)
+                           identifier: Identifier = None,
+                           verkey: str = None
+                           ) -> TestClient:
+    c, w = genTestClient(nodes, nodeReg=nodeReg, tmpdir=tmpdir,
+                      identifier=identifier, verkey=verkey)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    return c
+    return c, w
 
 
-def genTestClientProvider(nodes: TestNodeSet=None,
+def genTestClientProvider(nodes: TestNodeSet = None,
                           nodeReg=None,
                           tmpdir=None,
                           clientGnr=genTestClient):
@@ -402,40 +382,40 @@ def genTestClientProvider(nodes: TestNodeSet=None,
 
 
 def clientFromSigner(signer, looper, nodeSet, tdir):
-    s = genTestClient(nodeSet, signer=signer, tmpdir=tdir)
+    wallet = Wallet(signer.identifier)
+    wallet.addSigner(signer)
+    s = genTestClient(nodeSet, tmpdir=tdir, identifier=signer.identifier)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
 
 
-def createNym(looper, nym, creatorClient, creatorSigner, role):
-    op = {
-        TARGET_NYM: nym,
-        TXN_TYPE: NYM,
-        ROLE: role
-    }
-    return submitAndCheck(looper,
-                          creatorClient,
-                          op,
-                          identifier=creatorSigner.identifier)[0]
+def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
+    idy = Identity(identifier=nym,
+                   role=role)
+    creatorWallet.addSponsoredIdentity(idy)
+    reqs = creatorWallet.preparePending()
+    creatorClient.submitReqs(*reqs)
+
+    def check():
+        assert creatorWallet._sponsored[nym].seqNo
+
+    looper.run(eventually(check, timeout=2))
 
 
-def addUser(looper, creatorClient, creatorSigner, name):
-    usigner = SimpleSigner()
-    createNym(looper, usigner.verstr, creatorClient, creatorSigner, USER)
-    return usigner
+def addUser(looper, creatorClient, creatorWallet, name):
+    wallet = Wallet(name)
+    wallet.addSigner()
+    createNym(looper, wallet.defaultId, creatorClient, creatorWallet)
+    return wallet
 
 
-def submitAndCheck(looper, client, op, identifier):
-    # TODO: This assumes every transaction will have an edge in graph, why?
-    # Fix this
-    txnsBefore = client.getTxnsByType(op[TXN_TYPE])
-    client.submit(op, identifier=identifier)
+def checkSubmitted(looper, client, optype, txnsBefore):
     txnsAfter = []
 
     def checkTxnCountAdvanced():
         nonlocal txnsAfter
-        txnsAfter = client.getTxnsByType(op[TXN_TYPE])
+        txnsAfter = client.getTxnsByType(optype)
         logger.debug("old and new txns {} {}".format(txnsBefore, txnsAfter))
         assert len(txnsAfter) > len(txnsBefore)
 
@@ -446,16 +426,77 @@ def submitAndCheck(looper, client, op, identifier):
     return list(set(txnIdsAfter) - set(txnIdsBefore))
 
 
-def addNym(ha, looper, nym, sponsNym, sponsor):
+def submitAndCheck(looper, client, wallet, op, identifier=None):
+    # TODO: This assumes every transaction will have an edge in graph, why?
+    # Fix this
+    optype = op[TXN_TYPE]
+    txnsBefore = client.getTxnsByType(optype)
+    req = wallet.signOp(op, identifier=identifier)
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
+    return checkSubmitted(looper, client, optype, txnsBefore)
+
+
+def makePendingTxnsRequest(client, wallet):
+    wallet.pendSyncRequests()
+    prepared = wallet.preparePending()
+    client.submitReqs(*prepared)
+
+
+def makeGetNymRequest(client, wallet, nym):
     op = {
         TARGET_NYM: nym,
-        TXN_TYPE: NYM,
-        ROLE: USER,
-        DATA: json.dumps({'ha': ha})
+        TXN_TYPE: GET_NYM,
     }
-    submitAndCheck(looper, sponsor, op, identifier=sponsNym)
+    req = wallet.signOp(op)
+    # TODO: This looks boilerplate
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    return client.submitReqs(*reqs)
+
+
+def makeAttribRequest(client, wallet, attrib):
+    wallet.addAttribute(attrib)
+    # TODO: This looks boilerplate
+    reqs = wallet.preparePending()
+    return client.submitReqs(*reqs)
 
 
 class TestGraphStorage:
     def __init__(self):
         pass
+
+
+def _newWallet(name=None):
+    signer = SimpleSigner()
+    w = Wallet(name or signer.identifier)
+    w.addSigner(signer=signer)
+    return w
+
+
+def addAttributeAndCheck(looper, client, wallet, attrib):
+    old = wallet.pendingCount
+    pending = wallet.addAttribute(attrib)
+    assert pending == old + 1
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
+
+    def chk():
+        assert wallet.getAttribute(attrib).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=15))
+    return wallet.getAttribute(attrib).seqNo
+
+
+def addRawAttribute(looper, client, wallet, name, value, dest=None,
+                    localName=None):
+    if not localName:
+        localName = name
+    attrData = json.dumps({name: value})
+    attrib = Attribute(name=localName,
+                       origin=wallet.defaultId,
+                       value=attrData,
+                       dest=dest,
+                       ledgerStore=LedgerStore.RAW)
+    addAttributeAndCheck(looper, client, wallet, attrib)

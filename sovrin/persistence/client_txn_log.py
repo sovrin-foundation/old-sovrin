@@ -5,6 +5,7 @@ import os
 from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.stores.text_file_store import TextFileStore
 from plenum.common.txn import TXN_TYPE
+from plenum.common.util import updateFieldsWithSeqNo
 from plenum.persistence.client_txn_log import ClientTxnLog as PClientTxnLog
 
 from sovrin.common.txn import getTxnOrderedFields
@@ -14,7 +15,8 @@ class ClientTxnLog(PClientTxnLog):
 
     @property
     def txnFieldOrdering(self):
-        return getTxnOrderedFields()
+        fields = getTxnOrderedFields()
+        return updateFieldsWithSeqNo(fields)
 
     def getTxnsByType(self, txnType: str) -> List:
         txns = []

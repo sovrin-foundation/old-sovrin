@@ -21,9 +21,12 @@ def attrib():
     return '{"name": "Tyler"}'
 
 
-@pytest.fixture("module")
-def sponsorCli(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+# @pytest.fixture("module")
+# def sponsorCli(poolNodesCreated, looper, tdir):
+#     return newCLI(nodeRegsForCLI, looper, tdir)
+@pytest.yield_fixture(scope="module")
+def sponsorCli(CliBuilder):
+    yield from CliBuilder("sponsor")
 
 
 @pytest.fixture("module")

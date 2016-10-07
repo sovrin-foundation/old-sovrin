@@ -2,7 +2,7 @@ import json
 from _sha256 import sha256
 from copy import deepcopy
 from operator import itemgetter
-from typing import Iterable
+from typing import Iterable, Any
 
 import pyorient
 from ledger.compact_merkle_tree import CompactMerkleTree
@@ -12,17 +12,20 @@ from ledger.serializers.compact_serializer import CompactSerializer
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
-from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION
-from plenum.common.types import Reply, Request, RequestAck, RequestNack, f, \
-    NODE_PRIMARY_STORAGE_SUFFIX
-from plenum.common.util import getlogger, error
+from plenum.common.log import getlogger
+from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, ORIGIN
+from sovrin.common.types import Request
+from plenum.common.types import Reply, RequestAck, RequestNack, f, \
+    NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
+from plenum.common.util import error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
 from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
-    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole
+    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
+    ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -36,7 +39,7 @@ class Node(PlenumNode):
 
     def __init__(self,
                  name,
-                 nodeRegistry,
+                 nodeRegistry=None,
                  clientAuthNr=None,
                  ha=None,
                  cliname=None,
@@ -96,6 +99,13 @@ class Node(PlenumNode):
                      format(self, i))
         return i
 
+    def isSignatureVerificationNeeded(self, msg: Any):
+        op = msg.get(OPERATION)
+        if op:
+            if op.get(TXN_TYPE) in openTxns:
+                return False
+        return True
+
     def checkValidOperation(self, identifier, reqId, msg):
         self.checkValidSovrinOperation(identifier, reqId, msg)
         super().checkValidOperation(identifier, reqId, msg)
@@ -124,6 +134,13 @@ class Node(PlenumNode):
                                            '{} should have one and only one of '
                                            '{}, {}, {}'
                                            .format(ATTRIB, RAW, ENC, HASH))
+            if RAW in dataKeys:
+                try:
+                    json.loads(msg[RAW])
+                except:
+                    raise InvalidClientRequest(identifier, reqId,
+                                               'raw attribute {} should be '
+                                               'JSON'.format(msg[RAW]))
 
             if not (not msg.get(TARGET_NYM) or
                         self.graphStore.hasNym(msg[TARGET_NYM])):
@@ -167,14 +184,17 @@ class Node(PlenumNode):
                     request.reqId,
                     "{} cannot add {}".format(originRole, role))
         elif typ == ATTRIB:
-            if op.get(TARGET_NYM) and not \
-                            s.getSponsorFor(op[TARGET_NYM]) == origin:
+            if op.get(TARGET_NYM) and \
+                op[TARGET_NYM] != request.identifier and \
+                    not s.getSponsorFor(op[TARGET_NYM]) == origin:
+
                 raise UnauthorizedClientRequest(
                         request.identifier,
                         request.reqId,
                         "Only user's sponsor can add attribute for that user")
         # TODO: Just for now. Later do something meaningful here
-        elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF]:
+        elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF, ISSUER_KEY,
+                     GET_ISSUER_KEY]:
             pass
         else:
             return super().checkRequestAuthorized(request)
@@ -182,72 +202,121 @@ class Node(PlenumNode):
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStore)
 
-    def processRequest(self, request: Request, frm: str):
-        if request.operation[TXN_TYPE] == GET_NYM:
+    def processGetNymReq(self, request: Request, frm: str):
+        self.transmitToClient(RequestAck(request.reqId), frm)
+        nym = request.operation[TARGET_NYM]
+        txn = self.graphStore.getAddNymTxn(nym)
+        txnId = self.genTxnId(request.identifier, request.reqId)
+        result = {f.IDENTIFIER.nm: request.identifier,
+                  f.REQ_ID.nm: request.reqId,
+                  DATA: json.dumps(txn) if txn else None,
+                  TXN_ID: txnId
+                  }
+        result.update(request.operation)
+        self.transmitToClient(Reply(result), frm)
+
+    def processGetTxnReq(self, request: Request, frm: str):
+        nym = request.operation[TARGET_NYM]
+        origin = request.identifier
+        if nym != origin:
+            msg = "You can only receive transactions for yourself"
+            self.transmitToClient(RequestNack(request.reqId, msg), frm)
+        else:
             self.transmitToClient(RequestAck(request.reqId), frm)
-            nym = request.operation[TARGET_NYM]
-            txn = self.graphStore.getAddNymTxn(nym)
-            txnId = self.genTxnId(request.identifier, request.reqId)
-            result = {f.IDENTIFIER.nm: request.identifier,
-                      f.REQ_ID.nm: request.reqId,
-                      DATA: json.dumps(txn) if txn else None,
-                      TXN_ID: txnId
-                      }
-            result.update(request.operation)
-            self.transmitToClient(Reply(result), frm)
-        elif request.operation[TXN_TYPE] == GET_TXNS:
-            nym = request.operation[TARGET_NYM]
-            origin = request.identifier
-            if nym != origin:
-                msg = "You can only receive transactions for yourself"
-                self.transmitToClient(RequestNack(request.reqId, msg), frm)
-            else:
-                self.transmitToClient(RequestAck(request.reqId), frm)
-                data = request.operation.get(DATA)
-                addNymTxn = self.graphStore.getAddNymTxn(origin)
-                txnIds = [addNymTxn[TXN_ID], ] + self.graphStore.\
-                    getAddAttributeTxnIds(origin)
-                # If sending transactions to a user then should send user's
-                # sponsor creation transaction also
-                if addNymTxn.get(ROLE) == USER:
-                    sponsorNymTxn = self.graphStore.getAddNymTxn(
-                        addNymTxn.get(f.IDENTIFIER.nm))
-                    txnIds = [sponsorNymTxn[TXN_ID], ] + txnIds
-                # TODO: Remove this log statement
-                logger.debug("{} getting replies for {}".format(self, txnIds))
-                result = self.secondaryStorage.getReplies(*txnIds, seqNo=data)
-                txns = sorted(list(result.values()), key=itemgetter(F.seqNo.name))
-                lastTxn = str(txns[-1][F.seqNo.name]) if len(txns) > 0 else data
-                result = {
-                    TXN_ID: self.genTxnId(
-                        request.identifier, request.reqId)
-                }
-                result.update(request.operation)
-                result[DATA] = json.dumps({
-                    LAST_TXN: lastTxn,
-                    TXNS: txns
-                }, default=dateTimeEncoding)
-                result.update({
-                    f.IDENTIFIER.nm: request.identifier,
-                    f.REQ_ID.nm: request.reqId,
-                })
-                self.transmitToClient(Reply(result), frm)
-        elif request.operation[TXN_TYPE] == GET_CRED_DEF:
-            issuerNym = request.operation[TARGET_NYM]
-            name = request.operation[DATA][NAME]
-            version = request.operation[DATA][VERSION]
-            credDef = self.graphStore.getCredDef(issuerNym, name, version)
+            data = request.operation.get(DATA)
+            addNymTxn = self.graphStore.getAddNymTxn(origin)
+            txnIds = [addNymTxn[TXN_ID], ] + self.graphStore. \
+                getAddAttributeTxnIds(origin)
+            # If sending transactions to a user then should send user's
+            # sponsor creation transaction also
+            if addNymTxn.get(ROLE) == USER:
+                sponsorNymTxn = self.graphStore.getAddNymTxn(
+                    addNymTxn.get(f.IDENTIFIER.nm))
+                txnIds = [sponsorNymTxn[TXN_ID], ] + txnIds
+            # TODO: Remove this log statement
+            logger.debug("{} getting replies for {}".format(self, txnIds))
+            result = self.secondaryStorage.getReplies(*txnIds, seqNo=data)
+            txns = sorted(list(result.values()), key=itemgetter(F.seqNo.name))
+            lastTxn = str(txns[-1][F.seqNo.name]) if len(txns) > 0 else data
             result = {
                 TXN_ID: self.genTxnId(
                     request.identifier, request.reqId)
             }
             result.update(request.operation)
-            result[DATA] = json.dumps(credDef)
+            result[DATA] = json.dumps({
+                LAST_TXN: lastTxn,
+                TXNS: txns
+            }, default=dateTimeEncoding)
             result.update({
                 f.IDENTIFIER.nm: request.identifier,
                 f.REQ_ID.nm: request.reqId,
             })
             self.transmitToClient(Reply(result), frm)
+
+    def processGetCredDefReq(self, request: Request, frm: str):
+        issuerNym = request.operation[TARGET_NYM]
+        name = request.operation[DATA][NAME]
+        version = request.operation[DATA][VERSION]
+        credDef = self.graphStore.getCredDef(issuerNym, name, version)
+        result = {
+            TXN_ID: self.genTxnId(
+                request.identifier, request.reqId)
+        }
+        result.update(request.operation)
+        result[DATA] = json.dumps(credDef)
+        result.update({
+            f.IDENTIFIER.nm: request.identifier,
+            f.REQ_ID.nm: request.reqId,
+        })
+        self.transmitToClient(Reply(result), frm)
+
+    def processGetAttrsReq(self, request: Request, frm: str):
+        self.transmitToClient(RequestAck(request.reqId), frm)
+        attrName = request.operation[RAW]
+        nym = request.operation[TARGET_NYM]
+        attrWithSeqNo = self.graphStore.getRawAttrs(nym, attrName)
+        result = {
+            TXN_ID: self.genTxnId(
+                request.identifier, request.reqId)
+        }
+        if attrWithSeqNo:
+            attr = {attrName: attrWithSeqNo[attrName][0]}
+            result[DATA] = json.dumps(attr)
+            result[F.seqNo.name] = attrWithSeqNo[attrName][1]
+        result.update(request.operation)
+        result.update({
+            f.IDENTIFIER.nm: request.identifier,
+            f.REQ_ID.nm: request.reqId,
+        })
+        self.transmitToClient(Reply(result), frm)
+
+    def processGetIssuerKeyReq(self, request: Request, frm: str):
+        self.transmitToClient(RequestAck(request.reqId), frm)
+        keys = self.graphStore.getIssuerKeys(request.operation[ORIGIN],
+                                             request.operation[REF])
+        result = {
+            TXN_ID: self.genTxnId(
+                request.identifier, request.reqId)
+        }
+        result.update(request.operation)
+        result[DATA] = json.dumps(keys)
+        result.update({
+            f.IDENTIFIER.nm: request.identifier,
+            f.REQ_ID.nm: request.reqId,
+        })
+        self.transmitToClient(Reply(result), frm)
+
+    def processRequest(self, request: Request, frm: str):
+        if request.operation[TXN_TYPE] == GET_NYM:
+            self.processGetNymReq(request, frm)
+        elif request.operation[TXN_TYPE] == GET_TXNS:
+            self.processGetTxnReq(request, frm)
+        elif request.operation[TXN_TYPE] == GET_CRED_DEF:
+            self.processGetCredDefReq(request, frm)
+        elif request.operation[TXN_TYPE] == GET_ATTR:
+            self.processGetAttrsReq(request, frm)
+        elif request.operation[TXN_TYPE] == GET_ISSUER_KEY:
+            self.processGetIssuerKeyReq(request, frm)
         else:
             super().processRequest(request, frm)
 
@@ -262,7 +331,8 @@ class Node(PlenumNode):
         """
         txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
         self.sendReplyToClient(Reply(txnWithMerkleInfo))
-        self.storeTxnInGraph(txnWithMerkleInfo)
+        reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
+        self.storeTxnInGraph(reply.result)
 
     def storeTxnInLedger(self, result):
         if result[TXN_TYPE] == ATTRIB:
@@ -297,15 +367,22 @@ class Node(PlenumNode):
             self.graphStore.addAttribTxnToGraph(result)
         elif result[TXN_TYPE] == CRED_DEF:
             self.graphStore.addCredDefTxnToGraph(result)
+        elif result[TXN_TYPE] == ISSUER_KEY:
+            self.graphStore.addIssuerKeyTxnToGraph(result)
+        else:
+            logger.debug("Got an unknown type {} to process".
+                         format(result[TXN_TYPE]))
 
     def sendReplyToClient(self, reply):
         identifier = reply.result.get(f.IDENTIFIER.nm)
+        reqId = reply.result.get(f.REQ_ID.nm)
         # In case of genesis transactions when no identifier is present
-        if identifier in self.clientIdentifiers:
-            self.transmitToClient(reply, self.clientIdentifiers[identifier])
+        key = (identifier, reqId)
+        if (identifier, reqId) in self.requestSender:
+            self.transmitToClient(reply, self.requestSender.pop(key))
         else:
-            logger.debug("Could not find identifier {} to send reply".
-                         format(identifier))
+            logger.debug("Could not find key {} to send reply".
+                         format(key))
 
     def addToLedger(self, txn):
         merkleInfo = self.primaryStorage.append(txn)
@@ -327,9 +404,9 @@ class Node(PlenumNode):
         if req.operation[TXN_TYPE] == NYM and \
                 self.graphStore.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
-            if req.identifier in self.clientIdentifiers:
+            if req.key in self.requestSender:
                 self.transmitToClient(RequestNack(req.reqId, reason),
-                                      self.clientIdentifiers[req.identifier])
+                                      self.requestSender.pop(req.key))
         else:
             reply = self.generateReply(int(ppTime), req)
             self.storeTxnAndSendToClient(reply)
@@ -338,19 +415,6 @@ class Node(PlenumNode):
         operation = req.operation
         txnId = self.genTxnId(req.identifier, req.reqId)
         result = {TXN_ID: txnId, TXN_TIME: ppTime}
-        # if operation[TXN_TYPE] == GET_ATTR:
-        #     # TODO: Very inefficient, queries all transactions and looks for the
-        #     # DISCLOSE for the clients and returns all. We probably change the
-        #     # transaction schema or have some way to zero in on the DISCLOSE for
-        #     # the attribute that is being looked for
-        #     attrs = []
-        #     for txn in self.primaryStorage.getAllTxn().values():
-        #         if txn.get(TARGET_NYM, None) == req.identifier and txn[TXN_TYPE] == \
-        #                 DISCLOSE:
-        #             attrs.append({DATA: txn[DATA], NONCE: txn[NONCE]})
-        #     if attrs:
-        #         result[ATTRIBUTES] = attrs
-        #
         result.update(operation)
         result.update({
             f.IDENTIFIER.nm: req.identifier,

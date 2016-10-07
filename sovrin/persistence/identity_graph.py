@@ -6,26 +6,35 @@ from functools import reduce
 from typing import Dict, Optional
 
 from ledger.util import F
+from plenum.common.error import fault
+from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
-    DATA, RAW, ENC, HASH
-from plenum.common.types import f, Reply
-from plenum.common.util import getlogger, error
+    DATA, RAW, ENC, HASH, ORIGIN
+from plenum.common.types import f
+from plenum.common.util import error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
-    STEWARD, ROLE, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF, isValidRole
+    STEWARD, ROLE, REF, TXN_TIME, ATTRIB, CRED_DEF, isValidRole, \
+    ATTR_NAMES, ISSUER_KEY
+import datetime
+import time
 
 logger = getlogger()
+
+MIN_TXN_TIME = time.mktime(datetime.datetime(2000, 1, 1).timetuple())
 
 
 class Vertices:
     Nym = NYM
     Attribute = "Attribute"
     CredDef = "CredDef"
+    IssuerKey = "IssuerKey"
 
     _Properties = {
         Nym: (NYM, TXN_ID, ROLE, F.seqNo.name),
         Attribute: (RAW, ENC, HASH),
-        CredDef: (TYPE, IP, PORT, KEYS)
+        CredDef: (TYPE, ATTR_NAMES),
+        IssuerKey: (REF, DATA)
     }
 
     @classmethod
@@ -42,11 +51,14 @@ class Edges:
     # with someone
     AliasOf = "AliasOf"
     AddsCredDef = "AddsCredDef"
+    HasIssuerKey = "HasIssuerKey"
+
 
 txnEdges = {
         NYM: Edges.AddsNym,
         ATTRIB: Edges.AddsAttribute,
-        CRED_DEF: Edges.AddsCredDef
+        CRED_DEF: Edges.AddsCredDef,
+        ISSUER_KEY: Edges.HasIssuerKey
     }
 
 
@@ -71,11 +83,13 @@ class IdentityGraph(OrientDbGraphStore):
             (Vertices.Nym, self.createNymClass),
             (Vertices.Attribute, self.createAttributeClass),
             (Vertices.CredDef, self.createCredDefClass),
+            (Vertices.IssuerKey, self.createIssuerKeyClass),
             (Edges.AddsNym, self.createAddsNymClass),
             (Edges.AliasOf, self.createAliasOfClass),
             (Edges.AddsAttribute, self.createAddsAttributeClass),
             (Edges.HasAttribute, self.createHasAttributeClass),
-            (Edges.AddsCredDef, self.createAddsCredDefClass)
+            (Edges.AddsCredDef, self.createAddsCredDefClass),
+            (Edges.HasIssuerKey, self.createHasIssuerClass)
         ]
 
     # Creates a vertex class which has a property called `nym` with a unique
@@ -127,10 +141,14 @@ class IdentityGraph(OrientDbGraphStore):
 
     def createCredDefClass(self):
         self.createVertexClass(Vertices.CredDef, properties={
+            ATTR_NAMES: "string",
             TYPE: "string",
-            IP: "string",
-            PORT: "integer",
-            KEYS: "string"      # JSON
+        })
+
+    def createIssuerKeyClass(self):
+        self.createVertexClass(Vertices.IssuerKey, properties={
+            REF: "string",
+            DATA: "string", # JSON
         })
 
     def createAddsNymClass(self):
@@ -140,7 +158,7 @@ class IdentityGraph(OrientDbGraphStore):
 
     def createAliasOfClass(self):
         self.createUniqueTxnIdEdgeClass(Edges.AliasOf,
-                                        properties={REFERENCE: "string"})
+                                        properties={REF: "string"})
         # if not then `iN` need to be a USER
         self.addEdgeConstraint(Edges.AliasOf, iN=Vertices.Nym,
                                out=Vertices.Nym)
@@ -163,6 +181,10 @@ class IdentityGraph(OrientDbGraphStore):
         })
         self.addEdgeConstraint(Edges.AddsCredDef, iN=Vertices.CredDef)
 
+    def createHasIssuerClass(self):
+        self.createUniqueTxnIdEdgeClass(Edges.HasIssuerKey)
+        self.addEdgeConstraint(Edges.HasAttribute, out=Vertices.Nym)
+
     def getEdgeByTxnId(self, edgeClassName, txnId):
         return self.getEntityByUniqueAttr(edgeClassName, TXN_ID, txnId)
 
@@ -172,7 +194,8 @@ class IdentityGraph(OrientDbGraphStore):
     def addNym(self, txnId, nym, role, frm=None, reference=None, seqNo=None):
         kwargs = {
             NYM: nym,
-            TXN_ID: txnId,
+            TXN_ID: txnId,  # # Need to have txnId as a property for cases
+            # where we dont know the sponsor of this nym or its a genesis nym
             ROLE: role,    # Need to have role as a property of the vertex it
             # makes faster to query roles by vertex.
         }
@@ -201,7 +224,7 @@ class IdentityGraph(OrientDbGraphStore):
                 nymEdge = self.getEdgeByTxnId(Edges.AddsNym, txnId=reference)
                 referredNymRid = nymEdge.oRecordData['in'].get()
                 kwargs = {
-                    REFERENCE: reference,
+                    REF: reference,
                     TXN_ID: txnId
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, toV, **kwargs)
@@ -228,7 +251,6 @@ class IdentityGraph(OrientDbGraphStore):
             TXN_ID: txnId,
         }
         self.createEdge(Edges.AddsAttribute, frm, attrVertex._rid, **kwargs)
-        # If `to` exists, which means the attribute is not public
         if to:
             to = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
                                                            to)
@@ -237,14 +259,11 @@ class IdentityGraph(OrientDbGraphStore):
             }
             self.createEdge(Edges.HasAttribute, to, attrVertex._rid, **kwargs)
 
-    def addCredDef(self, frm, txnId, name, version, keys: Dict,
-                   typ: Optional[str]=None, ip: Optional[str]=None,
-                   port: Optional[int]=None):
+    def addCredDef(self, frm, txnId, name, version, attrNames,
+                   typ: Optional[str]=None):
         kwargs = {
             TYPE: typ,
-            IP: ip,
-            PORT: port,
-            KEYS: json.dumps(keys)
+            ATTR_NAMES: attrNames
         }
         vertex = self.createVertex(Vertices.CredDef, **kwargs)
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
@@ -256,7 +275,42 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.AddsCredDef, frm, vertex._rid, **kwargs)
 
+    def addIssuerKey(self, frm, txnId, data, reference):
+        kwargs = {
+            DATA: json.dumps(data),
+            REF: reference
+        }
+        vertex = self.createVertex(Vertices.IssuerKey, **kwargs)
+        frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
+                                                        frm)
+        kwargs = {
+            TXN_ID: txnId,
+        }
+        self.createEdge(Edges.HasIssuerKey, frm, vertex._rid, **kwargs)
+
+    def getRawAttrs(self, frm, *attrNames):
+        cmd = 'select expand(outE("{}").inV("{}")) from {} where {}="{}"'.\
+            format(Edges.HasAttribute, Vertices.Attribute, Vertices.Nym,
+                   NYM, frm)
+        allAttrsRecords = self.client.command(cmd)
+        attrVIds = [a._rid for a in allAttrsRecords]
+        seqNos = {}
+        if attrVIds:
+            edgeRecs = self.client.command("select expand(inE('{}')) from [{}]"
+                                           .format(Edges.AddsAttribute,
+                                                   ", ".join(attrVIds)))
+            seqNos = {str(rec._in): int(rec.oRecordData.get(F.seqNo.name))
+                      for rec in edgeRecs}
+        result = {}
+        for attrRec in allAttrsRecords:
+            raw = json.loads(attrRec.oRecordData.get(RAW))
+            key, value = raw.popitem()
+            if len(attrNames) == 0 or key in attrNames:
+                result[key] = [value, seqNos[attrRec._rid]]
+        return result
+
     def getCredDef(self, frm, name, version):
+        # TODO: Can this query be made similar to get attribute?
         cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {} where " \
               "name = '{}' and version = '{}'".format(Vertices.Nym, NYM, frm,
                                                  Vertices.CredDef,
@@ -265,14 +319,42 @@ class IdentityGraph(OrientDbGraphStore):
         credDefs = self.client.command(cmd)
         if credDefs:
             credDef = credDefs[0].oRecordData
+            edgeData = self.client.command(
+                "select expand(inE('{}')) from {}"
+                    .format(Edges.AddsCredDef, credDefs[0]._rid))[0].oRecordData
             return {
                 NAME: name,
                 VERSION: version,
-                IP: credDef.get(IP),
-                PORT: credDef.get(PORT),
                 TYPE: credDef.get(TYPE),
-                KEYS: credDef.get(KEYS)
+                F.seqNo.name: edgeData.get(F.seqNo.name),
+                ATTR_NAMES: credDef.get(ATTR_NAMES),
+                ORIGIN: frm,
             }
+        return None
+
+    def getIssuerKeys(self, frm, ref):
+        cmd = "select expand(outE('{}').inV('{}')) from {} where " \
+              "{} = '{}'".format(Edges.HasIssuerKey,
+                                                      Vertices.IssuerKey,
+                                                      Vertices.Nym, NYM,
+                                                      frm)
+        haystack = self.client.command(cmd)
+        needle = None
+        if haystack:
+            for rec in haystack:
+                if rec.oRecordData.get(REF) == str(ref):
+                    needle = rec
+                    break
+            edgeData = self.client.command(
+                "select expand(inE('{}')) from {}"
+                    .format(Edges.HasIssuerKey, needle._rid))[0].oRecordData
+            return {
+                ORIGIN: frm,
+                REF: ref,
+                F.seqNo.name: edgeData.get(F.seqNo.name),
+                DATA: json.loads(needle.oRecordData.get(DATA))
+            }
+        return None
 
     def getNym(self, nym, role=None):
         """
@@ -455,15 +537,15 @@ class IdentityGraph(OrientDbGraphStore):
             try:
                 txnId = txn[TXN_ID]
                 self.addNym(txnId, nym, role,
-                            frm=origin, reference=txn.get(REFERENCE),
+                            frm=origin, reference=txn.get(REF),
                             seqNo=txn.get(F.seqNo.name))
                 self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
             except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The nym {} was already added to graph".format(
-                    nym))
+                logger.debug("The nym {} was already added to graph".
+                             format(nym))
             except pyorient.PyOrientCommandException as ex:
-                    logger.error("An exception was raised while adding "
-                                 "nym {}: {}".format(nym, ex))
+                fault(ex, "An exception was raised while adding "
+                          "nym {}: {}".format(nym, ex))
 
     def addAttribTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
@@ -474,8 +556,8 @@ class IdentityGraph(OrientDbGraphStore):
                               to=txn.get(TARGET_NYM))
             self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsAttribute, txn)
         except pyorient.PyOrientCommandException as ex:
-            logger.error(
-                "An exception was raised while adding attribute: {}".format(ex))
+            fault(ex, "An exception was raised while adding attribute: {}".
+                  format(ex))
 
     def addCredDefTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
@@ -487,15 +569,27 @@ class IdentityGraph(OrientDbGraphStore):
                 txnId=txnId,
                 name=data.get(NAME),
                 version=data.get(VERSION),
-                keys=data.get(KEYS),
-                typ=data.get(TYPE),
-                ip=data.get(IP),
-                port=data.get(PORT)
-            )
+                attrNames=data.get(ATTR_NAMES),
+                typ=data.get(TYPE))
             self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsCredDef, txn)
-        except pyorient.PyOrientCommandException as ex:
-            logger.error(
-                "An exception was raised while adding cred def: {}".format(ex))
+        except Exception as ex:
+            fault(ex, "Error adding cred def to orientdb")
+
+    def addIssuerKeyTxnToGraph(self, txn):
+        origin = txn.get(f.IDENTIFIER.nm)
+        txnId = txn[TXN_ID]
+        data = txn.get(DATA)
+        try:
+            self.addIssuerKey(
+                frm=origin,
+                txnId=txnId,
+                data=data,
+                reference=txn.get(REF),
+                )
+            self._updateTxnIdEdgeWithTxn(txnId, Edges.HasIssuerKey, txn)
+        except Exception as ex:
+            fault(ex, "Error adding issuer key to orientdb")
+        pass
 
     def countTxns(self):
         seqNos = set()
@@ -529,10 +623,26 @@ class IdentityGraph(OrientDbGraphStore):
             F.seqNo.name: int(oRecordData.get(F.seqNo.name)),
             TXN_TYPE: txnType,
             TXN_ID: oRecordData.get(TXN_ID),
-            TXN_TIME: oRecordData.get(TXN_TIME),
             f.REQ_ID.nm: oRecordData.get(f.REQ_ID.nm),
             f.IDENTIFIER.nm: oRecordData.get(f.IDENTIFIER.nm),
         }
+
+        if TXN_TIME in oRecordData:
+            txnTime = oRecordData.get(TXN_TIME)
+            if isinstance(txnTime, datetime.datetime):
+                try:
+                    txnTimeStamp = int(time.mktime(txnTime.timetuple()))
+                except (OverflowError, ValueError) as ex:
+                    logger.warn("TXN_TIME cannot convert datetime '{}' "
+                                "to timestamp, reject it".format(txnTime))
+                else:
+                    # TODO The right thing to do is check the time of the PRE-PREPARE.
+                    # https://github.com/evernym/sovrin-priv/pull/20#discussion_r80387554
+                    if MIN_TXN_TIME < txnTimeStamp < time.time():
+                        result[TXN_TIME] = txnTimeStamp
+                    else:
+                        logger.warn("TXN_TIME {} is not in the range ({}, {}), "
+                                    "reject it".format(txnTimeStamp, MIN_TXN_TIME, time.time()))
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]

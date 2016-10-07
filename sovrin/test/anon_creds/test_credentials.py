@@ -1,23 +1,41 @@
 import json
 
-from sovrin.anon_creds.cred_def import SerFmt
+import pytest
+from ledger.util import F
 
-from plenum.common.txn import TXN_TYPE, NAME, VERSION, DATA, TARGET_NYM, \
-    KEYS
+from anoncreds.protocol.types import SerFmt
+from plenum.common.txn import NAME, VERSION, DATA
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
-from sovrin.common.txn import GET_CRED_DEF
+from sovrin.common.txn import ATTR_NAMES
 
 
-def testIssuerWritesCredDef(credentialDefinitionAdded):
+@pytest.fixture(scope="module")
+def curiousClient(userWalletA, nodeSet, looper, tdir):
+    from sovrin.test.helper import genTestClient
+    client, _ = genTestClient(nodeSet, tmpdir=tdir)
+    client.registerObserver(userWalletA.handleIncomingReply)
+    looper.add(client)
+    looper.run(client.ensureConnectedToNodes())
+    return client
+
+
+def testIssuerWritesCredDef(claimDefinitionAdded):
     """
     A credential definition is added
     """
     pass
 
 
-def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
-                          nodeSet, looper, sponsorSigner, credDef):
+def testIssuerWritesPublicKey(issuerPublicKeysAdded):
+    """
+    An issuer key is added
+    """
+    pass
+
+
+def testProverGetsCredDef(claimDefinitionAdded, userWalletA, tdir,
+                          nodeSet, looper, sponsorWallet, claimDef, curiousClient):
     """
     A credential definition is received
     """
@@ -26,29 +44,37 @@ def testProverGetsCredDef(credentialDefinitionAdded, userSignerA, tdir,
     # else that client class doesn't gets reloaded
     # and hence it doesn't get updated with correct plugin class/methods
     # and it gives error (for permanent solution bug is created: #130181205).
-    from sovrin.test.helper import genTestClient
 
-    user = genTestClient(nodeSet, signer=userSignerA, tmpdir=tdir)
-    looper.add(user)
-    looper.run(user.ensureConnectedToNodes())
-    definition = credDef.get(serFmt=SerFmt.base58)
-    op = {
-        TARGET_NYM: sponsorSigner.verstr,
-        TXN_TYPE: GET_CRED_DEF,
-        DATA: {
-            NAME: definition[NAME],
-            VERSION: definition[VERSION]
-        }
-    }
-    req, = user.submit(op, identifier=userSignerA.verstr)
-    looper.run(eventually(checkSufficientRepliesRecvd, user.inBox,
+    definition = claimDef.get(serFmt=SerFmt.base58)
+    credDefKey = (definition[NAME], definition[VERSION],
+                  sponsorWallet.defaultId)
+    req = userWalletA.requestClaimDef(credDefKey, userWalletA.defaultId)
+    curiousClient.submitReqs(req)
+
+    looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
                           req.reqId, nodeSet.f,
                           retryWait=1, timeout=5))
-    reply, status = user.getReply(req.reqId)
+    reply, status = curiousClient.getReply(req.reqId)
     assert status == "CONFIRMED"
     recvdCredDef = json.loads(reply[DATA])
     assert recvdCredDef[NAME] == definition[NAME]
     assert recvdCredDef[VERSION] == definition[VERSION]
-    assert json.loads(recvdCredDef[KEYS]) == definition[KEYS]
-    # TODO: Check whether cred def is added to wallet and then compare cred def
-    # retrieved from wallet
+    assert recvdCredDef[ATTR_NAMES].split(",") == definition[ATTR_NAMES]
+    claimDef = userWalletA.getClaimDef(seqNo=recvdCredDef[F.seqNo.name])
+    assert claimDef.attrNames == definition[ATTR_NAMES]
+
+
+def testGetIssuerKey(claimDefinitionAdded, userWalletA, tdir,
+                     nodeSet, looper, sponsorWallet, claimDef,
+                     issuerPublicKeysAdded, curiousClient):
+    key = (sponsorWallet.defaultId, claimDefinitionAdded)
+    req = userWalletA.requestIssuerKey(key,
+                                       userWalletA.defaultId)
+    curiousClient.submitReqs(req)
+    looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
+                          req.reqId, nodeSet.f,
+                          retryWait=1, timeout=5))
+    reply, status = curiousClient.getReply(req.reqId)
+    assert status == "CONFIRMED"
+    assert userWalletA.getIssuerPublicKey(key).seqNo
+

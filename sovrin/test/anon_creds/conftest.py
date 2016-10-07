@@ -1,15 +1,20 @@
+import uuid
+
 import pytest
-
-from plenum.client.signer import SimpleSigner
-from plenum.test.helper import genHa
-from plenum.common.txn import TXN_TYPE, DATA
-
-from sovrin.common.util import getConfig
-from sovrin.test.helper import addNym
-from sovrin.common.txn import CRED_DEF
-from sovrin.test.helper import submitAndCheck
-
 import sovrin.anon_creds.cred_def as CredDefModule
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from anoncreds.protocol.types import SerFmt
+from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
+from plenum.common.util import randomString
+from plenum.test.eventually import eventually
+from plenum.test.helper import genHa
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.common.util import getConfig
+from sovrin.test.helper import createNym, _newWallet
+
+# noinspection PyUnresolvedReferences
+from anoncreds.test.conftest import staticPrimes
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.
@@ -18,21 +23,18 @@ config = getConfig()
 
 
 @pytest.fixture(scope="module")
-def issuerSigner():
-    signer = SimpleSigner()
-    return signer
+def issuerWallet():
+    return _newWallet()
 
 
 @pytest.fixture(scope="module")
-def proverSigner():
-    signer = SimpleSigner()
-    return signer
+def proverWallet():
+    return _newWallet()
 
 
 @pytest.fixture(scope="module")
-def verifierSigner():
-    signer = SimpleSigner()
-    return signer
+def verifierWallet():
+    return _newWallet()
 
 
 @pytest.fixture(scope="module")
@@ -61,47 +63,98 @@ def proverAttributes():
 
 
 @pytest.fixture(scope="module")
-def addedIPV(looper, genned, addedSponsor, sponsor, sponsorSigner,
-             issuerSigner, proverSigner, verifierSigner, issuerHA, proverHA,
+def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
+             issuerWallet, proverWallet, verifierWallet, issuerHA, proverHA,
              verifierHA):
     """
     Creating nyms for issuer, prover and verifier on Sovrin.
     """
-    sponsNym = sponsorSigner.verstr
-    iNym = issuerSigner.verstr
-    pNym = proverSigner.verstr
-    vNym = verifierSigner.verstr
+    iNym = issuerWallet.defaultId
+    pNym = proverWallet.defaultId
+    vNym = verifierWallet.defaultId
 
-    for nym, ha in ((iNym, issuerHA), (pNym, proverHA), (vNym, verifierHA)):
-        addNym(ha, looper, nym, sponsNym, sponsor)
+    for nym in (iNym, pNym, vNym):
+        createNym(looper, nym, sponsor, sponsorWallet)
 
 
 @pytest.fixture(scope="module")
 def attrNames():
-    return "first_name", "last_name", "birth_date", "expire_date", \
-           "undergrad", "postgrad"
+    return ["first_name", "last_name", "birth_date", "expire_date", \
+           "undergrad", "postgrad"]
 
 
 @pytest.fixture(scope="module")
-def credDef(attrNames):
-    ip, port = genHa()
-    return CredDefModule.CredDef(attrNames, 'name1', 'version1',
-                   p_prime="prime1", q_prime="prime1",
-                   ip=ip, port=port)
+def claimDef(attrNames):
+    return CredDefModule.CredDef(str(uuid.uuid4()), attrNames, name='name1',
+                                 version='version1')
 
 
 @pytest.fixture(scope="module")
-def credentialDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorSigner, looper, tdir, nodeSet, credDef):
-    data = credDef.get(serFmt=CredDefModule.SerFmt.base58)
-
-    op = {
-        TXN_TYPE: CRED_DEF,
-        DATA: data
-    }
-    return submitAndCheck(looper, sponsor, op,
-                          identifier=sponsorSigner.verstr)
+def claimDefSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir, nodeSet,
+                          staticPrimes):
+    csk = CredDefSecretKey(*staticPrimes.get("prime1"))
+    return sponsorWallet.addClaimDefSk(str(csk))
 
 
+@pytest.fixture(scope="module")
+def claimDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
+                         sponsorWallet, looper, tdir, nodeSet, attrNames,
+                         claimDef, claimDefSecretKeyAdded):
+    old = sponsorWallet.pendingCount
+    data = claimDef.get(serFmt=SerFmt.base58)
+    claimDef = ClaimDef(seqNo=None,
+                        attrNames=attrNames,
+                        name=data[NAME],
+                        version=data[VERSION],
+                        origin=sponsorWallet.defaultId,
+                        typ=data[TYPE],
+                        secretKey=claimDefSecretKeyAdded)
+    pending = sponsorWallet.addClaimDef(claimDef)
+    assert pending == old + 1
+    reqs = sponsorWallet.preparePending()
+    sponsor.submitReqs(*reqs)
+
+    key = claimDef.key
+
+    def chk():
+        assert sponsorWallet.getClaimDef(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=30))
+    return sponsorWallet.getClaimDef(key).seqNo
 
 
+@pytest.fixture(scope="module")
+def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir, nodeSet,
+                          staticPrimes, claimDefSecretKeyAdded,
+                         claimDefinitionAdded):
+    csk = CredDefSecretKey.fromStr(sponsorWallet.getClaimDefSk(claimDefSecretKeyAdded))
+    cd = sponsorWallet.getClaimDef(seqNo=claimDefinitionAdded)
+    # This uid would be updated with the sequence number of the transaction
+    # which writes the public key on Sovrin
+    isk = IssuerSecretKey(cd, csk, uid=str(uuid.uuid4()))
+    # TODO: Need to serialize it and then deserialize while doing get
+    return sponsorWallet.addIssuerSecretKey(isk)
+
+
+@pytest.fixture(scope="module")
+def issuerPublicKeysAdded(genned, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir, nodeSet,
+                          staticPrimes, claimDefinitionAdded,
+                          issuerSecretKeyAdded):
+    isk = sponsorWallet.getIssuerSecretKey(issuerSecretKeyAdded)
+    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                       claimDefSeqNo=claimDefinitionAdded,
+                       secretKeyUid=isk.uid, origin=sponsorWallet.defaultId)
+    sponsorWallet.addIssuerPublicKey(ipk)
+    reqs = sponsorWallet.preparePending()
+    sponsor.submitReqs(*reqs)
+
+    key = (sponsorWallet.defaultId, claimDefinitionAdded)
+
+    def chk():
+        assert sponsorWallet.getIssuerPublicKey(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=30))
+    return sponsorWallet.getIssuerPublicKey(key).seqNo

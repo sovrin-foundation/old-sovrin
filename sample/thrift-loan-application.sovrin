@@ -1,0 +1,25 @@
+{
+  "link-invitation": {
+    "name": "Thrift Bank",
+    "identifier": "gcp+vfaMWkvmGXYQd3uE/BdK3btf/TR+8xuqhvOYDw0=",
+    "nonce": "77fbf9dc8c8e6acde33de98c6d747b28c",
+    "endpoint": "124.34.56.189:7880"
+  },
+  "claim-requests": [{
+      "name": "Loan-Application-Basic",
+      "version": "0.1",
+      "attributes": {
+            "salary_bracket": "string",
+            "employment_status": "string"
+       }
+    }, {
+      "name": "Loan-Application-KYC",
+      "version": "0.1",
+      "attributes": {
+            "first_name": "string",
+            "last_name": "string",
+            "ssn": "string"
+      }
+    }],
+  "sig": "ClyvW4oFp0WzEQ8uypChn5Zc5L9F+pwLoBPMCrkNxrhu+LfuG6fF0fVaXRliIJ6Y++hEa6kLBEQihhv8pGACCw=="
+}

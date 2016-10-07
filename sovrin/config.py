@@ -18,8 +18,9 @@ cliNodeReg = OrderedDict([
 
 baseDir = "~/.sovrin"
 
-domainTransactionsFile = "transactions"
-poolTransactionsFile = "pool_transactions"
+# TODO: Rename `transactions_sandbox` to `domain_transactions_sandbox`
+domainTransactionsFile = "transactions_sandbox"
+poolTransactionsFile = "pool_transactions_sandbox"
 
 logFilePath = "cli.log"
 
@@ -39,15 +40,32 @@ OrientDB = {
     "user": "sovrin",
     "password": "password",
     "host": "127.0.0.1",
-    "port": 2424,
-    "startScript": "/opt/orientdb/bin/server.sh",
-    "shutdownScript": "/opt/orientdb/bin/shutdown.sh"
+    "port": 2424
 }
 
-ClientIdentityGraph = True
+'''
+Client has the identity graph or not. True will make the client have
+identity graph and False will make client not have it
 
-ReqReplyStore = "orientdb"
+Possible values: True|False
+
+If True, then OrientDB is required.
+'''
+ClientIdentityGraph = False
+
+'''
+The storage type clients use to store requests and replies. Possible values
+are file and OrientDB.
+
+Possible values: "orientdb"|"file"
+'''
+ReqReplyStore = "file"
 
 RAETLogLevel = "concise"
+RAETLogLevelCli = "mute"
+RAETLogFilePath = None
+RAETLogFilePathCli = None
+RAETMessageTimeout = 30
+
 
 PluginsToLoad = ["anoncreds"]

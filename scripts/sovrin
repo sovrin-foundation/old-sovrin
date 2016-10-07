@@ -29,7 +29,7 @@ logger.disabled = True
 from plenum.common.plugin_helper import loadPlugins
 from sovrin.common.util import getConfig
 config = getConfig()
-baseDir = os.path.join(os.path.expanduser(config.baseDir))
+baseDir = config.baseDir
 if not os.path.exists(baseDir):
     os.makedirs(baseDir)
 loadPlugins(baseDir)
@@ -48,8 +48,6 @@ def run_cli():
         logFilePath = os.path.join(curDir, config.logFilePath)
         cli = SovrinCli(looper=looper,
                         basedirpath=baseDir,
-                        nodeReg=config.nodeReg,
-                        cliNodeReg=config.cliNodeReg,
                         logFileName=logFilePath
                         )
 

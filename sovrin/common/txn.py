@@ -9,17 +9,21 @@ from plenum.common.types import f
 ROLE = 'role'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
+ATTR_NAMES = "attr_names"
 
 LAST_TXN = "lastTxn"
 TXNS = "Txns"
 
 ENC_TYPE = "encType"
 SKEY = "secretKey"
-REFERENCE = "reference"
+REF = "ref"
 
-allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REFERENCE, RAW,
+allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
              ENC, HASH, ALIAS)
 reqOpKeys = (TXN_TYPE,)
+
+# Attribute Names
+ENDPOINT = "endpoint"
 
 # client transaction types
 NYM = NYM
@@ -39,15 +43,22 @@ ADD_PKI = "ADD_PKI"
 REQ_CRED = "REQ_CRED"
 GET_NONCE = "GET_NONCE"
 VER_PRF = "VER_PRF"
+ISSUER_KEY = "ISSUER_KEY"
+GET_ISSUER_KEY = "GET_ISSUER_KEY"
 
 # Temp for demo
 GEN_CRED = "GEN_CRED"
 
+openTxns = (GET_NYM, GET_ATTR, GET_CRED_DEF, GET_ISSUER_KEY)
+
+
 # TXN_TYPE -> (requireds, optionals)
 fields = {NYM: ([TARGET_NYM], [ROLE]),
           ATTRIB: ([], [RAW, ENC, HASH]),
-          CRED_DEF: ([NAME, VERSION, TYPE, KEYS], [IP, PORT]),
-          GET_CRED_DEF: ([], [])
+          CRED_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
+          GET_CRED_DEF: ([], []),
+          ISSUER_KEY: ([REF, DATA]),
+          GET_ISSUER_KEY: ([REF, ORIGIN])
           }
 
 validTxnTypes = {NYM,
@@ -59,7 +70,9 @@ validTxnTypes = {NYM,
                  GET_NYM,
                  GET_TXNS,
                  CRED_DEF,
-                 GET_CRED_DEF}
+                 GET_CRED_DEF,
+                 ISSUER_KEY,
+                 GET_ISSUER_KEY}
 validTxnTypes.update(POOL_TXN_TYPES)
 
 
@@ -132,9 +145,9 @@ def getGenesisTxns():
         {TXN_TYPE: NYM, f.IDENTIFIER.nm: 'xRuFk+Z8yWFVRvf1Z4JWe1f82Ew3nmr73ghN2oS9PVI=', TARGET_NYM: 'o7z4QmFkNB+mVkFI2BwX0Hdm1BGhnz8psWnKYIXWTaQ=', ROLE: SPONSOR, TXN_ID: '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4c'},
         {TXN_TYPE: NYM, TARGET_NYM: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw=', TXN_ID: '50c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', ROLE: SPONSOR, f.IDENTIFIER.nm: 'xRuFk+Z8yWFVRvf1Z4JWe1f82Ew3nmr73ghN2oS9PVI='},
         {TXN_TYPE: NYM, TARGET_NYM: 'adityastaging', TXN_ID: '77c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='},
-        {TXN_TYPE: NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='}
+        {TXN_TYPE: NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: 'OP2h59vBVQerRi6FjoOoMhSTv4CAemeEg4LPtDHaEWw='},
+        {ALIAS: "Steward8", TARGET_NYM: "V+jbY0Fniz7xFzYIrRYeVQZeDeGHrlB3fwCPEwvicqI=", TXN_ID: "4770beb7e45bf623bd9987af4bd6d6d8eb8b68a4d00fa2a4c6b6f3f0c1c036f8", TXN_TYPE: NYM, ROLE: STEWARD},
     ]
-
 
 def getGenesisTxnsForLocal():
     return [{ALIAS: "Steward1",
@@ -196,7 +209,7 @@ def getTxnOrderedFields():
         (ENC, (str, str)),
         (HASH, (str, str)),
         (ROLE, (str, str)),
-        (REFERENCE, (str, str))
+        (REF, (str, str))
     ])
 
 
