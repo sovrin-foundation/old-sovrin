@@ -55,10 +55,10 @@ setup(
     license=__license__,
     keywords='Sovrin identity plenum',
     packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']) + [
-        'data', ],
+        'data', 'sample'],
     package_data={
         '': ['*.txt', '*.md', '*.rst', '*.json', '*.conf', '*.html',
-             '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
+             '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL', '*.sovrin']},
     include_package_data=True,
     data_files=[(
         (BASE_DIR, ['data/pool_transactions_sandbox', ])
