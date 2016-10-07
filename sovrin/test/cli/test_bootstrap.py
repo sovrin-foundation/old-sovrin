@@ -400,7 +400,10 @@ def acceptInvitation(be, do, userCli, agentMap, expect,
                                     within=10,
                                     mapper=agentMap,
                                     expect=expect,
-                                    not_expect="Observer threw an exception")
+                                    not_expect=[
+                                        "Observer threw an exception",
+                                        "Identifier is not yet written to Sovrin"]
+                                    )
 
     if totalLinks:
         assert totalLinks == len(userCli.activeWallet._links)

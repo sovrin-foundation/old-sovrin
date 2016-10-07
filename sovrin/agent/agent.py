@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from datetime import datetime
@@ -26,7 +27,7 @@ from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
-    ORIGIN
+    ORIGIN, TARGET_NYM
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
@@ -427,11 +428,16 @@ class WalletedAgent(Agent):
         self.notifyObservers("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li: Link):
-            self.notifyObservers("    Confirmed identifier written to Sovrin.")
-            availableClaimNames = [n for n, _, _ in availableClaims]
-            self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
-                                      availableClaimNames=availableClaimNames,
-                                      claimProofReqsCount=len(li.claimProofRequests))
+            if reply.get(DATA) and json.loads(reply[DATA])[TARGET_NYM] == li.verkey:
+                self.notifyObservers(
+                    "    Confirmed identifier written to Sovrin.")
+                availableClaimNames = [n for n, _, _ in availableClaims]
+                self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
+                                          availableClaimNames=availableClaimNames,
+                                          claimProofReqsCount=len(li.claimProofRequests))
+            else:
+                self.notifyObservers(
+                    "    Identifier is not yet written to Sovrin")
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
                              self.client, getNymReply, availableClaims, li)
