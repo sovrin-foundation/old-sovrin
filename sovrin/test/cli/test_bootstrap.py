@@ -786,7 +786,7 @@ def testAliceSendClaimProofToAcme(be, do, aliceCli, acmeMap,
                                   aliceSelfAttestsAttributes):
     be(aliceCli)
 
-    do("send claim {claim-req-to-match} to {inviter}",  within=5,
+    do("send claim {claim-req-to-match} to {inviter}",  within=7,
                                 expect=["Your claim {claim-req-to-match} "
                                         "{claim-ver-req-to-show} has been received"
                                         " and verified"],

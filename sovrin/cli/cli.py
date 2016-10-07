@@ -302,8 +302,9 @@ class SovrinCli(PlenumCli):
         else:
             _send()
 
-    def _buildWalletClass(self, nm):
-        return Wallet(nm)
+    @property
+    def walletClass(self):
+        return Wallet
 
     @property
     def genesisTransactions(self):
