@@ -324,9 +324,10 @@ class Wallet(PWallet, Sponsoring):
 
     def getPendingTxnRequests(self, *identifiers):
         if not identifiers:
-            identifiers = self.ids.keys()
+            identifiers = self.idsToSigners.keys()
         else:
-            identifiers = set(identifiers).intersection(set(self.ids.keys()))
+            identifiers = set(identifiers).intersection(
+                set(self.idsToSigners.keys()))
         requests = []
         for identifier in identifiers:
             lastTxn = self.getLastKnownSeqs(identifier)
