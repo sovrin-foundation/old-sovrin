@@ -201,6 +201,7 @@ def usageLine():
 def nextCommandsToTryUsageLine():
     return [NEXT_COMMANDS_TO_TRY_TEXT]
 
+
 @pytest.fixture(scope="module")
 def connectUsage(usageLine):
     return usageLine + ["connect <test|live>"]

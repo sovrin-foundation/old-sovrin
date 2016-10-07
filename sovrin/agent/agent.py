@@ -6,8 +6,6 @@ from typing import Tuple
 
 import asyncio
 
-from ledger.util import F
-
 from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.types import Credential
@@ -511,6 +509,11 @@ class WalletedAgent(Agent):
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
+                logger.debug("ip, proof, nonce, encoded, revealed is {} {} {} {} {}".
+                             format(ipk, proof, nonce,
+                                              encodedAttrs,
+                                              revealedAttrs))
+                logger.debug("result is {}".format(str(result)))
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:
@@ -520,7 +523,6 @@ class WalletedAgent(Agent):
                 }
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
-            # self._getCredDefIsrKeyAndExecuteCallback(tuple(claimDefKey), verify)
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
                                                self.loop, tuple(claimDefKey),
                                                verify)
