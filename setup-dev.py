@@ -89,7 +89,7 @@ copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)
 SAMPLE_INVITATIONS_DIR = os.path.dirname(sample.__file__)
 INVITATION_DIR = os.path.join(BASE_DIR, "sample")
-os.makedirs(INVITATION_DIR)
+os.makedirs(INVITATION_DIR, exist_ok=True)
 files = glob.iglob(os.path.join(SAMPLE_INVITATIONS_DIR, "*.sovrin"))
 for file in files:
     if os.path.isfile(file):
