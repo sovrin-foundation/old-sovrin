@@ -13,7 +13,7 @@ from ledger.util import F
 
 import anoncreds.protocol.types as ATypes
 from anoncreds.protocol.proof_builder import ProofBuilder
-from plenum.client.wallet import Wallet as PWallet
+from plenum.client.wallet import Wallet as PWallet, RequestIdStore
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, TYPE, NYM, STEWARD, ROLE, RAW, \
@@ -63,12 +63,13 @@ class Sponsoring:
 class Wallet(PWallet, Sponsoring):
     clientNotPresentMsg = "The wallet does not have a client associated with it"
 
-    def __init__(self, name: str):
-        PWallet.__init__(self, name)
+    def __init__(self, name: str, requestIdStore: RequestIdStore=None):
+        PWallet.__init__(self, name, requestIdStore)
         Sponsoring.__init__(self)
 
         self._credMasterSecret = None
-        self._attributes = {}       # type: Dict[(str, Identifier, Optional[Identifier]), Attribute]
+        self._attributes = {}       # type: Dict[(str, Identifier,
+        # Optional[Identifier]), Attribute]
         self._claimDefs = {}         # type: Dict[(str, str, str), ClaimDef]
         self._claimDefSks = {}       # type: Dict[(str, str, str), ClaimDefSk]
         self._credentials = {}      # type: Dict[str, Credential]
