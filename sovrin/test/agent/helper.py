@@ -35,6 +35,9 @@ def getAgentCmdLineParams():
                             help='issuer def seq number')
 
         args = parser.parse_args()
-        return int(args.port), int(args.credDefSeq), int(args.issuerSeq)
+        port = int(args.port) if args.port else None
+        credDefSeq = int(args.credDefSeq) if args.credDefSeq else None
+        issuerSeq = int(args.issuerSeq) if args.issuerSeq else None
+        return port, credDefSeq, issuerSeq
     else:
         return None, None, None
