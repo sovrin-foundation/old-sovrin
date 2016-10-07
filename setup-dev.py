@@ -1,3 +1,4 @@
+import glob
 import shutil
 import sys
 import os
@@ -5,6 +6,8 @@ from setuptools import setup, find_packages, __version__
 from pip.req import parse_requirements
 from shutil import copyfile
 import data
+import sample
+
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -84,3 +87,10 @@ copyfile(os.path.join(DATA_DIR, "pool_transactions_sandbox"), POOL_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)
+SAMPLE_INVITATIONS_DIR = os.path.dirname(sample.__file__)
+INVITATION_DIR = os.path.join(BASE_DIR, "sample")
+os.makedirs(INVITATION_DIR)
+files = glob.iglob(os.path.join(SAMPLE_INVITATIONS_DIR, "*.sovrin"))
+for file in files:
+    if os.path.isfile(file):
+        shutil.copy2(file, INVITATION_DIR)
