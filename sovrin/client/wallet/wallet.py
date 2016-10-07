@@ -536,9 +536,15 @@ class Wallet(PWallet, Sponsoring):
         self.pendRequest(req, key=key)
         return self.preparePending()[0]
 
-    def getLinkByNonce(self, nonce) -> Optional[Link]:
+    # DEPR
+    # def getLinkByNonce(self, nonce) -> Optional[Link]:
+    #     for _, li in self._links.items():
+    #         if li.nonce == nonce:
+    #             return li
+
+    def getLinkByInternalId(self, internalId) -> Optional[Link]:
         for _, li in self._links.items():
-            if li.nonce == nonce:
+            if li.internalId == internalId:
                 return li
 
     def addIssuerSecretKey(self, issuerSk):

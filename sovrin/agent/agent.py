@@ -1,5 +1,6 @@
 import json
 import uuid
+from abc import abstractmethod
 
 from typing import Dict, Any
 from typing import Tuple
@@ -232,26 +233,37 @@ class WalletedAgent(Agent):
     def verifyAndGetLink(self, msg):
         body, (frm, ha) = msg
         key = body.get(f.IDENTIFIER.nm)
+
         signature = body.get(f.SIG.nm)
         verified = verifySig(key, signature, body)
-
-        nonce = body.get(NONCE)
-        matchingLink = self.wallet.getLinkByNonce(nonce)
-
         if not verified:
             self.logAndSendErrorResp(frm, body, "Signature Rejected",
                                      "Signature verification failed for msg: {}"
                                      .format(str(msg)))
             return None
 
-        if not matchingLink:
-            self.logAndSendErrorResp(frm, body, "No Such Link found",
-                                     "Link not found for msg: {}".format(msg))
+        nonce = body.get(NONCE)
+        internalId = self.getInternalIdByInvitedNonce(nonce)
+        if not internalId:
+            self.logAndSendErrorResp(frm, body,
+                                     "Nonce not found",
+                                     "Nonce not found for msg: {}".format(msg))
             return None
+        link = self.wallet.getLinkByInternalId(internalId)
+        if link:
+            raise RuntimeError("link already exists")
+        link = Link(internalId,
+                    self.wallet.defaultId,
+                    nonce=nonce,
+                    remoteIdentifier=body.get(f.IDENTIFIER.nm),
+                    remoteEndPoint=ha,
+                    internalId=internalId)
+        self.wallet.addLink(link)
+        return link
 
-        matchingLink.remoteIdentifier = body.get(f.IDENTIFIER.nm)
-        matchingLink.remoteEndPoint = ha
-        return matchingLink
+    @abstractmethod
+    def getInternalIdByInvitedNonce(self, nonce):
+        raise NotImplementedError
 
     def signAndSendToCaller(self, resp, identifier, frm):
         resp[IDENTIFIER] = identifier

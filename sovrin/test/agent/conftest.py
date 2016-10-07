@@ -1,12 +1,15 @@
 import pytest
+from plenum.common.util import randomString
+
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.test.helper import genHa
+from sovrin.agent.agent import WalletedAgent
+from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR
 from sovrin.test.agent.acme import runAcme
-from sovrin.test.agent.alice import runAlice
 from sovrin.test.agent.faber import runFaber
 from sovrin.test.helper import createNym
 
@@ -25,10 +28,17 @@ def faberWallet():
 
 
 @pytest.fixture(scope="module")
-def aliceWallet():
-    name = "Alice"
-    wallet = Wallet(name)
-    return wallet
+def walletBuilder():
+    def _(name):
+        wallet = Wallet(name)
+        wallet.addSigner(signer=SimpleSigner())
+        return wallet
+    return _
+
+
+@pytest.fixture(scope="module")
+def aliceWallet(walletBuilder):
+    return walletBuilder("Alice")
 
 
 @pytest.fixture(scope="module")
@@ -51,12 +61,34 @@ def acmeAdded(genned, looper, steward, stewardWallet, acmeWallet):
 
 
 @pytest.fixture(scope="module")
-def aliceIsRunning(emptyLooper, tdirWithPoolTxns, aliceWallet):
-    aliceWallet.addSigner(signer=SimpleSigner())
-    alice = runAlice(aliceWallet.name, aliceWallet,
-                     basedirpath=tdirWithPoolTxns, startRunning=False)
-    emptyLooper.add(alice)
-    return alice, aliceWallet
+def agentBuilder(tdirWithPoolTxns):
+    def _(wallet, basedir=None):
+        basedir = basedir or tdirWithPoolTxns
+        _, port = genHa()
+        _, clientPort = genHa()
+        client = Client(randomString(6),
+                        ha=("0.0.0.0", clientPort),
+                        basedirpath=basedir)
+
+        agent = WalletedAgent(name=wallet.name,
+                              basedirpath=basedir,
+                              client=client,
+                              wallet=wallet,
+                              port=port)
+
+        return agent
+    return _
+
+
+@pytest.fixture(scope="module")
+def aliceAgent(aliceWallet, agentBuilder):
+    return agentBuilder(aliceWallet)
+
+
+@pytest.fixture(scope="module")
+def aliceIsRunning(emptyLooper, aliceAgent):
+    emptyLooper.add(aliceAgent)
+    return aliceAgent
 
 
 @pytest.fixture(scope="module")
@@ -107,21 +139,24 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
 # who is adding
 @pytest.fixture(scope="module")
 def faberLinkAdded(faberIsRunning):
-    faber, wallet = faberIsRunning
-    idr = wallet.defaultId
-    link = Link("Alice", idr, nonce="b1134a647eb818069c089e7694f63e6d")
-    # TODO rename to addLink
-    wallet.addLink(link)
-    assert wallet.getMatchingLinks("Alice")
-    return link
+    # DEPR
+    # faber, wallet = faberIsRunning
+    # idr = wallet.defaultId
+    # link = Link("Alice", idr, nonce="b1134a647eb818069c089e7694f63e6d")
+    # wallet.addLink(link)
+    # assert wallet.getMatchingLinks("Alice")
+    # return link
+    pass
 
 
 @pytest.fixture(scope="module")
 def acmeLinkAdded(acmeIsRunning):
-    acme, wallet = acmeIsRunning
-    idr = wallet.defaultId
-    link = Link("Acme", idr, nonce="57fbf9dc8c8e6acde33de98c6d747b28c")
-    # TODO rename to addLink
-    wallet.addLink(link)
-    assert wallet.getMatchingLinks("Acme")
-    return link
+    # DEPR
+    # acme, wallet = acmeIsRunning
+    # idr = wallet.defaultId
+    # link = Link("Acme", idr, nonce="57fbf9dc8c8e6acde33de98c6d747b28c")
+    # # TODO rename to addLink
+    # wallet.addLink(link)
+    # assert wallet.getMatchingLinks("Acme")
+    # return link
+    pass

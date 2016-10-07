@@ -42,29 +42,39 @@ class FaberAgent(WalletedAgent):
             ("Transcript", "1.2"): (credDefSeqParam or credDefSeqNo,
                                     issuerSeqNoParam or issuerSeqNo)
         }
+
+        # maps invitation nonces to internal ids
+        self._invites = {
+            "b1134a647eb818069c089e7694f63e6d": 1,
+            "2a2eb72eca8b404e8d412c5bf79f2640": 2,
+            "7513d1397e87cada4214e2a650f603eb": 3,
+            "710b78be79f29fc81335abaa4ee1c5e8": 4
+        }
+
+        # maps internal ids to attributes
         self._attributes = {
-            "b1134a647eb818069c089e7694f63e6d": {
+            1: {
                 "student_name": "Alice Garcia",
                 "ssn": "123-45-6789",
                 "degree": "Bachelor of Science, Marketing",
                 "year": "2015",
                 "status": "graduated"
             },
-            "2a2eb72eca8b404e8d412c5bf79f2640": {
+            2: {
                 "student_name": "Carol Atkinson",
                 "ssn": "783-41-2695",
                 "degree": "Bachelor of Science, Physics",
                 "year": "2012",
                 "status": "graduated"
             },
-            "7513d1397e87cada4214e2a650f603eb": {
+            3: {
                 "student_name": "Frank Jeffrey",
                 "ssn": "996-54-1211",
                 "degree": "Bachelor of Arts, History",
                 "year": "2013",
                 "status": "dropped"
             },
-            "710b78be79f29fc81335abaa4ee1c5e8": {
+            4: {
                 "student_name": "Craig Richards",
                 "ssn": "151-44-5876",
                 "degree": "MBA, Finance",
@@ -72,6 +82,10 @@ class FaberAgent(WalletedAgent):
                 "status": "graduated"
             }
         }
+
+    def getInternalIdByInvitedNonce(self, nonce):
+        if nonce in self._invites:
+            return self._invites[nonce]
 
     def addKeyIfNotAdded(self):
         wallet = self.wallet
@@ -110,11 +124,11 @@ class FaberAgent(WalletedAgent):
         staticPrime = staticPrimes().get("prime1")
         attrNames = ["student_name", "ssn", "degree", "year", "status"]
         super().addClaimDefs(name=name,
-                                     version=version,
-                                     attrNames=attrNames,
-                                     staticPrime=staticPrime,
-                                     credDefSeqNo=credDefSeqNo,
-                                     issuerKeySeqNo=issuerKeySeqNo)
+                             version=version,
+                             attrNames=attrNames,
+                             staticPrime=staticPrime,
+                             credDefSeqNo=credDefSeqNo,
+                             issuerKeySeqNo=issuerKeySeqNo)
 
     def getAttributes(self, nonce):
         attrs = self._attributes.get(nonce)
@@ -133,7 +147,6 @@ class FaberAgent(WalletedAgent):
         attribsDef = AttribDef("Transcript", attribTypes)
         attribs = attribsDef.attribs(**attrs)
         return attribs
-
 
     def addLinksToWallet(self):
         wallet = self.wallet

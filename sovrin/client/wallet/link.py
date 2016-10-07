@@ -39,7 +39,8 @@ class constant:
 class Link:
     def __init__(self, name, localIdentifier, trustAnchor=None,
                  remoteIdentifier=None, remoteEndPoint=None, nonce=None,
-                 claimProofRequests=None, invitationData: Dict=None):
+                 claimProofRequests=None, invitationData: Dict=None,
+                 internalId=None):
         self.name = name
         self.localIdentifier = localIdentifier
         self.verkey = self.localIdentifier.split(":")[-1]
@@ -47,8 +48,15 @@ class Link:
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
-        self.nonce = nonce or getNonce()
+        # DEPR
+        # self.nonce = nonce or getNonce()
+        self.nonce = nonce
         self.invitationData = invitationData
+
+        # for optionally storing a reference to an identifier in another system
+        # for example, a college may already have a student ID for a particular
+        # person, and that student ID can be put in this field
+        self.internalId = internalId
 
         self.claimProofRequests = claimProofRequests or []
         self.availableClaims = []

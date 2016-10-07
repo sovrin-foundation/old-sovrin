@@ -42,32 +42,44 @@ class AcmeAgent(WalletedAgent):
                                          issuerSeqNoParam or issuerSeqNo)
         }
 
+        # maps invitation nonces to internal ids
+        self._invites = {
+            "57fbf9dc8c8e6acde33de98c6d747b28c": 1,
+            "3a2eb72eca8b404e8d412c5bf79f2640": 2,
+            "8513d1397e87cada4214e2a650f603eb": 3,
+            "810b78be79f29fc81335abaa4ee1c5e8": 4
+        }
+
         self._attributes = {
-            "57fbf9dc8c8e6acde33de98c6d747b28c": {
+            1: {
                 "employee_name": "Alice Garcia",
                 "employee_status": "Permanent",
                 "experience": "3 years",
                 "salary_bracket": "between $50,000 to $100,000"
             },
-            "3a2eb72eca8b404e8d412c5bf79f2640": {
+            2: {
                 "employee_name": "Carol Atkinson",
                 "employee_status": "Permanent",
                 "experience": "2 years",
                 "salary_bracket": "between $60,000 to $90,000"
             },
-            "8513d1397e87cada4214e2a650f603eb": {
+            3: {
                 "employee_name": "Frank Jeffrey",
                 "employee_status": "Temporary",
                 "experience": "4 years",
                 "salary_bracket": "between $40,000 to $80,000"
             },
-            "810b78be79f29fc81335abaa4ee1c5e8": {
+            4: {
                 "employee_name": "Craig Richards",
                 "employee_status": "On Contract",
                 "experience": "3 years",
                 "salary_bracket": "between $50,000 to $70,000"
             },
         }
+
+    def getInternalIdByInvitedNonce(self, nonce):
+        if nonce in self._invites:
+            return self._invites[nonce]
 
     def addKeyIfNotAdded(self):
         wallet = self.wallet
