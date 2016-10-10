@@ -19,7 +19,7 @@ from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.issuer import Issuer
-from sovrin.agent.exception import NonceNotFound
+from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -295,15 +295,14 @@ class WalletedAgent(Agent):
 
     def _eventHandler(self, msg):
         body, (frm, ha) = msg
-        isVerified = self._isVerified(body)
-        if isVerified:
-            eventName = body[EVENT_NAME]
-            data = body[DATA]
-            self.notifyEventListeners(eventName, **data)
+        self._isVerified(body)
+        eventName = body[EVENT_NAME]
+        data = body[DATA]
+        self.notifyEventListeners(eventName, **data)
 
-    def notifyEventListeners(self, eventName, **args):
+    def notifyEventListeners(self, eventName, **data):
         for el in self._eventListeners[eventName]:
-            el(notifier=self, **args)
+            el(notifier=self, **data)
 
     def notifyMsgListener(self, msg):
         self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
@@ -423,7 +422,9 @@ class WalletedAgent(Agent):
             identifier) else identifier
         isVerified = verifySig(key, signature, msgWithoutSig)
         if not isVerified:
-            self.notifyMsgListener("Signature rejected")
+            raise SignatureRejected
+            # DEPR
+            # self.notifyMsgListener("Signature rejected")
         return isVerified
 
     def _getLinkByTarget(self, target) -> Link:
@@ -547,7 +548,7 @@ class WalletedAgent(Agent):
         resp = {
             TYPE: EVENT,
             EVENT_NAME: event,
-            DATA: msg
+            DATA: {'msg': msg}
         }
         self.signAndSendToCaller(resp, identifier, frm)
 
