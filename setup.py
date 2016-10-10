@@ -1,3 +1,4 @@
+import glob
 import shutil
 import sys
 import os
@@ -6,6 +7,8 @@ import data
 from setuptools import setup, find_packages, __version__
 from pip.req import parse_requirements
 from shutil import copyfile
+
+import sample
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -55,10 +58,10 @@ setup(
     license=__license__,
     keywords='Sovrin identity plenum',
     packages=find_packages(exclude=['test', 'test.*', 'docs', 'docs*']) + [
-        'data', ],
+        'data', 'sample'],
     package_data={
         '': ['*.txt', '*.md', '*.rst', '*.json', '*.conf', '*.html',
-             '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL']},
+             '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL', '*.sovrin']},
     include_package_data=True,
     data_files=[(
         (BASE_DIR, ['data/pool_transactions_sandbox', ])
@@ -86,3 +89,10 @@ copyfile(os.path.join(DATA_DIR, "pool_transactions_sandbox"), POOL_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
 copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)
+SAMPLE_INVITATIONS_DIR = os.path.dirname(sample.__file__)
+INVITATION_DIR = os.path.join(BASE_DIR, "sample")
+os.makedirs(INVITATION_DIR, exist_ok=True)
+files = glob.iglob(os.path.join(SAMPLE_INVITATIONS_DIR, "*.sovrin"))
+for file in files:
+    if os.path.isfile(file):
+        shutil.copy2(file, INVITATION_DIR)

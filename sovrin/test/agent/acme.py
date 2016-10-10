@@ -39,7 +39,7 @@ class AcmeAgent(WalletedAgent):
         issuerSeqNo = 13
 
         self._seqNos = {
-            ("Job-Certificate", "0.1"): (credDefSeqParam or credDefSeqNo,
+            ("Job-Certificate", "0.2"): (credDefSeqParam or credDefSeqNo,
                                          issuerSeqNoParam or issuerSeqNo)
         }
 
@@ -95,7 +95,7 @@ class AcmeAgent(WalletedAgent):
     def getClaimList(self, claimNames=None):
         allClaims = [{
             "name": "Job-Certificate",
-            "version": "0.1",
+            "version": "0.2",
             "claimDefSeqNo": "<claimDefSeqNo>",
             "values": {
                 "employee_name": "Alice Gracia",
@@ -107,13 +107,13 @@ class AcmeAgent(WalletedAgent):
         return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
 
     def addClaimDefsToWallet(self):
-        name, version = "Job-Certificate", "0.1"
+        name, version = "Job-Certificate", "0.2"
         credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
         staticPrime = staticPrimes().get("prime1")
         attrNames = ["employee_name", "employee_status", "experience",
                      "salary_bracket"]
         super().addClaimDefs(name="Job-Application",
-                                     version="0.1",
+                                     version="0.2",
                                      attrNames=attrNames,
                                      staticPrime=staticPrime,
                                      credDefSeqNo=credDefSeqNo,
@@ -142,7 +142,6 @@ class AcmeAgent(WalletedAgent):
         for nonce, data in self._attributes.items():
             link = Link(data.get("employee_name"), idr, nonce=nonce)
             wallet.addLink(link)
-
 
     def bootstrap(self):
         self.addKeyIfNotAdded()

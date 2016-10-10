@@ -7,8 +7,6 @@ from typing import Tuple
 
 import asyncio
 
-from ledger.util import F
-
 from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.types import Credential
@@ -68,7 +66,6 @@ class Agent(Motor, AgentNet):
                  client: Client=None,
                  port: int=None):
         Motor.__init__(self)
-        self._observers = set()
         self._eventListeners = {}   # Dict[str, set(Callable)]
         self._name = name
 
@@ -161,12 +158,6 @@ class Agent(Motor, AgentNet):
         cur = self._eventListeners.get(eventName)
         if cur:
             self._eventListeners[eventName] = cur - set(listener)
-
-    def registerObserver(self, observer):
-        self._observers.add(observer)
-
-    def deregisterObserver(self, observer):
-        self._observers.remove(observer)
 
 
 class WalletedAgent(Agent):
@@ -308,18 +299,14 @@ class WalletedAgent(Agent):
         if isVerified:
             eventName = body[EVENT_NAME]
             data = body[DATA]
-            if eventName == EVENT_NOTIFY_MSG:
-                self.notifyObservers(data)
-            else:
-                self.notifyEventListeners(eventName, **data)
-
-    def notifyObservers(self, msg):
-        for o in self._observers:
-            o.notify(self, msg)
+            self.notifyEventListeners(eventName, **data)
 
     def notifyEventListeners(self, eventName, **args):
         for el in self._eventListeners[eventName]:
-            el(**args)
+            el(notifier=self, **args)
+
+    def notifyMsgListener(self, msg):
+        self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
@@ -329,11 +316,10 @@ class WalletedAgent(Agent):
             handler((body, (frm, frmHa)))
         else:
             raise NotImplementedError
-            # logger.warning("no handler found for type {}".format(typ))
 
     def _handleError(self, msg):
         body, (frm, ha) = msg
-        self.notifyObservers("Error ({}) occurred while processing this "
+        self.notifyMsgListener("Error ({}) occurred while processing this "
                              "msg: {}".format(body[DATA], body[REQ_MSG]))
 
     def _fetchAllAvailableClaimsInWallet(self, li, availableClaims):
@@ -358,7 +344,7 @@ class WalletedAgent(Agent):
         def postAllFetched():
             if fetchedCount == len(availableClaims):
                 if availableClaims:
-                    self.notifyObservers("    Available claims: {}".
+                    self.notifyMsgListener("    Available claims: {}".
                                          format(",".join(
                         [n for n, _, _ in availableClaims])))
                 self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
@@ -372,14 +358,14 @@ class WalletedAgent(Agent):
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 # TODO: Show seconds took to respond
-                self.notifyObservers("Response from {}:".format(li.name))
-                self.notifyObservers("    Signature accepted.")
-                self.notifyObservers("    Trust established.")
+                self.notifyMsgListener("Response from {}:".format(li.name))
+                self.notifyMsgListener("    Signature accepted.")
+                self.notifyMsgListener("    Trust established.")
                 alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
                 if alreadyAccepted:
-                    self.notifyObservers("    Already accepted.")
+                    self.notifyMsgListener("    Already accepted.")
                 else:
-                    self.notifyObservers("    Identifier created in Sovrin.")
+                    self.notifyMsgListener("    Identifier created in Sovrin.")
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
                 li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
@@ -397,16 +383,16 @@ class WalletedAgent(Agent):
                     li.availableClaims.extend(availableClaims)
                 self._fetchAllAvailableClaimsInWallet(li, availableClaims)
             else:
-                self.notifyObservers("No matching link found")
+                self.notifyMsgListener("No matching link found")
 
     def _handleReqClaimResponse(self, msg):
         body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
-            self.notifyObservers("Signature accepted.")
+            self.notifyMsgListener("Signature accepted.")
             identifier = body.get(IDENTIFIER)
             claim = body[DATA]
-            self.notifyObservers("Received {}.\n".format(claim[NAME]))
+            self.notifyMsgListener("Received {}.\n".format(claim[NAME]))
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 name, version, idr = \
@@ -423,7 +409,7 @@ class WalletedAgent(Agent):
                                                  data[f.IDENTIFIER.nm],
                                                  credential)
             else:
-                self.notifyObservers("No matching link found")
+                self.notifyMsgListener("No matching link found")
 
     def _isVerified(self, msg: Dict[str, str]):
         signature = msg.get(f.SIG.nm)
@@ -437,7 +423,7 @@ class WalletedAgent(Agent):
             identifier) else identifier
         isVerified = verifySig(key, signature, msgWithoutSig)
         if not isVerified:
-            self.notifyObservers("Signature rejected")
+            self.notifyMsgListener("Signature rejected")
         return isVerified
 
     def _getLinkByTarget(self, target) -> Link:
@@ -452,18 +438,18 @@ class WalletedAgent(Agent):
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
         self.client.submitReqs(req)
-        self.notifyObservers("Synchronizing...")
+        self.notifyMsgListener("Synchronizing...")
 
         def getNymReply(reply, err, availableClaims, li: Link):
             if reply.get(DATA) and json.loads(reply[DATA])[TARGET_NYM] == li.verkey:
-                self.notifyObservers(
+                self.notifyMsgListener(
                     "    Confirmed identifier written to Sovrin.")
                 availableClaimNames = [n for n, _, _ in availableClaims]
                 self.notifyEventListeners(EVENT_POST_ACCEPT_INVITE,
                                           availableClaimNames=availableClaimNames,
                                           claimProofReqsCount=len(li.claimProofRequests))
             else:
-                self.notifyObservers(
+                self.notifyMsgListener(
                     "    Identifier is not yet written to Sovrin")
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
@@ -532,7 +518,13 @@ class WalletedAgent(Agent):
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
+
                 assert result
+                logger.debug("ip, proof, nonce, encoded, revealed is {} {} {} {} {}".
+                             format(ipk, proof, nonce,
+                                              encodedAttrs,
+                                              revealedAttrs))
+                logger.debug("result is {}".format(str(result)))
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:
@@ -542,7 +534,6 @@ class WalletedAgent(Agent):
                 }
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
-            # self._getCredDefIsrKeyAndExecuteCallback(tuple(claimDefKey), verify)
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
                                                self.loop, tuple(claimDefKey),
                                                verify)
@@ -550,7 +541,7 @@ class WalletedAgent(Agent):
     def handleClaimProofStatus(self, msg: Any):
         body, (frm, ha) = msg
         data = body.get(DATA)
-        self.notifyObservers(data)
+        self.notifyMsgListener(data)
 
     def notifyToRemoteCaller(self, event, msg, identifier, frm):
         resp = {
@@ -584,7 +575,7 @@ class WalletedAgent(Agent):
         def sendClaimList(reply=None, error=None):
             logger.debug("sent to sovrin {}".format(identifier))
             resp = self.createAvailClaimListMsg(
-                self.getAvailableClaimList())
+                self.getAvailableClaimList(), alreadyAccepted=alreadyAdded)
             self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
         if alreadyAdded:

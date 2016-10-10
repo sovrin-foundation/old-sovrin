@@ -101,7 +101,7 @@ def testMultipleAcceptance(aliceAcceptedFaber,
                            emptyLooper,
                            faberNonceForAlice):
     """
-    For the test agent, Faber. Any invite nonce is acceptible.
+    For the test agent, Faber. Any invite nonce is acceptable.
     """
     faberAgent, _ = faberIsRunning
     assert len(faberAgent.wallet._links) == 1

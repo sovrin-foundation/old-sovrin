@@ -24,7 +24,8 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN, ATTRIBUTES
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
-from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE
+from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE, \
+    EVENT_NOTIFY_MSG
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
@@ -226,9 +227,10 @@ class SovrinCli(PlenumCli):
     def _getSetAttrUsage(self):
         return ['set <attr-name> to <attr-value>']
 
-    def _getSendClaimProofReqUsage(self, claimProofReqName=None):
-        return ['send claim request {}'.format(
-            claimProofReqName or "<claim-req-name>")]
+    def _getSendClaimProofReqUsage(self, claimProofReqName=None, inviterName=None):
+        return ['send claim {} to {}'.format(
+            claimProofReqName or "<claim-req-name>",
+            inviterName or "<inviter-name>")]
 
     def _getShowFileUsage(self, filePath=None):
         return ['show {}'.format(filePath or "<file-path>")]
@@ -265,15 +267,20 @@ class SovrinCli(PlenumCli):
     def _getConnectUsage(self):
         return ["connect <{}>".format(self.allEnvNames)]
 
-    def _printPostShowClaimReqSuggestion(self, claimProofReqName):
+    def _printPostShowClaimReqSuggestion(self, claimProofReqName, inviterName):
         msgs = self._getSetAttrUsage() + \
-               self._getSendClaimProofReqUsage(claimProofReqName)
+               self._getSendClaimProofReqUsage(claimProofReqName, inviterName)
         self.printSuggestion(msgs)
 
     def _printShowClaimReqUsage(self):
         self.printUsage(self._getShowClaimReqUsage())
 
-    def _printSuggestionPostAcceptLink(self, availableClaimNames,
+    def _printMsg(self, notifier, msg):
+        self.print(msg)
+
+
+    def _printSuggestionPostAcceptLink(self, notifier,
+                                       availableClaimNames,
                                        claimProofReqsCount):
         if len(availableClaimNames) > 0:
             claimName = "|".join([n for n in availableClaimNames])
@@ -302,8 +309,9 @@ class SovrinCli(PlenumCli):
         else:
             _send()
 
-    def _buildWalletClass(self, nm):
-        return Wallet(nm)
+    @property
+    def walletClass(self):
+        return Wallet
 
     @property
     def genesisTransactions(self):
@@ -358,7 +366,7 @@ class SovrinCli(PlenumCli):
                                         client=self.activeClient,
                                         wallet=self.activeWallet,
                                         port=port)
-            self._agent.registerObserver(self)
+            self._agent.registerEventListener(EVENT_NOTIFY_MSG, self._printMsg)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
                                               self._printSuggestionPostAcceptLink)
             self.looper.add(self._agent)
@@ -1126,7 +1134,7 @@ class SovrinCli(PlenumCli):
         self.printSuggestion(msgs)
 
     def _printLinkAlreadyExcepted(self, linkName):
-        self.print("Link {} is already accepted".format(linkName))
+        self.print("Link {} is already accepted\n".format(linkName))
 
     def _printShowAndAcceptLinkUsage(self, linkName=None):
         msgs = self._getShowLinkUsage(linkName) + \
@@ -1212,7 +1220,7 @@ class SovrinCli(PlenumCli):
                 if li.isAccepted:
                     acn = [n for n, _, _ in li.availableClaims]
                     self._printSuggestionPostAcceptLink(
-                        acn, len(li.claimProofRequests))
+                        self, acn, len(li.claimProofRequests))
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:
@@ -1477,7 +1485,8 @@ class SovrinCli(PlenumCli):
                 self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
                 self._showMatchingClaimProof(claimReq, attributes)
-                self._printPostShowClaimReqSuggestion(claimReq.name)
+                self._printPostShowClaimReqSuggestion(claimReq.name,
+                                                      matchingLink.name)
             return True
 
     def _showClaim(self, matchedVars):
@@ -1719,9 +1728,6 @@ class SovrinCli(PlenumCli):
         }
 
         return defaultdict(lambda: defaultHelper, **mappings)
-
-    def notify(self, notifier, msg):
-        self.print(msg)
 
     @property
     def canMakeSovrinRequest(self):
