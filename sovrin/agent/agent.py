@@ -286,8 +286,6 @@ class WalletedAgent(Agent):
 
     def notifyMsgListener(self, msg):
         self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
-        for el in self._eventListeners.get(EVENT_NOTIFY_MSG):
-            el(notifier=self, msg=msg)
 
     def handleEndpointMessage(self, msg):
         body, frm = msg

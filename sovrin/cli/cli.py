@@ -227,9 +227,10 @@ class SovrinCli(PlenumCli):
     def _getSetAttrUsage(self):
         return ['set <attr-name> to <attr-value>']
 
-    def _getSendClaimProofReqUsage(self, claimProofReqName=None):
-        return ['send claim request {}'.format(
-            claimProofReqName or "<claim-req-name>")]
+    def _getSendClaimProofReqUsage(self, claimProofReqName=None, inviterName=None):
+        return ['send claim {} to {}'.format(
+            claimProofReqName or "<claim-req-name>",
+            inviterName or "<inviter-name>")]
 
     def _getShowFileUsage(self, filePath=None):
         return ['show {}'.format(filePath or "<file-path>")]
@@ -266,9 +267,9 @@ class SovrinCli(PlenumCli):
     def _getConnectUsage(self):
         return ["connect <{}>".format(self.allEnvNames)]
 
-    def _printPostShowClaimReqSuggestion(self, claimProofReqName):
+    def _printPostShowClaimReqSuggestion(self, claimProofReqName, inviterName):
         msgs = self._getSetAttrUsage() + \
-               self._getSendClaimProofReqUsage(claimProofReqName)
+               self._getSendClaimProofReqUsage(claimProofReqName, inviterName)
         self.printSuggestion(msgs)
 
     def _printShowClaimReqUsage(self):
@@ -1133,7 +1134,7 @@ class SovrinCli(PlenumCli):
         self.printSuggestion(msgs)
 
     def _printLinkAlreadyExcepted(self, linkName):
-        self.print("Link {} is already accepted".format(linkName))
+        self.print("Link {} is already accepted\n".format(linkName))
 
     def _printShowAndAcceptLinkUsage(self, linkName=None):
         msgs = self._getShowLinkUsage(linkName) + \
@@ -1484,7 +1485,8 @@ class SovrinCli(PlenumCli):
                 self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
                 self._showMatchingClaimProof(claimReq, attributes)
-                self._printPostShowClaimReqSuggestion(claimReq.name)
+                self._printPostShowClaimReqSuggestion(claimReq.name,
+                                                      matchingLink.name)
             return True
 
     def _showClaim(self, matchedVars):
