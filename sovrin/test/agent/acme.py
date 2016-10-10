@@ -8,6 +8,7 @@ from plenum.common.txn import NAME
 from anoncreds.test.conftest import staticPrimes
 
 from sovrin.agent.agent import WalletedAgent, runAgent
+from sovrin.agent.exception import NonceNotFound
 from sovrin.anon_creds.issuer import AttribType, AttribDef
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
@@ -80,6 +81,8 @@ class AcmeAgent(WalletedAgent):
     def getInternalIdByInvitedNonce(self, nonce):
         if nonce in self._invites:
             return self._invites[nonce]
+        else:
+            raise NonceNotFound
 
     def addKeyIfNotAdded(self):
         wallet = self.wallet

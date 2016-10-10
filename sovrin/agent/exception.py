@@ -1,0 +1,2 @@
+class NonceNotFound(RuntimeError):
+    pass

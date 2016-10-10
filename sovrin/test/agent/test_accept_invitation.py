@@ -13,12 +13,14 @@ def testFaberCreateLink(faberLinkAdded):
     pass
 
 
-def checkAcceptInvitation(emptyLooper, nonce, userAgent: WalletedAgent,
+def checkAcceptInvitation(looper,
+                          nonce,
+                          userAgent: WalletedAgent,
                           agentIsRunning):
-
+    assert nonce
     agent, awallet = agentIsRunning
     a = agent  # type: WalletedAgent
-    ensureAgentsConnected(emptyLooper, userAgent, agent)
+    ensureAgentsConnected(looper, userAgent, agent)
     msg = {
         TYPE: ACCEPT_INVITE,
         f.IDENTIFIER.nm: userAgent.wallet.defaultId,
@@ -39,7 +41,7 @@ def checkAcceptInvitation(emptyLooper, nonce, userAgent: WalletedAgent,
         assert link.remoteIdentifier == userAgent.wallet.defaultId
         assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
 
-    emptyLooper.run(eventually(chk))
+    looper.run(eventually(chk))
 
 
 @pytest.fixture(scope="module")
@@ -96,7 +98,8 @@ def testMultipleAcceptance(aliceAcceptedFaber,
                            faberAdded,
                            walletBuilder,
                            agentBuilder,
-                           emptyLooper):
+                           emptyLooper,
+                           faberNonceForAlice):
     """
     For the test agent, Faber. Any invite nonce is acceptible.
     """
@@ -106,10 +109,10 @@ def testMultipleAcceptance(aliceAcceptedFaber,
     otherAgent = agentBuilder(wallet)
     emptyLooper.add(otherAgent)
 
-    checkAcceptInvitation(emptyLooper,
-                          faberLinkAdded,
-                          otherAgent,
-                          faberIsRunning)
+    checkAcceptInvitation(looper=emptyLooper,
+                          nonce=faberNonceForAlice,
+                          userAgent=otherAgent,
+                          agentIsRunning=faberIsRunning)
 
     assert len(faberAgent.wallet._links) == 2
 

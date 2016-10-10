@@ -773,11 +773,8 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
     aliceCli.sendToAgent(msg, (ip, int(port)))
 
     be(aliceCli)
-    do(None,                        within=3,
-                                    expect=["Error (No Such Link found) "
-                                            "occurred while "
-                                            "processing this msg: {}".
-                                                format(msg)])
+    do(None, within=3,
+             expect=["Nonce not found".format(msg)])
 
 
 def testAliceSendClaimProofToAcme(be, do, aliceCli, acmeMap,
@@ -786,8 +783,9 @@ def testAliceSendClaimProofToAcme(be, do, aliceCli, acmeMap,
                                   aliceSelfAttestsAttributes):
     be(aliceCli)
 
-    do("send claim {claim-req-to-match} to {inviter}",  within=7,
+    do("send claim {claim-req-to-match} to {inviter}",
+                                within=7,
                                 expect=["Your claim {claim-req-to-match} "
-                                        "{claim-ver-req-to-show} has been received"
-                                        " and verified"],
+                                        "{claim-ver-req-to-show} has been "
+                                        "received and verified"],
                                 mapper=acmeMap)

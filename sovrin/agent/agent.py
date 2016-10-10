@@ -21,6 +21,7 @@ from plenum.common.types import Identifier
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.issuer import Issuer
+from sovrin.agent.exception import NonceNotFound
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 
 from sovrin.common.identity import Identity
@@ -243,22 +244,30 @@ class WalletedAgent(Agent):
             return None
 
         nonce = body.get(NONCE)
-        internalId = self.getInternalIdByInvitedNonce(nonce)
-        if not internalId:
+        try:
+            return self.linkFromNonce(nonce,
+                                      remoteIdr=body.get(f.IDENTIFIER.nm),
+                                      remoteHa=ha)
+        except NonceNotFound:
             self.logAndSendErrorResp(frm, body,
                                      "Nonce not found",
                                      "Nonce not found for msg: {}".format(msg))
             return None
+
+    def linkFromNonce(self, nonce, remoteIdr, remoteHa):
+        internalId = self.getInternalIdByInvitedNonce(nonce)
         link = self.wallet.getLinkByInternalId(internalId)
-        if link:
-            raise RuntimeError("link already exists")
-        link = Link(internalId,
-                    self.wallet.defaultId,
-                    nonce=nonce,
-                    remoteIdentifier=body.get(f.IDENTIFIER.nm),
-                    remoteEndPoint=ha,
-                    internalId=internalId)
-        self.wallet.addLink(link)
+        if not link:
+            link = Link(str(internalId),
+                        self.wallet.defaultId,
+                        nonce=nonce,
+                        remoteIdentifier=remoteIdr,
+                        remoteEndPoint=remoteHa,
+                        internalId=internalId)
+            self.wallet.addLink(link)
+        else:
+            link.remoteIdentifier = remoteIdr
+            link.remoteEndPoint = remoteHa
         return link
 
     @abstractmethod
@@ -470,7 +479,7 @@ class WalletedAgent(Agent):
             # TODO: Need to do validation
             uValue = strToCharmInteger(body['U'])
             claimDef = self.wallet.getClaimDef(key=(name, version, origin))
-            attributes = self._getClaimsAttrsFor(link.nonce,
+            attributes = self._getClaimsAttrsFor(link.internalId,
                                                  claimDef.attrNames)
             encodedAttrs = next(iter(getEncodedAttrs(link.verkey,
                                                 attributes).values()))
@@ -523,12 +532,13 @@ class WalletedAgent(Agent):
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
+                assert result
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:
-                        "Your claim {} {} has been received and {}".
+                        'Your claim {} {} has been received and {}verified'.
                             format(body[NAME], body[VERSION],
-                                   "verified" if result else "not-verified"),
+                                   '' if result else 'is not yet '),
                 }
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
@@ -553,37 +563,40 @@ class WalletedAgent(Agent):
     def _acceptInvite(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
-        if link:
-            identifier = body.get(f.IDENTIFIER.nm)
-            idy = Identity(identifier)
-            try:
-                pendingCount = self.wallet.addSponsoredIdentity(idy)
-                logger.debug("pending request count {}".format(pendingCount))
-                alreadyAdded = False
-            except Exception as e:
-                if e.args[0] == 'identifier already added':
-                    alreadyAdded = True
-                else:
-                    logger.warning("Exception raised while adding nym, "
-                                   "error was: {}".format(e.args[0]))
-                    raise e
-
-            def sendClaimList(reply=None, error=None):
-                logger.debug("sent to sovrin {}".format(identifier))
-                resp = self.createAvailClaimListMsg(
-                    self.getAvailableClaimList())
-                self.signAndSendToCaller(resp, link.localIdentifier, frm)
-
-            if alreadyAdded:
-                sendClaimList()
-                self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                                          "    Already accepted",
-                                          link.verkey, frm)
+        # TODO this is really kludgy code... needs refactoring
+        # exception handling, separation of concerns, etc.
+        if not link:
+            return
+        identifier = body.get(f.IDENTIFIER.nm)
+        idy = Identity(identifier)
+        try:
+            pendingCount = self.wallet.addSponsoredIdentity(idy)
+            logger.debug("pending request count {}".format(pendingCount))
+            alreadyAdded = False
+        except Exception as e:
+            if e.args[0] in ['identifier already added']:
+                alreadyAdded = True
             else:
-                reqs = self.wallet.preparePending()
-                # Assuming there was only one pending request
-                logger.debug("sending to sovrin {}".format(reqs[0]))
-                self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
+                logger.warning("Exception raised while adding nym, "
+                               "error was: {}".format(e.args[0]))
+                raise e
+
+        def sendClaimList(reply=None, error=None):
+            logger.debug("sent to sovrin {}".format(identifier))
+            resp = self.createAvailClaimListMsg(
+                self.getAvailableClaimList())
+            self.signAndSendToCaller(resp, link.localIdentifier, frm)
+
+        if alreadyAdded:
+            sendClaimList()
+            self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                      "    Already accepted",
+                                      link.verkey, frm)
+        else:
+            reqs = self.wallet.preparePending()
+            # Assuming there was only one pending request
+            logger.debug("sending to sovrin {}".format(reqs[0]))
+            self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
         # TODO: If I have the below exception thrown, somehow the
         # error msg which is sent in verifyAndGetLink is not being received
@@ -595,9 +608,9 @@ class WalletedAgent(Agent):
         self.client.submitReqs(req)
         ensureReqCompleted(self.loop, req.reqId, self.client, clbk, *args)
 
-    def _getClaimsAttrsFor(self, nonce, attrNames):
+    def _getClaimsAttrsFor(self, internalId, attrNames):
         res = {}
-        attributes = self.getAttributes(nonce)
+        attributes = self.getAttributes(internalId)
         if attributes:
             for nm in attrNames:
                 res[nm] = attributes.get(nm)

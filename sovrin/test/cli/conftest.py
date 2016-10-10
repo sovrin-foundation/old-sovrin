@@ -721,7 +721,8 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
     faber._seqNos = {
         ("Transcript", "1.2"): (cdSeqNo, iskSeqNo)
     }
-    faber.addLinksToWallet()
+    # DEPR
+    # faber.addLinksToWallet()
     return faber, faberWallet
 
 

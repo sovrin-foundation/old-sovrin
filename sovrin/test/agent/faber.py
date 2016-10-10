@@ -8,6 +8,7 @@ from plenum.common.txn import VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
+from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
@@ -86,6 +87,8 @@ class FaberAgent(WalletedAgent):
     def getInternalIdByInvitedNonce(self, nonce):
         if nonce in self._invites:
             return self._invites[nonce]
+        else:
+            raise NonceNotFound
 
     def addKeyIfNotAdded(self):
         wallet = self.wallet
@@ -130,16 +133,22 @@ class FaberAgent(WalletedAgent):
                              credDefSeqNo=credDefSeqNo,
                              issuerKeySeqNo=issuerKeySeqNo)
 
-    def getAttributes(self, nonce):
-        attrs = self._attributes.get(nonce)
+    def getAttributes(self, internalId):
+        attrs = self._attributes.get(internalId)
+
         if not attrs:
-            attrs = {
-                "student_name": random.choice(randomData.NAMES),
-                "ssn": random.choice(randomData.SSN),
-                "degree": random.choice(randomData.DEGREE),
-                "year": random.choice(randomData.YEAR),
-                "status": random.choice(randomData.STATUS)
-            }
+            raise RuntimeError('attributes for internal ID {} not found'.
+                               format(internalId))
+
+        # DEPR
+        # if not attrs:
+        #     attrs = {
+        #         "student_name": random.choice(randomData.NAMES),
+        #         "ssn": random.choice(randomData.SSN),
+        #         "degree": random.choice(randomData.DEGREE),
+        #         "year": random.choice(randomData.YEAR),
+        #         "status": random.choice(randomData.STATUS)
+        #     }
 
         attribTypes = []
         for name in attrs:
@@ -148,16 +157,17 @@ class FaberAgent(WalletedAgent):
         attribs = attribsDef.attribs(**attrs)
         return attribs
 
-    def addLinksToWallet(self):
-        wallet = self.wallet
-        idr = wallet.defaultId
-        for nonce, data in self._attributes.items():
-            link = Link(data.get("student_name"), idr, nonce=nonce)
-            wallet.addLink(link)
+    # DEPR
+    # def addLinksToWallet(self):
+    #     wallet = self.wallet
+    #     idr = wallet.defaultId
+    #     for nonce, data in self._attributes.items():
+    #         link = Link(data.get("student_name"), idr, nonce=nonce)
+    #         wallet.addLink(link)
 
     def bootstrap(self):
         self.addKeyIfNotAdded()
-        self.addLinksToWallet()
+        # self.addLinksToWallet()
         self.addClaimDefsToWallet()
 
 
