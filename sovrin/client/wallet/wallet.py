@@ -583,6 +583,7 @@ class Wallet(PWallet, Sponsoring):
     def addCredentialToProofBuilder(self, claimDefKey, issuerId, credential):
         for pb, name, version, origin in self.proofBuilders.values():
             if (name, version, origin) == claimDefKey and issuerId in pb.U:
+                logger.debug("{} adding credential to proof builder")
                 credential = ATypes.Credential(credential.A, credential.e,
                                         pb.vprime[issuerId] + credential.v)
                 pb.setCredential(credential)

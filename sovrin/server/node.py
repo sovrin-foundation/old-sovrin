@@ -207,9 +207,11 @@ class Node(PlenumNode):
         nym = request.operation[TARGET_NYM]
         txn = self.graphStore.getAddNymTxn(nym)
         txnId = self.genTxnId(request.identifier, request.reqId)
+        # TODO: We should have a single JSON encoder which does the
+        # encoding for us, like sorting by keys, handling datetime objects.
         result = {f.IDENTIFIER.nm: request.identifier,
                   f.REQ_ID.nm: request.reqId,
-                  DATA: json.dumps(txn) if txn else None,
+                  DATA: json.dumps(txn, sort_keys=True) if txn else None,
                   TXN_ID: txnId
                   }
         result.update(request.operation)
@@ -243,10 +245,12 @@ class Node(PlenumNode):
                     request.identifier, request.reqId)
             }
             result.update(request.operation)
+            # TODO: We should have a single JSON encoder which does the
+            # encoding for us, like sorting by keys, handling datetime objects.
             result[DATA] = json.dumps({
                 LAST_TXN: lastTxn,
                 TXNS: txns
-            }, default=dateTimeEncoding)
+            }, default=dateTimeEncoding, sort_keys=True)
             result.update({
                 f.IDENTIFIER.nm: request.identifier,
                 f.REQ_ID.nm: request.reqId,
@@ -263,7 +267,7 @@ class Node(PlenumNode):
                 request.identifier, request.reqId)
         }
         result.update(request.operation)
-        result[DATA] = json.dumps(credDef)
+        result[DATA] = json.dumps(credDef, sort_keys=True)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,
@@ -281,7 +285,7 @@ class Node(PlenumNode):
         }
         if attrWithSeqNo:
             attr = {attrName: attrWithSeqNo[attrName][0]}
-            result[DATA] = json.dumps(attr)
+            result[DATA] = json.dumps(attr, sort_keys=True)
             result[F.seqNo.name] = attrWithSeqNo[attrName][1]
         result.update(request.operation)
         result.update({
@@ -299,7 +303,7 @@ class Node(PlenumNode):
                 request.identifier, request.reqId)
         }
         result.update(request.operation)
-        result[DATA] = json.dumps(keys)
+        result[DATA] = json.dumps(keys, sort_keys=True)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,
