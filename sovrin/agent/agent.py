@@ -333,6 +333,7 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         isVerified = self._isVerified(body)
         if isVerified:
+            logger.debug("got accept invite response: {}".format(body))
             identifier = body.get(IDENTIFIER)
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
@@ -532,6 +533,7 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if link:
+            logger.debug("proceeding with link: {}".format(link.name))
             identifier = body.get(f.IDENTIFIER.nm)
             idy = Identity(identifier)
             try:
@@ -541,6 +543,8 @@ class WalletedAgent(Agent):
             except Exception as e:
                 if e.args[0] == 'identifier already added':
                     alreadyAdded = True
+                    logger.debug(
+                        "link {} already accepted".format(link.name))
                 else:
                     logger.warning("Exception raised while adding nym, "
                                    "error was: {}".format(e.args[0]))
@@ -553,11 +557,13 @@ class WalletedAgent(Agent):
                 self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
             if alreadyAdded:
+                logger.debug("already accepted, "
+                             "so directly sending available claims")
                 sendClaimList()
-                # self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                #                           "    Already accepted",
-                #                           link.verkey, frm)
             else:
+                logger.debug(
+                    "not accepted, so add nym to sovrin "
+                    "and then will send available claims")
                 reqs = self.wallet.preparePending()
                 # Assuming there was only one pending request
                 logger.debug("sending to sovrin {}".format(reqs[0]))
