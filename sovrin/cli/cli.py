@@ -24,7 +24,8 @@ from plenum.client.signer import SimpleSigner
 from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN, ATTRIBUTES
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString, getCryptonym
-from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE
+from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE, \
+    EVENT_NOTIFY_MSG
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
@@ -273,7 +274,12 @@ class SovrinCli(PlenumCli):
     def _printShowClaimReqUsage(self):
         self.printUsage(self._getShowClaimReqUsage())
 
-    def _printSuggestionPostAcceptLink(self, availableClaimNames,
+    def _printMsg(self, notifier, msg):
+        self.print(msg)
+
+
+    def _printSuggestionPostAcceptLink(self, notifier,
+                                       availableClaimNames,
                                        claimProofReqsCount):
         if len(availableClaimNames) > 0:
             claimName = "|".join([n for n in availableClaimNames])
@@ -359,7 +365,7 @@ class SovrinCli(PlenumCli):
                                         client=self.activeClient,
                                         wallet=self.activeWallet,
                                         port=port)
-            self._agent.registerObserver(self)
+            self._agent.registerEventListener(EVENT_NOTIFY_MSG, self._printMsg)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
                                               self._printSuggestionPostAcceptLink)
             self.looper.add(self._agent)
@@ -1213,7 +1219,7 @@ class SovrinCli(PlenumCli):
                 if li.isAccepted:
                     acn = [n for n, _, _ in li.availableClaims]
                     self._printSuggestionPostAcceptLink(
-                        acn, len(li.claimProofRequests))
+                        self, acn, len(li.claimProofRequests))
                 else:
                     self._printSyncAndAcceptUsage(li.name)
             else:
@@ -1720,9 +1726,6 @@ class SovrinCli(PlenumCli):
         }
 
         return defaultdict(lambda: defaultHelper, **mappings)
-
-    def notify(self, notifier, msg):
-        self.print(msg)
 
     @property
     def canMakeSovrinRequest(self):
