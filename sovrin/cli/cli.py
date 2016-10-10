@@ -409,7 +409,7 @@ class SovrinCli(PlenumCli):
         self.activeClient.submitReqs(req)
         self.print("Getting nym {}".format(nym))
 
-        def getNymReply(reply, err):
+        def getNymReply(reply, err, *args):
             self.print("Transaction id for NYM {} is {}".
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
 
@@ -433,7 +433,7 @@ class SovrinCli(PlenumCli):
             printStr = printStr + " for " + other_client_name
         self.print(printStr)
 
-        def out(reply, error):
+        def out(reply, error, *args, **kwargs):
             self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
@@ -463,7 +463,7 @@ class SovrinCli(PlenumCli):
         req, = self.activeClient.submitReqs(*reqs)
         self.print("Adding attributes {} for {}".format(data, nym))
 
-        def chk(reply, error):
+        def chk(reply, error, *args, **kwargs):
             assert self.activeWallet.getAttribute(attrib).seqNo is not None
             self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
                        Token.BoldBlue)
@@ -681,7 +681,7 @@ class SovrinCli(PlenumCli):
             reqs = self.activeWallet.preparePending()
             self.activeClient.submitReqs(*reqs)
 
-            def published(reply, error):
+            def published(reply, error, *args, **kwargs):
                 self.print("The following credential definition is published"
                            "to the Sovrin distributed ledger\n", Token.BoldBlue,
                            newline=False)
@@ -706,7 +706,7 @@ class SovrinCli(PlenumCli):
                 reqs = self.activeWallet.preparePending()
                 self.activeClient.submitReqs(*reqs)
 
-                def published(reply, error):
+                def published(reply, error, *args, **kwargs):
                     self.print("The following issuer key is published to the"
                                " Sovrin distributed ledger\n", Token.BoldBlue,
                                newline=False)
@@ -734,9 +734,9 @@ class SovrinCli(PlenumCli):
                                                    self.print,
                                                    self.looper.loop,
                                                claimDefKey,
-                                                     self._printCredReq,
-                                               credName, credVersion, origin,
-                                               proverName)
+                                               self._printCredReq,
+                                               pargs=(credName, credVersion,
+                                                      origin, proverName))
             return True
 
     def _listCredAction(self, matchedVars):
@@ -818,7 +818,7 @@ class SovrinCli(PlenumCli):
                                                    self.looper.loop,
                                            claimDefKey,
                                                  self.doVerification,
-                                                 status, proof)
+                                                 pargs=(status, proof))
 
     def doVerification(self, reply, err, status, proof):
         issuer = proof[ISSUER]
@@ -997,7 +997,7 @@ class SovrinCli(PlenumCli):
             self._pingToEndpoint(endPoint)
 
     def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
-                                       link: Link):
+                                       link: Link, **kwargs):
         if err:
             self.print('Error occurred: {}'.format(err))
             return True
@@ -1025,8 +1025,7 @@ class SovrinCli(PlenumCli):
                                         req.reqId,
                                         self.activeClient,
                                         self._syncLinkPostEndPointRetrieval,
-                                        postSync,
-                                        li)
+                                        (postSync, li))
         else:
             if not self.activeEnv:
                 self._printNotConnectedEnvMessage(
@@ -1062,6 +1061,18 @@ class SovrinCli(PlenumCli):
 
     def sendReqClaim(self, reply, error, link, claimDefKey):
         name, version, origin = claimDefKey
+        claimDef = self.activeWallet.getClaimDef(claimDefKey)
+        if not claimDef.seqNo:
+            self.looper.loop.call_later(.2, self.sendReqClaim,
+                                        reply, error, link, claimDefKey)
+        else:
+            issuerPubKey = self.activeWallet.getIssuerPublicKey(
+                (origin, claimDef.seqNo))
+            if not issuerPubKey.seqNo:
+                self.looper.loop.call_later(.2, self.sendReqClaim,
+                                            reply, error, link, claimDefKey)
+            else:
+                self.logger.debug("Found both claimDef and issuerKey in wallet")
         # TODO: Should check for an existing proof builder if that exists for
         # the claim definition and issuer key
         proofBuilder = self.newProofBuilder(name, version, origin)
@@ -1338,8 +1349,8 @@ class SovrinCli(PlenumCli):
                                                    self.looper.loop,
                                                    claimDefKey,
                                                    self.sendReqClaim,
-                                                   matchingLink,
-                                                   claimDefKey)
+                                                   pargs=(matchingLink,
+                                                          claimDefKey))
             else:
                 self.print("No matching claim(s) found "
                            "in any links in current keyring")
@@ -1623,7 +1634,7 @@ class SovrinCli(PlenumCli):
             self.looper.loop.call_later(.2, self.ensureClientConnected)
 
     def ensureAgentConnected(self, otherAgentHa, clbk: Callable=None,
-                             *args, **kwargs):
+                             *args):
         if not self.agent:
             return
         if self.agent.endpoint.isConnectedTo(ha=otherAgentHa):
@@ -1631,13 +1642,15 @@ class SovrinCli(PlenumCli):
             self.logger.debug("Agent {} connected to {}".
                               format(self.agent, otherAgentHa))
             if clbk:
-                clbk(*args, **kwargs)
+                clbk(*args)
         else:
             self.looper.loop.call_later(.2, self.ensureAgentConnected,
-                                        otherAgentHa, clbk, *args, **kwargs)
+                                        otherAgentHa, clbk, *args)
 
-    def _ensureReqCompleted(self, reqId, client, clbk=None, *args):
-        ensureReqCompleted(self.looper.loop, reqId, client, clbk, *args)
+    def _ensureReqCompleted(self, reqId, client, clbk=None, pargs=None,
+                            kwargs=None, cond=None, condPargs=None):
+        ensureReqCompleted(self.looper.loop, reqId, client, clbk, pargs=pargs,
+                           kwargs=kwargs, cond=cond, condPargs=condPargs)
 
     def addAlias(self, reply, err, client, alias, signer):
         if not self.canMakeSovrinRequest:

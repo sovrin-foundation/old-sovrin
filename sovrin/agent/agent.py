@@ -432,7 +432,7 @@ class WalletedAgent(Agent):
                     "    Identifier is not yet written to Sovrin")
 
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
-                             self.client, getNymReply, availableClaims, li)
+                             self.client, getNymReply, (availableClaims, li))
 
     def _reqClaim(self, msg):
         body, (frm, ha) = msg
