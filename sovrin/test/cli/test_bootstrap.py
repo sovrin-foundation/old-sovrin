@@ -12,7 +12,6 @@ from sovrin.client.wallet.link import Link
 from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT, ATTR_NAMES
 from sovrin.test.cli.helper import getFileLines
-from sovrin.test.cli.test_link_invitation import aliceConnected
 
 
 # FABER_ENDPOINT_PORT = 1212
@@ -205,8 +204,7 @@ def testShowFaberInvite(be, do, aliceCli, faberMap):
                                     mapper=faberMap)
 
 
-def testLoadInviteNotExists(be, do, aliceCli, fileNotExists, faberMap,
-                            aliceConnected):
+def testLoadInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
     be(aliceCli)
     do('load {invite-not-exists}',  expect=fileNotExists, mapper=faberMap)
 

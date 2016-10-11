@@ -88,6 +88,8 @@ class Link:
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
         targetEndPoint = self.remoteEndPoint or \
                          constant.UNKNOWN_WAITING_FOR_SYNC
+        if isinstance(targetEndPoint, tuple):
+            targetEndPoint = "{}:{}".format(*targetEndPoint)
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = prettyDate(self.linkLastSynced) or \
                          constant.LINK_NOT_SYNCHRONIZED
@@ -109,7 +111,7 @@ class Link:
             fixedLinkHeading += "(not yet accepted)"
 
         # TODO: Refactor to use string interpolation
-
+        # try:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
@@ -123,6 +125,9 @@ class Link:
             'Target endpoint: ' + targetEndPoint + '\n' \
             'Invitation nonce: ' + self.invitationNonce + '\n' \
             'Invitation status: ' + linkStatus + '\n'
+        # except Exception as ex:
+        #     print(ex)
+        #     print(targetEndPoint, linkStatus, )
 
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:

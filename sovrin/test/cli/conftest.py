@@ -30,7 +30,7 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
-    acmeIsRunning, faberAgentPort, acmeAgentPort
+    acmeIsRunning, faberAgentPort, acmeAgentPort, faberAgent
 from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
@@ -716,10 +716,10 @@ def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
 
 
 @pytest.fixture(scope="module")
-def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
-                   faberWallet, faberAddedByPhil):
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
+                   faberAddedByPhil, faberAgent):
     faber, faberWallet = runningFaber(emptyLooper, tdirWithPoolTxns,
-                                      faberAgentPort, faberWallet)
+                                      faberWallet, faberAddedByPhil, faberAgent)
     # DEPR
     # faber.addLinksToWallet()
     return faber, faberWallet

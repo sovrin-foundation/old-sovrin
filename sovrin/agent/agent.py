@@ -85,10 +85,18 @@ class Agent(Motor, AgentNet):
                           msgHandler=self.handleEndpointMessage)
 
         # Client used to connect to Sovrin and forward on owner's txns
-        self.client = client  # type: Client
+        self._client = client  # type: Client
 
         # known identifiers of this agent's owner
         self.ownerIdentifiers = {}  # type: Dict[Identifier, Identity]
+
+    @property
+    def client(self):
+        return self._client
+
+    @client.setter
+    def client(self, client):
+        self._client = client
 
     def name(self):
         pass
@@ -186,12 +194,8 @@ class WalletedAgent(Agent):
                  port: int=None):
         super().__init__(name, basedirpath, client, port)
         self._wallet = wallet or Wallet(name)
-        obs = self._wallet.handleIncomingReply
-        if not self.client.hasObserver(obs):
-            self.client.registerObserver(obs)
-        self._wallet.pendSyncRequests()
-        prepared = self._wallet.preparePending()
-        self.client.submitReqs(*prepared)
+        if self.client:
+            self.syncClient()
         self.loop = asyncio.get_event_loop()
         self.msgHandlers = {
             PING: self._handlePing,
@@ -204,6 +208,14 @@ class WalletedAgent(Agent):
             EVENT: self._eventHandler,
             CLAIM_PROOF_STATUS: self.handleClaimProofStatus
         }
+
+    def syncClient(self):
+        obs = self._wallet.handleIncomingReply
+        if not self.client.hasObserver(obs):
+            self.client.registerObserver(obs)
+        self._wallet.pendSyncRequests()
+        prepared = self._wallet.preparePending()
+        self.client.submitReqs(*prepared)
 
     @property
     def wallet(self) -> Wallet:
@@ -340,6 +352,7 @@ class WalletedAgent(Agent):
             except SignatureRejected:
                 self.notifyMsgListener("Signature rejected")
                 return
+        self.notifyMsgListener("Signature accepted.")
         handler = self.msgHandlers.get(typ)
         if handler:
             # TODO we should verify signature here
@@ -403,7 +416,7 @@ class WalletedAgent(Agent):
         if li:
             # TODO: Show seconds took to respond
             self.notifyMsgListener("Response from {}:".format(li.name))
-            self.notifyMsgListener("    Signature accepted.")
+            # self.notifyMsgListener("    Signature accepted.")
             self.notifyMsgListener("    Trust established.")
             alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
             if alreadyAccepted:
@@ -431,7 +444,7 @@ class WalletedAgent(Agent):
 
     def _handleReqClaimResponse(self, msg):
         body, (frm, ha) = msg
-        self.notifyMsgListener("Signature accepted.")
+        # self.notifyMsgListener("Signature accepted.")
         identifier = body.get(IDENTIFIER)
         claim = body[DATA]
         self.notifyMsgListener("Received {}.\n".format(claim[NAME]))

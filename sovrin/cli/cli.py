@@ -359,19 +359,23 @@ class SovrinCli(PlenumCli):
             self.activeWallet.pendSyncRequests()
             prepared = self.activeWallet.preparePending()
             client.submitReqs(*prepared)
+
+        # If agent was created before the user connected to a test environment
+        if self._agent and self._agent.client is None:
+            self._agent.client = client
         return client
 
     @property
     def agent(self) -> WalletedAgent:
         # Assuming that creation of agent requires connection to Sovrin
-        if not self.activeEnv:
-            self._printNotConnectedEnvMessage()
-            return None
+        # if not self.activeEnv:
+        #     self._printNotConnectedEnvMessage()
+        #     return None
         if self._agent is None:
             _, port = self.nextAvailableClientAddr()
             self._agent = WalletedAgent(name=randomString(6),
                                         basedirpath=self.basedirpath,
-                                        client=self.activeClient,
+                                        client=self.activeClient if self.activeEnv else None,
                                         wallet=self.activeWallet,
                                         port=port)
             self._agent.registerEventListener(EVENT_NOTIFY_MSG, self._printMsg)
@@ -877,6 +881,8 @@ class SovrinCli(PlenumCli):
                 givenFilePath = matchedVars.get('file_path')
                 filePath = SovrinCli._getFilePath(givenFilePath)
                 try:
+                    # TODO: Shouldn't just be the wallet be involved in loading
+                    # an invitation.
                     link = self.agent.loadInvitationFile(filePath)
                     self._printShowAndAcceptLinkUsage(link.name)
                 except (FileNotFoundError, TypeError):
@@ -944,8 +950,8 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
-    def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
-                                       link: Link, **kwargs):
+    def _syncLinkPostEndPointRetrieval(self, postSync,
+                                       link: Link, reply, err, **kwargs):
         if err:
             self.print('Error occurred: {}'.format(err))
             return True
@@ -996,8 +1002,9 @@ class SovrinCli(PlenumCli):
         op[NONCE] = link.invitationNonce
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
-        ip, port = link.remoteEndPoint.split(":")
-        self.sendToAgent(op, (ip, int(port)))
+        # ip, port = link.remoteEndPoint.split(":")
+        # self.sendToAgent(op, (ip, int(port)))
+        self.sendToAgent(op, link.remoteEndPoint)
 
     def sendReqClaim(self, reply, error, link, claimDefKey):
         name, version, origin = claimDefKey
