@@ -23,13 +23,35 @@ from sovrin.test.agent.acme import runAcme
 from sovrin.test.agent.faber import runFaber
 from sovrin.test.agent.helper import ensureAgentsConnected
 from sovrin.test.helper import createNym, faberAddedClaimDefAndIssuerKeys, \
-    addAttributeAndCheck
+    addAttributeAndCheck, getStewardConnectedToPool
+from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
+    tdirWithDomainTxns, genesisTxns
+from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 
 @pytest.fixture(scope="module")
 def emptyLooper():
     with Looper() as l:
         yield l
+
+
+@pytest.fixture(scope="module")
+def stewardAndWallet(gennedTxnPoolNodeSet, emptyLooper, tdirWithDomainTxns,
+                     poolTxnStewardData):
+    steward, wallet = getStewardConnectedToPool(emptyLooper,
+                                                tdirWithDomainTxns,
+                                                poolTxnStewardData)
+    return steward, wallet
+
+
+@pytest.fixture(scope="module")
+def steward(stewardAndWallet):
+    return stewardAndWallet[0]
+
+
+@pytest.fixture(scope="module")
+def stewardWallet(stewardAndWallet):
+    return stewardAndWallet[1]
 
 
 @pytest.fixture(scope="module")
@@ -63,12 +85,6 @@ def acmeWallet():
 
 
 @pytest.fixture(scope="module")
-def acmeAdded(genned, looper, steward, stewardWallet, acmeWallet):
-    createNym(looper, acmeWallet.defaultId, steward, stewardWallet,
-              role=SPONSOR)
-
-
-@pytest.fixture(scope="module")
 def agentBuilder(tdirWithPoolTxns):
     def _(wallet, basedir=None):
         basedir = basedir or tdirWithPoolTxns
@@ -94,17 +110,17 @@ def aliceAgent(aliceWallet, agentBuilder):
 
 
 @pytest.fixture(scope="module")
-def aliceIsRunning(looper, aliceAgent):
-    looper.add(aliceAgent)
+def aliceIsRunning(emptyLooper, aliceAgent):
+    emptyLooper.add(aliceAgent)
     return aliceAgent
 
 
 @pytest.fixture(scope="module")
-def aliceAgentConnected(genned,
+def aliceAgentConnected(gennedTxnPoolNodeSet,
                         aliceAgent,
                         aliceIsRunning,
-                        looper):
-    looper.run(
+                        emptyLooper):
+    emptyLooper.run(
         eventually(
             assertFunc, aliceAgent.client.isReady))
     return aliceAgent
@@ -120,38 +136,6 @@ def acmeAgentPort():
     return genHa()[1]
 
 
-# @pytest.fixture(scope="module")
-# def faberAdded(genned, looper, steward, stewardWallet, faberWallet):
-#     createNym(looper, faberWallet.defaultId, steward, stewardWallet,
-#               role=SPONSOR)
-
-
-@pytest.fixture(scope="module")
-def faberAdded(genned,
-               steward,
-               stewardWallet,
-               looper,
-               faberAgent):
-
-    createNym(looper,
-              faberAgent.wallet.defaultId,
-              steward,
-              stewardWallet,
-              role=SPONSOR)
-
-    ep = ':'.join(str(_) for _ in faberAgent.endpoint.ha)
-    attributeData = json.dumps({ENDPOINT: ep})
-
-    # TODO Faber Agent should be doing this!
-    attrib = Attribute(name='test attribute',
-                       origin=stewardWallet.defaultId,
-                       value=attributeData,
-                       dest=faberAgent.wallet.defaultId,
-                       ledgerStore=LedgerStore.RAW)
-    addAttributeAndCheck(looper, steward, stewardWallet, attrib)
-    return attrib
-
-
 @pytest.fixture(scope="module")
 def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet):
     agent = runFaber(faberWallet.name, faberWallet,
@@ -162,8 +146,21 @@ def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet):
 
 
 @pytest.fixture(scope="module")
-def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
-                   faberWallet, faberAdded, faberAgent):
+def faberAdded(gennedTxnPoolNodeSet,
+               steward,
+               stewardWallet,
+               emptyLooper,
+            faberAgentPort,
+               faberAgent):
+
+    attrib = createAgentAndAddEndpoint(emptyLooper, faberAgent.wallet.defaultId,
+                                       faberAgentPort, steward, stewardWallet)
+    return attrib
+
+
+@pytest.fixture(scope="module")
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet, faberAdded,
+                   faberAgent):
     faber = faberAgent
     faber.addKeyIfNotAdded()
     faberWallet.pendSyncRequests()
@@ -181,14 +178,31 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
 
 
 @pytest.fixture(scope="module")
-def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
-                  acmeWallet):
-    acmeWallet.addSigner(signer=SimpleSigner(
-        seed=b'Acme0000000000000000000000000000'))
-    acme = runAcme(acmeWallet.name, acmeWallet,
+def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet):
+    agent = runAcme(acmeWallet.name, acmeWallet,
                      basedirpath=tdirWithPoolTxns,
                      port=acmeAgentPort,
-                     startRunning=False)
+                     startRunning=False, bootstrap=False)
+    agent.addKeyIfNotAdded()
+    return agent
+
+
+@pytest.fixture(scope="module")
+def acmeAdded(gennedTxnPoolNodeSet,
+               steward,
+               stewardWallet,
+               emptyLooper,
+            acmeAgentPort,
+               acmeAgent):
+    attrib = createAgentAndAddEndpoint(emptyLooper, acmeAgent.wallet.defaultId,
+                                       acmeAgentPort, steward, stewardWallet)
+    return attrib
+
+
+@pytest.fixture(scope="module")
+def acmeIsRunning(tdirWithPoolTxns, emptyLooper, acmeAgent, acmeWallet,
+                  acmeAdded):
+    acme = acmeAgent
     acmeWallet.pendSyncRequests()
     prepared = acmeWallet.preparePending()
     acme.client.submitReqs(*prepared)
@@ -236,8 +250,8 @@ def acmeNonceForAlice():
 @pytest.fixture(scope="module")
 def aliceAcceptedFaber(faberIsRunning, faberNonceForAlice, faberAdded,
                        aliceIsRunning, emptyLooper,
-                       aliceInvitationLoaded,
-                       aliceInvitationLinkSynced):
+                       aliceFaberInvitationLoaded,
+                       aliceFaberInvitationLinkSynced):
     """
     Faber creates a Link object, generates a link invitation file.
     Start FaberAgent
@@ -253,48 +267,68 @@ def aliceAcceptedFaber(faberIsRunning, faberNonceForAlice, faberAdded,
 
 @pytest.fixture(scope="module")
 def faberInvitation():
-    sampledir = os.path.dirname(sample.__file__)
-    filename = os.path.join(sampledir, 'faber-invitation.sovrin')
-    return filename
+    return getInvitationFile('faber-invitation.sovrin')
 
 
 @pytest.fixture(scope="module")
-def aliceInvitationLoaded(aliceAgent, faberInvitation):
-    link = aliceAgent.loadInvitationFile(faberInvitation)
-    assert link
+def acmeInvitation():
+    return getInvitationFile('acme-job-application.sovrin')
+
+
+@pytest.fixture(scope="module")
+def aliceFaberInvitationLoaded(aliceAgent, faberInvitation):
+    link = agentInvitationLoaded(aliceAgent, faberInvitation)
     assert link.name == 'Faber College'
     return link
 
 
 @pytest.fixture(scope="module")
-def aliceInvitationLinkSynced(aliceInvitationLoaded,
+def aliceFaberInvitationLinkSynced(aliceFaberInvitationLoaded,
                               aliceAgentConnected,
                               aliceAgent: WalletedAgent,
-                              looper,
+                              emptyLooper,
                               faberAdded
                               ):
-    done = False
-
-    def cb(reply, err):
-        nonlocal done
-        assert reply
-        assert not err
-        done = True
-
-    def checkDone():
-        assert done
-
-    aliceAgent.sync(aliceInvitationLoaded.name, cb)
-    looper.run(eventually(checkDone))
-
-    link = aliceAgent.wallet.getLink('Faber College', required=True)
-    assert link
-    ep = link.remoteEndPoint
-    assert ep
-    assert len(ep) == 2
+    agentInvitationLinkSynced(aliceAgent, aliceFaberInvitationLoaded.name,
+                              emptyLooper)
 
 
-def checkAcceptInvitation(looper,
+@pytest.fixture(scope="module")
+def aliceAcmeInvitationLoaded(aliceAgent, acmeInvitation):
+    link = agentInvitationLoaded(aliceAgent, acmeInvitation)
+    assert link.name == 'Acme Corp'
+    return link
+
+
+@pytest.fixture(scope="module")
+def aliceAcmeInvitationLinkSynced(aliceAcmeInvitationLoaded,
+                              aliceAgentConnected,
+                              aliceAgent: WalletedAgent,
+                              emptyLooper,
+                            acmeAdded
+                              ):
+    agentInvitationLinkSynced(aliceAgent, aliceAcmeInvitationLoaded.name,
+                              emptyLooper)
+
+
+@pytest.fixture(scope="module")
+def aliceAcceptedAcme(acmeIsRunning, acmeNonceForAlice, acmeAdded,
+                       aliceIsRunning, emptyLooper,
+                      aliceAcmeInvitationLinkSynced):
+    """
+    Faber creates a Link object, generates a link invitation file.
+    Start FaberAgent
+    Start AliceAgent and send a ACCEPT_INVITE to FaberAgent.
+    """
+
+    checkAcceptInvitation(emptyLooper,
+                          acmeNonceForAlice,
+                          aliceIsRunning,
+                          acmeIsRunning,
+                          linkName='Acme Corp')
+
+
+def checkAcceptInvitation(emptyLooper,
                           nonce,
                           userAgent: WalletedAgent,
                           agentIsRunning,
@@ -307,7 +341,7 @@ def checkAcceptInvitation(looper,
     a = agent  # type: WalletedAgent
 
     userAgent.connectTo(linkName)
-    ensureAgentsConnected(looper, userAgent, agent)
+    ensureAgentsConnected(emptyLooper, userAgent, agent)
 
     userAgent.acceptInvitation(linkName)
 
@@ -322,6 +356,59 @@ def checkAcceptInvitation(looper,
         assert link.remoteIdentifier == userAgent.wallet.defaultId
         assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
 
-    looper.run(eventually(chk))
+        emptyLooper.run(eventually(chk))
 
 
+def createAgentAndAddEndpoint(looper, agentNym, agentPort, steward,
+                              stewardWallet):
+    createNym(looper,
+              agentNym,
+              steward,
+              stewardWallet,
+              role=SPONSOR)
+    ep = '127.0.0.1:{}'.format(agentPort)
+    attributeData = json.dumps({ENDPOINT: ep})
+
+    # TODO Faber Agent should be doing this!
+    attrib = Attribute(name='{}_endpoint'.format(agentNym),
+                       origin=stewardWallet.defaultId,
+                       value=attributeData,
+                       dest=agentNym,
+                       ledgerStore=LedgerStore.RAW)
+    addAttributeAndCheck(looper, steward, stewardWallet, attrib)
+    return attrib
+
+
+def getInvitationFile(fileName):
+    sampleDir = os.path.dirname(sample.__file__)
+    return os.path.join(sampleDir, fileName)
+
+
+def agentInvitationLoaded(agent, invitaition):
+    link = agent.loadInvitationFile(invitaition)
+    assert link
+    return link
+
+
+def agentInvitationLinkSynced(agent,
+                              linkName,
+                              looper):
+    done = False
+
+    def cb(reply, err):
+        nonlocal done
+        assert reply
+        assert not err
+        done = True
+
+    def checkDone():
+        assert done
+
+    agent.sync(linkName, cb)
+    looper.run(eventually(checkDone))
+
+    link = agent.wallet.getLink(linkName, required=True)
+    assert link
+    ep = link.remoteEndPoint
+    assert ep
+    assert len(ep) == 2

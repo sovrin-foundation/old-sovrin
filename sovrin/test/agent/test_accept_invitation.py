@@ -14,11 +14,11 @@ def testFaberCreateLink(faberLinkAdded):
     pass
 
 
-def testAliceLoadsInvitation(aliceInvitationLoaded):
+def testAliceLoadsFaberInvitation(aliceFaberInvitationLoaded):
     pass
 
 
-def testAliceSyncsInvitationLink(aliceInvitationLinkSynced):
+def testAliceSyncsFaberInvitationLink(aliceFaberInvitationLinkSynced):
     pass
 
 
@@ -34,13 +34,18 @@ def testAliceAcceptFaberInvitation(aliceAcceptedFaber):
     pass
 
 
-def testAliceAcceptAcmeInvitation(acmeIsRunning, acmeNonceForAlice,
-                         aliceIsRunning, emptyLooper):
+# def testAliceAcceptAcmeInvitation(acmeIsRunning, acmeNonceForAlice,
+#                          aliceIsRunning, emptyLooper,
+#                                   aliceAcmeInvitationLinkSynced):
+#
+#     checkAcceptInvitation(emptyLooper,
+#                           acmeNonceForAlice,
+#                           aliceIsRunning,
+#                           acmeIsRunning, "Acme Corp")
 
-    checkAcceptInvitation(emptyLooper,
-                          acmeNonceForAlice,
-                          aliceIsRunning,
-                          acmeIsRunning)
+
+def testAliceAcceptAcmeInvitation(aliceAcceptedAcme):
+    pass
 
 
 @pytest.mark.skip("Not yet implemented")

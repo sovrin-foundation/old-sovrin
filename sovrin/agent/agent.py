@@ -760,7 +760,8 @@ class WalletedAgent(Agent):
 
         if DATA in reply and reply[DATA]:
             data = json.loads(reply[DATA])
-            link.remoteEndPoint = data.get(ENDPOINT)
+            ip, port = data.get(ENDPOINT).split(":")
+            link.remoteEndPoint = (ip, int(port))
 
         link.linkLastSynced = datetime.now()
         self.notifyMsgListener("    Link {} synced".format(link.name))

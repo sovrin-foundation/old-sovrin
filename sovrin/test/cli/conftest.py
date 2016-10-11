@@ -500,6 +500,7 @@ def rcvdClaimOut():
             "status: {attr-status}"
     ]
 
+
 @pytest.fixture(scope="module")
 def showClaimOut(nextCommandsToTryUsageLine):
     return ["Found claim {name} in link {inviter}",
@@ -519,6 +520,7 @@ def showClaimOut(nextCommandsToTryUsageLine):
 @pytest.fixture(scope="module")
 def showLinkWithClaimReqOut():
     return ["Claim Requests: {claim-requests}"]
+
 
 @pytest.fixture(scope="module")
 def showLinkWithAvailableClaimsOut():

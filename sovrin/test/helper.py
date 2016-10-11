@@ -9,6 +9,7 @@ from typing import Dict
 from typing import Iterable, Union, Tuple
 
 import pyorient
+from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
@@ -549,3 +550,17 @@ def faberAddedClaimDefAndIssuerKeys(looper, faberAgent):
 
     looper.run(eventually(chk, retryWait=1, timeout=10))
     return claimDef.seqNo, ipk.seqNo
+
+
+def getStewardConnectedToPool(looper, tdirWithDomainTxns,
+                           poolTxnStewardData):
+    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
+                                              tdirWithDomainTxns,
+                                              clientClass=TestClient,
+                                              walletClass=Wallet)
+    client.registerObserver(wallet.handleIncomingReply)
+
+    looper.add(client)
+    looper.run(client.ensureConnectedToNodes())
+    makePendingTxnsRequest(client, wallet)
+    return client, wallet
