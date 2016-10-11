@@ -1,19 +1,18 @@
 import os
 import random
 
-import sys
 from plenum.common.log import getlogger
-from plenum.common.txn import NAME
+from plenum.common.txn import NAME, VERSION
 
-from anoncreds.test.conftest import staticPrimes
-
+from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
-from sovrin.anon_creds.issuer import AttribType, AttribDef
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 import sovrin.test.random_data as randomData
+
+from anoncreds.test.conftest import staticPrimes
 from sovrin.test.agent.helper import getAgentCmdLineParams
 
 logger = getlogger()
@@ -36,6 +35,8 @@ class AcmeAgent(WalletedAgent):
 
         credDefSeqNo = 12
         issuerSeqNo = 13
+
+        self.availableClaims = []
 
         self._seqNos = {
             ("Job-Certificate", "0.2"): (credDefSeqParam or credDefSeqNo,
@@ -75,21 +76,22 @@ class AcmeAgent(WalletedAgent):
             wallet.addSigner(seed=b'Acme0000000000000000000000000000')
 
     def getAvailableClaimList(self):
-        return []
+        return self.availableClaims
 
-    def getClaimList(self, claimNames=None):
-        allClaims = [{
-            "name": "Job-Certificate",
-            "version": "0.2",
-            "claimDefSeqNo": "<claimDefSeqNo>",
-            "values": {
-                "employee_name": "Alice Gracia",
-                "employee_status": "Permanent",
-                "experience": "3 years",
-                "salary_bracket": "between $50,000 to $100,000"
-            }
-        }]
-        return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
+    def postClaimVerification(self, claimName):
+        if claimName == "Job-Application":
+            self.addAvailableClaimList()
+
+    def addAvailableClaimList(self):
+        claimDefSeqNo, _ = self._seqNos.get(("Job-Certificate", "0.2"))
+        logger.info("TSL: before new addition of claim, total size: {}".format(
+            len(self.availableClaims)))
+        self.availableClaims.append({
+            NAME: "Job-Certificate",
+            VERSION: "0.2",
+            "claimDefSeqNo": claimDefSeqNo
+        })
+        logger.info("TSL: post new addition of claim, total size: {}".format(len(self.availableClaims)))
 
     def addClaimDefsToWallet(self):
         name, version = "Job-Certificate", "0.2"

@@ -45,8 +45,8 @@ class ThriftAgent(WalletedAgent):
     def getAvailableClaimList(self):
         return []
 
-    def getClaimList(self, claimNames=None):
-        return []
+    def postClaimVerification(self, claimName):
+        pass
 
     def addClaimDefsToWallet(self):
         pass

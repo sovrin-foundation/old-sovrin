@@ -33,7 +33,7 @@ from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
-    ACCEPT_INVITE, CLAIM_PROOF, CLAIM_PROOF_STATUS
+    ACCEPT_INVITE, CLAIM_PROOF, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
@@ -190,7 +190,8 @@ class WalletedAgent(Agent):
             REQUEST_CLAIM: self._reqClaim,
             CLAIM_PROOF: self.verifyClaimProof,
             EVENT: self._eventHandler,
-            CLAIM_PROOF_STATUS: self.handleClaimProofStatus
+            CLAIM_PROOF_STATUS: self.handleClaimProofStatus,
+            NEW_AVAILABLE_CLAIMS: self._handleNewAvailableClaimsDataResponse
         }
 
     @property
@@ -200,9 +201,6 @@ class WalletedAgent(Agent):
     @wallet.setter
     def wallet(self, wallet):
         self._wallet = wallet
-
-    def getClaimList(self, claimNames=None):
-        raise NotImplementedError
 
     def getAvailableClaimList(self):
         raise NotImplementedError
@@ -269,6 +267,14 @@ class WalletedAgent(Agent):
         return WalletedAgent.getCommonMsg(AVAIL_CLAIM_LIST, data)
 
     @staticmethod
+    def createNewAvailableClaimsMsg(claimLists):
+        data = {
+            CLAIMS_LIST_FIELD: claimLists
+        }
+        return WalletedAgent.getCommonMsg(NEW_AVAILABLE_CLAIMS, data)
+
+
+    @staticmethod
     def createClaimMsg(claim):
         return WalletedAgent.getCommonMsg(CLAIM, claim)
 
@@ -301,6 +307,17 @@ class WalletedAgent(Agent):
         self.notifyMsgListener("Error ({}) occurred while processing this "
                              "msg: {}".format(body[DATA], body[REQ_MSG]))
 
+    def _sendGetClaimDefRequests(self, availableClaims, postFetchCredDef=None):
+        for name, version, origin in availableClaims:
+            req = self.wallet.requestClaimDef((name, version, origin),
+                                              sender=self.wallet.defaultId)
+
+            self.client.submitReqs(req)
+
+            if postFetchCredDef:
+                self.loop.call_later(.2, ensureReqCompleted, self.loop,
+                                 req.reqId, self.client, postFetchCredDef)
+
     def _fetchAllAvailableClaimsInWallet(self, li, availableClaims):
 
         fetchedCount = 0
@@ -310,14 +327,7 @@ class WalletedAgent(Agent):
             fetchedCount += 1
             postAllFetched()
 
-        for name, version, origin in availableClaims:
-            req = self.wallet.requestClaimDef((name, version, origin),
-                                              sender=self.wallet.defaultId)
-
-            self.client.submitReqs(req)
-
-            self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client, postFetchCredDef)
+        self._sendGetClaimDefRequests(availableClaims, postFetchCredDef)
 
         # TODO: Find a better name
         def postAllFetched():
@@ -328,6 +338,49 @@ class WalletedAgent(Agent):
                         [n for n, _, _ in availableClaims])))
                 self._syncLinkPostAvailableClaimsRcvd(li, availableClaims)
         postAllFetched()
+
+    def _handleNewAvailableClaimsDataResponse(self, msg):
+        body, (frm, ha) = msg
+        logger.info("TSL: new available claims response received: {}".format(msg))
+        isVerified = self._isVerified(body)
+        logger.info(
+            "TSL: new available claims response verified result: {}".format(isVerified))
+        if isVerified:
+            identifier = body.get(IDENTIFIER)
+            li = self._getLinkByTarget(getCryptonym(identifier))
+            logger.info(
+                "TSL: new available claims response link: {}".format(li.name))
+            if li:
+                newAvailableClaims = self._getNewAvailableClaims(
+                    li, body[DATA][CLAIMS_LIST_FIELD])
+                logger.info(
+                    "TSL: new available claims response NAC: {}".format(
+                        newAvailableClaims))
+                if newAvailableClaims:
+                    li.availableClaims.extend(newAvailableClaims)
+                    self._sendGetClaimDefRequests(newAvailableClaims)
+            else:
+                self.notifyMsgListener("No matching link found")
+
+    def _getNewAvailableClaims(self, li, rcvdAvailableClaims):
+        availableClaims = []
+        for cl in rcvdAvailableClaims:
+            if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
+                name, version = cl[NAME], cl[VERSION]
+                availableClaims.append((name, version,
+                                        li.remoteIdentifier))
+                # TODO: Handle case where agent can send claims in batches.
+                # So consider a scenario where first time an accept invite is
+                # sent, agent sends 2 claims and the second time accept
+                # invite is sent, agent sends 3 claims.
+
+        return availableClaims
+
+    def _handleAvailableClaimListResponse(self, li, rcvdAvailableClaims):
+        newAvailableClaims = self._getNewAvailableClaims(li, rcvdAvailableClaims)
+        if newAvailableClaims:
+            li.availableClaims.extend(newAvailableClaims)
+        self._fetchAllAvailableClaimsInWallet(li, newAvailableClaims)
 
     def _handleAcceptInviteResponse(self, msg):
         body, (frm, ha) = msg
@@ -349,19 +402,8 @@ class WalletedAgent(Agent):
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
                 li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                availableClaims = []
-                for cl in body[DATA][CLAIMS_LIST_FIELD]:
-                    if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
-                        name, version = cl[NAME], cl[VERSION]
-                        availableClaims.append((name, version,
-                                                li.remoteIdentifier))
-                # TODO: Handle case where agent can send claims in batches.
-                # So consider a scenario where first time an accept invite is
-                # sent, agent sends 2 claims and the second time accept
-                # invite is sent, agent sends 3 claims.
-                if availableClaims:
-                    li.availableClaims.extend(availableClaims)
-                self._fetchAllAvailableClaimsInWallet(li, availableClaims)
+                self._handleAvailableClaimListResponse(
+                    li, body[DATA][CLAIMS_LIST_FIELD])
             else:
                 self.notifyMsgListener("No matching link found")
 
@@ -492,13 +534,25 @@ class WalletedAgent(Agent):
                 proof = ProofBuilder.prepareProofFromDict({
                     'issuer': data[ORIGIN], 'proof': proof
                 })
+                claimName = body[NAME]
                 ipk = {
                     data[ORIGIN]: IssuerKey(data.get(REF), **pk)
                 }
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
-                logger.debug("ip, proof, nonce, encoded, revealed is {} {} {} {} {}".
+                logger.info("claim {} verification result: {}".
+                            format(claimName, result))
+
+                # TODO: Following line is temporary and need to remove
+                # result=True
+
+                if result:
+                    self.postClaimVerification(claimName)
+                    self.sendNewAvailableClaimsData(frm, link)
+
+                logger.debug("ip, proof, nonce, encoded, revealed is "
+                             "{} {} {} {} {}".
                              format(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs))
@@ -589,6 +643,14 @@ class WalletedAgent(Agent):
 
     def getAttributes(self, nonce):
         raise NotImplementedError
+
+    def postClaimVerification(self, claimName):
+        raise NotImplementedError
+
+    def sendNewAvailableClaimsData(self, frm, link):
+        resp = self.createNewAvailableClaimsMsg(self.getAvailableClaimList())
+        logger.info("TSL: new available claims response: {}".format(resp))
+        self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
     def addClaimDefs(self, name, version, attrNames,
                              staticPrime, credDefSeqNo, issuerKeySeqNo):

@@ -63,6 +63,10 @@ def aliceIsRunning(emptyLooper, tdirWithPoolTxns, aliceWallet):
 def faberAgentPort():
     return genHa()[1]
 
+@pytest.fixture(scope="module")
+def thriftAgentPort():
+    return genHa()[1]
+
 
 @pytest.fixture(scope="module")
 def acmeAgentPort():

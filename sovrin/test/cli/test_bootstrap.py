@@ -137,7 +137,8 @@ def philCli(be, do, philCLI):
 def faberAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
                      nymAddedOut, faberMap):
     be(philCli)
-    do('connect test',              within=3,
+    if not philCli._isConnectedToAnyEnv():
+        do('connect test',          within=3,
                                     expect=connectedToTest, mapper=faberMap)
 
     do('send NYM dest={target} role=SPONSOR',
@@ -201,7 +202,6 @@ def testShowFaberInvite(be, do, aliceCli, faberMap):
 
     do('show {invite}',             expect=inviteContents,
                                     mapper=faberMap)
-
 
 def testLoadInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
     be(aliceCli)
@@ -339,17 +339,20 @@ def testEndpointAddedForFaber(faberWithEndpointAdded):
     pass
 
 
+def syncInvite(be, do, userCli, expectedMsgs, mapping):
+    be(userCli)
+
+    do('sync {inviter}',            within=2,
+                                    expect=expectedMsgs,
+                                    mapper=mapping)
+
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI,
                                   faberInviteSyncedWithoutEndpoint,
                                   faberWithEndpointAdded,
                                   syncLinkOutWithEndpoint,
                                   poolNodesStarted):
-    be(aliceCLI)
-
-    do('sync {inviter}',            within=2,
-                                    expect=syncLinkOutWithEndpoint,
-                                    mapper=faberMap)
+    syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, faberMap)
     return aliceCLI
 
 
@@ -476,13 +479,14 @@ def testShowClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
                                     mapper=faberMap)
 
 
-def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap, showClaimOut,
-                                   aliceAcceptedFaberInvitation):
+def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
+                            showTranscriptClaimOut,
+                            aliceAcceptedFaberInvitation):
 
     be(aliceCli)
 
     do("show claim {name}",
-                                    expect=showClaimOut,
+                                    expect=showTranscriptClaimOut,
                                     mapper=transcriptClaimMap)
 
 
@@ -527,7 +531,7 @@ def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
     aliceSigner = aliceCli.activeWallet._getIdData(
         aliceCli.activeWallet.defaultId).signer
 
-    msg = WalletedAgent.createClaimMsg(faber.getClaimList())
+    msg = WalletedAgent.createClaimMsg(faber.getAvailableClaimList())
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
 
     reqClaimResp = getSignedRespMsg(msg, aliceSigner)
@@ -539,7 +543,7 @@ def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
 def aliceRequestedFaberTranscriptClaim(be, do, aliceCli, faberCli,
                                        faberAddedByPhil,
                                        faberLinkAdded,
-                                    aliceAcceptedFaberInvitation
+                                       aliceAcceptedFaberInvitation
                                        ):
     be(aliceCli)
     do("request claim Transcript",  within=5,
@@ -554,10 +558,11 @@ def testAliceReqClaim(aliceRequestedFaberTranscriptClaim):
 
 def testShowFaberClaimPostReqClaim(be, do, aliceCli,
                                    aliceRequestedFaberTranscriptClaim,
-                                   transcriptClaimValueMap, rcvdClaimOut):
+                                   transcriptClaimValueMap,
+                                   rcvdTranscriptClaimOut):
     be(aliceCli)
     do("show claim {name}",
-                                    expect=rcvdClaimOut,
+                                    expect=rcvdTranscriptClaimOut,
                                     mapper=transcriptClaimValueMap)
 
 
@@ -736,7 +741,8 @@ def testShowJobApplicationClaimReqAfterSetAttr(do,
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
-                                faberIsRunning, faberInviteSyncedWithoutEndpoint):
+                                faberIsRunning,
+                                faberInviteSyncedWithoutEndpoint):
 
     msg = {
         TYPE: ACCEPT_INVITE,
@@ -780,14 +786,85 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
                                                 format(msg)])
 
 
-def testAliceSendClaimProofToAcme(be, do, aliceCli, acmeMap,
-                                    aliceAcceptedAcmeJobInvitation,
-                                  aliceRequestedFaberTranscriptClaim,
-                                  aliceSelfAttestsAttributes):
-    be(aliceCli)
+def sendClaim(be, do, userCli, agentMap):
+    be(userCli)
 
-    do("send claim {claim-req-to-match} to {inviter}",  within=7,
-                                expect=["Your claim {claim-req-to-match} "
-                                        "{claim-ver-req-to-show} has been received"
-                                        " and verified"],
-                                mapper=acmeMap)
+    do("send claim {claim-req-to-match} to {inviter}",
+                                    within=7,
+                                    expect=["Your claim {claim-req-to-match} "
+                                            "{claim-ver-req-to-show} has been "
+                                            "received and verified"],
+                                    mapper=agentMap)
+
+
+# @pytest.fixture(scope="module")
+# def jobApplicationClaimSent(be, do, aliceCli, acmeMap,
+#                                     aliceAcceptedAcmeJobInvitation,
+#                                   aliceRequestedFaberTranscriptClaim,
+#                                   aliceSelfAttestsAttributes):
+#     sendClaim(be, do, aliceCli, acmeMap)
+#
+#
+# def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
+#     pass
+#
+#
+# def testShowAcmeLinkAfterClaimSent(be, do, aliceCli, acmeMap,
+#                                    jobApplicationClaimSent,
+#                                    showAcceptedLinkWithAvailableClaimsOut):
+#
+#     be(aliceCli)
+#     mapping = {}
+#     mapping.update(acmeMap)
+#     mapping["claims"] = "Job-Certificate"
+#
+#     acmeMap.update(acmeMap)
+#     do("show link {inviter}",       expect=showAcceptedLinkWithAvailableClaimsOut,
+#                                     mapper=mapping)
+#
+#
+# def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
+#                          showJobCertClaimOut,
+#                          jobApplicationClaimSent):
+#
+#     be(aliceCli)
+#
+#     do("show claim {name}",
+#                                     expect=showJobCertClaimOut,
+#                                     mapper=jobCertificateClaimMap)
+#
+#
+# def testReqJobCertClaim(be, do, aliceCli,
+#                         jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
+#                         jobApplicationClaimSent):
+#     be(aliceCli)
+#     inviter = jobCertificateClaimMap["inviter"]
+#     links = aliceCli.activeWallet.getMatchingLinks(inviter)
+#     assert len(links) == 1
+#     faberId = links[0].remoteIdentifier
+#     name, version = jobCertificateClaimMap["name"], \
+#                     jobCertificateClaimMap["version"]
+#     aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
+#     do("request claim {name}",      within=7,
+#                                     expect=reqClaimOut1,
+#                                     mapper=jobCertificateClaimMap)
+#
+#
+# def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
+#                                   jobApplicationClaimSent,
+#                                   jobCertificateClaimValueMap,
+#                                   rcvdJobCertClaimOut):
+#     be(aliceCli)
+#     do("show claim {name}",
+#                                     expect=rcvdJobCertClaimOut,
+#                                     mapper=jobCertificateClaimValueMap)
+#
+#
+#
+# @pytest.fixture(scope="module")
+# def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, acmeMap):
+#     be(aliceCli)
+#     do('load {invite}',             expect=loadInviteOut, mapper=acmeMap)
+#     link = aliceCli.activeWallet.getLinkInvitation(acmeMap.get("inviter"))
+#     link.remoteEndPoint = acmeMap.get(ENDPOINT)
+#     return aliceCli

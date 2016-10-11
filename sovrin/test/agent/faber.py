@@ -1,10 +1,8 @@
 import os
 import random
 
-import sys
 from plenum.common.log import getlogger
-from plenum.common.txn import NAME
-from plenum.common.txn import VERSION
+from plenum.common.txn import NAME, VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
@@ -38,6 +36,7 @@ class FaberAgent(WalletedAgent):
         credDefSeqNo = 10
         issuerSeqNo = 11
 
+        self.availableClaims = []
         self._seqNos = {
             ("Transcript", "1.2"): (credDefSeqParam or credDefSeqNo,
                                     issuerSeqNoParam or issuerSeqNo)
@@ -79,30 +78,19 @@ class FaberAgent(WalletedAgent):
             wallet.addSigner(seed=b'Faber000000000000000000000000000')
 
     def getAvailableClaimList(self):
+        return self.availableClaims
+
+    def postClaimVerification(self, claimName):
+        pass
+
+    def initAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()
-        resp = []
         for cd, ik in acl:
-            resp.append({
+            self.availableClaims.append({
                 NAME: cd.name,
                 VERSION: cd.version,
                 "claimDefSeqNo": cd.seqNo
             })
-        return resp
-
-    def getClaimList(self, claimNames=None):
-        allClaims = [{
-            "name": "Transcript",
-            "version": "1.2",
-            "claimDefSeqNo": "<claimDefSeqNo>",
-            "values": {
-                "student_name": "Alice Garcia",
-                "ssn": "123456789",
-                "degree": "Bachelor of Science, Marketing",
-                "year": "2015",
-                "status": "graduated"
-            }
-        }]
-        return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
 
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
@@ -146,6 +134,7 @@ class FaberAgent(WalletedAgent):
         self.addKeyIfNotAdded()
         self.addLinksToWallet()
         self.addClaimDefsToWallet()
+        self.initAvailableClaimList()
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,

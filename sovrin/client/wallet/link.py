@@ -118,19 +118,20 @@ class Link:
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
             optionalLinkItems += "Claim Requests: {}". \
-                format(",".join([cr.name for cr in self.claimProofRequests]))
+                format(", ".join([cr.name for cr in self.claimProofRequests])) \
+                                 + '\n'
 
         if self.availableClaims:
             optionalLinkItems += "Available claims: {}".\
-                format(",".join([name
-                                 for name, _, _ in self.availableClaims]))
+                format(", ".join([name
+                                 for name, _, _ in self.availableClaims])) \
+                                 + '\n'
 
         if self.linkLastSyncNo:
-            optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
+            optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo \
+                                 + '\n'
 
-        fixedEndingLines = \
-            '\n' \
-            'Last synced: ' + linkLastSynced
+        fixedEndingLines = 'Last synced: ' + linkLastSynced
 
         linkItems = fixedLinkItems + optionalLinkItems + fixedEndingLines
         indentedLinkItems = constant.LINK_ITEM_PREFIX.join(

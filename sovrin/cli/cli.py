@@ -278,7 +278,6 @@ class SovrinCli(PlenumCli):
     def _printMsg(self, notifier, msg):
         self.print(msg)
 
-
     def _printSuggestionPostAcceptLink(self, notifier,
                                        availableClaimNames,
                                        claimProofReqsCount):
@@ -1004,7 +1003,6 @@ class SovrinCli(PlenumCli):
 
         self._updateLinkWithLatestInfo(link, reply)
         postSync(link)
-        return True
 
     def _printUsagePostSync(self, link):
         self._printShowAndAcceptLinkUsage(link.name)
