@@ -207,6 +207,7 @@ def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
             ["Invitation acceptance aborted."] + \
             canNotSyncMsg + connectUsage
 
+
 @pytest.fixture(scope="module")
 def usageLine():
     return [USAGE_TEXT]
@@ -472,7 +473,6 @@ def jobCertClaimAttrValueMap():
     return {
         "attr-first_name": "Alice",
         "attr-last_name": "Garcia",
-        "attr-ssn": "123-45-6789",
         "attr-employee_status": "Permanent",
         "attr-experience": "3 years",
         "attr-salary_bracket": "between $50,000 to $100,000"
@@ -498,7 +498,6 @@ def jobCertificateClaimMap():
         "version": "0.2",
         "attr-first_name": "string",
         "attr-last_name": "string",
-        "attr-ssn": "string",
         "attr-employee_status": "string",
         "attr-experience": "string",
         "attr-salary_bracket": "string"
@@ -545,7 +544,6 @@ def rcvdJobCertClaimOut():
             "Attributes:",
             "first_name: {attr-first_name}",
             "last_name: {attr-last_name}",
-            "ssn: {attr-ssn}",
             "employee_status: {attr-employee_status}",
             "experience: {attr-experience}",
             "salary_bracket: {attr-salary_bracket}"
@@ -576,7 +574,6 @@ def showJobCertClaimOut(nextCommandsToTryUsageLine):
             "Attributes:",
             "first_name",
             "last_name",
-            "ssn",
             "employee_status",
             "experience",
             "salary_bracket"
@@ -826,7 +823,7 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
 
     claimDefs = [
         ("Job-Certificate", "0.2",
-         ["first_name", "last_name", "ssn", "employee_status",
+         ["first_name", "last_name", "employee_status",
           "experience", "salary_bracket"])
     ]
     addClaimDefs(emptyLooper, claimDefs, acme, acmeWallet)

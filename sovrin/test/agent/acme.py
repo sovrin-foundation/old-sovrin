@@ -47,7 +47,6 @@ class AcmeAgent(WalletedAgent):
             "57fbf9dc8c8e6acde33de98c6d747b28c": {
                 "first_name": "Alice",
                 "last_name": "Garcia",
-                "ssn": "123-45-6789",
                 "employee_status": "Permanent",
                 "experience": "3 years",
                 "salary_bracket": "between $50,000 to $100,000"
@@ -55,7 +54,6 @@ class AcmeAgent(WalletedAgent):
             "3a2eb72eca8b404e8d412c5bf79f2640": {
                 "first_name": "Carol",
                 "last_name": "Atkinson",
-                "ssn": "987-65-4321",
                 "employee_status": "Permanent",
                 "experience": "2 years",
                 "salary_bracket": "between $60,000 to $90,000"
@@ -63,7 +61,6 @@ class AcmeAgent(WalletedAgent):
             "8513d1397e87cada4214e2a650f603eb": {
                 "first_name": "Frank",
                 "last_name": "Jeffrey",
-                "ssn": "111-22-3333",
                 "employee_status": "Temporary",
                 "experience": "4 years",
                 "salary_bracket": "between $40,000 to $80,000"
@@ -71,7 +68,6 @@ class AcmeAgent(WalletedAgent):
             "810b78be79f29fc81335abaa4ee1c5e8": {
                 "first_name": "Craig",
                 "last_name": "Richards",
-                "ssn": "999-88-7777",
                 "employee_status": "On Contract",
                 "experience": "3 years",
                 "salary_bracket": "between $50,000 to $70,000"
@@ -102,7 +98,7 @@ class AcmeAgent(WalletedAgent):
         name, version = "Job-Certificate", "0.2"
         credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
         staticPrime = staticPrimes().get("prime1")
-        attrNames = ["first_name", "last_name", "ssn", "employee_status",
+        attrNames = ["first_name", "last_name", "employee_status",
                      "experience", "salary_bracket"]
         super().addClaimDefs(name=name,
                                      version=version,
@@ -118,7 +114,6 @@ class AcmeAgent(WalletedAgent):
             attrs = {
                 "first_name": name.split(' ', 1)[0],
                 "last_name": name.split(' ', 1)[1],
-                "ssn": random.choice(randomData.SSN),
                 "employee_status": random.choice(randomData.EMPLOYEE_STATUS),
                 "experience": random.choice(randomData.EXPERIENCE),
                 "salary_bracket": random.choice(randomData.SALARY_BRACKET)
