@@ -213,6 +213,11 @@ class WalletedAgent(Agent):
     def wallet(self, wallet):
         self._wallet = wallet
 
+    @property
+    def lockedMsgs(self):
+        # Msgs for which signature verification is required
+        return CLAIM, AVAIL_CLAIM_LIST, EVENT
+
     def getClaimList(self, claimNames=None):
         raise NotImplementedError
 
@@ -315,7 +320,6 @@ class WalletedAgent(Agent):
 
     def _eventHandler(self, msg):
         body, (frm, ha) = msg
-        self._isVerified(body)
         eventName = body[EVENT_NAME]
         data = body[DATA]
         self.notifyEventListeners(eventName, **data)
@@ -329,7 +333,14 @@ class WalletedAgent(Agent):
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
-        handler = self.msgHandlers.get(body.get(TYPE))
+        typ = body.get(TYPE)
+        if typ in self.lockedMsgs:
+            try:
+                self._isVerified(body)
+            except SignatureRejected:
+                self.notifyMsgListener("Signature rejected")
+                return
+        handler = self.msgHandlers.get(typ)
         if handler:
             # TODO we should verify signature here
             frmHa = self.endpoint.getRemote(frm).ha
@@ -387,82 +398,73 @@ class WalletedAgent(Agent):
 
     def _handleAcceptInviteResponse(self, msg):
         body, (frm, ha) = msg
-        isVerified = self._isVerified(body)
-        if isVerified:
-            identifier = body.get(IDENTIFIER)
-            li = self._getLinkByTarget(getCryptonym(identifier))
-            if li:
-                # TODO: Show seconds took to respond
-                self.notifyMsgListener("Response from {}:".format(li.name))
-                self.notifyMsgListener("    Signature accepted.")
-                self.notifyMsgListener("    Trust established.")
-                alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
-                if alreadyAccepted:
-                    self.notifyMsgListener("    Already accepted.")
-                else:
-                    self.notifyMsgListener("    Identifier created in Sovrin.")
-
-                li.linkStatus = constant.LINK_STATUS_ACCEPTED
-                li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                availableClaims = []
-                for cl in body[DATA][CLAIMS_LIST_FIELD]:
-                    if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
-                        name, version = cl[NAME], cl[VERSION]
-                        availableClaims.append((name, version,
-                                                li.remoteIdentifier))
-                # TODO: Handle case where agent can send claims in batches.
-                # So consider a scenario where first time an accept invite is
-                # sent, agent sends 2 claims and the second time accept
-                # invite is sent, agent sends 3 claims.
-                if availableClaims:
-                    li.availableClaims.extend(availableClaims)
-                self._fetchAllAvailableClaimsInWallet(li, availableClaims)
+        identifier = body.get(IDENTIFIER)
+        li = self._getLinkByTarget(getCryptonym(identifier))
+        if li:
+            # TODO: Show seconds took to respond
+            self.notifyMsgListener("Response from {}:".format(li.name))
+            self.notifyMsgListener("    Signature accepted.")
+            self.notifyMsgListener("    Trust established.")
+            alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
+            if alreadyAccepted:
+                self.notifyMsgListener("    Already accepted.")
             else:
-                self.notifyMsgListener("No matching link found")
+                self.notifyMsgListener("    Identifier created in Sovrin.")
+
+            li.linkStatus = constant.LINK_STATUS_ACCEPTED
+            li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
+            availableClaims = []
+            for cl in body[DATA][CLAIMS_LIST_FIELD]:
+                if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
+                    name, version = cl[NAME], cl[VERSION]
+                    availableClaims.append((name, version,
+                                            li.remoteIdentifier))
+            # TODO: Handle case where agent can send claims in batches.
+            # So consider a scenario where first time an accept invite is
+            # sent, agent sends 2 claims and the second time accept
+            # invite is sent, agent sends 3 claims.
+            if availableClaims:
+                li.availableClaims.extend(availableClaims)
+            self._fetchAllAvailableClaimsInWallet(li, availableClaims)
+        else:
+            self.notifyMsgListener("No matching link found")
 
     def _handleReqClaimResponse(self, msg):
         body, (frm, ha) = msg
-        isVerified = self._isVerified(body)
-        if isVerified:
-            self.notifyMsgListener("Signature accepted.")
-            identifier = body.get(IDENTIFIER)
-            claim = body[DATA]
-            self.notifyMsgListener("Received {}.\n".format(claim[NAME]))
-            li = self._getLinkByTarget(getCryptonym(identifier))
-            if li:
-                name, version, idr = \
-                    claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
-                attributes = claim['attributes']
-                self.wallet.addAttrFrom(idr, attributes)
-                data = body['data']
-                credential = Credential(*(strToCharmInteger(x) for x in
-                                          [data['A'], data['e'],
-                                           data['vprimeprime']]))
+        self.notifyMsgListener("Signature accepted.")
+        identifier = body.get(IDENTIFIER)
+        claim = body[DATA]
+        self.notifyMsgListener("Received {}.\n".format(claim[NAME]))
+        li = self._getLinkByTarget(getCryptonym(identifier))
+        if li:
+            name, version, idr = \
+                claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
+            attributes = claim['attributes']
+            self.wallet.addAttrFrom(idr, attributes)
+            data = body['data']
+            credential = Credential(*(strToCharmInteger(x) for x in
+                                      [data['A'], data['e'],
+                                       data['vprimeprime']]))
 
-                self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
-                                                  data[f.IDENTIFIER.nm]),
-                                                 data[f.IDENTIFIER.nm],
-                                                 credential)
-            else:
-                self.notifyMsgListener("No matching link found")
+            self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
+                                              data[f.IDENTIFIER.nm]),
+                                             data[f.IDENTIFIER.nm],
+                                             credential)
+        else:
+            self.notifyMsgListener("No matching link found")
 
     def _isVerified(self, msg: Dict[str, str]):
         signature = msg.get(f.SIG.nm)
         identifier = msg.get(IDENTIFIER)
-        msgWithoutSig = {}
-        for k, v in msg.items():
-            if k != f.SIG.nm:
-                msgWithoutSig[k] = v
-
-        # TODO This assumes the current key is the cryptonym. This is a BAD ASSUMPTION!!! Sovrin needs to provide the current key.
-        key = cryptonymToHex(identifier) if not isHex(
-            identifier) else identifier
-        isVerified = verifySig(key, signature, msgWithoutSig)
-        if not isVerified:
+        msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
+        # TODO This assumes the current key is the cryptonym. This is a BAD
+        # ASSUMPTION!!! Sovrin needs to provide the current key.
+        if not verifySig(identifier, signature, msgWithoutSig):
             raise SignatureRejected
             # DEPR
             # self.notifyMsgListener("Signature rejected")
-        return isVerified
+        else:
+            return True
 
     def _getLinkByTarget(self, target) -> Link:
         return self.wallet.getLinkInvitationByTarget(target)
@@ -556,7 +558,7 @@ class WalletedAgent(Agent):
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
-
+                # TODO: Why an assert here? A verify can either succeed or not.
                 assert result
                 logger.debug("ip, proof, nonce, encoded, revealed is {} {} {} {} {}".
                              format(ipk, proof, nonce,
@@ -619,8 +621,8 @@ class WalletedAgent(Agent):
         if alreadyAdded:
             sendClaimList()
             self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                                      "    Already accepted",
-                                      link.verkey, frm)
+                                  "    Already accepted",
+                                  link.verkey, frm)
         else:
             reqs = self.wallet.preparePending()
             # Assuming there was only one pending request

@@ -186,8 +186,7 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
 
     claimDef = wallet.getClaimDef(key=claimDefKey)
     if not (claimDef and claimDef.seqNo):
-        req = wallet.requestClaimDef(claimDefKey,
-                                                wallet.defaultId)
+        req = wallet.requestClaimDef(claimDefKey, wallet.defaultId)
         client.submitReqs(req)
         displayer("Getting Claim Definition from Sovrin: {} {}"
                    .format(claimDefKey[0], claimDefKey[1]))

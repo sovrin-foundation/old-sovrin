@@ -44,6 +44,7 @@ def getSampleLinkInvitation():
                "VsXdSmBJ7yEfQBm8bSJuj6/4CRNI39fFul6DcDA=="
     }
 
+
 def prompt_is(prompt):
     def x(cli):
         assert cli.currPromptText == prompt
@@ -535,7 +536,7 @@ def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
 
     reqClaimResp = getSignedRespMsg(msg, aliceSigner)
-    aliceCli.agent._handleReqClaimResponse((reqClaimResp, (None, None)))
+    aliceCli.agent.handleEndpointMessage((reqClaimResp, (None, None)))
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 
@@ -543,7 +544,7 @@ def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
 def aliceRequestedFaberTranscriptClaim(be, do, aliceCli, faberCli,
                                        faberAddedByPhil,
                                        faberLinkAdded,
-                                    aliceAcceptedFaberInvitation
+                                       aliceAcceptedFaberInvitation
                                        ):
     be(aliceCli)
     do("request claim Transcript",  within=5,
