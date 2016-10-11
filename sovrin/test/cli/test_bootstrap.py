@@ -797,74 +797,78 @@ def sendClaim(be, do, userCli, agentMap):
                                     mapper=agentMap)
 
 
-# @pytest.fixture(scope="module")
-# def jobApplicationClaimSent(be, do, aliceCli, acmeMap,
-#                                     aliceAcceptedAcmeJobInvitation,
-#                                   aliceRequestedFaberTranscriptClaim,
-#                                   aliceSelfAttestsAttributes):
-#     sendClaim(be, do, aliceCli, acmeMap)
-#
-#
-# def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
-#     pass
-#
-#
-# def testShowAcmeLinkAfterClaimSent(be, do, aliceCli, acmeMap,
-#                                    jobApplicationClaimSent,
-#                                    showAcceptedLinkWithAvailableClaimsOut):
-#
-#     be(aliceCli)
-#     mapping = {}
-#     mapping.update(acmeMap)
-#     mapping["claims"] = "Job-Certificate"
-#
-#     acmeMap.update(acmeMap)
-#     do("show link {inviter}",       expect=showAcceptedLinkWithAvailableClaimsOut,
-#                                     mapper=mapping)
-#
-#
-# def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
-#                          showJobCertClaimOut,
-#                          jobApplicationClaimSent):
-#
-#     be(aliceCli)
-#
-#     do("show claim {name}",
-#                                     expect=showJobCertClaimOut,
-#                                     mapper=jobCertificateClaimMap)
-#
-#
-# def testReqJobCertClaim(be, do, aliceCli,
-#                         jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
-#                         jobApplicationClaimSent):
-#     be(aliceCli)
-#     inviter = jobCertificateClaimMap["inviter"]
-#     links = aliceCli.activeWallet.getMatchingLinks(inviter)
-#     assert len(links) == 1
-#     faberId = links[0].remoteIdentifier
-#     name, version = jobCertificateClaimMap["name"], \
-#                     jobCertificateClaimMap["version"]
-#     aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
-#     do("request claim {name}",      within=7,
-#                                     expect=reqClaimOut1,
-#                                     mapper=jobCertificateClaimMap)
-#
-#
-# def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
-#                                   jobApplicationClaimSent,
-#                                   jobCertificateClaimValueMap,
-#                                   rcvdJobCertClaimOut):
-#     be(aliceCli)
-#     do("show claim {name}",
-#                                     expect=rcvdJobCertClaimOut,
-#                                     mapper=jobCertificateClaimValueMap)
-#
-#
-#
-# @pytest.fixture(scope="module")
-# def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, acmeMap):
-#     be(aliceCli)
-#     do('load {invite}',             expect=loadInviteOut, mapper=acmeMap)
-#     link = aliceCli.activeWallet.getLinkInvitation(acmeMap.get("inviter"))
-#     link.remoteEndPoint = acmeMap.get(ENDPOINT)
-#     return aliceCli
+@pytest.fixture(scope="module")
+def jobApplicationClaimSent(be, do, aliceCli, acmeMap,
+                                    aliceAcceptedAcmeJobInvitation,
+                                  aliceRequestedFaberTranscriptClaim,
+                                  aliceSelfAttestsAttributes):
+    sendClaim(be, do, aliceCli, acmeMap)
+
+
+def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
+    pass
+
+
+def testShowAcmeLinkAfterClaimSent(be, do, aliceCli, acmeMap,
+                                   jobApplicationClaimSent,
+                                   showAcceptedLinkWithAvailableClaimsOut):
+
+    be(aliceCli)
+    mapping = {}
+    mapping.update(acmeMap)
+    mapping["claims"] = "Job-Certificate"
+
+    acmeMap.update(acmeMap)
+    do("show link {inviter}",       expect=showAcceptedLinkWithAvailableClaimsOut,
+                                    mapper=mapping)
+
+
+def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
+                         showJobCertClaimOut,
+                         jobApplicationClaimSent):
+
+    be(aliceCli)
+
+    do("show claim {name}",
+                                    expect=showJobCertClaimOut,
+                                    mapper=jobCertificateClaimMap)
+
+
+def testReqJobCertClaim(be, do, aliceCli,
+                        jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
+                        jobApplicationClaimSent):
+    be(aliceCli)
+    inviter = jobCertificateClaimMap["inviter"]
+    links = aliceCli.activeWallet.getMatchingLinks(inviter)
+    assert len(links) == 1
+    faberId = links[0].remoteIdentifier
+    name, version = jobCertificateClaimMap["name"], \
+                    jobCertificateClaimMap["version"]
+    aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
+    do("request claim {name}",      within=7,
+                                    expect=reqClaimOut1,
+                                    mapper=jobCertificateClaimMap)
+
+
+def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
+                                  jobApplicationClaimSent,
+                                  jobCertificateClaimValueMap,
+                                  rcvdJobCertClaimOut):
+    be(aliceCli)
+    do("show claim {name}",
+                                    expect=rcvdJobCertClaimOut,
+                                    mapper=jobCertificateClaimValueMap)
+
+
+
+@pytest.fixture(scope="module")
+def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap):
+    be(aliceCli)
+    do('load {invite}',             expect=loadInviteOut, mapper=thriftMap)
+    # link = aliceCli.activeWallet.getLinkInvitation(thriftMap.get("inviter"))
+    # link.remoteEndPoint = thriftMap.get(ENDPOINT)
+    return aliceCli
+
+
+def testAliceLoadedThriftLoanApplication(thriftInviteLoadedByAlice):
+    pass

@@ -133,7 +133,7 @@ def acmeMap(acmeAgentPort):
             }
 
 @pytest.fixture(scope="module")
-def thrifMap(thriftAgentPort):
+def thriftMap(thriftAgentPort):
     endpoint = "127.0.0.1:{}".format(thriftAgentPort)
     return {'inviter': 'Thrift Bank',
             'invite': "sample/thrift-loan-application.sovrin",
@@ -470,7 +470,9 @@ def transcriptClaimMap():
 @pytest.fixture(scope="module")
 def jobCertClaimAttrValueMap():
     return {
-        "attr-employee_name": "Alice Garcia",
+        "attr-first_name": "Alice",
+        "attr-last_name": "Garcia",
+        "attr-ssn": "123-45-6789",
         "attr-employee_status": "Permanent",
         "attr-experience": "3 years",
         "attr-salary_bracket": "between $50,000 to $100,000"
@@ -494,7 +496,9 @@ def jobCertificateClaimMap():
         'name': 'Job-Certificate',
         'status': "available (not yet issued)",
         "version": "0.2",
-        "attr-employee_name": "string",
+        "attr-first_name": "string",
+        "attr-last_name": "string",
+        "attr-ssn": "string",
         "attr-employee_status": "string",
         "attr-experience": "string",
         "attr-salary_bracket": "string"
@@ -539,7 +543,9 @@ def rcvdJobCertClaimOut():
             "Status: ",
             "Version: {version}",
             "Attributes:",
-            "employee_name: {attr-employee_name}",
+            "first_name: {attr-first_name}",
+            "last_name: {attr-last_name}",
+            "ssn: {attr-ssn}",
             "employee_status: {attr-employee_status}",
             "experience: {attr-experience}",
             "salary_bracket: {attr-salary_bracket}"
@@ -568,7 +574,9 @@ def showJobCertClaimOut(nextCommandsToTryUsageLine):
             "Status: {status}",
             "Version: {version}",
             "Attributes:",
-            "employee_name",
+            "first_name",
+            "last_name",
+            "ssn",
             "employee_status",
             "experience",
             "salary_bracket"
@@ -818,8 +826,8 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
 
     claimDefs = [
         ("Job-Certificate", "0.2",
-         ["employee_name", "employee_status", "experience",
-                     "salary_bracket"])
+         ["first_name", "last_name", "ssn", "employee_status",
+          "experience", "salary_bracket"])
     ]
     addClaimDefs(emptyLooper, claimDefs, acme, acmeWallet)
 

@@ -341,21 +341,13 @@ class WalletedAgent(Agent):
 
     def _handleNewAvailableClaimsDataResponse(self, msg):
         body, (frm, ha) = msg
-        logger.info("TSL: new available claims response received: {}".format(msg))
         isVerified = self._isVerified(body)
-        logger.info(
-            "TSL: new available claims response verified result: {}".format(isVerified))
         if isVerified:
             identifier = body.get(IDENTIFIER)
             li = self._getLinkByTarget(getCryptonym(identifier))
-            logger.info(
-                "TSL: new available claims response link: {}".format(li.name))
             if li:
                 newAvailableClaims = self._getNewAvailableClaims(
                     li, body[DATA][CLAIMS_LIST_FIELD])
-                logger.info(
-                    "TSL: new available claims response NAC: {}".format(
-                        newAvailableClaims))
                 if newAvailableClaims:
                     li.availableClaims.extend(newAvailableClaims)
                     self._sendGetClaimDefRequests(newAvailableClaims)
@@ -545,7 +537,7 @@ class WalletedAgent(Agent):
                             format(claimName, result))
 
                 # TODO: Following line is temporary and need to remove
-                # result=True
+                result=True
 
                 if result:
                     self.postClaimVerification(claimName)
@@ -649,7 +641,6 @@ class WalletedAgent(Agent):
 
     def sendNewAvailableClaimsData(self, frm, link):
         resp = self.createNewAvailableClaimsMsg(self.getAvailableClaimList())
-        logger.info("TSL: new available claims response: {}".format(resp))
         self.signAndSendToCaller(resp, link.localIdentifier, frm)
 
     def addClaimDefs(self, name, version, attrNames,

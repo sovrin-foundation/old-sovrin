@@ -10,7 +10,7 @@
       "version": "0.1",
       "attributes": {
             "salary_bracket": "string",
-            "employment_status": "string"
+            "employee_status": "string"
        }
     }, {
       "name": "Loan-Application-KYC",
