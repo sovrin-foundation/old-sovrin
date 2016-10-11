@@ -10,7 +10,7 @@ from sovrin.test.agent.helper import ensureAgentsConnected
 
 
 def testPing(aliceAcceptedFaber, faberIsRunning, aliceAgent):
-    aliceAgent.sendPing('FaberCollege')
+    aliceAgent.sendPing('Faber College')
 
     # msg = WalletedAgent.createAvailClaimListMsg(faber.getAvailableClaimList())
     # sig = aliceCli.activeWallet.signMsg(msg)
