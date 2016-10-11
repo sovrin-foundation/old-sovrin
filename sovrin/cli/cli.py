@@ -280,7 +280,6 @@ class SovrinCli(PlenumCli):
     def _printMsg(self, notifier, msg):
         self.print(msg)
 
-
     def _printSuggestionPostAcceptLink(self, notifier,
                                        availableClaimNames,
                                        claimProofReqsCount):

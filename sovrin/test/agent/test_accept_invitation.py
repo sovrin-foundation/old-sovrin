@@ -47,6 +47,7 @@ def testAddIssuerKeys():
     raise NotImplementedError
 
 
+@pytest.mark.skip("Incomplete implementation")
 def testMultipleAcceptance(aliceAcceptedFaber,
                            faberIsRunning,
                            faberLinkAdded,
