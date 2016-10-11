@@ -611,6 +611,7 @@ class WalletedAgent(Agent):
         # exception handling, separation of concerns, etc.
         if not link:
             return
+        logger.debug("proceeding with link: {}".format(link.name))
         identifier = body.get(f.IDENTIFIER.nm)
         idy = Identity(identifier)
         try:
@@ -633,10 +634,15 @@ class WalletedAgent(Agent):
 
         if alreadyAdded:
             sendClaimList()
-            self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                                  "    Already accepted",
-                                  link.verkey, frm)
+            logger.debug("already accepted, "
+                         "so directly sending available claims")
+            # self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+            #                       "    Already accepted",
+            #                       link.verkey, frm)
         else:
+            logger.debug(
+                "not accepted, so add nym to sovrin "
+                "and then will send available claims")
             reqs = self.wallet.preparePending()
             # Assuming there was only one pending request
             logger.debug("sending to sovrin {}".format(reqs[0]))
