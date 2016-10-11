@@ -441,7 +441,7 @@ class Wallet(PWallet, Sponsoring):
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
         else:
-            raise NotImplementedError("'Data' in reply was None")
+            raise NotImplementedError("'DATA' in reply was None")
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO

@@ -13,7 +13,6 @@ from plenum.common.looper import Looper
 from plenum.test.eventually import eventually
 from plenum.test.helper import genHa, assertExp, assertFunc
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.link import Link

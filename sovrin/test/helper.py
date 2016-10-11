@@ -406,7 +406,7 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
     def check():
         assert creatorWallet._sponsored[nym].seqNo
 
-    looper.run(eventually(check, timeout=2))
+    looper.run(eventually(check, timeout=4))
 
 
 def addUser(looper, creatorClient, creatorWallet, name):

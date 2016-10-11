@@ -4,7 +4,6 @@ from plenum.common.txn import TYPE, NONCE
 from plenum.common.types import f
 from plenum.test.eventually import eventually
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.test.agent.conftest import checkAcceptInvitation
 
 from sovrin.test.agent.helper import ensureAgentsConnected
@@ -34,16 +33,6 @@ def testAliceAcceptFaberInvitation(aliceAcceptedFaber):
     pass
 
 
-# def testAliceAcceptAcmeInvitation(acmeIsRunning, acmeNonceForAlice,
-#                          aliceIsRunning, emptyLooper,
-#                                   aliceAcmeInvitationLinkSynced):
-#
-#     checkAcceptInvitation(emptyLooper,
-#                           acmeNonceForAlice,
-#                           aliceIsRunning,
-#                           acmeIsRunning, "Acme Corp")
-
-
 def testAliceAcceptAcmeInvitation(aliceAcceptedAcme):
     pass
 
@@ -71,15 +60,15 @@ def testMultipleAcceptance(aliceAcceptedFaber,
     """
     faberAgent, _ = faberIsRunning
     assert len(faberAgent.wallet._links) == 1
+    link = next(faberAgent.wallet._links.values())
     wallet = walletBuilder("Bob")
     otherAgent = agentBuilder(wallet)
     emptyLooper.add(otherAgent)
 
-    checkAcceptInvitation(looper=emptyLooper,
+    checkAcceptInvitation(emptyLooper,
                           nonce=faberNonceForAlice,
                           userAgent=otherAgent,
-                          agentIsRunning=faberIsRunning)
+                          agentIsRunning=faberIsRunning, linkName=link.name)
 
     assert len(faberAgent.wallet._links) == 2
-
 

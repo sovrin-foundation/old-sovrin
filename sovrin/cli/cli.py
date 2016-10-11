@@ -45,7 +45,7 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
-    LinkNotFound
+    LinkNotFound, NotConnectedToNetwork
 
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
@@ -330,6 +330,11 @@ class SovrinCli(PlenumCli):
         nodesAdded = super().newNode(nodeName)
         return nodesAdded
 
+    def _printCannotSyncSinceNotConnectedEnvMessage(self):
+
+        self.print("Cannot sync because not connected. Please connect first.")
+        self._printConnectUsage()
+
     def _printNotConnectedEnvMessage(self,
                                      prefix="Not connected to Sovrin network"):
 
@@ -358,6 +363,7 @@ class SovrinCli(PlenumCli):
 
     @property
     def agent(self) -> WalletedAgent:
+        # Assuming that creation of agent requires connection to Sovrin
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
             return None
@@ -860,29 +866,32 @@ class SovrinCli(PlenumCli):
         self.print("\n{}".format(USAGE_TEXT))
         self.printUsageMsgs(msgs)
 
-    def _loadInvitation(self, invitationData):
-        self.agent.loadInvitation(invitationData)
+    # def _loadInvitation(self, invitationData):
+    #     self.agent.loadInvitation(invitationData)
 
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
-            givenFilePath = matchedVars.get('file_path')
-            filePath = SovrinCli._getFilePath(givenFilePath)
-            try:
-                link = self.agent.loadInvitationFile(filePath)
-                self._printShowAndAcceptLinkUsage(link.name)
-            except FileNotFoundError:
-                self.print("Given file does not exist")
-                msgs = self._getShowFileUsage() + self._getLoadFileUsage()
-                self.printUsage(msgs)
-            except LinkAlreadyExists:
-                self.print("Link already exists")
-            except LinkNotFound:
-                self.print("No link invitation found in the given file")
-            except ValueError:
-                self.print("Input is not a valid json"
-                           "please check and try again")
-            except InvalidLinkException as e:
-                self.print(e.args[0])
+            if not self.agent:
+                self._printNotConnectedEnvMessage()
+            else:
+                givenFilePath = matchedVars.get('file_path')
+                filePath = SovrinCli._getFilePath(givenFilePath)
+                try:
+                    link = self.agent.loadInvitationFile(filePath)
+                    self._printShowAndAcceptLinkUsage(link.name)
+                except (FileNotFoundError, TypeError):
+                    self.print("Given file does not exist")
+                    msgs = self._getShowFileUsage() + self._getLoadFileUsage()
+                    self.printUsage(msgs)
+                except LinkAlreadyExists:
+                    self.print("Link already exists")
+                except LinkNotFound:
+                    self.print("No link invitation found in the given file")
+                except ValueError:
+                    self.print("Input is not a valid json"
+                               "please check and try again")
+                except InvalidLinkException as e:
+                    self.print(e.args[0])
             return True
 
     @staticmethod
@@ -952,12 +961,16 @@ class SovrinCli(PlenumCli):
             self.print("    Synchronizing...")
             doneCallback = partial(self._syncLinkPostEndPointRetrieval,
                                    postSync, li)
-            self.agent.sync(li.name, doneCallback)
+            try:
+                self.agent.sync(li.name, doneCallback)
+            except NotConnectedToNetwork:
+                self.print("Not connected to any network yet")
         else:
             if not self.activeEnv:
-                self._printNotConnectedEnvMessage(
-                    "Cannot sync because not connected")
+                self._printCannotSyncSinceNotConnectedEnvMessage()
             elif not self.activeClient.hasSufficientConnections:
+                # TODO: This is not needed since the client would queue the
+                # request anyway
                 self.print("Cannot sync because not connected. "
                            "Please confirm if Sovrin network is running.")
 
@@ -1102,6 +1115,7 @@ class SovrinCli(PlenumCli):
 
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
+            # TODO: Shouldn't we remove single quotes too?
             linkName = SovrinCli.removeDoubleQuotes(matchedVars.get('link_name'))
             self._syncLinkInvitation(linkName)
             return True

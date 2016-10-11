@@ -287,7 +287,7 @@ class WalletedAgent(Agent):
             self.connectTo(linkName)
             link = self.wallet.getLink(linkName, required=True)
             ha = link.getRemoteEndpoint(required=True)
-            signingIdr = link.localIdentifier
+            signingIdr = self.wallet._requiredIdr(link.localIdentifier)
             params = dict(destHa=ha)
         else:
             params = dict(destName=toRaetStackName)
@@ -741,9 +741,10 @@ class WalletedAgent(Agent):
 
     def acceptInvitation(self, linkName):
         link = self.wallet.getLink(linkName, required=True)
+        idr = self.wallet._requiredIdr(link.localIdentifier)
         msg = {
             TYPE: ACCEPT_INVITE,
-            f.IDENTIFIER.nm: link.localIdentifier,
+            f.IDENTIFIER.nm: idr,
             NONCE: link.invitationNonce,
         }
         self.signAndSend(msg, None, None, linkName)
