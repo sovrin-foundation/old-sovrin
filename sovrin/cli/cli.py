@@ -1004,8 +1004,6 @@ class SovrinCli(PlenumCli):
         op[NONCE] = link.invitationNonce
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
-        # ip, port = link.remoteEndPoint.split(":")
-        # self.sendToAgent(op, (ip, int(port)))
         self.sendToAgent(op, link)
 
     def sendReqClaim(self, reply, error, link, claimDefKey):

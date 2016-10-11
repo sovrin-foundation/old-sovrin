@@ -753,8 +753,8 @@ def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
     signature = aliceCli.activeWallet.signMsg(msg,
                                               aliceCli.activeWallet.defaultId)
     msg[f.SIG.nm] = signature
-    ip, port = faberMap[ENDPOINT].split(":")
-    aliceCli.sendToAgent(msg, (ip, int(port)))
+    link = aliceCli.activeWallet.getLink(faberMap['inviter'], required=True)
+    aliceCli.sendToAgent(msg, link)
 
     be(aliceCli)
     do(None,                        within=3,
@@ -775,8 +775,8 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
     signature = aliceCli.activeWallet.signMsg(msg,
                                               aliceCli.activeWallet.defaultId)
     msg[f.SIG.nm] = signature
-    ip, port = faberMap[ENDPOINT].split(":")
-    aliceCli.sendToAgent(msg, (ip, int(port)))
+    link = aliceCli.activeWallet.getLink(faberMap['inviter'], required=True)
+    aliceCli.sendToAgent(msg, link)
 
     be(aliceCli)
     do(None, within=3,

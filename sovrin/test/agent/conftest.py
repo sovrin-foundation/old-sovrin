@@ -199,7 +199,7 @@ def acmeAdded(gennedTxnPoolNodeSet,
 
 
 @pytest.fixture(scope="module")
-def acmeIsRunning(tdirWithPoolTxns, emptyLooper, acmeAgent, acmeWallet,
+def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet, acmeAgent,
                   acmeAdded):
     acme = acmeAgent
     acmeWallet.pendSyncRequests()

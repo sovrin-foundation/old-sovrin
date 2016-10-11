@@ -30,7 +30,9 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
-    acmeIsRunning, faberAgentPort, acmeAgentPort, faberAgent
+    acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
+    acmeAgent
+
 from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
@@ -255,6 +257,7 @@ def syncedInviteAcceptedWithClaimsOut(syncedInviteAcceptedOutWithoutClaims):
     return syncedInviteAcceptedOutWithoutClaims + [
         "Available claims: {claims}",
     ]
+
 
 @pytest.fixture(scope="module")
 def unsycedAcceptedInviteWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
@@ -723,3 +726,13 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
     # DEPR
     # faber.addLinksToWallet()
     return faber, faberWallet
+
+
+@pytest.fixture(scope="module")
+def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet,
+                   acmeAddedByPhil, acmeAgent):
+    acme, acmeWallet = runningAcme(emptyLooper, tdirWithPoolTxns,
+                                   acmeWallet, acmeAgent, acmeAddedByPhil)
+    # DEPR
+    # faber.addLinksToWallet()
+    return acme, acmeWallet
