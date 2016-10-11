@@ -403,7 +403,7 @@ def acceptInvitation(be, do, userCli, agentMap, expect,
                      totalClaimAttrs=None):
     be(userCli)
     do("accept invitation from {inviter}",
-                                    within=10,
+                                    within=15,
                                     mapper=agentMap,
                                     expect=expect,
                                     not_expect=[

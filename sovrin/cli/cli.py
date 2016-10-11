@@ -295,11 +295,13 @@ class SovrinCli(PlenumCli):
         else:
             self.print("")
 
-    def sendToAgent(self, msg: Any, endpoint: Tuple):
+    def sendToAgent(self, msg: Any, link: Link):
         if not self.agent:
             return
 
-        self.agent.connectTo(endpoint)
+        self.agent.connectTo(link.name)
+
+        endpoint = link.remoteEndPoint
 
         # TODO: Refactor this
         def _send():
@@ -1004,7 +1006,7 @@ class SovrinCli(PlenumCli):
         op[f.SIG.nm] = signature
         # ip, port = link.remoteEndPoint.split(":")
         # self.sendToAgent(op, (ip, int(port)))
-        self.sendToAgent(op, link.remoteEndPoint)
+        self.sendToAgent(op, link)
 
     def sendReqClaim(self, reply, error, link, claimDefKey):
         name, version, origin = claimDefKey
@@ -1025,7 +1027,7 @@ class SovrinCli(PlenumCli):
         proofBuilder = self.newProofBuilder(name, version, origin)
         uValue = proofBuilder.U[origin]
         op = {
-            NONCE: link.nonce,
+            NONCE: link.invitationNonce,
             TYPE: REQUEST_CLAIM,
             NAME: name,
             VERSION: version,
@@ -1322,16 +1324,17 @@ class SovrinCli(PlenumCli):
                 else:
                     link = links[0]
                     claimPrfReq = reqs[0][1]
+                    nonce = int(link.invitationNonce, 16)
                     proof, encodedAttrs, verifiableAttrs, claimDefKey = \
-                        self.activeWallet.buildClaimProof(int(link.nonce, 16),
-                                                          claimPrfReq)
+                        self.activeWallet.buildClaimProof(
+                            nonce, claimPrfReq)
                     _, curClaimReq, selfAttestedAttrs = self.curContext
                     for iid, attrs in encodedAttrs.items():
                         encodedAttrs[iid] = {n: str(v) for n, v in attrs.items()}
                     op = {
                         NAME: claimPrfReq.name,
                         VERSION: claimPrfReq.version,
-                        NONCE: link.nonce,
+                        NONCE: link.invitationNonce,
                         TYPE: CLAIM_PROOF,
                         'proof': proof,
                         'encodedAttrs': encodedAttrs,

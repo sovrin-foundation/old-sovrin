@@ -310,7 +310,8 @@ class Wallet(PWallet, Sponsoring):
     def getLink(self, name, required=False) -> Link:
         l = self._links.get(name)
         if not l and required:
-            raise LinkNotFound
+            logger.debug("Wallet has links {}".format(self._links))
+            raise LinkNotFound(l.name)
         return l
 
     @property

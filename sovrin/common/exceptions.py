@@ -11,7 +11,9 @@ class NotFound(RuntimeError):
 
 
 class LinkNotFound(NotFound):
-    pass
+    def __init__(self, name: str=None):
+        if name:
+            self.reason = "Link with name not found".format(name)
 
 
 class RemoteEndpointNotFound(NotFound):
