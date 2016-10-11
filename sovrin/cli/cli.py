@@ -362,7 +362,7 @@ class SovrinCli(PlenumCli):
             client.submitReqs(*prepared)
 
         # If agent was created before the user connected to a test environment
-        if self._agent and self._agent.client is None:
+        if self._agent:
             self._agent.client = client
         return client
 
