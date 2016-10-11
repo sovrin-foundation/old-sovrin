@@ -1,6 +1,7 @@
 import ast
 import datetime
 import json
+from functools import partial
 from typing import Dict, Any, Tuple, Callable
 import uuid
 
@@ -43,7 +44,8 @@ from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.common.exceptions import InvalidLinkException
+from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
+    LinkNotFound
 
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
@@ -355,7 +357,7 @@ class SovrinCli(PlenumCli):
         return client
 
     @property
-    def agent(self):
+    def agent(self) -> WalletedAgent:
         if not self.activeEnv:
             self._printNotConnectedEnvMessage()
             return None
@@ -859,71 +861,28 @@ class SovrinCli(PlenumCli):
         self.printUsageMsgs(msgs)
 
     def _loadInvitation(self, invitationData):
-        linkInvitation = invitationData["link-invitation"]
-        remoteIdentifier = linkInvitation[f.IDENTIFIER.nm]
-        signature = invitationData["sig"]
-        linkInvitationName = linkInvitation[NAME]
-        remoteEndPoint = linkInvitation.get("endpoint", None)
-        linkNonce = linkInvitation[NONCE]
-        claimProofRequestsJson = invitationData.get("claim-requests", None)
-
-        claimProofRequests = []
-        if claimProofRequestsJson:
-            for cr in claimProofRequestsJson:
-                claimProofRequests.append(
-                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES]))
-
-        self.print("1 link invitation found for {}.".format(linkInvitationName))
-        # TODO: Assuming it is cryptographic identifier
-        alias = "cid-" + str(len(self.activeWallet.identifiers) + 1)
-        signer = SimpleSigner(alias=alias)
-        self.activeWallet.addSigner(signer=signer)
-
-        self.print("Creating Link for {}.".format(linkInvitationName))
-        self.print("Generating Identifier and Signing key.")
-        # TODO: Would we always have a trust anchor corresponding ot a link?
-        trustAnchor = linkInvitationName
-        li = Link(linkInvitationName,
-                  signer.alias + ":" + signer.identifier,
-                  trustAnchor, remoteIdentifier,
-                  remoteEndPoint, linkNonce,
-                  claimProofRequests, invitationData=invitationData)
-        self.activeWallet.addLink(li)
+        self.agent.loadInvitation(invitationData)
 
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
             givenFilePath = matchedVars.get('file_path')
             filePath = SovrinCli._getFilePath(givenFilePath)
-            if not filePath:
+            try:
+                link = self.agent.loadInvitationFile(filePath)
+                self._printShowAndAcceptLinkUsage(link.name)
+            except FileNotFoundError:
                 self.print("Given file does not exist")
                 msgs = self._getShowFileUsage() + self._getLoadFileUsage()
                 self.printUsage(msgs)
-                return True
-
-            with open(filePath) as data_file:
-                try:
-                    invitationData = json.load(
-                        data_file, object_pairs_hook=collections.OrderedDict)
-                    linkInvitation = invitationData.get("link-invitation")
-                    if linkInvitation:
-                        linkName = linkInvitation["name"]
-                        existingLinkInvites = self.activeWallet.\
-                            getMatchingLinks(linkName)
-                        if len(existingLinkInvites) >= 1:
-                            self.print("Link already exists")
-                        else:
-                            Link.validate(invitationData)
-                            self._loadInvitation(invitationData)
-
-                        self._printShowAndAcceptLinkUsage(linkName)
-                    else:
-                        self.print("No link invitation found in the given file")
-                except ValueError:
-                    self.print("Input is not a valid json"
-                               "please check and try again")
-                except InvalidLinkException as e:
-                    self.print(e.args[0])
-
+            except LinkAlreadyExists:
+                self.print("Link already exists")
+            except LinkNotFound:
+                self.print("No link invitation found in the given file")
+            except ValueError:
+                self.print("Input is not a valid json"
+                           "please check and try again")
+            except InvalidLinkException as e:
+                self.print(e.args[0])
             return True
 
     @staticmethod
@@ -976,33 +935,12 @@ class SovrinCli(PlenumCli):
             "likelyMatched": likelyMatched
         }
 
-    def _pingToEndpoint(self, endPoint):
-        self.print("    Pinging target endpoint: {}".format(endPoint))
-        self.print("        [Not Yet Implemented]")
-
-    def _updateLinkWithLatestInfo(self, link: Link, reply):
-
-        if DATA in reply and reply[DATA]:
-            data = json.loads(reply[DATA])
-            endPoint = data.get(ENDPOINT)
-        else:
-            endPoint = link.remoteEndPoint or constant.NOT_AVAILABLE
-
-        link.remoteEndPoint = endPoint
-        link.linkLastSynced = datetime.datetime.now()
-        self.print("    Link {} synced".format(link.name))
-        self.activeWallet.addLink(link)
-
-        if endPoint != constant.NOT_AVAILABLE:
-            self._pingToEndpoint(endPoint)
-
     def _syncLinkPostEndPointRetrieval(self, reply, err, postSync,
                                        link: Link, **kwargs):
         if err:
             self.print('Error occurred: {}'.format(err))
             return True
 
-        self._updateLinkWithLatestInfo(link, reply)
         postSync(link)
         return True
 
@@ -1012,20 +950,9 @@ class SovrinCli(PlenumCli):
     def _getTargetEndpoint(self, li, postSync):
         if self._isConnectedToAnyEnv():
             self.print("    Synchronizing...")
-            nym = getCryptonym(li.remoteIdentifier)
-            attrib = Attribute(name=ENDPOINT,
-                               value=None,
-                               dest=nym,
-                               ledgerStore=LedgerStore.RAW)
-            req = self.activeWallet.requestAttribute(
-                attrib, sender=self.activeWallet.defaultId)
-            self.activeClient.submitReqs(req)
-            self.looper.loop.call_later(.2,
-                                        self._ensureReqCompleted,
-                                        req.reqId,
-                                        self.activeClient,
-                                        self._syncLinkPostEndPointRetrieval,
-                                        (postSync, li))
+            doneCallback = partial(self._syncLinkPostEndPointRetrieval,
+                                   postSync, li)
+            self.agent.sync(li.name, doneCallback)
         else:
             if not self.activeEnv:
                 self._printNotConnectedEnvMessage(
@@ -1053,7 +980,7 @@ class SovrinCli(PlenumCli):
 
     def _sendReqToTargetEndpoint(self, op, link: Link):
         op[f.IDENTIFIER.nm] = link.verkey
-        op[NONCE] = link.nonce
+        op[NONCE] = link.invitationNonce
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
         ip, port = link.remoteEndPoint.split(":")

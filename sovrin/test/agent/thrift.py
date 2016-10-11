@@ -58,7 +58,7 @@ class ThriftAgent(WalletedAgent):
         wallet = self.wallet
         idr = wallet.defaultId
         link = Link(random.choice(randomData.NAMES), idr,
-                    nonce="77fbf9dc8c8e6acde33de98c6d747b28c")
+                    invitationNonce="77fbf9dc8c8e6acde33de98c6d747b28c")
         wallet.addLink(link)
 
     def bootstrap(self):

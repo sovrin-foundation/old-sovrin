@@ -1,17 +1,21 @@
 import json
 import uuid
 from abc import abstractmethod
+from datetime import datetime
 
 from typing import Dict, Any
 from typing import Tuple
 
 import asyncio
 
+import collections
+
 from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.types import Credential
 from anoncreds.protocol.utils import strToCharmInteger
 from anoncreds.protocol.verifier import Verifier
+from plenum.client.signer import SimpleSigner
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.port_dispenser import genHa
@@ -20,7 +24,11 @@ from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.issuer import Issuer
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
+from sovrin.client.wallet.attribute import LedgerStore, Attribute
+from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
+    LinkNotFound, NotConnectedToNetwork
 
 from sovrin.common.identity import Identity
 
@@ -29,7 +37,7 @@ from plenum.common.exceptions import RemoteNotFound
 from plenum.common.motor import Motor
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
-    ORIGIN, TARGET_NYM
+    ORIGIN, TARGET_NYM, ATTRIBUTES
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
     randomString
@@ -39,7 +47,7 @@ from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import ATTR_NAMES, REF
+from sovrin.common.txn import ATTR_NAMES, REF, ENDPOINT
 from sovrin.common.util import verifySig, getConfig, getEncodedAttrs, \
     charmDictToStringDict, stringDictToCharmDict, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback
@@ -49,6 +57,7 @@ CLAIMS_LIST_FIELD = 'availableClaimsList'
 CLAIMS_FIELD = 'claims'
 REQ_MSG = "REQ_MSG"
 
+PING = "ping"
 ERROR = "error"
 EVENT = "event"
 EVENT_NAME = "eventName"
@@ -144,7 +153,7 @@ class Agent(Motor, AgentNet):
             return
         self.endpoint.transmit(msg, remote.uid)
 
-    def connectTo(self, ha):
+    def connectToHa(self, ha):
         self.endpoint.connectTo(ha)
 
     def registerEventListener(self, eventName, listener):
@@ -185,6 +194,7 @@ class WalletedAgent(Agent):
         self.client.submitReqs(*prepared)
         self.loop = asyncio.get_event_loop()
         self.msgHandlers = {
+            PING: self._handlePing,
             ERROR: self._handleError,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
             CLAIM: self._handleReqClaimResponse,
@@ -219,8 +229,8 @@ class WalletedAgent(Agent):
 
     def logAndSendErrorResp(self, to, reqBody, respMsg, logMsg):
         logger.warning(logMsg)
-        self.signAndSendToCaller(resp=self.getErrorResponse(reqBody, respMsg),
-                                 identifier=self.wallet.defaultId, frm=to)
+        self.signAndSend(msg=self.getErrorResponse(reqBody, respMsg),
+                         signingIdr=self.wallet.defaultId, toRaetStackName=to)
 
     def verifyAndGetLink(self, msg):
         body, (frm, ha) = msg
@@ -251,7 +261,7 @@ class WalletedAgent(Agent):
         if not link:
             link = Link(str(internalId),
                         self.wallet.defaultId,
-                        nonce=nonce,
+                        invitationNonce=nonce,
                         remoteIdentifier=remoteIdr,
                         remoteEndPoint=remoteHa,
                         internalId=internalId)
@@ -265,11 +275,21 @@ class WalletedAgent(Agent):
     def getInternalIdByInvitedNonce(self, nonce):
         raise NotImplementedError
 
-    def signAndSendToCaller(self, resp, identifier, frm):
-        resp[IDENTIFIER] = identifier
-        signature = self.wallet.signMsg(resp, identifier)
-        resp[f.SIG.nm] = signature
-        self.sendMessage(resp, destName=frm)
+    def signAndSend(self, msg, signingIdr, toRaetStackName, linkName=None):
+        if linkName:
+            assert not signingIdr
+            assert not toRaetStackName
+            self.connectTo(linkName)
+            link = self.wallet.getLink(linkName, required=True)
+            ha = link.getRemoteEndpoint(required=True)
+            signingIdr = link.localIdentifier
+            params = dict(destHa=ha)
+        else:
+            params = dict(destName=toRaetStackName)
+        msg[IDENTIFIER] = signingIdr
+        signature = self.wallet.signMsg(msg, signingIdr)
+        msg[f.SIG.nm] = signature
+        self.sendMessage(msg, **params)
 
     @staticmethod
     def getCommonMsg(typ, data):
@@ -301,7 +321,7 @@ class WalletedAgent(Agent):
         self.notifyEventListeners(eventName, **data)
 
     def notifyEventListeners(self, eventName, **data):
-        for el in self._eventListeners[eventName]:
+        for el in self._eventListeners.get(eventName, []):
             el(notifier=self, **data)
 
     def notifyMsgListener(self, msg):
@@ -311,6 +331,7 @@ class WalletedAgent(Agent):
         body, frm = msg
         handler = self.msgHandlers.get(body.get(TYPE))
         if handler:
+            # TODO we should verify signature here
             frmHa = self.endpoint.getRemote(frm).ha
             handler((body, (frm, frmHa)))
         else:
@@ -320,6 +341,21 @@ class WalletedAgent(Agent):
         body, (frm, ha) = msg
         self.notifyMsgListener("Error ({}) occurred while processing this "
                              "msg: {}".format(body[DATA], body[REQ_MSG]))
+
+    def _handlePing(self, msg):
+        body, (frm, ha) = msg
+        link = self.verifyAndGetLink(msg)
+        # TODO instead of asserting, have previous throw exception
+        assert link
+        self.notifyMsgListener("Ping received. Sending Pong.")
+        self.signAndSend({'msg': 'pong'}, link.localIdentifier, frm)
+
+    def _handlePong(self, msg):
+        body, (frm, ha) = msg
+        link = self.verifyAndGetLink(msg)
+        # TODO instead of asserting, have previous throw exception
+        assert link
+        self.notifyMsgListener("Pong received.")
 
     def _fetchAllAvailableClaimsInWallet(self, li, availableClaims):
 
@@ -418,6 +454,7 @@ class WalletedAgent(Agent):
             if k != f.SIG.nm:
                 msgWithoutSig[k] = v
 
+        # TODO This assumes the current key is the cryptonym. This is a BAD ASSUMPTION!!! Sovrin needs to provide the current key.
         key = cryptonymToHex(identifier) if not isHex(
             identifier) else identifier
         isVerified = verifySig(key, signature, msgWithoutSig)
@@ -485,7 +522,7 @@ class WalletedAgent(Agent):
                 'vprimeprime': str(cred[2])
             }
             resp = self.createClaimMsg(claimDetails)
-            self.signAndSendToCaller(resp, link.localIdentifier, frm)
+            self.signAndSend(resp, link.localIdentifier, frm)
         else:
             raise NotImplementedError
 
@@ -533,7 +570,7 @@ class WalletedAgent(Agent):
                             format(body[NAME], body[VERSION],
                                    '' if result else 'is not yet '),
                 }
-                self.signAndSendToCaller(resp, link.localIdentifier, frm)
+                self.signAndSend(resp, link.localIdentifier, frm)
 
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
                                                self.loop, tuple(claimDefKey),
@@ -550,7 +587,7 @@ class WalletedAgent(Agent):
             EVENT_NAME: event,
             DATA: {'msg': msg}
         }
-        self.signAndSendToCaller(resp, identifier, frm)
+        self.signAndSend(resp, identifier, frm)
 
     def _acceptInvite(self, msg):
         body, (frm, ha) = msg
@@ -577,7 +614,7 @@ class WalletedAgent(Agent):
             logger.debug("sent to sovrin {}".format(identifier))
             resp = self.createAvailClaimListMsg(
                 self.getAvailableClaimList(), alreadyAccepted=alreadyAdded)
-            self.signAndSendToCaller(resp, link.localIdentifier, frm)
+            self.signAndSend(resp, link.localIdentifier, frm)
 
         if alreadyAdded:
             sendClaimList()
@@ -639,6 +676,119 @@ class WalletedAgent(Agent):
                            seqNo=issuerKeySeqNo)
         key = (wallet.defaultId, credDefSeqNo)
         wallet._issuerPks[key] = ipk
+
+    def sendPing(self, linkName):
+        self.signAndSend({'msg': PING}, None, None, linkName)
+        self.notifyMsgListener("Ping sent.")
+
+    def connectTo(self, linkName):
+        link = self.wallet.getLink(linkName, required=True)
+        ha = link.getRemoteEndpoint(required=True)
+        self.connectToHa(ha)
+
+    def loadInvitation(self, invitationData):
+        linkInvitation = invitationData["link-invitation"]
+        remoteIdentifier = linkInvitation[f.IDENTIFIER.nm]
+        signature = invitationData["sig"]
+        linkInvitationName = linkInvitation[NAME]
+        remoteEndPoint = linkInvitation.get("endpoint", None)
+        linkNonce = linkInvitation[NONCE]
+        claimProofRequestsJson = invitationData.get("claim-requests", None)
+
+        claimProofRequests = []
+        if claimProofRequestsJson:
+            for cr in claimProofRequestsJson:
+                claimProofRequests.append(
+                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES]))
+
+        self.notifyMsgListener("1 link invitation found for {}.".
+                               format(linkInvitationName))
+        # TODO: Assuming it is cryptographic identifier
+        alias = "cid-" + str(len(self.wallet.identifiers) + 1)
+        signer = SimpleSigner(alias=alias)
+        self.wallet.addSigner(signer=signer)
+
+        self.notifyMsgListener("Creating Link for {}.".
+                               format(linkInvitationName))
+        self.notifyMsgListener("Generating Identifier and Signing key.")
+        # TODO: Would we always have a trust anchor corresponding ot a link?
+        trustAnchor = linkInvitationName
+        li = Link(linkInvitationName,
+                  signer.alias + ":" + signer.identifier,
+                  trustAnchor, remoteIdentifier,
+                  remoteEndPoint, linkNonce,
+                  claimProofRequests, invitationData=invitationData)
+        self.wallet.addLink(li)
+        return li
+
+    def loadInvitationFile(self, filePath):
+        with open(filePath) as data_file:
+            invitationData = json.load(
+                data_file, object_pairs_hook=collections.OrderedDict)
+            linkInvitation = invitationData.get("link-invitation")
+            if not linkInvitation:
+                raise LinkNotFound
+            linkName = linkInvitation["name"]
+            existingLinkInvites = self.wallet.\
+                getMatchingLinks(linkName)
+            if len(existingLinkInvites) >= 1:
+                raise LinkAlreadyExists
+            Link.validate(invitationData)
+            link = self.loadInvitation(invitationData)
+            return link
+
+    def acceptInvitation(self, linkName):
+        link = self.wallet.getLink(linkName, required=True)
+        msg = {
+            TYPE: ACCEPT_INVITE,
+            f.IDENTIFIER.nm: link.localIdentifier,
+            NONCE: link.invitationNonce,
+        }
+        self.signAndSend(msg, None, None, linkName)
+
+    def _handleSyncResp(self, link, additionalCallback):
+        def _(reply, err):
+            if err:
+                raise RuntimeError(err)
+            self._updateLinkWithLatestInfo(link, reply)
+            additionalCallback(reply, err)
+        return _
+
+    def _updateLinkWithLatestInfo(self, link: Link, reply):
+
+        if DATA in reply and reply[DATA]:
+            data = json.loads(reply[DATA])
+            link.remoteEndPoint = data.get(ENDPOINT)
+
+        link.linkLastSynced = datetime.now()
+        self.notifyMsgListener("    Link {} synced".format(link.name))
+        if link.remoteEndPoint:
+            self._pingToEndpoint(link.remoteEndPoint)
+
+    def _pingToEndpoint(self, endPoint):
+        self.notifyMsgListener("    Pinging target endpoint: {}".format(endPoint))
+        self.notifyMsgListener("        [Not Yet Implemented]")
+        # TODO implement ping
+
+    def sync(self, linkName, doneCallback=None):
+        if not self.client.isReady():
+            raise NotConnectedToNetwork
+        link = self.wallet.getLink(linkName, required=True)
+        nym = getCryptonym(link.remoteIdentifier)
+        attrib = Attribute(name=ENDPOINT,
+                           value=None,
+                           dest=nym,
+                           ledgerStore=LedgerStore.RAW)
+        req = self.wallet.requestAttribute(
+            attrib, sender=self.wallet.defaultId)
+        self.client.submitReqs(req)
+        if doneCallback:
+            self.loop.call_later(.2,
+                                 ensureReqCompleted,
+                                 self.loop,
+                                 req.reqId,
+                                 self.client,
+                                 self._handleSyncResp(link, doneCallback))
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,

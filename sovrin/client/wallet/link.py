@@ -3,7 +3,8 @@ from typing import Dict
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
 from plenum.common.util import prettyDate
-from sovrin.common.exceptions import InvalidLinkException
+from sovrin.common.exceptions import InvalidLinkException, \
+    RemoteEndpointNotFound
 from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
 
 
@@ -38,7 +39,7 @@ class constant:
 
 class Link:
     def __init__(self, name, localIdentifier, trustAnchor=None,
-                 remoteIdentifier=None, remoteEndPoint=None, nonce=None,
+                 remoteIdentifier=None, remoteEndPoint=None, invitationNonce=None,
                  claimProofRequests=None, invitationData: Dict=None,
                  internalId=None):
         self.name = name
@@ -50,7 +51,7 @@ class Link:
         self.remoteEndPoint = remoteEndPoint
         # DEPR
         # self.nonce = nonce or getNonce()
-        self.nonce = nonce
+        self.invitationNonce = invitationNonce
         self.invitationData = invitationData
 
         # for optionally storing a reference to an identifier in another system
@@ -120,7 +121,7 @@ class Link:
                           constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.nonce + '\n' \
+            'Invitation nonce: ' + self.invitationNonce + '\n' \
             'Invitation status: ' + linkStatus + '\n'
 
         optionalLinkItems = ""
@@ -159,3 +160,8 @@ class Link:
         linkInvitationReqFields = [f.IDENTIFIER.nm, NAME, NONCE]
         for fn in linkInvitationReqFields:
             checkIfFieldPresent(linkInvitation, 'link-invitation', fn)
+
+    def getRemoteEndpoint(self, required=False):
+        if not self.remoteEndPoint and required:
+            raise RemoteEndpointNotFound
+        return self.remoteEndPoint

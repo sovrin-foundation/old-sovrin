@@ -140,7 +140,7 @@ class AcmeAgent(WalletedAgent):
         wallet = self.wallet
         idr = wallet.defaultId
         for nonce, data in self._attributes.items():
-            link = Link(data.get("employee_name"), idr, nonce=nonce)
+            link = Link(data.get("employee_name"), idr, invitationNonce=nonce)
             wallet.addLink(link)
 
     def bootstrap(self):

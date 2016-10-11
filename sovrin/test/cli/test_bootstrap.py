@@ -6,7 +6,7 @@ from plenum.common.types import f
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
 from plenum.test.eventually import eventually
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_types import ACCEPT_INVITE
+from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.link import Link
 from sovrin.common.exceptions import InvalidLinkException
@@ -386,7 +386,11 @@ def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
     sig = aliceCli.activeWallet.signMsg(msg)
     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
     msg[f.SIG.nm] = sig
-    aliceCli.agent._handleAcceptInviteResponse((msg, (None, None)))
+    msg[TYPE] = AVAIL_CLAIM_LIST
+
+    aliceCli.agent.handleEndpointMessage((msg, faber.endpoint.name))
+    # TODO Why are we calling a protected method here? A CLI test should test it through the CLI.
+    # aliceCli.agent._handleAcceptInviteResponse((msg, (None, None)))
     assert "Signature rejected" in aliceCli.lastCmdOutput
 
 

@@ -3,17 +3,21 @@ import json
 import os
 
 import shutil
+import uuid
 from contextlib import ExitStack
 from typing import Dict
 from typing import Iterable, Union, Tuple
 
 import pyorient
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from anoncreds.test.conftest import staticPrimes
 from plenum.common.log import getlogger
 
 from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
-from plenum.common.txn import REQACK, DATA
+from plenum.common.txn import REQACK, DATA, NAME, VERSION, TYPE
 from plenum.common.types import HA, Identifier
 from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
@@ -30,10 +34,11 @@ from plenum.test.helper import genTestClientProvider as \
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
-    TXN_ID, GET_NYM
+    TXN_ID, GET_NYM, ATTR_NAMES
 from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
@@ -500,3 +505,47 @@ def addRawAttribute(looper, client, wallet, name, value, dest=None,
                        dest=dest,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, client, wallet, attrib)
+
+
+def faberAddedClaimDefAndIssuerKeys(looper, faberAgent):
+    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
+    sid = faberAgent.wallet.addClaimDefSk(str(csk))
+    # Need to modify the claim definition. We do not support types yet
+    claimDef = {
+            "name": "Transcript",
+            "version": "1.2",
+            "type": "CL",
+            "attr_names": ["student_name", "ssn", "degree", "year", "status"]
+    }
+    claimDef = ClaimDef(seqNo=None,
+                       attrNames=claimDef[ATTR_NAMES],
+                       name=claimDef[NAME],
+                       version=claimDef[VERSION],
+                       origin=faberAgent.wallet.defaultId,
+                       typ=claimDef[TYPE],
+                       secretKey=sid)
+    faberAgent.wallet.addClaimDef(claimDef)
+    reqs = faberAgent.wallet.preparePending()
+    faberAgent.client.submitReqs(*reqs)
+
+    def chk():
+        assert claimDef.seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+
+    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
+    faberAgent.wallet.addIssuerSecretKey(isk)
+    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                       claimDefSeqNo=claimDef.seqNo,
+                       secretKeyUid=isk.uid, origin=faberAgent.wallet.defaultId)
+    faberAgent.wallet.addIssuerPublicKey(ipk)
+    reqs = faberAgent.wallet.preparePending()
+    faberAgent.client.submitReqs(*reqs)
+
+    key = (faberAgent.wallet.defaultId, claimDef.seqNo)
+
+    def chk():
+        assert faberAgent.wallet.getIssuerPublicKey(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+    return claimDef.seqNo, ipk.seqNo

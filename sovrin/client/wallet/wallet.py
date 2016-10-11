@@ -24,6 +24,7 @@ from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
+from sovrin.common.exceptions import LinkNotFound
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
     GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.identity import Identity
@@ -306,8 +307,11 @@ class Wallet(PWallet, Sponsoring):
     def addLink(self, link: Link):
         self._links[link.key] = link
 
-    def getLink(self, name):
-        return self._links.get(name)
+    def getLink(self, name, required=False) -> Link:
+        l = self._links.get(name)
+        if not l and required:
+            raise LinkNotFound
+        return l
 
     @property
     def masterSecret(self):
