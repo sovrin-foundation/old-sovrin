@@ -1468,7 +1468,8 @@ class SovrinCli(PlenumCli):
                 if k in commonAttrs:
                     attributesWithValue[k] = allAttrs[k]
                 else:
-                    attributesWithValue[k] = selfAttestedAttrs.get(k, v)
+                    defaultValue = attributesWithValue[k] or v
+                    attributesWithValue[k] = selfAttestedAttrs.get(k, defaultValue)
 
         claimProofReq.attributes = attributesWithValue
         self.print(str(claimProofReq))
