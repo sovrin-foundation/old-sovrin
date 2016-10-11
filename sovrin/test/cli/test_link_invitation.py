@@ -87,7 +87,8 @@ def testAliceConnect(aliceConnected):
 def testSyncLinkWhenEndpointNotAvailable(faberAdded,
                                          looper,
                                          aliceCLI,
-                                         stewardClientAndWallet):
+                                         stewardClientAndWallet,
+                                         aliceConnected):
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
     ep = li.remoteEndPoint
     li.remoteEndPoint = None
@@ -102,7 +103,8 @@ def testSyncLinkWhenEndpointNotAvailable(faberAdded,
 def testSyncLinkWhenEndpointIsAvailable(looper,
                                         aliceCLI,
                                         stewardClientAndWallet,
-                                        faberAdded):
+                                        faberAdded,
+                                        aliceConnected):
     client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
     assert li.remoteEndPoint is None
