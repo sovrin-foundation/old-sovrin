@@ -29,7 +29,8 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
-    acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, thriftAgentPort
+    acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, thriftAgentPort, \
+    thriftLinkAdded, thriftIsRunning, thriftWallet
 from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
@@ -144,6 +145,7 @@ def thriftMap(thriftAgentPort):
             ENDPOINT: endpoint,
             "endpointAttr": json.dumps({ENDPOINT: endpoint}),
             "claim-requests": "Loan-Application-Basic, Loan-Application-KYC",
+            "claim-ver-req-to-show": "0.1"
             }
 
 

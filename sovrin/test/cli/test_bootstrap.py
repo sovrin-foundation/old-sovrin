@@ -60,6 +60,11 @@ def acmeCLI(CliBuilder):
     yield from CliBuilder("acme")
 
 
+@pytest.yield_fixture(scope="module")
+def thriftCLI(CliBuilder):
+    yield from CliBuilder("thrift")
+
+
 @pytest.fixture(scope="module")
 def poolNodesStarted(be, do, poolCLI):
     be(poolCLI)
@@ -115,6 +120,22 @@ def acmeCli(be, do, acmeCLI):
 
 
 @pytest.fixture(scope="module")
+def thriftCli(be, do, thriftCLI):
+    be(thriftCLI)
+
+    do('prompt Thrift',               expect=prompt_is('Thrift'))
+
+    do('new keyring Thrift',          expect=['New keyring Thrift created',
+                                              'Active keyring set to "Thrift"'])
+    seed = 'Thrift00000000000000000000000000'
+    idr = 'gcp+vfaMWkvmGXYQd3uE/BdK3btf/TR+8xuqhvOYDw0='
+
+    do('new key with seed ' + seed, expect=['Key created in keyring Thrift',
+                                            'Identifier for key is ' + idr,
+                                            'Current identifier set to ' + idr])
+    return acmeCLI
+
+@pytest.fixture(scope="module")
 def philCli(be, do, philCLI):
     be(philCLI)
     do('prompt Phil',               expect=prompt_is('Phil'))
@@ -157,6 +178,20 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
     do('send NYM dest={target} role=SPONSOR',
                                     within=2,
                                     expect=nymAddedOut, mapper=acmeMap)
+    return philCli
+
+
+@pytest.fixture(scope="module")
+def thriftAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
+                     nymAddedOut, thriftMap):
+    be(philCli)
+    if not philCli._isConnectedToAnyEnv():
+        do('connect test',          within=3,
+                                    expect=connectedToTest, mapper=thriftMap)
+
+    do('send NYM dest={target} role=SPONSOR',
+                                    within=3,
+                                    expect=nymAddedOut, mapper=thriftMap)
     return philCli
 
 
@@ -332,6 +367,18 @@ def acmeWithEndpointAdded(be, do, philCli, acmeAddedByPhil,
                                     within=3,
                                     expect=attrAddedOut,
                                     mapper=acmeMap)
+    return philCli
+
+
+@pytest.fixture(scope="module")
+def thriftWithEndpointAdded(be, do, philCli, thriftAddedByPhil,
+                            thriftMap, attrAddedOut):
+
+    be(philCli)
+    do('send ATTRIB dest={target} raw={endpointAttr}',
+                                    within=3,
+                                    expect=attrAddedOut,
+                                    mapper=thriftMap)
     return philCli
 
 
@@ -834,7 +881,8 @@ def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
                                     mapper=jobCertificateClaimMap)
 
 
-def testReqJobCertClaim(be, do, aliceCli,
+@pytest.fixture(scope="module")
+def jobCertClaimRequested(be, do, aliceCli,
                         jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
                         jobApplicationClaimSent):
     be(aliceCli)
@@ -845,13 +893,17 @@ def testReqJobCertClaim(be, do, aliceCli,
     name, version = jobCertificateClaimMap["name"], \
                     jobCertificateClaimMap["version"]
     aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
-    do("request claim {name}",      within=7,
-                                    expect=reqClaimOut1,
-                                    mapper=jobCertificateClaimMap)
+    do("request claim {name}", within=7,
+       expect=reqClaimOut1,
+       mapper=jobCertificateClaimMap)
+
+
+def testReqJobCertClaim(jobCertClaimRequested):
+    pass
 
 
 def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
-                                  jobApplicationClaimSent,
+                                  jobCertClaimRequested,
                                   jobCertificateClaimValueMap,
                                   rcvdJobCertClaimOut):
     be(aliceCli)
@@ -862,13 +914,59 @@ def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
 
 
 @pytest.fixture(scope="module")
-def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap):
+def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap,
+                              jobCertClaimRequested):
     be(aliceCli)
     do('load {invite}',             expect=loadInviteOut, mapper=thriftMap)
-    # link = aliceCli.activeWallet.getLinkInvitation(thriftMap.get("inviter"))
-    # link.remoteEndPoint = thriftMap.get(ENDPOINT)
     return aliceCli
 
 
 def testAliceLoadedThriftLoanApplication(thriftInviteLoadedByAlice):
+    pass
+
+
+@pytest.fixture(scope="module")
+def aliceAcceptedThriftLoanApplication(be, do, aliceCli, thriftMap, thriftCli,
+                                       thriftAddedByPhil, thriftLinkAdded,
+                                       thriftIsRunning,
+                                       thriftWithEndpointAdded,
+                                       thriftInviteLoadedByAlice,
+                                       syncedInviteAcceptedOutWithoutClaims):
+    acceptInvitation(be, do, aliceCli, thriftMap,
+                     syncedInviteAcceptedOutWithoutClaims,
+                     totalLinks=3,
+                     totalAvailableClaims=2,
+                     totalCredDefs=2,
+                     totalClaimAttrs=0)
+    return aliceCli
+
+
+def testAliceAcceptsThriftLoanApplication(aliceAcceptedThriftLoanApplication):
+    pass
+
+
+
+@pytest.fixture(scope="module")
+def bankBasicClaimSent(be, do, aliceCli, thriftMap,
+                       aliceAcceptedThriftLoanApplication):
+    mapping = {}
+    mapping.update(thriftMap)
+    mapping["claim-req-to-match"] = "Loan-Application-Basic"
+    sendClaim(be, do, aliceCli, mapping)
+
+
+def testAliceSendBankBasicClaim(bankBasicClaimSent):
+    pass
+
+
+@pytest.fixture(scope="module")
+def bankKYCClaimSent(be, do, aliceCli, thriftMap,
+                       aliceAcceptedThriftLoanApplication):
+    mapping = {}
+    mapping.update(thriftMap)
+    mapping["claim-req-to-match"] = "Loan-Application-KYC"
+    sendClaim(be, do, aliceCli, mapping)
+
+
+def testAliceSendBankKYCClaim(bankBasicClaimSent):
     pass

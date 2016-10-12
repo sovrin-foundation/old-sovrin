@@ -8,6 +8,7 @@ from sovrin.common.txn import SPONSOR
 from sovrin.test.agent.acme import runAcme
 from sovrin.test.agent.alice import runAlice
 from sovrin.test.agent.faber import runFaber
+from sovrin.test.agent.thrift import runThrift
 from sovrin.test.helper import createNym
 
 
@@ -34,6 +35,13 @@ def aliceWallet():
 @pytest.fixture(scope="module")
 def acmeWallet():
     name = "Acme"
+    wallet = Wallet(name)
+    return wallet
+
+
+@pytest.fixture(scope="module")
+def thriftWallet():
+    name = "Thrift"
     wallet = Wallet(name)
     return wallet
 
@@ -107,13 +115,31 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
     return acme, acmeWallet
 
 
+@pytest.fixture(scope="module")
+def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftAgentPort,
+                   thriftWallet):
+    thriftWallet.addSigner(signer=SimpleSigner(
+        seed=b'Thrift00000000000000000000000000'))
+    thrift = runThrift(thriftWallet.name, thriftWallet,
+                     basedirpath=tdirWithPoolTxns,
+                     port=thriftAgentPort,
+                     startRunning=False, bootstrap=False)
+    thrift.addKeyIfNotAdded()
+    thriftWallet.pendSyncRequests()
+    prepared = thriftWallet.preparePending()
+    thrift.client.submitReqs(*prepared)
+    # faber.bootstrap()
+    emptyLooper.add(thrift)
+    return thrift, thriftWallet
+
+
 # TODO: Rename it, not clear whether link is added to which wallet and
 # who is adding
 @pytest.fixture(scope="module")
 def faberLinkAdded(faberIsRunning):
     faber, wallet = faberIsRunning
     idr = wallet.defaultId
-    link = Link("Alice", idr, nonce="b1134a647eb818069c089e7694f63e6d")
+    link = Link("Alice Garcia", idr, nonce="b1134a647eb818069c089e7694f63e6d")
     # TODO rename to addLink
     wallet.addLink(link)
     assert wallet.getMatchingLinks("Alice")
@@ -124,8 +150,19 @@ def faberLinkAdded(faberIsRunning):
 def acmeLinkAdded(acmeIsRunning):
     acme, wallet = acmeIsRunning
     idr = wallet.defaultId
-    link = Link("Acme", idr, nonce="57fbf9dc8c8e6acde33de98c6d747b28c")
+    link = Link("Alice Garcia", idr, nonce="57fbf9dc8c8e6acde33de98c6d747b28c")
     # TODO rename to addLink
     wallet.addLink(link)
-    assert wallet.getMatchingLinks("Acme")
+    assert wallet.getMatchingLinks("Alice")
+    return link
+
+
+@pytest.fixture(scope="module")
+def thriftLinkAdded(thriftIsRunning):
+    thrift, wallet = thriftIsRunning
+    idr = wallet.defaultId
+    link = Link("Alice Garcia", idr, nonce="77fbf9dc8c8e6acde33de98c6d747b28c")
+    # TODO rename to addLink
+    wallet.addLink(link)
+    assert wallet.getMatchingLinks("Alice")
     return link

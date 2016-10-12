@@ -1163,7 +1163,7 @@ class SovrinCli(PlenumCli):
         self._printShowAndLoadFileSuggestion()
 
     def _isConnectedToAnyEnv(self):
-        return self.activeEnv and self.activeClient.hasSufficientConnections
+        return self.activeEnv and self.activeClient and self.activeClient.hasSufficientConnections
 
     def _acceptInvitationLink(self, matchedVars):
         if matchedVars.get('accept_link_invite') == 'accept invitation from':
