@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-GACTION=$1
-
 dirs=( "sovrin-priv" "plenum-priv" "anoncreds-priv" "ledger-priv" )
 
 # quiet pushd
@@ -19,6 +17,6 @@ for dir in "${dirs[@]}"
 do
   pushd ../$dir
   echo '----------' 'RUNNING' $1 'ON' $(pwd) '----------'
-  git $GACTION
+  git "$@"
   popd
 done
