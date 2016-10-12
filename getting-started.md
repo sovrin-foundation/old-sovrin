@@ -217,103 +217,20 @@ Targets can have endpoints - -locations(IRIs / URIs / URLs) on the network where
 Invitation nonce: b1134a647eb818069c089e7694f63e6d
 ```
 
-This is just
-a
-big
-random
-number
-that
-Faber
-College
-generated
-to
-track
-the
-unique
-invitation.When
-an
-invitation is accepted, the
-invitee
-digitally
-signs
-the
-nonce
-such
-that
-the
-inviter
-can
-match
-the
-acceptance
-with a prior invitation.
-
+This is just a big random number that Faber College generated to track the unique invitation.When an invitation is accepted, the invitee digitally signs the nonce such that the inviter can match the acceptance with a prior invitation.
 ```
 Invitation status: not verified, target verification key unknown
 ```
 
-Invitations
-are
-signed
-by
-the
-target.We
-have
-a
-signature, but
-we
-don’t
-yet
-know
-Faber
-College’s
-verification
-key, so
-the
-signature
-can’t
-be
-proved
-authentic.We
-might
-have
-an
-invitation
-from someone masquerading as Faber
-
-College.We’ll
-resolve
-that
-uncertainty
-when
-we
-sync.
-
+Invitations are signed by the target. We have a signature, but we don’t yet know Faber College’s verification key, so the signature can’t be proved authentic.We might have an invitation from someone masquerading as Faber College. We’ll resolve that uncertainty when we sync.
 ```
 Last synced: < this link has not yet been synchronized >
 ```
-A
-link
-stores
-when
-it
-was
-last
-synchronized
-with the Sovrin network, so we can tell how stale some of the information
-might be.Ultimately, values will be proved current when a transaction is
-committed to the ledger, so staleness isn’t dangerous--but it makes Sovrin
-more efficient when identity owners work with up-to-date data.
+A link stores when it was last synchronized with the Sovrin network, so we can tell how stale some of the information might be.Ultimately, values will be proved current when a transaction is committed to the ledger, so staleness isn’t dangerous--but it makes Sovrin more efficient when identity owners work with up-to-date data.
 
 ## Accept the Invitation
 
-Alice
-attempts
-to
-accept
-the
-invitation
-from Faber College.
+Alice attempts to accept the invitation from Faber College.
 
 ```
 ALICE> accept invitation from Faber
@@ -327,83 +244,16 @@ Usage:
     connect(test | live)
 ```
 
-In
-order
-to
-accept
-an
-invitation, its
-origin
-must
-be
-proved.Just
-because
-an
-invitation
-says
-the
-sender is "Faber College"
-doesn’t
-make
-it
-so;
-the
-ease
-of
-forging
-email
-headers is a
-reminder
-of
-why
-we
-can’t
-just
-trust
-what
-a
-sender
-says.Syncing
-the
-link
-with Sovrin will allow us to prove the association between Faber College’s
-identity and public key, but the CLI must be connected to the Sovrin network
-to sync-- and we haven’t connected yet.
+In order to accept an invitation, its origin must be proved.Just because an invitation says the sender is "Faber College" doesn’t make it so; the ease of forging email headers is a reminder of why we can’t just trust what a sender says.Syncing the link with Sovrin will allow us to prove the association between Faber College’s identity and public key, but the CLI must be connected to the Sovrin network to sync-- and we haven’t connected yet.
 
-There
-are
-two
-Sovrin
-networks
-we
-might
-connect
-to.One is a
-test
-network, and the
-other is live(production).We’ll
-use
-the
-test
-network
-for the demo.
+There are two Sovrin networks we might connect to. One is a test network, and the other is live(production).We’ll use the test network for the demo.
 
 ```
 ALICE> connect test
 Connected to test.
 ```
 
-Alice
-tries
-again
-to
-accept
-the
-invitation
-from Faber College.This
-time
-she
-succeeds.
+Alice tries again to accept the invitation from Faber College.This time she succeeds.
 
 ```
 ALICE> accept invitation from Faber
@@ -427,30 +277,9 @@ Try Next:
   show claim "Transcript"
   request claim "Transcript"
 ```
+Accepting an invitation takes the nonce that Faber College provided, and signs it with the Alice’s signing key. It then securely transmits the signed data along with the identifier and verification key to Faber College’s endpoint, which is discovered when the link is synchronized. Faber College matches the provided nonce to the record of the nonce it sent to Alice, verifies the signature, then records Alice’s new pairwise identifier in the Sovrin ledger.
 
-Accepting
-an
-invitation
-takes
-the
-nonce
-that
-Faber
-College
-provided, and signs
-it
-with the Alice’s signing key.It then securely transmits the signed data along
-with the identifier and verification key to Faber College’s endpoint,
-which is discovered when the link is synchronized.Faber College matches the
-provided nonce to the record of the nonce it sent to Alice, verifies the
-signature, then records Alice’s new pairwise identifier in the Sovrin ledger.
-
-Once
-the
-link is accepted and synchronized, Alice
-inspects
-it
-again.
+Once the link is accepted and synchronized, Alice inspects it again.
 
 ```
 ALICE> show link Faber
@@ -474,273 +303,42 @@ Try Next:
   request claim "Transcript"
 ```
 
-Notice
-now
-that
-the
-Last
-synced
-line is updated.
+Notice now that the Last synced line is updated.
 
-Alice
-can
-see
-now
-that
-the
-target
-verification
-key and target
-endpoint
-are
-updated, which
-allows
-her
-to
-communicate
-with Faber College.She can also see that the identity of the trust anchor was
-confirmed (from the Sovrin network), and that her invitation has been accepted.
+Alice can see now that the target verification key and target endpoint are updated, which allows her to communicate with Faber College. She can also see that the identity of the trust anchor was confirmed (from the Sovrin network), and that her invitation has been accepted.
 
 ## Test Secure Interaction
 
-At
-this
-point
-Alice is connected
-to
-Faber
-College, and can
-interact in a
-secure
-way.The
-Sovrin
-CLI
-supports
-a
-ping
-command
-to
-test
-secure
-pairwise
-interactions.(This
-command is not yet
-implemented.)
+At this point Alice is connected to Faber College, and can interact in a secure way. The Sovrin CLI supports a ping command to test secure pairwise interactions.(This command is not yet implemented.)
 
 ```
 ALICE> ping Faber
 Success: 145.2 ms
 ```
 
-Alice
-receives
-a
-successful
-response
-from Faber College.Here’s
-what
-happens
-behind
-the
-scenes:
+Alice receives a successful response from Faber College.Here’s what happens behind the scenes:
 
-1.
-The
-ping
-she
-sends
-contains
-a
-random
-challenge.
+1. The ping she sends contains a random challenge.
 
-2.
-The
-ping
-also
-includes
-Alice’s
-pairwise
-identifier and a
-signature.
+2. The ping also includes Alice’s pairwise identifier and a signature.
 
-3.
-Faber
-College
-verifies
-Alice’s
-signature.
+3. Faber College verifies Alice’s signature.
 
-4.
-Faber
-College
-digitally
-signs
-that
-challenge and sends
-it
-back.
+4. Faber College digitally signs that challenge and sends it back.
 
-5.
-Alice
-verifies
-that
-the
-response
-contained
-the
-same
-random
-challenge
-she
-sent.
+5. Alice verifies that the response contained the same random challenge she sent.
 
-6.
-Alice
-uses
-the
-verification
-key in the
-Faber
-College
-Link
-to
-verify
-the
-Faber
-College
-digital
-signature.
+6. Alice uses the verification key in the Faber College Link to verify the Faber College digital signature.
 
-She
-can
-trust
-the
-response
-from Faber College
+She can trust the response from Faber College
 
-because(1)
-she
-connects
-to
-the
-current
-endpoint, (2)
-no
-replay - attack is possible, due
-to
-her
-random
-challenge, (3)
-she
-knows
-the
-verification
-key
-used
-to
-verify
-Faber
-College’s
-digital
-signature is the
-correct
-one
-because
-she
-just
-confirmed
-it
-on
-Sovrin.
+because (1) she connects to the current endpoint, (2) no replay - attack is possible, due to her random challenge, (3) she knows the verification key used to verify Faber College’s digital signature is the correct one because she just confirmed it on Sovrin.
 
 ## Inspect the Claim
 
-Notice
-that
-when
-Alice
-last
-showed
-the
-Faber
-link, there
-was
-a
-new
-line: Available
-claim: Transcript.A ** _claim_ ** is a
-piece
-of
-information
-about
-an
-identity - -a
-name, an
-age, a
-credit
-score… It is information
-claimed
-to
-be
-true.In
-this
-case, the
-claim is named
-"Transcript."
+Notice that when Alice last showed the Faber link, there was a new line: Available claim: Transcript.A ** _claim_ ** is a piece of information about an identity - -a name, an age, a credit score… It is information claimed to be true.In this case, the claim is named "Transcript."
 
-Claims
-are
-offered
-by
-an ** _issuer_ **.An
-issuer
-may
-be
-any
-identity
-owner
-known
-to
-Sovrin, and any
-issuer
-may
-issue
-a
-claim
-about
-any
-identity
-owner
-it
-can
-identify.The
-usefulness and reliability
-of
-a
-claim
-are
-tied
-to
-the
-reputation
-of
-the
-issuer,
-with respect to the claim at hand.For Alice to self-issue a claim that she
-likes chocolate ice cream may be perfectly reasonable, but for her to
-    self-issue a claim that she graduated from Faber College should not
-    impress anyone.The value of this transcript is that it is provably issued
-    by Faber College.
-
-Alice
-wants
-to
-use
-that
-claim.She
-asks
-for more information:
+Claims are offered by an ** _issuer_ **. An issuer may be any identity owner known to Sovrin, and any issuer may issue a claim about any identity owner it can identify. The usefulness and reliability of a claim are tied to the reputation of the issuer, with respect to the claim at hand.For Alice to self-issue a claim that she likes chocolate ice cream may be perfectly reasonable, but for her to self-issue a claim that she graduated from Faber College should not impress anyone. The value of this transcript is that it is provably issued by Faber College. Alice wants to use that claim.She asks for more information:
 
 ```
 ALICE> show claim Transcript
@@ -757,22 +355,7 @@ Attributes:
     status
 ```
 
-Alice
-sees
-the
-attributes
-the
-transcript
-contains.These
-attributes
-are
-known
-because
-a
-schema
-for Transcript has been written to the ledger (see Appendix).However,
-the "not yet issued" note means that the transcript has not been delivered to
-Alice in a usable form.To get the transcript, Alice needs to request it.
+Alice sees the attributes the transcript contains. These attributes are known because a schema for Transcript has been written to the ledger (see Appendix). However, the "not yet issued" note means that the transcript has not been delivered to Alice in a usable form.To get the transcript, Alice needs to request it.
 
 ```
 ALICE> request claim Transcript
@@ -783,39 +366,7 @@ Requesting claim Transcript from Faber College ...
 Received Transcript.
 ```
 
-Now
-the
-transcript
-has
-been
-issued;
-Alice
-has
-it in her
-possession, in much
-the
-same
-way
-that
-she
-would
-hold
-a
-physical
-transcript
-that
-had
-been
-mailed
-to
-her.When
-she
-inspects
-it
-again, she
-sees
-more
-details:
+Now the transcript has been issued; Alice has it in her possession, in much the same way that she would hold a physical transcript that had been mailed to her.When she inspects it again, she sees more details:
 
 ```
 ALICE> show claim Transcript 
@@ -834,18 +385,7 @@ Attributes:
 
 # Apply for a job
 
-Alice
-would
-like
-to
-work
-for Acme Corp.Normally she would browse to acmecorp.com, where she would
-click on a hyperlink to apply for a job.Her browser would download a link
-invitation which her Sovrin app would open; this would trigger a prompt to
-Alice, asking her to accept the link with Acme Corp.Because we’re using a
-CLI, the interface is different, but the steps are the same.We do
-approximately the same things that we did when Alice was accepting Faber
-College’s link invitation:
+Alice would like to work for Acme Corp.Normally she would browse to acmecorp.com, where she would click on a hyperlink to apply for a job.Her browser would download a link invitation which her Sovrin app would open; this would trigger a prompt to Alice, asking her to accept the link with Acme Corp. Because we’re using a CLI, the interface is different, but the steps are the same. We do approximately the same things that we did when Alice was accepting Faber College’s link invitation:
 
 ```
 ALICE> show sample/acme-job-application.sovrin
@@ -869,106 +409,9 @@ Try Next:
   load sample/acme-job-application.sovrin
 ```
 
-Notice
-that
-this
-link
-invitation
-contains
-a ** _claim
-request_ **.ACME
-Corp is requesting
-that
-Alice
-provide
-a
-Job
-Application.The
-Job
-Application is a
-rich
-document
-type
-that
-has
-a
-schema
-defined
-on
-the
-Sovrin
-ledger;
-its
-particulars
-are
-outside
-the
-scope
-of
-this
-guide, but
-it
-will
-require
-a
-name, SSN, and degree, so
-it
-overlaps
-with the transcript we’ve already looked at.This becomes important below.
+Notice that this link invitation contains a ** _claim request_ **. ACME Corp is requesting that Alice provide a Job Application. The Job Application is a rich document type that has a schema defined on the Sovrin ledger; its particulars are outside the scope of this guide, but it will require a name, SSN, and degree, so it overlaps with the transcript we’ve already looked at. This becomes important below.
 
-Notice
-that
-the
-invitation
-also
-identifies
-an
-endpoint.This is different
-from our previous
-
-case, where
-an
-identity
-owner’s
-endpoint
-was
-discovered
-through
-lookup
-on
-the
-Sovrin
-ledger.Here, Acme
-Corp.has
-decided
-to
-short - circuit
-Sovrin and just
-directly
-publish
-its
-job
-application
-acceptor
-endpoint
-with each request.Sovrin supports this.
-
-Alice
-quickly
-works
-through
-the
-sequence
-of
-commands
-that
-establishes
-a
-new
-pairwise
-connection
-with Acme:
-
+Notice that the invitation also identifies an endpoint. This is different from our previous case, where an identity owner’s endpoint was discovered through lookup on the Sovrin ledger.Here, Acme Corp.has decided to short - circuit Sovrin and just directly publish its job application acceptor endpoint with each request. Sovrin supports this.  Alice quickly works through the sequence of commands that establishes a new pairwise connection with Acme:
 ```
 ALICE> load sample/acme-job-application.sovrin
 1 link invitation found for Acme Corp.
@@ -1011,20 +454,7 @@ Usage:
   show claim request "<claim-request-name>"
 ```
 
-Notice
-what
-the
-claim
-request
-looks
-like
-now.Although
-the
-application is not submitted, it
-has
-various
-claims
-filled in:
+Notice what the claim request looks like now.Although the application is not submitted, it has various claims filled in:
 
 ```
 ALICE> show claim request Job-Application
@@ -1052,85 +482,11 @@ Try Next:
   send claim request Job-Application
 ```
 
-Alice
-only
-has
-one
-claim
-that
-meets
-claim
-proof
-requirements
-for this Job Application, so it is associated automatically with the request;
-this is how some of her attributes are pre-populated.
+Alice only has one claim that meets claim proof requirements for this Job Application, so it is associated automatically with the request; this is how some of her attributes are pre-populated.
 
-The
-pre - population
-doesn’t
-create
-data
-leakage, though;
-the
-request is still
-pending.Alice
-can
-edit
-what
-she is willing
-to
-supply
-for each requested attribute.
+The pre - population doesn’t create data leakage, though; the request is still pending. Alice can edit what she is willing to supply for each requested attribute.
 
-Notice
-that
-some
-attributes
-are
-verifiable, and some
-are
-not.The
-claim
-request
-schema
-says
-that
-ssn and degree( and others) in the
-transcript
-must
-be
-formally
-asserted
-by
-an
-issuer
-other
-than
-Alice.Notice
-also
-that
-the
-first
-occurrence
-of
-first_name and last_name, plus
-the
-only
-occurrence
-of
-phone_number, are
-empty, and are
-not required
-to
-be
-verifiable.By
-not tagging
-these
-claims
-with a verifiable status, Acme’s claim request is saying it will accept
-Alice’s own claim about her names and phone numbers.(This might be done to
-allow Alice to provide a first name that’s a nickname, for example.) Alice
-therefore adds the extra attributes now:
+Notice that some attributes are verifiable, and some are not. The claim request schema says that ssn and degree( and others) in the transcript must be formally asserted by an issuer other than Alice. Notice also that the first occurrence of first_name and last_name, plus the only occurrence of phone_number, are empty, and are not required to be verifiable. By not tagging these claims with a verifiable status, Acme’s claim request is saying it will accept Alice’s own claim about her names and phone numbers. (This might be done to allow Alice to provide a first name that’s a nickname, for example.) Alice therefore adds the extra attributes now:
 
 ```
 ALICE> set first_name to Sally
@@ -1138,17 +494,7 @@ ALICE> set last_name to Gonzales
 ALICE> set phone_number to 123-555-1212
 ```
 
-Alice
-checks
-to
-see
-what
-the
-claim
-request
-looks
-like
-now.
+Alice checks to see what the claim request looks like now.
 
 ```
 ALICE> show claim request Job-Application
@@ -1176,10 +522,7 @@ Try Next:
   send claim request Job-Application
 ```
 
-She
-decides
-to
-submit.
+She decides to submit.
 
 ```
 ALICE> send claim Job-Application to Acme
@@ -1189,36 +532,9 @@ Thank you for your submission.
 We will be in touch.
 ```
 
-It
-will
-be
-interesting
-to
-see
-whether
-Acme
-accepts
-this
-application
-with the informal first_name not matching the one on her transcript.If Acme
-is concerned about this discrepancy, it could reach out to Alice and ask
-about it, using the secure channel that’s now established.Alice could send a
-photo showing her college ID that lists her name as "Alice (Sally) Gonzales".
+It will be interesting to see whether Acme accepts this application with the informal first_name not matching the one on her transcript.If Acme is concerned about this discrepancy, it could reach out to Alice and ask about it, using the secure channel that’s now established.Alice could send a photo showing her college ID that lists her name as "Alice (Sally) Gonzales".
 
-Here, we’ll
-assume
-the
-application is accepted, and Alice
-ends
-up
-getting
-the
-job.When
-Alice
-inspects
-her
-link
-with Acme a week later, she sees that a new claim is available:
+Here, we’ll assume the application is accepted, and Alice ends up getting the job. When Alice inspects her link with Acme a week later, she sees that a new claim is available:
 
 ```
 ALICE> show link Acme
@@ -1240,18 +556,7 @@ Link
 
 ## Apply for a loan
 
-Now
-that
-Alice
-has
-a
-job, she’d
-like
-to
-apply
-for a loan.That will require proof of employment.She can get this from the
-Job-Certificate claim offered by Acme.Alice goes through a familiar sequence
-of interactions.First she inspects the claim:
+Now that Alice has a job, she’d like to apply for a loan. That will require proof of employment.She can get this from the Job-Certificate claim offered by Acme.Alice goes through a familiar sequence of interactions. First she inspects the claim:
 
 ```
 ALICE> show claim Job-Certificate
@@ -1266,9 +571,7 @@ Attributes:
     salary_slab
 ```
 
-Next, she
-requests
-it:
+Next, she requests it:
 
 ```
 ALICE> request claim Job-Certificate
@@ -1279,15 +582,7 @@ Requesting claim Job-Certificate from Acme Corp ...
 Received Job-Certificate.
 ```
 
-The
-Job - Certificate
-has
-been
-issued, and she
-now
-has
-it in her
-possession.
+The Job - Certificate has been issued, and she now has it in her possession.
 
 ```
 ALICE> show claim Job-Certificate
@@ -1302,44 +597,9 @@ Attributes:
     salary_slab: between $50, 000 to $100, 000
 ```
 
-She
-can
-use
-it
-when
-she
-applies
-for her loan, in much the same way that she used her transcript when applying
-for a job.
+She can use it when she applies for her loan, in much the same way that she used her transcript when applying for a job.
 
-There is a
-disadvantage in this
-approach
-to
-data
-sharing, though - -it
-may
-disclose
-more
-data
-than
-what is strictly
-necessary.If
-all
-Alice
-needs
-to
-do is provide
-proof
-of
-employment, this
-can
-be
-done
-with an anonymous credential instead.Anonymous credentials may prove certain
-predicates without disclosing actual values (e.g., Alice is employed
-full-time, with a salary greater than X--but how much her salary is, and what
-her hire date is, remain hidden).
+There is a disadvantage in this approach to data sharing, though - -it may disclose more data than what is strictly necessary.If all Alice needs to do is provide proof of employment, this can be done with an anonymous credential instead.Anonymous credentials may prove certain predicates without disclosing actual values (e.g., Alice is employed full-time, with a salary greater than X--but how much her salary is, and what her hire date is, remain hidden).
 
 Support
 for anonymous credentials is at a late alpha stage on Sovrin right now.We’ll
@@ -1349,25 +609,7 @@ circle back and update this guide when we reach beta.
 
 ## Faber College Configures Transcripts
 
-The
-following
-operations
-show
-how
-Transcripts
-are
-defined
-on
-the
-ledger, such
-that
-they
-can
-later
-be
-issued
-with reference to a known schema.
-
+The following operations show how Transcripts are defined on the ledger, such that they can later be issued with reference to a known schema.
 ```
 faber> use Claim-Defs-Keyring
  
@@ -1398,16 +640,7 @@ Submitted.
 
 ## Acme Corp Defines a Job-Application
 
-A
-similar
-process is followed
-by
-Acme
-Corp.to
-define
-a
-Job
-Application.
+A similar process is followed by Acme Corp.to define a Job Application.
 
 ```
 $ sovrin
