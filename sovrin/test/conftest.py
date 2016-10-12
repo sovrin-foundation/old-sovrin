@@ -44,8 +44,8 @@ def stewardWallet():
     seed = b'is a pit   seed, or somepin else'
     signer = SimpleSigner(seed=seed)
     assert signer.verstr == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
-    return signer
-
+    wallet.addSigner(signer=signer)
+    return wallet
 
 
 @pytest.fixture(scope="module")

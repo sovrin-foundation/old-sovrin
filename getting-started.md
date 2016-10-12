@@ -290,7 +290,7 @@ Link
     Trust anchor: Faber College (confirmed)
     Verification key: <same as local identifier>
     Signing key: <hidden>
-    Target: 3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4=
+    Target: FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB
     Target Verification key: <same as target>
     Target endpoint: <faber's endpoint>
     Invitation nonce: b1134a647eb818069c089e7694f63e6d

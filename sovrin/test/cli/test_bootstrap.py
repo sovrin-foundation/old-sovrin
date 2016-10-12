@@ -24,7 +24,7 @@ def getSampleLinkInvitation():
     return {
         "link-invitation": {
             "name": "Acme Corp",
-            "identifier": "YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4=",
+            "identifier": "7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21",
             "nonce": "57fbf9dc8c8e6acde33de98c6d747b28c",
             "endpoint": "127.0.0.1:1213"
         },
@@ -95,7 +95,7 @@ def faberCli(be, do, faberCLI):
     do('new keyring Faber',         expect=['New keyring Faber created',
                                             'Active keyring set to "Faber"'])
     seed = 'Faber000000000000000000000000000'
-    idr = '3W2465HP3OUPGkiNlTMl2iZ+NiMZegfUFIsl8378KH4='
+    idr = 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB'
 
     do('new key with seed ' + seed, expect=['Key created in keyring Faber',
                                            'Identifier for key is ' + idr,
@@ -112,7 +112,7 @@ def acmeCli(be, do, acmeCLI):
     do('new keyring Acme',          expect=['New keyring Acme created',
                                             'Active keyring set to "Acme"'])
     seed = 'Acme0000000000000000000000000000'
-    idr = 'YSTHvR/sxdu41ig9mcqMq/DI5USQMVU4kpa6anJhot4='
+    idr = '7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21'
 
     do('new key with seed ' + seed, expect=['Key created in keyring Acme',
                                             'Identifier for key is ' + idr,
@@ -129,12 +129,13 @@ def thriftCli(be, do, thriftCLI):
     do('new keyring Thrift',          expect=['New keyring Thrift created',
                                               'Active keyring set to "Thrift"'])
     seed = 'Thrift00000000000000000000000000'
-    idr = 'gcp+vfaMWkvmGXYQd3uE/BdK3btf/TR+8xuqhvOYDw0='
+    idr = '9jegUr9vAMqoqQQUEAiCBYNQDnUbTktQY9nNspxfasZW'
 
     do('new key with seed ' + seed, expect=['Key created in keyring Thrift',
                                             'Identifier for key is ' + idr,
                                             'Current identifier set to ' + idr])
     return acmeCLI
+
 
 @pytest.fixture(scope="module")
 def philCli(be, do, philCLI):
@@ -146,7 +147,7 @@ def philCli(be, do, philCLI):
 
     mapper = {
         'seed': '11111111111111111111111111111111',
-        'idr': 'SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0='}
+        'idr': '5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC'}
     do('new key with seed {seed}',  expect=['Key created in keyring Phil',
                                             'Identifier for key is {idr}',
                                             'Current identifier set to {idr}'],
