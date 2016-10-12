@@ -149,6 +149,7 @@ def getGenesisTxns():
         {ALIAS: "Steward8", TARGET_NYM: "V+jbY0Fniz7xFzYIrRYeVQZeDeGHrlB3fwCPEwvicqI=", TXN_ID: "4770beb7e45bf623bd9987af4bd6d6d8eb8b68a4d00fa2a4c6b6f3f0c1c036f8", TXN_TYPE: NYM, ROLE: STEWARD},
     ]
 
+
 def getGenesisTxnsForLocal():
     return [{ALIAS: "Steward1",
              TARGET_NYM: "SAdaWX5yGhVuLgeZ3lzAxTJNxufq8c3UYlCGjsUyFd0=",

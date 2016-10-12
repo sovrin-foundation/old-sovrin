@@ -37,6 +37,12 @@ logger = getlogger()
 class Node(PlenumNode):
     keygenScript = "init_sovrin_raet_keep"
 
+    authorizedAdders = {
+        STEWARD: (STEWARD,),
+        SPONSOR: (STEWARD,),
+        USER: (STEWARD, SPONSOR),
+    }
+
     def __init__(self,
                  name,
                  nodeRegistry=None,
@@ -159,12 +165,6 @@ class Node(PlenumNode):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} is already present".
                                            format(msg[TARGET_NYM]))
-
-    authorizedAdders = {
-        STEWARD: (STEWARD,),
-        SPONSOR: (STEWARD,),
-        USER: (STEWARD, SPONSOR),
-    }
 
     def checkRequestAuthorized(self, request: Request):
         op = request.operation
