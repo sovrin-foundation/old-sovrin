@@ -598,3 +598,11 @@ class Wallet(PWallet, Sponsoring):
                                         pb.vprime[issuerId] + credential.v)
                 pb.setCredential(credential)
                 return
+
+    def isClaimDefComplete(self, claimDefKey):
+        claimDef = self.getClaimDef(key=claimDefKey)
+        return claimDef and claimDef.seqNo
+
+    def isIssuerKeyComplete(self, origin, reference):
+        ipk = self.getIssuerPublicKey(key=(origin, reference))
+        return ipk and ipk.seqNo

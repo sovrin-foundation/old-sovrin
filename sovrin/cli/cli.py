@@ -1603,9 +1603,9 @@ class SovrinCli(PlenumCli):
                                         otherAgentHa, clbk, *args)
 
     def _ensureReqCompleted(self, reqId, client, clbk=None, pargs=None,
-                            kwargs=None, cond=None, condPargs=None):
+                            kwargs=None, cond=None):
         ensureReqCompleted(self.looper.loop, reqId, client, clbk, pargs=pargs,
-                           kwargs=kwargs, cond=cond, condPargs=condPargs)
+                           kwargs=kwargs, cond=cond)
 
     def addAlias(self, reply, err, client, alias, signer):
         if not self.canMakeSovrinRequest:
