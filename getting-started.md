@@ -16,69 +16,12 @@ pass finishes.* __
 
 ## What Sovrin is, and Why it Matters
 
-Sovrin is a
-software
-ecosystem
-for private, secure, and powerful identity.It puts people— not the
-organizations that traditionally centralize identity— in charge of decisions
-about their own privacy and disclosure.This enables all kinds of rich
-innovation: link
-contracts, revocation, novel
-payment
-workflows, asset and document
-management
-features, creative
-forms
-of
-escrow, curated
-reputation, integrations
-with other cool technologies, and so on.
+Sovrin is a software ecosystem for private, secure, and powerful identity.It puts people— not the organizations that traditionally centralize identity— in charge of decisions about their own privacy and disclosure.This enables all kinds of rich innovation: link contracts, revocation, novel payment workflows, asset and document management features, creative forms of escrow, curated
+reputation, integrations with other cool technologies, and so on.
 
-Sovrin
-uses
-open - source, distributed
-ledger
-technology.These
-ledgers
-are
-a
-form
-of
-database
-that is provided
-cooperatively
-by
-a
-pool
-of
-participants, instead
-of
-by
-a
-giant
-database
-with a central admin.Data lives redundantly in many places, and it accrues in
-transactions orchestrated by many machines.Strong, industry-standard
-cryptography protects it.Best practices in key management and cybersecurity
-pervade its design.The result is a reliable, public source of truth under no
-single entity’s control, robust to system failure, resilient to hacking,
-and highly immune to subversion by hostile entities.
+Sovrin uses open - source, distributed ledger technology.These ledgers are a form of database that is provided cooperatively by a pool of participants, instead of by a giant database with a central admin.Data lives redundantly in many places, and it accrues in transactions orchestrated by many machines.Strong, industry-standard cryptography protects it.Best practices in key management and cybersecurity pervade its design.The result is a reliable, public source of truth under no single entity’s control, robust to system failure, resilient to hacking, and highly immune to subversion by hostile entities.
 
-If
-the
-cryptography and blockchain
-details
-feel
-mysterious, fear
-not: getting
-traction
-to
-develop
-on
-Sovrin is easy and fast.You’re
-starting in the
-right
-place.
+If the cryptography and blockchain details feel mysterious, fear not: getting traction to develop on Sovrin is easy and fast.You’re starting in the right place.
 
 ## What We’ll Cover
 
