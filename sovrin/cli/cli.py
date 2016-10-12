@@ -1005,22 +1005,11 @@ class SovrinCli(PlenumCli):
         op[f.SIG.nm] = signature
         self.sendToAgent(op, link)
 
+    # TODO: This should be moved to agent
     def sendReqClaim(self, reply, error, link, claimDefKey):
-        name, version, origin = claimDefKey
-        claimDef = self.activeWallet.getClaimDef(claimDefKey)
-        if not claimDef.seqNo:
-            self.looper.loop.call_later(.2, self.sendReqClaim,
-                                        reply, error, link, claimDefKey)
-        else:
-            issuerPubKey = self.activeWallet.getIssuerPublicKey(
-                (origin, claimDef.seqNo))
-            if not issuerPubKey.seqNo:
-                self.looper.loop.call_later(.2, self.sendReqClaim,
-                                            reply, error, link, claimDefKey)
-            else:
-                self.logger.debug("Found both claimDef and issuerKey in wallet")
         # TODO: Should check for an existing proof builder if that exists for
         # the claim definition and issuer key
+        name, version, origin = claimDefKey
         proofBuilder = self.newProofBuilder(name, version, origin)
         uValue = proofBuilder.U[origin]
         op = {

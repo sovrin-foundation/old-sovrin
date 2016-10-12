@@ -551,20 +551,23 @@ class WalletedAgent(Agent):
                 encodedAttrs[iid] = stringDictToCharmDict(attrs)
             revealedAttrs = body['verifiableAttrs']
             nonce = int(body[NONCE], 16)
-            claimDefKey = body['claimDefKey']
+            # Converting from list to tuple
+            claimDefKey = tuple((body['claimDefKey']))
 
-            def verify(reply, error):
+            def verify(r, e, name, version, origin):
+                # This assumes that author of claimDef is same as the author of
+                # issuerPublicKey
                 # TODO: Do json validation
                 nonlocal proof, nonce, body
-                data = json.loads(reply.get(DATA))
-                pk = data.get(DATA)
-                pk = stringDictToCharmDict(pk)
-                pk['R'] = stringDictToCharmDict(pk['R'])
+                claimDefKey = name, version, origin
+                claimDef = self.wallet.getClaimDef(key=claimDefKey)
+                issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
+                    claimDef.seqNo)
                 proof = ProofBuilder.prepareProofFromDict({
-                    'issuer': data[ORIGIN], 'proof': proof
+                    'issuer': origin, 'proof': proof
                 })
                 ipk = {
-                    data[ORIGIN]: IssuerKey(data.get(REF), **pk)
+                    origin: issuerKey
                 }
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
@@ -588,8 +591,8 @@ class WalletedAgent(Agent):
                 self.signAndSend(resp, link.localIdentifier, frm)
 
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
-                                               self.loop, tuple(claimDefKey),
-                                               verify)
+                                               self.loop, claimDefKey,
+                                               verify, pargs=claimDefKey)
 
     def handleClaimProofStatus(self, msg: Any):
         body, (frm, ha) = msg

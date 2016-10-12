@@ -180,6 +180,8 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
                                        claimDefKey, clbk, pargs=None):
 
+    # This assumes that author of claimDef is same as the author of
+    # issuerPublicKey
     def _getKey(result, error):
         data = json.loads(result.get(DATA))
         origin = data.get(ORIGIN)

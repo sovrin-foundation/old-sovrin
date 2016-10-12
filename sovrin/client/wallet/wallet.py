@@ -567,7 +567,7 @@ class Wallet(PWallet, Sponsoring):
             self.pendRequest(req, None)
         return len(self._pending)
 
-    def getIssuerPublicKey(self, key=None, seqNo=None):
+    def getIssuerPublicKey(self, key=None, seqNo=None) -> Optional[IssuerPubKey]:
         assert key or seqNo
         if key:
             return self._issuerPks.get(key)
@@ -577,7 +577,7 @@ class Wallet(PWallet, Sponsoring):
                     return pk
         return self._issuerPks.get(key)
 
-    def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo):
+    def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo) -> Optional[IssuerPubKey]:
         # Assuming only one identifier per claimDefSeqNo
         for k, v in self._issuerPks.items():
             if k[1] == claimDefSeqNo:
