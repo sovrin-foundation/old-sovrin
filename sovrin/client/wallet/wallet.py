@@ -24,13 +24,14 @@ from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
+from sovrin.common.exceptions import LinkNotFound
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
     GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
 from anoncreds.protocol.utils import strToCharmInteger
-from sovrin.common.util import getEncodedAttrs
+from sovrin.common.util import getEncodedAttrs, stringDictToCharmDict
 
 ENCODING = "utf-8"
 
@@ -306,8 +307,12 @@ class Wallet(PWallet, Sponsoring):
     def addLink(self, link: Link):
         self._links[link.key] = link
 
-    def getLink(self, name):
-        return self._links.get(name)
+    def getLink(self, name, required=False) -> Link:
+        l = self._links.get(name)
+        if not l and required:
+            logger.debug("Wallet has links {}".format(self._links))
+            raise LinkNotFound(l.name)
+        return l
 
     @property
     def masterSecret(self):
@@ -437,7 +442,7 @@ class Wallet(PWallet, Sponsoring):
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
         else:
-            raise NotImplementedError("'Data' in reply was None")
+            raise NotImplementedError("'DATA' in reply was None")
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO
@@ -460,8 +465,7 @@ class Wallet(PWallet, Sponsoring):
         keys = data.get(DATA)
         for k in ('N', 'S', 'Z'):
             keys[k] = strToCharmInteger(keys[k])
-        for k in keys['R']:
-            keys['R'][k] = strToCharmInteger(keys['R'][k])
+        keys['R'] = stringDictToCharmDict(keys['R'])
         isPk.initPubKey(data.get(F.seqNo.name), keys['N'], keys['R'],
                         keys['S'], keys['Z'])
 
@@ -537,9 +541,15 @@ class Wallet(PWallet, Sponsoring):
         self.pendRequest(req, key=key)
         return self.preparePending()[0]
 
-    def getLinkByNonce(self, nonce) -> Optional[Link]:
+    # DEPR
+    # def getLinkByNonce(self, nonce) -> Optional[Link]:
+    #     for _, li in self._links.items():
+    #         if li.nonce == nonce:
+    #             return li
+
+    def getLinkByInternalId(self, internalId) -> Optional[Link]:
         for _, li in self._links.items():
-            if li.nonce == nonce:
+            if li.internalId == internalId:
                 return li
 
     def addIssuerSecretKey(self, issuerSk):
@@ -588,3 +598,11 @@ class Wallet(PWallet, Sponsoring):
                                         pb.vprime[issuerId] + credential.v)
                 pb.setCredential(credential)
                 return
+
+    def isClaimDefComplete(self, claimDefKey):
+        claimDef = self.getClaimDef(key=claimDefKey)
+        return claimDef and claimDef.seqNo
+
+    def isIssuerKeyComplete(self, origin, reference):
+        ipk = self.getIssuerPublicKey(key=(origin, reference))
+        return ipk and ipk.seqNo

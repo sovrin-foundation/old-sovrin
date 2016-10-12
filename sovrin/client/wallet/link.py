@@ -3,7 +3,8 @@ from typing import Dict
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
 from plenum.common.util import prettyDate
-from sovrin.common.exceptions import InvalidLinkException
+from sovrin.common.exceptions import InvalidLinkException, \
+    RemoteEndpointNotFound
 from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
 
 
@@ -38,8 +39,9 @@ class constant:
 
 class Link:
     def __init__(self, name, localIdentifier, trustAnchor=None,
-                 remoteIdentifier=None, remoteEndPoint=None, nonce=None,
-                 claimProofRequests=None, invitationData: Dict=None):
+                 remoteIdentifier=None, remoteEndPoint=None, invitationNonce=None,
+                 claimProofRequests=None, invitationData: Dict=None,
+                 internalId=None):
         self.name = name
         self.localIdentifier = localIdentifier
         self.verkey = self.localIdentifier.split(":")[-1]
@@ -47,8 +49,15 @@ class Link:
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
-        self.nonce = nonce or getNonce()
+        # DEPR
+        # self.nonce = nonce or getNonce()
+        self.invitationNonce = invitationNonce
         self.invitationData = invitationData
+
+        # for optionally storing a reference to an identifier in another system
+        # for example, a college may already have a student ID for a particular
+        # person, and that student ID can be put in this field
+        self.internalId = internalId
 
         self.claimProofRequests = claimProofRequests or []
         self.availableClaims = []
@@ -79,6 +88,8 @@ class Link:
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
         targetEndPoint = self.remoteEndPoint or \
                          constant.UNKNOWN_WAITING_FOR_SYNC
+        if isinstance(targetEndPoint, tuple):
+            targetEndPoint = "{}:{}".format(*targetEndPoint)
         linkStatus = 'not verified, target verkey unknown'
         linkLastSynced = prettyDate(self.linkLastSynced) or \
                          constant.LINK_NOT_SYNCHRONIZED
@@ -100,7 +111,7 @@ class Link:
             fixedLinkHeading += "(not yet accepted)"
 
         # TODO: Refactor to use string interpolation
-
+        # try:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
@@ -112,8 +123,11 @@ class Link:
                           constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.nonce + '\n' \
+            'Invitation nonce: ' + self.invitationNonce + '\n' \
             'Invitation status: ' + linkStatus + '\n'
+        # except Exception as ex:
+        #     print(ex)
+        #     print(targetEndPoint, linkStatus, )
 
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
@@ -152,3 +166,8 @@ class Link:
         linkInvitationReqFields = [f.IDENTIFIER.nm, NAME, NONCE]
         for fn in linkInvitationReqFields:
             checkIfFieldPresent(linkInvitation, 'link-invitation', fn)
+
+    def getRemoteEndpoint(self, required=False):
+        if not self.remoteEndPoint and required:
+            raise RemoteEndpointNotFound
+        return self.remoteEndPoint

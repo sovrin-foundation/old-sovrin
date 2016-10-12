@@ -13,7 +13,6 @@ def connectAgents(agent1, agent2):
 
 
 def ensureAgentsConnected(looper, agent1, agent2):
-    connectAgents(agent1, agent2)
     e1 = agent1.endpoint
     e2 = agent2.endpoint
     looper.run(eventually(checkRemoteExists, e1, e2.name, CONNECTED,

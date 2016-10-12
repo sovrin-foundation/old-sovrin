@@ -4,6 +4,7 @@ import random
 from plenum.common.log import getlogger
 
 from sovrin.agent.agent import WalletedAgent, runAgent
+from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
@@ -37,6 +38,17 @@ class ThriftAgent(WalletedAgent):
 
         }
 
+        # maps invitation nonces to internal ids
+        self._invites = {
+            "77fbf9dc8c8e6acde33de98c6d747b28c": 1
+        }
+
+    def getInternalIdByInvitedNonce(self, nonce):
+        if nonce in self._invites:
+            return self._invites[nonce]
+        else:
+            raise NonceNotFound
+
     def addKeyIfNotAdded(self):
         wallet = self.wallet
         if not wallet.identifiers:
@@ -54,16 +66,16 @@ class ThriftAgent(WalletedAgent):
     def getAttributes(self, nonce):
         pass
 
-    def addLinksToWallet(self):
-        wallet = self.wallet
-        idr = wallet.defaultId
-        link = Link(random.choice(randomData.NAMES), idr,
-                    nonce="77fbf9dc8c8e6acde33de98c6d747b28c")
-        wallet.addLink(link)
+    # def addLinksToWallet(self):
+    #     wallet = self.wallet
+    #     idr = wallet.defaultId
+    #     link = Link(random.choice(randomData.NAMES), idr,
+    #                 invitationNonce="77fbf9dc8c8e6acde33de98c6d747b28c")
+    #     wallet.addLink(link)
 
     def bootstrap(self):
         self.addKeyIfNotAdded()
-        self.addLinksToWallet()
+        # self.addLinksToWallet()
         self.addClaimDefsToWallet()
 
 

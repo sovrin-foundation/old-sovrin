@@ -220,3 +220,10 @@ def userClientA(genned, userWalletA, looper, tdir):
     makePendingTxnsRequest(u, userWalletA)
     return u
 
+
+def pytest_assertrepr_compare(op, left, right):
+    if isinstance(left, str) and isinstance(right, str):
+        if op in ('in', 'not in'):
+            mod = 'not ' if 'not' in op else ''
+            lines = ['    ' + s for s in right.split('\n')]
+            return ['"{}" should {}be in...'.format(left, mod)] + lines

@@ -39,7 +39,8 @@ def testShowFile(aliceCLI, be, do, faberMap):
                         mapper=faberMap)
 
 
-def testLoadFileNotExists(aliceCLI, be, do, fileNotExists, faberMap):
+def testLoadFileNotExists(aliceCLI, be, do, fileNotExists, faberMap,
+                          aliceConnected):
     be(aliceCLI)
     do("load {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
@@ -86,22 +87,27 @@ def testAliceConnect(aliceConnected):
 def testSyncLinkWhenEndpointNotAvailable(faberAdded,
                                          looper,
                                          aliceCLI,
-                                         stewardClientAndWallet):
+                                         stewardClientAndWallet,
+                                         aliceConnected):
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
+    ep = li.remoteEndPoint
+    li.remoteEndPoint = None
     aliceCLI.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,
                           "Endpoint not available",
                           retryWait=1,
                           timeout=10))
+    li.remoteEndPoint = ep
 
 
 def testSyncLinkWhenEndpointIsAvailable(looper,
                                         aliceCLI,
                                         stewardClientAndWallet,
-                                        faberAdded):
+                                        faberAdded,
+                                        aliceConnected):
     client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
-    assert li.remoteEndPoint is constant.NOT_AVAILABLE
+    assert li.remoteEndPoint is None
     endpointValue = "0.0.0.0:0000"
     addRawAttribute(looper, client, wallet, ENDPOINT, endpointValue,
                     dest=li.remoteIdentifier)

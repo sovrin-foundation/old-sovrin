@@ -6,6 +6,7 @@ import importlib
 import importlib.util
 import json
 import os
+from functools import partial
 from typing import Tuple, Union
 
 import libnacl.secret
@@ -157,8 +158,9 @@ def charmDictToStringDict(dictionary):
 
 def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
                                 reference, clbk, pargs=None):
-    ipk = wallet.getIssuerPublicKey(key=(origin, reference))
-    if not (ipk and ipk.seqNo):
+
+    chk = partial(wallet.isIssuerKeyComplete, origin, reference)
+    if not chk():
         req = wallet.requestIssuerKey((origin, reference),
                                                  wallet.defaultId)
         client.submitReqs(req)
@@ -166,10 +168,10 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
             displayer("Getting Keys for the Claim Definition from Sovrin")
         if pargs is not None:
             loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                                    clbk, pargs)
+                                    clbk, pargs, None, chk)
         else:
             loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                            clbk)
+                            clbk, None, None, chk)
     else:
         # Since reply and error will be none
         clbk(None, None, *pargs)
@@ -177,6 +179,7 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
 
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
                                        claimDefKey, clbk, pargs=None):
+
     def _getKey(result, error):
         data = json.loads(result.get(DATA))
         origin = data.get(ORIGIN)
@@ -184,27 +187,27 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
                                    seqNo, clbk, pargs)
 
-    claimDef = wallet.getClaimDef(key=claimDefKey)
-    if not (claimDef and claimDef.seqNo):
-        req = wallet.requestClaimDef(claimDefKey,
-                                                wallet.defaultId)
+    chk = partial(wallet.isClaimDefComplete, claimDefKey)
+    if not chk():
+        req = wallet.requestClaimDef(claimDefKey, wallet.defaultId)
         client.submitReqs(req)
         displayer("Getting Claim Definition from Sovrin: {} {}"
-                   .format(claimDefKey[0], claimDefKey[1]))
+                  .format(claimDefKey[0], claimDefKey[1]))
         loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                                    _getKey)
+                        _getKey, None, None, chk)
     else:
+        claimDef = wallet.getClaimDef(key=claimDefKey)
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop,
                                    claimDef.origin, claimDef.seqNo, clbk, pargs)
 
 
-# TODO: Should have a timeout
+# TODO: Should have a timeout, should not have kwargs
 def ensureReqCompleted(loop, reqId, client, clbk=None, pargs=None, kwargs=None,
-                       cond=None, condPargs=None):
+                       cond=None):
     reply, err = client.replyIfConsensus(reqId)
-    if reply is None and (not cond or not cond(condPargs)):
+    if reply is None and (cond is None or not cond()):
         loop.call_later(.2, ensureReqCompleted, loop,
-                             reqId, client, clbk, pargs, kwargs, cond, condPargs)
+                             reqId, client, clbk, pargs, kwargs, cond)
     elif clbk:
         # TODO: Do something which makes reply and error optional in the
         # callback.

@@ -6,6 +6,7 @@ from plenum.common.txn import NAME, VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
+from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
@@ -43,29 +44,37 @@ class AcmeAgent(WalletedAgent):
                                          issuerSeqNoParam or issuerSeqNo)
         }
 
+        # maps invitation nonces to internal ids
+        self._invites = {
+            "57fbf9dc8c8e6acde33de98c6d747b28c": 1,
+            "3a2eb72eca8b404e8d412c5bf79f2640": 2,
+            "8513d1397e87cada4214e2a650f603eb": 3,
+            "810b78be79f29fc81335abaa4ee1c5e8": 4
+        }
+
         self._attributes = {
-            "57fbf9dc8c8e6acde33de98c6d747b28c": {
+            1: {
                 "first_name": "Alice",
                 "last_name": "Garcia",
                 "employee_status": "Permanent",
                 "experience": "3 years",
                 "salary_bracket": "between $50,000 to $100,000"
             },
-            "3a2eb72eca8b404e8d412c5bf79f2640": {
+            2: {
                 "first_name": "Carol",
                 "last_name": "Atkinson",
                 "employee_status": "Permanent",
                 "experience": "2 years",
                 "salary_bracket": "between $60,000 to $90,000"
             },
-            "8513d1397e87cada4214e2a650f603eb": {
+            3: {
                 "first_name": "Frank",
                 "last_name": "Jeffrey",
                 "employee_status": "Temporary",
                 "experience": "4 years",
                 "salary_bracket": "between $40,000 to $80,000"
             },
-            "810b78be79f29fc81335abaa4ee1c5e8": {
+            4: {
                 "first_name": "Craig",
                 "last_name": "Richards",
                 "employee_status": "On Contract",
@@ -73,6 +82,12 @@ class AcmeAgent(WalletedAgent):
                 "salary_bracket": "between $50,000 to $70,000"
             },
         }
+
+    def getInternalIdByInvitedNonce(self, nonce):
+        if nonce in self._invites:
+            return self._invites[nonce]
+        else:
+            raise NonceNotFound
 
     def addKeyIfNotAdded(self):
         wallet = self.wallet
@@ -107,17 +122,12 @@ class AcmeAgent(WalletedAgent):
                                      credDefSeqNo=credDefSeqNo,
                                      issuerKeySeqNo=issuerKeySeqNo)
 
-    def getAttributes(self, nonce):
-        attrs = self._attributes.get(nonce)
+    def getAttributes(self, internalId):
+        attrs = self._attributes.get(internalId)
         if not attrs:
-            name = random.choice(randomData.NAMES)
-            attrs = {
-                "first_name": name.split(' ', 1)[0],
-                "last_name": name.split(' ', 1)[1],
-                "employee_status": random.choice(randomData.EMPLOYEE_STATUS),
-                "experience": random.choice(randomData.EXPERIENCE),
-                "salary_bracket": random.choice(randomData.SALARY_BRACKET)
-            }
+            if not attrs:
+                raise RuntimeError('attributes for internal ID {} not found'.
+                                   format(internalId))
 
         attribTypes = []
         for name in attrs:
@@ -126,17 +136,9 @@ class AcmeAgent(WalletedAgent):
         attribs = attribsDef.attribs(**attrs)
         return attribs
 
-    def addLinksToWallet(self):
-        wallet = self.wallet
-        idr = wallet.defaultId
-        for nonce, data in self._attributes.items():
-            link = Link(data.get("first_name") + " " + data.get("last_name"),
-                        idr, nonce=nonce)
-            wallet.addLink(link)
 
     def bootstrap(self):
         self.addKeyIfNotAdded()
-        self.addLinksToWallet()
         self.addClaimDefsToWallet()
 
 

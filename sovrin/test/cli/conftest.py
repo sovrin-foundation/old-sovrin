@@ -29,8 +29,10 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
-    acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, thriftAgentPort, \
-    thriftLinkAdded, thriftIsRunning, thriftWallet
+    acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
+    acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
+    thriftAgent
+
 from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
@@ -273,6 +275,7 @@ def syncedInviteAcceptedWithClaimsOut(syncedInviteAcceptedOutWithoutClaims):
         "Available claims: {claims}",
     ]
 
+
 @pytest.fixture(scope="module")
 def unsycedAcceptedInviteWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
     return [
@@ -470,6 +473,7 @@ def transcriptClaimMap():
         "attr-status": "string"
     }
 
+
 @pytest.fixture(scope="module")
 def jobCertClaimAttrValueMap():
     return {
@@ -586,6 +590,7 @@ def showJobCertClaimOut(nextCommandsToTryUsageLine):
 @pytest.fixture(scope="module")
 def showLinkWithClaimReqOut():
     return ["Claim Requests: {claim-requests}"]
+
 
 @pytest.fixture(scope="module")
 def showLinkWithAvailableClaimsOut():
@@ -787,86 +792,28 @@ def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
     return client, wallet
 
 
-def addClaimDefs(emptyLooper, claimDefs, agent, agentWallet):
-    for name, version, attr_names in claimDefs:
-        claimDef = {
-                "name": name,
-                "version": version,
-                "type": "CL",
-                "attr_names": attr_names
-        }
-
-        cdSeqNo, iskSeqNo = addClaimDefAndIssuerKey(emptyLooper, agent,
-                                                    agentWallet, claimDef)
-        agent._seqNos[(name, version)] = (cdSeqNo, iskSeqNo)
-
-
 @pytest.fixture(scope="module")
-def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
-                   faberWallet, faberAddedByPhil):
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
+                   faberAddedByPhil, faberAgent):
     faber, faberWallet = runningFaber(emptyLooper, tdirWithPoolTxns,
-                                      faberAgentPort, faberWallet)
-    claimDefs = [
-        ("Transcript", "1.2", ["student_name", "ssn", "degree", "year", "status"])
-    ]
-
-    addClaimDefs(emptyLooper, claimDefs, faber, faberWallet)
-
-    faber.initAvailableClaimList()
-    faber.addLinksToWallet()
+                                      faberWallet, faberAgent, faberAddedByPhil)
     return faber, faberWallet
 
 
 @pytest.fixture(scope="module")
-def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeAgentPort,
-                   acmeWallet, acmeAddedByPhil):
+def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet,
+                   acmeAddedByPhil, acmeAgent):
     acme, acmeWallet = runningAcme(emptyLooper, tdirWithPoolTxns,
-                                      acmeAgentPort, acmeWallet)
+                                   acmeWallet, acmeAgent, acmeAddedByPhil)
 
-    claimDefs = [
-        ("Job-Certificate", "0.2",
-         ["first_name", "last_name", "employee_status",
-          "experience", "salary_bracket"])
-    ]
-    addClaimDefs(emptyLooper, claimDefs, acme, acmeWallet)
-
-    acme.addLinksToWallet()
     return acme, acmeWallet
 
 
-def addClaimDefAndIssuerKey(looper, agent, agentWallet, claimDefToAdd):
-    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    sid = agentWallet.addClaimDefSk(str(csk))
+@pytest.fixture(scope="module")
+def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
+                    thriftAddedByPhil, thriftAgent):
+    thrift, thriftWallet = runningThrift(emptyLooper, tdirWithPoolTxns,
+                                         thriftWallet, thriftAgent,
+                                         thriftAddedByPhil)
 
-    claimDef = ClaimDef(seqNo=None,
-                       attrNames=claimDefToAdd[ATTR_NAMES],
-                       name=claimDefToAdd[NAME],
-                       version=claimDefToAdd[VERSION],
-                       origin=agentWallet.defaultId,
-                       typ=claimDefToAdd[TYPE],
-                       secretKey=sid)
-    agentWallet.addClaimDef(claimDef)
-    reqs = agentWallet.preparePending()
-    agent.client.submitReqs(*reqs)
-
-    def chk():
-        assert claimDef.seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-
-    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
-    agentWallet.addIssuerSecretKey(isk)
-    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=claimDef.seqNo,
-                       secretKeyUid=isk.uid, origin=agentWallet.defaultId)
-    agentWallet.addIssuerPublicKey(ipk)
-    reqs = agentWallet.preparePending()
-    agent.client.submitReqs(*reqs)
-
-    key = (agentWallet.defaultId, claimDef.seqNo)
-
-    def chk():
-        assert agentWallet.getIssuerPublicKey(key).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-    return claimDef.seqNo, ipk.seqNo
+    return thrift, thriftWallet

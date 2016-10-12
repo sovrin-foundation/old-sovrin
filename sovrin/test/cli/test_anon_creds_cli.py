@@ -232,13 +232,11 @@ def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
         assert out in tylerCLI.lastCmdOutput
 
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
-    U = None
-    proofId = None
     pat = re.compile(
         "Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
     m = pat.search(tylerCLI.lastCmdOutput)
-    if m:
-        proofId, U = m.groups()
+    assert m
+    proofId, U = m.groups()
     return proofId, U
 
 
@@ -248,6 +246,8 @@ def byuCreatedCredential(nodesSetup, byuCLI, tylerCLI,
                          credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
     proofId, U = tylerPreparedU
+    assert proofId
+    assert U
     proverId = tylerCLI.activeWallet.defaultAlias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
                   .format(proverId, credDefName, credDefVersion, U))
@@ -324,11 +324,12 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
     checkCmdValid(tylerCLI, "prepare proof of {} using nonce {} for {}".
                   format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
-    pat = re.compile("Proof is: (.+)$")
+    pat = re.compile("Proof is: \n(.+)$")
     m = pat.search(tylerCLI.lastCmdOutput)
-    if m:
-        proof = m.groups()[0]
-        return proof
+    assert m
+    proof = m.groups()[0]
+    assert proof
+    return proof
 
 
 @pytest.fixture(scope="module")
@@ -417,6 +418,7 @@ def testPrepareProof(preparedProof):
 
 def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected,
                     revealedAtrr):
+    assert preparedProof
     checkCmdValid(bookStoreCLI, "verify status is {} in proof {}"
                   .format(revealedAtrr, preparedProof))
 
