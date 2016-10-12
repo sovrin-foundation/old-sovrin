@@ -4,15 +4,7 @@
 
 ![image alt text](banner.png)
 
-__ * Note: This
-document
-describes
-behavior
-that is targeted
-for release in the Sovrin Foundation’s code drop on Oct 7. Until then,
-the tutorial is a preview.Published code already has tests that prove the
-basic features, but the end-to-end flow won’t be usable until our final QA
-pass finishes.* __
+__ * Note: This document describes behavior that is targeted for release in the Sovrin Foundation’s code drop on Oct 7. Until then, the tutorial is a preview.Published code already has tests that prove the basic features, but the end-to-end flow won’t be usable until our final QA pass finishes.* __
 
 ## What Sovrin is, and Why it Matters
 
@@ -52,135 +44,31 @@ For this guide, however, we’ll be using a command - line interface instead of 
 
 ## Install Sovrin
 
-If
-you
-use
-EC2 or Azure, you
-may
-want
-to
-create
-a
-VM
-to
-experiment
-with Sovrin(see[instructions](http: //
-    bit.ly / 2
-dtTm4n)).Otherwise, you
-can
-install
-sovrin
-on
-your
-workstation.Try
-opening
-a
-shell(command
-prompt) and typing
-either
-this:
+If you use EC2 or Azure, you may want to create a VM to experiment with Sovrin(see[instructions](http: // bit.ly / 2 dtTm4n)). Otherwise, you can install sovrin on your workstation. Try opening a shell(command prompt) and typing either this:
 
 ```
 $ pip install sovrin
 ```
 
-... or ( if you
-are
-docker - centric):
+... or (if you are docker - centric):
 
 ```
 $ docker run-it sovrinfoundation/sovrin
 ```
 
-If
-you
-get
-an
-error, check
-out
-the
-info
-about[prerequisites](http: // bit.ly / 2
-d1o7we); there
-are
-a
-few
-dominoes
-you
-might
-have
-to
-line
-up.
+If you get an error, check out the info about[prerequisites](http: // bit.ly / 2 d1o7we); there are a few dominoes you might have to line up.
 
-The
-install
-puts
-some
-python
-modules
-on
-your
-system.Most
-importantly, it
-gives
-you
-a
-command - line
-interface(CLI)
-to
-Sovrin.We
-are
-going
-to
-use
-that
-CLI
-to
-explore
-what
-Sovrin
-can
-do.(Sovrin
-also
-has
-a
-programmatic
-API, but
-it is not yet
-fully
-formalized, and this
-version
-of
-the
-guide
-doesn’t
-document
-it.See
-the[Sovrin
-roadmap](http: // bit.ly / 2
-cwrabV).)
+The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do.(Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the[Sovrin roadmap](http: // bit.ly / 2 cwrabV).)
 
-** Run
-the
-Sovrin
-CLI **
+** Run the Sovrin CLI **
 
-Type
-this
-command:
+Type this command:
 
 ```
 $ sovrin
 ```
 
-You
-should
-see
-an
-interactive
-prompt, like
-this:
+You should see an interactive prompt, like this:
 
 ```
 Sovrin - CLI version 1.17(c) 2016 Evernym, Inc.
@@ -188,76 +76,13 @@ Type 'help' for more information.
 sovrin> 
 ```
 
-We’re
-going
-to
-be
-playing
-the
-role
-of
-multiple ** _identity
-owners_ ** (a
-person
-like
-Alice, an
-organization
-like
-Faber
-College, or an
-IoT - style
-thing;
-these
-are
-often
-called
-"principals" in security
-circles) before
-the
-guide is done.To
-do
-this
-we’ll
-use
-multiple
-shells.To
-make
-it
-easy
-to
-keep
-track
-of
-which
-identity
-owner
-we’re
-representing in a
-given
-window, let’s
-change
-the
-prompt:
+We’re going to be playing the role of multiple ** _identity owners_ ** (a person like Alice, an organization like Faber College, or an IoT - style thing; these are often called "principals" in security circles) before the guide is done.To do this we’ll use multiple shells. To make it easy to keep track of which identity owner we’re representing in a given window, let’s change the prompt:
 
 ```
 sovrin> prompt ALICE
 ALICE> 
 ```
-
-The
-status
-command
-gives
-general
-information
-about
-the
-state
-of
-the
-CLI.Alice
-tries
-it:
+The status comm and gives general information about the state of theCLI. Alice tries it:
 
 ```
 ALICE> status
@@ -267,36 +92,11 @@ Usage:
     connect(test | live)
 ```
 
-Alice
-might
-also
-try the help command to explore what’s available.
+Alice might also try the help command to explore what’s available.
 
 ## Evaluate the Invitation
 
-To
-make
-this
-guide
-more
-convenient, the
-sovrin
-CLI
-package
-installs
-a
-sample
-Faber
-College
-invitation
-to < CLI
-ROOT > / scripts / sample / faber - invitation.sovrin.We’re
-going
-to
-use
-this
-file as if we had downloaded it from Faber.(Remember, in normal usage,
-Alice’s Sovrin app would be doing a lot of these steps automatically.)
+To make this guide more convenient, the sovrin CLI package installs a sample Faber College invitation to < CLI ROOT > / scripts / sample / faber - invitation.sovrin.We’re going to use this file as if we had downloaded it from Faber. (Remember, in normal usage, Alice’s Sovrin app would be doing a lot of these steps automatically.)
 
 ```
 ALICE> show sample/faber-invitation.sovrin
@@ -315,33 +115,7 @@ Try Next:
   load sample/faber-invitation.sovrin
 ```
 
-Alice
-sees
-a
-bunch
-of
-data
-that
-looks
-interesting
-but
-mysterious.She
-wants
-Sovrin
-to
-tell
-her if the
-link
-invitation
-file is well
-formed and has
-something
-useful in it, so
-she
-uses
-the
-load
-command:
+Alice sees a bunch of data that looks interesting but mysterious. She wants Sovrin to tell her if the link invitation file is well formed and has something useful in it, so she uses the load command:
 
 ```
 ALICE> load sample/faber-invitation.sovrin
@@ -354,33 +128,13 @@ Usage:
     show link "Faber College"
 ```
 
-This
-causes
-Sovrin
-to
-parse and validate
-the
-file.Alice
-would
-now
-like
-to
-know
-what’s
-entailed in accepting
-the
-invitation.She
-types:
+This causes Sovrin to parse and validate the file. Alice would now like to know what’s entailed in accepting the invitation.She types:
 
 ```
 ALICE> show link Faber
 ```
 
-Unlike
-the
-show
-command
-for files, this one asks Sovrin to show a link.More details are exposed:
+Unlike the show command for files, this one asks Sovrin to show a link.More details are exposed:
 
 ```
 Expanding Faber to "Faber College"
@@ -402,357 +156,63 @@ Usage:
     sync "Faber College"
 ```
 
-You’ll
-see
-the
-link
-contains
-several
-pieces
-of
-information.Let’s
-examine
-them
-one
-at
-a
-time.
+You’ll see the link contains several pieces of information. Let’s examine them one at a time.
 
 ```
 Name: Faber College
 ```
 
-This is a
-friendly
-name
-for the link that Alice has been invited to accept.The name is stored locally
-and not shared.Alice can always rename a link; its initial value is just
-provided by Faber for convenience.
+This is a friendly name for the link that Alice has been invited to accept. The name is stored locally and not shared.Alice can always rename a link; its initial value is just provided by Faber for convenience.
 
 ```
 Identifier: cid - 1:CvEDw...Xy5
 ```
 
-Identifier is a
-unique
-value
-that,
-if this invitation is accepted, will be sent to Faber College, and used by
-Faber College to reference Alice in secure interactions.This value was
-generated by the Sovrin CLI when it loaded the invitation.(Did you notice
-"Generating identifier and signing key" in the output above?) Each link
-invitation on Sovrin establishes a pairwise relationship when accepted,
-and each pairwise relationship uses different identifiers.Alice won’t use
-this identifier with other relationships.By having independent pairwise
-relationships, Alice reduces the ability for others to correlate her
-activities across multiple interactions.
+Identifier is a unique value that, if this invitation is accepted, will be sent to Faber College, and used by Faber College to reference Alice in secure interactions. This value was generated by the Sovrin CLI when it loaded the invitation. (Did you notice "Generating identifier and signing key" in the output above?) Each link invitation on Sovrin establishes a pairwise relationship when accepted, and each pairwise relationship uses different identifiers. Alice won’t use this identifier with other relationships. By having independent pairwise relationships, Alice reduces the ability for others to correlate her activities across multiple interactions.
 
 ```
 Trust anchor: Faber College(not yet written to Sovrin)
 ```
 
-This
-gives
-Alice
-a
-friendly
-name
-for the entity that is bootstrapping the new pairwise relationship onto the
-Sovrin ecosystem.Trust anchors provide a way for identifiers to be added to
-Sovrin.They are generally organizations but can be persons as well.Faber
-College is a trust anchor, and if its invitation is accepted, will write
-Alice’s identifier to Sovrin.
+This gives Alice a friendly name for the entity that is bootstrapping the new pairwise relationship onto the Sovrin ecosystem. Trust anchors provide a way for identifiers to be added to Sovrin. They are generally organizations but can be persons as well. Faber College is a trust anchor, and if its invitation is accepted, will write Alice’s identifier to Sovrin.
 
-It is important
-to
-understand
-that
-this
-identifier
-for Alice is not, in and of itself, the same thing as Alice’s self-sovereign
-identity.Rather, Alice’s identity will-- for her--be the sum total of all the
-pairwise relationships she has, and all the attributes knowable about those
-manifestations of her identity, across the full network.If Alice accepts this
-invitation, she will have a self-sovereign identity by virtue of the fact
-that she is accessible on the network through at least one relationship,
-and Faber College will be creating the first relationship participating in
-Alice’s identity--but Alice’s identity will not be captive to Faber College
-in any way.
+It is important to understand that this identifier for Alice is not, in and of itself, the same thing as Alice’s self-sovereign identity. Rather, Alice’s identity will-- for her--be the sum total of all the pairwise relationships she has, and all the attributes knowable about those manifestations of her identity, across the full network. If Alice accepts this invitation, she will have a self-sovereign identity by virtue of the fact that she is accessible on the network through at least one relationship, and Faber College will be creating the first relationship participating in Alice’s identity--but Alice’s identity will not be captive to Faber College in any way.
 
 ```
 Verification key: < same as local identifier >
 ```
 
-Alice’s ** _verification
-key_ ** allows
-Sovrin and Faber
-College
-to
-trust, in cryptographic
-operations, that
-interactions
-with Alice are authentically bound to her as sender or receiver.It is an[
-asymmetric public key](https://
-    en.wikipedia.org / wiki / Public - key_cryptography), in cryptographic
-terms, and the
-Sovrin
-CLI
-generated
-this
-value
-randomly
-when
-it
-loaded
-the
-invitation.
+Alice’s ** _verification key_ ** allows Sovrin and Faber College to trust, in cryptographic operations, that interactions with Alice are authentically bound to her as sender or receiver.It is an[ asymmetric public key](https:// en.wikipedia.org / wiki / Public - key_cryptography), in cryptographic terms, and the Sovrin CLI generated this value randomly when it loaded the invitation.
 
-The
-Verification
-key
-has
-a
-subtle
-relationship
-with the Identifier value a couple lines above it in the CLI output.When an
-identifier is a ** _CID_ **, or a ** _cryptographic identifier_ **, then the
-identifier itself * is * the verification key, meaning that it can be used as
-direct input to cryptographic operations that prove an identity.(Notice that
-the identifier proposed for the pairwise Faber relationship in the invitation
-had cid-1 in its prefix.)
+The Verification key has a subtle relationship with the Identifier value a couple lines above it in the CLI output. When an identifier is a ** _CID_ **, or a ** _cryptographic identifier_ **, then the identifier itself * is * the verification key, meaning that it can be used as direct input to cryptographic operations that prove an identity. (Notice that the identifier proposed for the pairwise Faber relationship in the invitation had cid-1 in its prefix.)
+Identifiers in Sovrin can also be ** _DIDs_ ** ( ** _distributed identifiers_ **). These are opaque, unique sequences of bits, like UUIDs or GUIDs.If an identifier is a DID, then its verification key is defined independently. We’re just
+collapsing the two for simplicity here.
 
-Identifiers in Sovrin
-can
-also
-be ** _DIDs_ ** ( ** _distributed
-identifiers_ **).These
-are
-opaque, unique
-sequences
-of
-bits, like
-UUIDs or GUIDs.If
-an
-identifier is a
-DID, then
-its
-verification
-key is defined
-independently.We’re
-just
-collapsing
-the
-two
-for simplicity here.
-
-The
-key
-that
-Alice
-uses
-to
-interact
-with Faber can change if she revokes or rotates it, so accepting this
-invitation and activating this link doesn’t lock Alice in to permanent use of
-this key.Key management events are discoverable in the Sovrin ledger by
-parties such as Faber College; we’ll touch on that later in the guide.
-
-Besides
-telling
-Sovrin
-that
-we’re
-dealing
-with a CID, the cid-1 prefix on Identifier tells Sovrin more about the data
-type of the value: it is a
-32 - byte
-Ed25519
-verification
-key, using
-a
-base58
-encoding.Ed25519 is a
-particular
-elliptic
-curve, and is the
-default
-signature
-scheme
-for Sovrin.Combining the Identifier and Verification key values, we know what
-sort of cryptography we’re going to use to talk to Faber.
+The key that Alice uses to interact with Faber can change if she revokes or rotates it, so accepting this invitation and activating this link doesn’t lock Alice in to permanent use of this key. Key management events are discoverable in the Sovrin ledger by parties such as Faber College; we’ll touch on that later in the guide.
+Besides telling Sovrin that we’re dealing with a CID, the cid-1 prefix on Identifier tells Sovrin more about the data type of the value: it is a 32 - byte Ed25519 verification key, using a base58 encoding.Ed25519 is a particular elliptic curve, and is the default signature scheme for Sovrin. Combining the Identifier and Verification key values, we know what sort of cryptography we’re going to use to talk to Faber.
 
 ```
 Signing key: < hidden >
 ```
 
-A
-different ** _signing
-key_ ** is used
-by
-Alice
-to
-interact
-with each party on Sovrin (Faber College in this case).A signing key is an
-asymmetric private key, in cryptographic terms, and the Sovrin CLI also
-generated this value when it loaded the invitation.Alice will sign her
-messages to Faber College with this key, but she will never transmit the
-signing key anywhere.Because she signs with this key, Faber College can use
-the associated verification key and know it’s really dealing with Alice.It’s
-important that this signing key is kept secret, as someone with this key can
-impersonate Alice.If this key is ever compromised, Alice can replace it with
-    a new one using several methods not covered here.
+A different ** _signing key_ ** is used by Alice to interact with each party on Sovrin (Faber College in this case). A signing key is an asymmetric private key, in cryptographic terms, and the Sovrin CLI also generated this value when it loaded the invitation. Alice will sign her messages to Faber College with this key, but she will never transmit the signing key anywhere. Because she signs with this key, Faber College can use the associated verification key and know it’s really dealing with Alice. It’s important that this signing key is kept secret, as someone with this key can impersonate Alice. If this key is ever compromised, Alice can replace it with a new one using several methods not covered here.
 
 ```
 Target: cid - 1:d0ba0...352
 ```
 
-** _Target_ ** is the
-unique
-identifier
-Alice
-uses
-to
-reference
-Faber
-College.Faber
-College
-provided
-this
-value in the
-invitation.Alice
-can
-use
-it
-to
-look
-up
-Faber
-College’s
-verification
-key in the
-Sovrin
-Ledger
-to
-ensure
-interactions
-with Faber College are authentic.
+** _Target_ ** is the unique identifier Alice uses to reference Faber College. Faber College provided this value in the invitation. Alice can use it to look up Faber College’s verification key in the Sovrin Ledger to ensure interactions with Faber College are authentic.
 
 ```
 Target Verification key: < unknown, waiting for sync >
 ```
 
-Communication
-from the target
-
-can’t
-be
-confirmed
-unless
-we
-know
-its
-verification
-key.We
-know
-the
-target is a
-CID(that’s
-what
-the
-Target
-line
-just
-above
-told
-us)--but
-since
-key
-revocations and rotations
-might
-happen
-at
-any
-time, we
-cannot
-assume
-that
-a
-CID
-has
-not updated
-its
-verification
-key.To
-know
-the
-true
-verification
-key
-of
-an
-identifier, we
-have
-to
-query
-Sovrin.Different
-use
-cases
-require
-different
-levels
-of
-assurance as to
-how
-recently
-we’ve
-queried
-Sovrin
-for any key replacements.In this case we might be comfortable if we know that
-the key was synchronized in the last hour.But we can see that we’ve never
-synchronized this link, so we don’t know what the verification key is at
-all.Until Alice connects to Sovrin, she won’t be able to trust communication
-from Faber College.
-
+Communication from the target can’t be confirmed unless we know its verification key.We know the target is a CID(that’s what the Target line just above told us)--but since key revocations and rotations might happen at any time, we cannot assume that a CID has not updated its verification key. To know the true verification key of an identifier, we have to query Sovrin. Different use cases require different levels of assurance as to how recently we’ve queried Sovrin for any key replacements. In this case we might be comfortable if we know that the key was synchronized in the last hour. But we can see that we’ve never synchronized this link, so we don’t know what the verification key is at all.Until Alice connects to Sovrin, she won’t be able to trust communication from Faber College.
 ```
 Target endpoint: < unknown, waiting for sync >
 ```
 
-Targets
-can
-have
-endpoints - -locations(IRIs / URIs / URLs)
-on
-the
-network
-where
-others
-can
-contact
-them.These
-endpoints
-can
-be
-static, or they
-can
-be
-ephemeral
-pseudonymous
-endpoints
-facilitated
-by
-a
-third
-party
-agency.To
-keep
-things
-simple, we’ll
-just
-use
-static
-endpoints
-for now.
-
+Targets can have endpoints - -locations(IRIs / URIs / URLs) on the network where others can contact them. These endpoints can be static, or they can be ephemeral pseudonymous endpoints facilitated by a third party agency. To keep things simple, we’ll just use static endpoints for now.
 ```
 Invitation nonce: b1134a647eb818069c089e7694f63e6d
 ```
