@@ -536,8 +536,8 @@ class WalletedAgent(Agent):
                 logger.info("claim {} verification result: {}".
                             format(claimName, result))
 
-                # TODO: Following line is temporary and need to remove
-                result=True
+                # TODO: Following line is temporary and need to be removed
+                # result=True
 
                 if result:
                     self.postClaimVerification(claimName)
