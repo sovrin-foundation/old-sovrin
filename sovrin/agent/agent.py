@@ -547,10 +547,8 @@ class WalletedAgent(Agent):
         if link:
             proof = body['proof']
             encodedAttrs = body['encodedAttrs']
-            # TODO: Use stringDictToCharmDict
             for iid, attrs in encodedAttrs.items():
-                encodedAttrs[iid] = {n: strToCharmInteger(v) for n, v in
-                                     attrs.items()}
+                encodedAttrs[iid] = stringDictToCharmDict(attrs)
             revealedAttrs = body['verifiableAttrs']
             nonce = int(body[NONCE], 16)
             claimDefKey = body['claimDefKey']
@@ -571,13 +569,15 @@ class WalletedAgent(Agent):
                 result = Verifier.verifyProof(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
-                # TODO: Why an assert here? A verify can either succeed or not.
-                assert result
                 logger.debug("ip, proof, nonce, encoded, revealed is {} {} {} {} {}".
                              format(ipk, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs))
                 logger.debug("result is {}".format(str(result)))
+
+                # TODO: Why an assert here? A verify can either succeed or not.
+                assert result
+
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:

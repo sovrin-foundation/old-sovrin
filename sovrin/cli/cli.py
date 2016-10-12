@@ -51,7 +51,7 @@ from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields, ENDPOINT
 from sovrin.common.util import getConfig, getEncodedAttrs, ensureReqCompleted, \
-    getCredDefIsrKeyAndExecuteCallback
+    getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict
 from sovrin.server.node import Node
 import sovrin.anon_creds.cred_def as CredDefModule
 
@@ -1311,7 +1311,9 @@ class SovrinCli(PlenumCli):
             if not reqs:
                 self._printNoClaimFoundMsg()
             elif len(reqs) > 1:
-                self._printMoreThanOneLinkFoundForRequest(claimName, [(li, cr.name) for (li, cr) in reqs])
+                self._printMoreThanOneLinkFoundForRequest(claimName,
+                                                          [(li, cr.name) for
+                                                           (li, cr) in reqs])
             else:
                 links = self.activeWallet.getMatchingLinks(linkName)
                 if not links:
@@ -1322,12 +1324,17 @@ class SovrinCli(PlenumCli):
                     link = links[0]
                     claimPrfReq = reqs[0][1]
                     nonce = int(link.invitationNonce, 16)
+                    self.logger.debug("Building proof using {} for {}".
+                                      format(claimPrfReq, link))
                     proof, encodedAttrs, verifiableAttrs, claimDefKey = \
                         self.activeWallet.buildClaimProof(
                             nonce, claimPrfReq)
-                    _, curClaimReq, selfAttestedAttrs = self.curContext
+                    ctxLink, curClaimReq, selfAttestedAttrs = self.curContext
+                    self.logger.debug("Current context {} {} {}".
+                                      format(*self.curContext))
+
                     for iid, attrs in encodedAttrs.items():
-                        encodedAttrs[iid] = {n: str(v) for n, v in attrs.items()}
+                        encodedAttrs[iid] = charmDictToStringDict(attrs)
                     op = {
                         NAME: claimPrfReq.name,
                         VERSION: claimPrfReq.version,

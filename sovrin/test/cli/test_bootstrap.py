@@ -742,7 +742,8 @@ def testShowJobApplicationClaimReqAfterSetAttr(do,
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
-                                faberIsRunning, faberInviteSyncedWithoutEndpoint):
+                                faberIsRunning,
+                                faberInviteSyncedWithoutEndpoint):
 
     msg = {
         TYPE: ACCEPT_INVITE,

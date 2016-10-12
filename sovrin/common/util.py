@@ -177,12 +177,6 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
 
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
                                        claimDefKey, clbk, pargs=None):
-    def _getKey(result, error):
-        data = json.loads(result.get(DATA))
-        origin = data.get(ORIGIN)
-        seqNo = data.get(F.seqNo.name)
-        getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
-                                   seqNo, clbk, pargs)
 
     claimDef = wallet.getClaimDef(key=claimDefKey)
     if not (claimDef and claimDef.seqNo):
@@ -190,8 +184,8 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
         client.submitReqs(req)
         displayer("Getting Claim Definition from Sovrin: {} {}"
                    .format(claimDefKey[0], claimDefKey[1]))
-        loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                                    _getKey)
+        loop.call_later(.2, getCredDefIsrKeyAndExecuteCallback, wallet, client,
+                        displayer, loop, claimDefKey, clbk, pargs)
     else:
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop,
                                    claimDef.origin, claimDef.seqNo, clbk, pargs)

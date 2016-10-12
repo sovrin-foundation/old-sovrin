@@ -31,7 +31,7 @@ from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
 from anoncreds.protocol.utils import strToCharmInteger
-from sovrin.common.util import getEncodedAttrs
+from sovrin.common.util import getEncodedAttrs, stringDictToCharmDict
 
 ENCODING = "utf-8"
 
@@ -465,8 +465,7 @@ class Wallet(PWallet, Sponsoring):
         keys = data.get(DATA)
         for k in ('N', 'S', 'Z'):
             keys[k] = strToCharmInteger(keys[k])
-        for k in keys['R']:
-            keys['R'][k] = strToCharmInteger(keys['R'][k])
+        keys['R'] = stringDictToCharmDict(keys['R'])
         isPk.initPubKey(data.get(F.seqNo.name), keys['N'], keys['R'],
                         keys['S'], keys['Z'])
 
