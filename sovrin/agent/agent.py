@@ -229,7 +229,8 @@ class WalletedAgent(Agent):
     @property
     def lockedMsgs(self):
         # Msgs for which signature verification is required
-        return CLAIM, AVAIL_CLAIM_LIST, EVENT
+        return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
+               CLAIM, AVAIL_CLAIM_LIST, EVENT
 
     def getClaimList(self, claimNames=None):
         raise NotImplementedError
@@ -352,16 +353,27 @@ class WalletedAgent(Agent):
     def notifyMsgListener(self, msg):
         self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
 
+    def isMsgProcessingProgressRespRequired(self, type):
+        return type not in [EVENT]
+
+    def sendProgressResponseMsg(self, respMsg, to, reqMsgTyp):
+        if self.isMsgProcessingProgressRespRequired(reqMsgTyp):
+            self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                      respMsg, self.wallet.defaultId, to)
+
     def handleEndpointMessage(self, msg):
         body, frm = msg
         typ = body.get(TYPE)
+        self.sendProgressResponseMsg("\nRequest received by target:", frm, typ)
         if typ in self.lockedMsgs:
             try:
                 self._isVerified(body)
             except SignatureRejected:
-                self.notifyMsgListener("Signature rejected")
+                self.sendProgressResponseMsg("    Signature rejected.",
+                                             frm, typ)
                 return
-        self.notifyMsgListener("Signature accepted.")
+        self.sendProgressResponseMsg("    Signature accepted.", frm, typ)
+
         handler = self.msgHandlers.get(typ)
         if handler:
             # TODO we should verify signature here
@@ -373,7 +385,7 @@ class WalletedAgent(Agent):
     def _handleError(self, msg):
         body, _ = msg
         self.notifyMsgListener("Error ({}) occurred while processing this "
-                             "msg: {}".format(body[DATA], body[REQ_MSG]))
+                               "msg: {}".format(body[DATA], body[REQ_MSG]))
 
     def _sendGetClaimDefRequests(self, availableClaims, postFetchCredDef=None):
         for name, version, origin in availableClaims:
@@ -427,14 +439,14 @@ class WalletedAgent(Agent):
             identifier = body.get(IDENTIFIER)
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
-
+                self.notifyResponseFromMsg(li.name)
                 def postAllFetched(li, newAvailableClaims):
                     if newAvailableClaims:
                         claimNames = ",".join(
                             [n for n, _, _ in newAvailableClaims])
 
                         self.notifyMsgListener(
-                            "{} link has now new available claims: {}".
+                            "    {} link has now new available claims: {}".
                             format(li.name, claimNames))
 
                 self._processNewAvailableClaimsData(
@@ -473,8 +485,7 @@ class WalletedAgent(Agent):
         li = self._getLinkByTarget(getCryptonym(identifier))
         if li:
             # TODO: Show seconds took to respond
-            self.notifyMsgListener("Response from {}:".format(li.name))
-            self.notifyMsgListener("    Signature accepted.")
+            self.notifyResponseFromMsg(li.name)
             self.notifyMsgListener("    Trust established.")
             alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
             if alreadyAccepted:
@@ -494,9 +505,10 @@ class WalletedAgent(Agent):
         body, _ = msg
         identifier = body.get(IDENTIFIER)
         claim = body[DATA]
-        self.notifyMsgListener("Received {}.\n".format(claim[NAME]))
         li = self._getLinkByTarget(getCryptonym(identifier))
         if li:
+            self.notifyResponseFromMsg(li.name)
+            self.notifyMsgListener("    Received {}.\n".format(claim[NAME]))
             name, version, idr = \
                 claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
             attributes = claim['attributes']
@@ -542,7 +554,7 @@ class WalletedAgent(Agent):
         req = self.wallet.requestIdentity(identity,
                                         sender=self.wallet.defaultId)
         self.client.submitReqs(req)
-        self.notifyMsgListener("Synchronizing...")
+        self.notifyMsgListener("\nSynchronizing...")
 
         def getNymReply(reply, err, availableClaims, li: Link):
             if reply.get(DATA) and json.loads(reply[DATA])[TARGET_NYM] == \
@@ -627,11 +639,7 @@ class WalletedAgent(Agent):
                             format(claimName, result))
 
                 # TODO: Following line is temporary and need to be removed
-                result=True
-
-                if result:
-                    self.postClaimVerification(claimName)
-                    self.sendNewAvailableClaimsData(frm, link)
+                # result=True
 
                 logger.debug("ip, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
@@ -642,19 +650,32 @@ class WalletedAgent(Agent):
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:
-                        'Your claim {} {} has been received and {}verified'.
+                        '    Your claim {} {} has been received and {}verified'.
                             format(body[NAME], body[VERSION],
                                    '' if result else 'is not yet '),
                 }
                 self.signAndSend(resp, link.localIdentifier, frm)
 
+                if result:
+                    aclBefore = len(self.getAvailableClaimList())
+                    self.postClaimVerification(claimName)
+                    aclAfter = len(self.getAvailableClaimList())
+                    if aclAfter > aclBefore:
+                        self.sendNewAvailableClaimsData(frm, link)
+
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
                                                self.loop, tuple(claimDefKey),
                                                verify)
 
+    def notifyResponseFromMsg(self, linkName):
+        self.notifyMsgListener("\nResponse from {}:".format(linkName))
+
     def handleClaimProofStatus(self, msg: Any):
         body, _ = msg
         data = body.get(DATA)
+        identifier = body.get(IDENTIFIER)
+        li = self._getLinkByTarget(getCryptonym(identifier))
+        self.notifyResponseFromMsg(li.name)
         self.notifyMsgListener(data)
 
     def notifyToRemoteCaller(self, event, msg, identifier, frm):
