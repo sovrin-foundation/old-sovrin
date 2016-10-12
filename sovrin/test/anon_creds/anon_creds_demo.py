@@ -1,8 +1,8 @@
+import logging
 import os
 import pprint
 import shutil
 import tempfile
-import logging
 
 # The following setup of logging needs to happen before everything else
 from plenum.common.log import getlogger
@@ -12,15 +12,12 @@ from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
 
 from plenum.common.txn_util import createGenesisTxnFile
-from ioflo.aid.consoling import Console
 
 logging.root.handlers = []
 # setupLogging(DISPLAY_LOG_LEVEL,
 #              Console.Wordage.mute)
 logger = getlogger("anon_creds_demo")
 
-
-from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
 from plenum.common.txn import DATA, ORIGIN
 from plenum.common.txn import TXN_TYPE
@@ -34,7 +31,6 @@ from sovrin.test.conftest import genesisTxns
 from sovrin.common.util import getCredDefTxnData, getConfig
 import sovrin.anon_creds.issuer as IssuerModule
 import sovrin.anon_creds.prover as ProverModule
-import sovrin.anon_creds.proof_builder as ProofBuilderModule
 import sovrin.anon_creds.verifier as VerifierModule
 
 

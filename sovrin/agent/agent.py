@@ -1,55 +1,47 @@
+import asyncio
+import collections
 import json
 import uuid
 from abc import abstractmethod
 from datetime import datetime
-
 from typing import Dict, Any
 from typing import Tuple
 
-import asyncio
-
-import collections
-
-from anoncreds.protocol.issuer_key import IssuerKey
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.types import Credential
 from anoncreds.protocol.utils import strToCharmInteger
 from anoncreds.protocol.verifier import Verifier
-from plenum.client.signer import SimpleSigner
-from plenum.common.log import getlogger
-from plenum.common.looper import Looper
-from plenum.common.port_dispenser import genHa
-from plenum.common.types import Identifier
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.issuer import Issuer
-from sovrin.agent.exception import NonceNotFound, SignatureRejected
-from sovrin.client.wallet.attribute import LedgerStore, Attribute
-from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
-from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
-    LinkNotFound, NotConnectedToNetwork
-
-from sovrin.common.identity import Identity
-
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
+from plenum.common.log import getlogger
+from plenum.common.looper import Looper
 from plenum.common.motor import Motor
+from plenum.common.port_dispenser import genHa
+from plenum.common.signer_simple import SimpleSigner
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
     ORIGIN, TARGET_NYM, ATTRIBUTES
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, isHex, cryptonymToHex, \
-    randomString
+from plenum.common.util import getCryptonym, randomString
 from sovrin.agent.agent_net import AgentNet
+from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
     ACCEPT_INVITE, CLAIM_PROOF, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
 from sovrin.client.client import Client
+from sovrin.client.wallet.attribute import LedgerStore, Attribute
+from sovrin.client.wallet.claim import ClaimProofRequest
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import ATTR_NAMES, REF, ENDPOINT
+from sovrin.common.exceptions import LinkAlreadyExists, \
+    LinkNotFound, NotConnectedToNetwork
+from sovrin.common.identity import Identity
+from sovrin.common.txn import ATTR_NAMES, ENDPOINT
 from sovrin.common.util import verifySig, getConfig, getEncodedAttrs, \
-    charmDictToStringDict, stringDictToCharmDict, ensureReqCompleted, \
+    stringDictToCharmDict, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback
 
 ALREADY_ACCEPTED_FIELD = 'alreadyAccepted'

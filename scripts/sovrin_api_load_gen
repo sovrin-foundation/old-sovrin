@@ -3,10 +3,12 @@
 
 # Sends requests to Sovrin Client REST wrapper running on 127.0.0.1:4300
 
-import os, sys
-from plenum.client.signer import SimpleSigner
-from time import sleep
+import os
+import sys
 from random import random
+from time import sleep
+
+from plenum.common.signer_simple import SimpleSigner
 
 if len(sys.argv) == 2:
      count = int(sys.argv[1])

@@ -3,8 +3,9 @@ import json
 import base58
 import libnacl.public
 import pytest
-from plenum.client.signer import SimpleSigner
+
 from plenum.common.log import getlogger
+from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import REQNACK, ENC, DATA
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict

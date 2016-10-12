@@ -1,9 +1,7 @@
-import os
-
-from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
-from sovrin.common.util import getConfig
+from plenum.common.signer_simple import SimpleSigner
 from sovrin.client.client import Client
+from sovrin.common.util import getConfig
 
 looper = Looper(debug=True)
 

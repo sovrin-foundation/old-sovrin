@@ -4,30 +4,23 @@ import os
 import pytest
 
 import sample
-from plenum.common.txn import TYPE
-from plenum.common.types import f
-from plenum.common.util import randomString
-
-from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
+from plenum.common.signer_simple import SimpleSigner
+from plenum.common.util import randomString
 from plenum.test.eventually import eventually
-from plenum.test.helper import genHa, assertExp, assertFunc
+from plenum.test.helper import genHa, assertFunc
 from sovrin.agent.agent import WalletedAgent
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import SPONSOR, NONCE, ENDPOINT
+from sovrin.common.txn import SPONSOR, ENDPOINT
 from sovrin.test.agent.acme import runAcme
 from sovrin.test.agent.faber import runFaber
-from sovrin.test.agent.thrift import runThrift
-from sovrin.test.helper import createNym, addClaimDefAndIssuerKeys
 from sovrin.test.agent.helper import ensureAgentsConnected
+from sovrin.test.agent.thrift import runThrift
+from sovrin.test.helper import addClaimDefAndIssuerKeys
 from sovrin.test.helper import createNym, addAttributeAndCheck, \
     getStewardConnectedToPool
-from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
-    tdirWithDomainTxns, genesisTxns
-from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 
 @pytest.fixture(scope="module")

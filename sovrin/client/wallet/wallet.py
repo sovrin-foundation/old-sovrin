@@ -6,7 +6,7 @@ import uuid
 import operator
 
 from collections import deque
-from typing import Dict
+from typing import Dict, List, Iterable
 from typing import Optional
 
 from ledger.util import F
@@ -14,6 +14,7 @@ from ledger.util import F
 import anoncreds.protocol.types as ATypes
 from anoncreds.protocol.proof_builder import ProofBuilder
 from plenum.client.wallet import Wallet as PWallet, RequestIdStore
+from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NAME, VERSION, TYPE, NYM, STEWARD, ROLE, RAW, \
@@ -24,6 +25,7 @@ from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
+from sovrin.common.did_method import DefaultDidMethods
 from sovrin.common.exceptions import LinkNotFound
 from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
     GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REF
@@ -64,8 +66,14 @@ class Sponsoring:
 class Wallet(PWallet, Sponsoring):
     clientNotPresentMsg = "The wallet does not have a client associated with it"
 
-    def __init__(self, name: str, requestIdStore: RequestIdStore=None):
-        PWallet.__init__(self, name, requestIdStore)
+    def __init__(self,
+                 name: str,
+                 requestIdStore: RequestIdStore=None,
+                 supportedDidMethods: DidMethods=None):
+        PWallet.__init__(self,
+                         name,
+                         requestIdStore,
+                         supportedDidMethods or DefaultDidMethods)
         Sponsoring.__init__(self)
 
         self._credMasterSecret = None

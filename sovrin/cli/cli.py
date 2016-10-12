@@ -1,36 +1,37 @@
 import ast
 import datetime
 import json
-from functools import partial
-from typing import Dict, Any, Tuple, Callable
-import uuid
-
 import os
+import uuid
+from functools import partial
 from hashlib import sha256
-
-import collections
-
-from plenum.client.signer import Signer
-
-from ledger.util import F
-from plenum.common.types import f
+from typing import Dict, Any, Tuple, Callable
 
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
+import sovrin.anon_creds.cred_def as CredDefModule
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from anoncreds.protocol.types import SerFmt
+from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.test.conftest import staticPrimes
+from anoncreds.test.cred_def_test_store import MemoryCredDefStore
+from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
+from ledger.util import F
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
-from plenum.client.signer import SimpleSigner
-from plenum.common.txn import DATA, NAME, VERSION, TYPE, ORIGIN, ATTRIBUTES
+from plenum.common.signer_simple import SimpleSigner
+from plenum.common.txn import NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
-from plenum.common.util import randomString, getCryptonym
+from plenum.common.types import f
+from plenum.common.util import randomString
 from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE, \
     EVENT_NOTIFY_MSG
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
-from sovrin.anon_creds.issuer import AttrRepo
 from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
@@ -39,29 +40,19 @@ from sovrin.cli.helper import getNewClientGrams, Environment, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
+from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
+from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.client.wallet.link import Link, constant
-from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
     LinkNotFound, NotConnectedToNetwork
-
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
-    SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields, ENDPOINT
+    SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
 from sovrin.common.util import getConfig, getEncodedAttrs, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict
 from sovrin.server.node import Node
-import sovrin.anon_creds.cred_def as CredDefModule
-
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.types import SerFmt
-from anoncreds.protocol.utils import strToCharmInteger
-from anoncreds.test.conftest import staticPrimes
-from anoncreds.test.cred_def_test_store import MemoryCredDefStore
-from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
 
 """
 Objective
