@@ -1,6 +1,6 @@
 import datetime
 import random
-from base64 import b64decode
+from base58 import b58decode
 
 import importlib
 import importlib.util
@@ -35,7 +35,7 @@ def verifySig(identifier, signature, msg) -> bool:
         identifier) else identifier
     ser = serializeForSig(msg)
     b64sig = signature.encode('utf-8')
-    sig = b64decode(b64sig)
+    sig = b58decode(b64sig)
     vr = Verifier(key)
     return vr.verify(sig, ser)
 
