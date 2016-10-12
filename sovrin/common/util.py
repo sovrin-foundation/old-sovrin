@@ -6,6 +6,7 @@ import importlib
 import importlib.util
 import json
 import os
+from functools import partial
 from typing import Tuple, Union
 
 import libnacl.secret
@@ -156,51 +157,69 @@ def charmDictToStringDict(dictionary):
 
 
 def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
-                                reference, clbk, *args):
-    ipk = wallet.getIssuerPublicKey(key=(origin, reference))
-    if not (ipk and ipk.seqNo):
+                                reference, clbk, pargs=None):
+
+    chk = partial(wallet.isIssuerKeyComplete, origin, reference)
+    if not chk():
         req = wallet.requestIssuerKey((origin, reference),
                                                  wallet.defaultId)
         client.submitReqs(req)
         if displayer:
             displayer("Getting Keys for the Claim Definition from Sovrin")
-        loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                                    clbk, *args)
+        if pargs is not None:
+            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+                                    clbk, pargs, None, chk)
+        else:
+            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+                            clbk, None, None, chk)
     else:
         # Since reply and error will be none
-        clbk(None, None, *args)
+        clbk(None, None, *pargs)
 
 
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer, loop,
-                                       claimDefKey, clbk, *args):
+                                       claimDefKey, clbk, pargs=None):
+
+    # This assumes that author of claimDef is same as the author of
+    # issuerPublicKey
     def _getKey(result, error):
         data = json.loads(result.get(DATA))
         origin = data.get(ORIGIN)
         seqNo = data.get(F.seqNo.name)
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
-                                   seqNo, clbk, *args)
+                                   seqNo, clbk, pargs)
 
-    claimDef = wallet.getClaimDef(key=claimDefKey)
-    if not (claimDef and claimDef.seqNo):
-        req = wallet.requestClaimDef(claimDefKey,
-                                                wallet.defaultId)
+    chk = partial(wallet.isClaimDefComplete, claimDefKey)
+    if not chk():
+        req = wallet.requestClaimDef(claimDefKey, wallet.defaultId)
         client.submitReqs(req)
         displayer("Getting Claim Definition from Sovrin: {} {}"
-                   .format(claimDefKey[0], claimDefKey[1]))
+                  .format(claimDefKey[0], claimDefKey[1]))
         loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                                    _getKey)
+                        _getKey, None, None, chk)
     else:
+        claimDef = wallet.getClaimDef(key=claimDefKey)
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop,
-                                   claimDef.origin, claimDef.seqNo, clbk, *args)
+                                   claimDef.origin, claimDef.seqNo, clbk, pargs)
 
 
-# TODO: Should have a timeout
-def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
+# TODO: Should have a timeout, should not have kwargs
+def ensureReqCompleted(loop, reqId, client, clbk=None, pargs=None, kwargs=None,
+                       cond=None):
     reply, err = client.replyIfConsensus(reqId)
-    if reply is None:
+    if reply is None and (cond is None or not cond()):
         loop.call_later(.2, ensureReqCompleted, loop,
-                             reqId, client, clbk, *args)
+                             reqId, client, clbk, pargs, kwargs, cond)
     elif clbk:
         # TODO: Do something which makes reply and error optional in the
         # callback.
-        clbk(reply, err, *args)
+        # TODO: This is kludgy, but will be resolved once we move away from
+        # this callback pattern
+        if pargs is not None and kwargs is not None:
+            clbk(reply, err, *pargs, **kwargs)
+        elif pargs is not None and kwargs is None:
+            clbk(reply, err, *pargs)
+        elif pargs is None and kwargs is not None:
+            clbk(reply, err, **kwargs)
+        else:
+            clbk(reply, err)

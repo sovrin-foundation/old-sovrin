@@ -29,7 +29,10 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
-    acmeIsRunning, faberAgentPort, acmeAgentPort
+    acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
+    acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
+    thriftAgent
+
 from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
@@ -129,8 +132,24 @@ def acmeMap(acmeAgentPort):
             "claims": "<claim-name>",
             "rcvd-claim-transcript-provider": "Faber College",
             "rcvd-claim-transcript-name": "Transcript",
-            "rcvd-claim-transcript-version": "1.2",
+            "rcvd-claim-transcript-version": "1.2"
             }
+
+@pytest.fixture(scope="module")
+def thriftMap(thriftAgentPort):
+    endpoint = "127.0.0.1:{}".format(thriftAgentPort)
+    return {'inviter': 'Thrift Bank',
+            'invite': "sample/thrift-loan-application.sovrin",
+            'invite-not-exists': "sample/thrift-loan-application.sovrin.not.exists",
+            'inviter-not-exists': "non-existing-inviter",
+            "target": "gcp+vfaMWkvmGXYQd3uE/BdK3btf/TR+8xuqhvOYDw0=",
+            "nonce": "77fbf9dc8c8e6acde33de98c6d747b28c",
+            ENDPOINT: endpoint,
+            "endpointAttr": json.dumps({ENDPOINT: endpoint}),
+            "claim-requests": "Loan-Application-Basic, Loan-Application-KYC",
+            "claim-ver-req-to-show": "0.1"
+            }
+
 
 
 @pytest.fixture(scope="module")
@@ -192,6 +211,7 @@ def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
             ["Invitation acceptance aborted."] + \
             canNotSyncMsg + connectUsage
 
+
 @pytest.fixture(scope="module")
 def usageLine():
     return [USAGE_TEXT]
@@ -200,6 +220,7 @@ def usageLine():
 @pytest.fixture(scope="module")
 def nextCommandsToTryUsageLine():
     return [NEXT_COMMANDS_TO_TRY_TEXT]
+
 
 @pytest.fixture(scope="module")
 def connectUsage(usageLine):
@@ -253,6 +274,7 @@ def syncedInviteAcceptedWithClaimsOut(syncedInviteAcceptedOutWithoutClaims):
     return syncedInviteAcceptedOutWithoutClaims + [
         "Available claims: {claims}",
     ]
+
 
 @pytest.fixture(scope="module")
 def unsycedAcceptedInviteWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
@@ -377,8 +399,8 @@ def syncLinkOutWithoutEndpoint(syncLinkOutStartsWith):
 
 
 @pytest.fixture(scope="module")
-def showSyncedLinkWithEndpointOut(showLinkOut):
-    return showLinkOut + \
+def showSyncedLinkWithEndpointOut(acceptedLinkHeading, showLinkOut):
+    return acceptedLinkHeading + showLinkOut + \
         ["Last synced: "] + \
         ["Target endpoint: {endpoint}"]
 
@@ -394,8 +416,18 @@ def linkNotYetSynced():
 
 
 @pytest.fixture(scope="module")
-def showUnSyncedLinkOut(showLinkOut, linkNotYetSynced):
-    return showLinkOut + linkNotYetSynced
+def acceptedLinkHeading():
+    return ["Link"]
+
+
+@pytest.fixture(scope="module")
+def unAcceptedLinkHeading():
+    return ["Link (not yet accepted)"]
+
+
+@pytest.fixture(scope="module")
+def showUnSyncedLinkOut(unAcceptedLinkHeading, showLinkOut, linkNotYetSynced):
+    return unAcceptedLinkHeading + showLinkOut + linkNotYetSynced
 
 
 @pytest.fixture(scope="module")
@@ -443,17 +475,25 @@ def transcriptClaimMap():
 
 
 @pytest.fixture(scope="module")
-def jobCertificateClaimValueMap():
+def jobCertClaimAttrValueMap():
     return {
-        'inviter': 'Acme Corp',
-        'name': 'Job-Certificate',
-        'status': "available (not yet issued)",
-        "version": "1.1",
-        "attr-employee_name": "Alice Garcia",
+        "attr-first_name": "Alice",
+        "attr-last_name": "Garcia",
         "attr-employee_status": "Permanent",
         "attr-experience": "3 years",
         "attr-salary_bracket": "between $50,000 to $100,000"
     }
+
+@pytest.fixture(scope="module")
+def jobCertificateClaimValueMap(jobCertClaimAttrValueMap):
+    basic = {
+        'inviter': 'Acme Corp',
+        'name': 'Job-Certificate',
+        'status': "available (not yet issued)",
+        "version": "0.2"
+    }
+    basic.update(jobCertClaimAttrValueMap)
+    return basic
 
 @pytest.fixture(scope="module")
 def jobCertificateClaimMap():
@@ -461,8 +501,9 @@ def jobCertificateClaimMap():
         'inviter': 'Acme Corp',
         'name': 'Job-Certificate',
         'status': "available (not yet issued)",
-        "version": "1.1",
-        "attr-employee_name": "string",
+        "version": "0.2",
+        "attr-first_name": "string",
+        "attr-last_name": "string",
         "attr-employee_status": "string",
         "attr-experience": "string",
         "attr-salary_bracket": "string"
@@ -481,11 +522,13 @@ def reqClaimOut():
 def reqClaimOut1():
     return ["Found claim {name} in link {inviter}",
             "Requesting claim {name} from {inviter}...",
-                "Getting Claim Definition from Sovrin"]
+            "Getting Claim Definition from Sovrin",
+            "Signature accepted.",
+            "Received {name}."]
 
 
 @pytest.fixture(scope="module")
-def rcvdClaimOut():
+def rcvdTranscriptClaimOut():
     return ["Found claim {name} in link {inviter}",
             "Name: {name}",
             "Status: ",
@@ -499,7 +542,21 @@ def rcvdClaimOut():
     ]
 
 @pytest.fixture(scope="module")
-def showClaimOut(nextCommandsToTryUsageLine):
+def rcvdJobCertClaimOut():
+    return ["Found claim {name} in link {inviter}",
+            "Name: {name}",
+            "Status: ",
+            "Version: {version}",
+            "Attributes:",
+            "first_name: {attr-first_name}",
+            "last_name: {attr-last_name}",
+            "employee_status: {attr-employee_status}",
+            "experience: {attr-experience}",
+            "salary_bracket: {attr-salary_bracket}"
+    ]
+
+@pytest.fixture(scope="module")
+def showTranscriptClaimOut(nextCommandsToTryUsageLine):
     return ["Found claim {name} in link {inviter}",
             "Name: {name}",
             "Status: {status}",
@@ -515,8 +572,25 @@ def showClaimOut(nextCommandsToTryUsageLine):
 
 
 @pytest.fixture(scope="module")
+def showJobCertClaimOut(nextCommandsToTryUsageLine):
+    return ["Found claim {name} in link {inviter}",
+            "Name: {name}",
+            "Status: {status}",
+            "Version: {version}",
+            "Attributes:",
+            "first_name",
+            "last_name",
+            "employee_status",
+            "experience",
+            "salary_bracket"
+            ] + nextCommandsToTryUsageLine + \
+           ['request claim "{name}"']
+
+
+@pytest.fixture(scope="module")
 def showLinkWithClaimReqOut():
     return ["Claim Requests: {claim-requests}"]
+
 
 @pytest.fixture(scope="module")
 def showLinkWithAvailableClaimsOut():
@@ -537,6 +611,14 @@ def showAcceptedLinkWithClaimReqsOut(showAcceptedLinkOut,
 def showAcceptedLinkWithoutAvailableClaimsOut(showAcceptedLinkOut,
                                         showLinkWithClaimReqOut):
     return showAcceptedLinkOut + showLinkWithClaimReqOut
+
+
+@pytest.fixture(scope="module")
+def showAcceptedLinkWithAvailableClaimsOut(showAcceptedLinkOut,
+                                           showLinkWithClaimReqOut,
+                                           showLinkWithAvailableClaimsOut):
+    return showAcceptedLinkOut + showLinkWithClaimReqOut + \
+           showLinkWithAvailableClaimsOut
 
 
 @pytest.fixture(scope="module")
@@ -561,7 +643,6 @@ def showAcceptedLinkOut():
 @pytest.fixture(scope="module")
 def showLinkOut(nextCommandsToTryUsageLine):
     return [
-            "Link (not yet accepted)",
             "Name: {inviter}",
             "Target: {target}",
             "Target Verification key: <unknown, waiting for sync>",
@@ -712,58 +793,27 @@ def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
 
 
 @pytest.fixture(scope="module")
-def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberAgentPort,
-                   faberWallet, faberAddedByPhil):
+def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
+                   faberAddedByPhil, faberAgent):
     faber, faberWallet = runningFaber(emptyLooper, tdirWithPoolTxns,
-                                      faberAgentPort, faberWallet)
-    cdSeqNo, iskSeqNo = faberAddedClaimDefAndIssuerKeys(emptyLooper, faber,
-                                                        faberWallet)
-    faber._seqNos = {
-        ("Transcript", "1.2"): (cdSeqNo, iskSeqNo)
-    }
-    faber.addLinksToWallet()
+                                      faberWallet, faberAgent, faberAddedByPhil)
     return faber, faberWallet
 
 
-def faberAddedClaimDefAndIssuerKeys(looper, faber, faberWallet):
-    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    sid = faberWallet.addClaimDefSk(str(csk))
-    # Need to modify the claim definition. We do not support types yet
-    claimDef = {
-            "name": "Transcript",
-            "version": "1.2",
-            "type": "CL",
-            "attr_names": ["student_name", "ssn", "degree", "year", "status"]
-    }
-    claimDef = ClaimDef(seqNo=None,
-                       attrNames=claimDef[ATTR_NAMES],
-                       name=claimDef[NAME],
-                       version=claimDef[VERSION],
-                       origin=faberWallet.defaultId,
-                       typ=claimDef[TYPE],
-                       secretKey=sid)
-    faberWallet.addClaimDef(claimDef)
-    reqs = faberWallet.preparePending()
-    faber.client.submitReqs(*reqs)
+@pytest.fixture(scope="module")
+def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet,
+                   acmeAddedByPhil, acmeAgent):
+    acme, acmeWallet = runningAcme(emptyLooper, tdirWithPoolTxns,
+                                   acmeWallet, acmeAgent, acmeAddedByPhil)
 
-    def chk():
-        assert claimDef.seqNo is not None
+    return acme, acmeWallet
 
-    looper.run(eventually(chk, retryWait=1, timeout=10))
 
-    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
-    faberWallet.addIssuerSecretKey(isk)
-    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=claimDef.seqNo,
-                       secretKeyUid=isk.uid, origin=faberWallet.defaultId)
-    faberWallet.addIssuerPublicKey(ipk)
-    reqs = faberWallet.preparePending()
-    faber.client.submitReqs(*reqs)
+@pytest.fixture(scope="module")
+def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
+                    thriftAddedByPhil, thriftAgent):
+    thrift, thriftWallet = runningThrift(emptyLooper, tdirWithPoolTxns,
+                                         thriftWallet, thriftAgent,
+                                         thriftAddedByPhil)
 
-    key = (faberWallet.defaultId, claimDef.seqNo)
-
-    def chk():
-        assert faberWallet.getIssuerPublicKey(key).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-    return claimDef.seqNo, ipk.seqNo
+    return thrift, thriftWallet

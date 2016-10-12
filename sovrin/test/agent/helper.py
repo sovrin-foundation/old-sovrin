@@ -13,7 +13,6 @@ def connectAgents(agent1, agent2):
 
 
 def ensureAgentsConnected(looper, agent1, agent2):
-    connectAgents(agent1, agent2)
     e1 = agent1.endpoint
     e2 = agent2.endpoint
     looper.run(eventually(checkRemoteExists, e1, e2.name, CONNECTED,
@@ -35,6 +34,9 @@ def getAgentCmdLineParams():
                             help='issuer def seq number')
 
         args = parser.parse_args()
-        return int(args.port), int(args.credDefSeq), int(args.issuerSeq)
+        port = int(args.port) if args.port else None
+        credDefSeq = int(args.credDefSeq) if args.credDefSeq else None
+        issuerSeq = int(args.issuerSeq) if args.issuerSeq else None
+        return port, credDefSeq, issuerSeq
     else:
         return None, None, None

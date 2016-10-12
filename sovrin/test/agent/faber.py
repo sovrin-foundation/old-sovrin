@@ -1,13 +1,12 @@
 import os
 import random
 
-import sys
 from plenum.common.log import getlogger
-from plenum.common.txn import NAME
-from plenum.common.txn import VERSION
+from plenum.common.txn import NAME, VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import WalletedAgent, runAgent
+from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
@@ -38,33 +37,45 @@ class FaberAgent(WalletedAgent):
         credDefSeqNo = 10
         issuerSeqNo = 11
 
+        self.availableClaims = []
+
         self._seqNos = {
             ("Transcript", "1.2"): (credDefSeqParam or credDefSeqNo,
                                     issuerSeqNoParam or issuerSeqNo)
         }
+
+        # maps invitation nonces to internal ids
+        self._invites = {
+            "b1134a647eb818069c089e7694f63e6d": 1,
+            "2a2eb72eca8b404e8d412c5bf79f2640": 2,
+            "7513d1397e87cada4214e2a650f603eb": 3,
+            "710b78be79f29fc81335abaa4ee1c5e8": 4
+        }
+
+        # maps internal ids to attributes
         self._attributes = {
-            "b1134a647eb818069c089e7694f63e6d": {
+            1: {
                 "student_name": "Alice Garcia",
                 "ssn": "123-45-6789",
                 "degree": "Bachelor of Science, Marketing",
                 "year": "2015",
                 "status": "graduated"
             },
-            "2a2eb72eca8b404e8d412c5bf79f2640": {
+            2: {
                 "student_name": "Carol Atkinson",
                 "ssn": "783-41-2695",
                 "degree": "Bachelor of Science, Physics",
                 "year": "2012",
                 "status": "graduated"
             },
-            "7513d1397e87cada4214e2a650f603eb": {
+            3: {
                 "student_name": "Frank Jeffrey",
                 "ssn": "996-54-1211",
                 "degree": "Bachelor of Arts, History",
                 "year": "2013",
                 "status": "dropped"
             },
-            "710b78be79f29fc81335abaa4ee1c5e8": {
+            4: {
                 "student_name": "Craig Richards",
                 "ssn": "151-44-5876",
                 "degree": "MBA, Finance",
@@ -73,36 +84,31 @@ class FaberAgent(WalletedAgent):
             }
         }
 
+    def getInternalIdByInvitedNonce(self, nonce):
+        if nonce in self._invites:
+            return self._invites[nonce]
+        else:
+            raise NonceNotFound
+
     def addKeyIfNotAdded(self):
         wallet = self.wallet
         if not wallet.identifiers:
             wallet.addSigner(seed=b'Faber000000000000000000000000000')
 
     def getAvailableClaimList(self):
+        return self.availableClaims
+
+    def postClaimVerification(self, claimName):
+        pass
+
+    def initAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()
-        resp = []
         for cd, ik in acl:
-            resp.append({
+            self.availableClaims.append({
                 NAME: cd.name,
                 VERSION: cd.version,
                 "claimDefSeqNo": cd.seqNo
             })
-        return resp
-
-    def getClaimList(self, claimNames=None):
-        allClaims = [{
-            "name": "Transcript",
-            "version": "1.2",
-            "claimDefSeqNo": "<claimDefSeqNo>",
-            "values": {
-                "student_name": "Alice Garcia",
-                "ssn": "123456789",
-                "degree": "Bachelor of Science, Marketing",
-                "year": "2015",
-                "status": "graduated"
-            }
-        }]
-        return [c for c in allClaims if not claimNames or c[NAME] in claimNames]
 
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
@@ -110,22 +116,18 @@ class FaberAgent(WalletedAgent):
         staticPrime = staticPrimes().get("prime1")
         attrNames = ["student_name", "ssn", "degree", "year", "status"]
         super().addClaimDefs(name=name,
-                                     version=version,
-                                     attrNames=attrNames,
-                                     staticPrime=staticPrime,
-                                     credDefSeqNo=credDefSeqNo,
-                                     issuerKeySeqNo=issuerKeySeqNo)
+                             version=version,
+                             attrNames=attrNames,
+                             staticPrime=staticPrime,
+                             credDefSeqNo=credDefSeqNo,
+                             issuerKeySeqNo=issuerKeySeqNo)
 
-    def getAttributes(self, nonce):
-        attrs = self._attributes.get(nonce)
+    def getAttributes(self, internalId):
+        attrs = self._attributes.get(internalId)
+
         if not attrs:
-            attrs = {
-                "student_name": random.choice(randomData.NAMES),
-                "ssn": random.choice(randomData.SSN),
-                "degree": random.choice(randomData.DEGREE),
-                "year": random.choice(randomData.YEAR),
-                "status": random.choice(randomData.STATUS)
-            }
+            raise RuntimeError('attributes for internal ID {} not found'.
+                               format(internalId))
 
         attribTypes = []
         for name in attrs:
@@ -135,17 +137,10 @@ class FaberAgent(WalletedAgent):
         return attribs
 
 
-    def addLinksToWallet(self):
-        wallet = self.wallet
-        idr = wallet.defaultId
-        for nonce, data in self._attributes.items():
-            link = Link(data.get("student_name"), idr, nonce=nonce)
-            wallet.addLink(link)
-
     def bootstrap(self):
         self.addKeyIfNotAdded()
-        self.addLinksToWallet()
         self.addClaimDefsToWallet()
+        self.initAvailableClaimList()
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,
