@@ -90,7 +90,7 @@ def claimDef(attrNames):
 
 
 @pytest.fixture(scope="module")
-def claimDefSecretKeyAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+def claimDefSecretKeyAdded(nodeSet, steward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir,
                           staticPrimes):
     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
@@ -98,7 +98,7 @@ def claimDefSecretKeyAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
 
 
 @pytest.fixture(scope="module")
-def claimDefinitionAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+def claimDefinitionAdded(nodeSet, steward, addedSponsor, sponsor,
                          sponsorWallet, looper, tdir, attrNames,
                          claimDef, claimDefSecretKeyAdded):
     old = sponsorWallet.pendingCount
@@ -125,7 +125,7 @@ def claimDefinitionAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
 
 
 @pytest.fixture(scope="module")
-def issuerSecretKeyAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+def issuerSecretKeyAdded(nodeSet, steward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir,
                           staticPrimes, claimDefSecretKeyAdded,
                          claimDefinitionAdded):
@@ -139,7 +139,7 @@ def issuerSecretKeyAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
 
 
 @pytest.fixture(scope="module")
-def issuerPublicKeysAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+def issuerPublicKeysAdded(nodeSet, steward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir,
                           staticPrimes, claimDefinitionAdded,
                           issuerSecretKeyAdded):
