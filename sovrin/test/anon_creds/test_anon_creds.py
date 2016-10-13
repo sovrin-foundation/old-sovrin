@@ -214,7 +214,7 @@ def testAnonCredFlow(nodeSet,
     proofBuilder.setParams(presentationToken,
                     revealedAttrs, nonce)
     prf = ProofBuilderModule.ProofBuilder.prepareProof(
-        credDefPks=proofBuilder.credDefPks,
+        credDefPks=proofBuilder.issuerPks,
         masterSecret=proofBuilder.masterSecret,
         creds=presentationToken,
         encodedAttrs=encodedAttributes,

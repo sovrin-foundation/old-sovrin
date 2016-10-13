@@ -526,7 +526,7 @@ class SovrinCli(PlenumCli):
                       credVersion, issuerId, proverId):
         # TODO: Should check for an existing proof builder if that exists for
         # the claim definition and issuer key
-        proofBuilder = self.newProofBuilder(credName, credVersion, issuerId)
+        proofBuilder = self.newProofBuilder((credName, credVersion, issuerId))
         u = proofBuilder.U[issuerId]
         self.setProofBuilderAttrs(proofBuilder, issuerId)
         tokens = []
@@ -540,21 +540,19 @@ class SovrinCli(PlenumCli):
         tokens.append((Token, "\n"))
         self.printTokens(tokens, separator='')
 
-    def newProofBuilder(self, claimName, claimVersion, issuerId):
-        # Assuming the claim def and issuer key come from the same entity
-        claimDef = self.activeWallet.getClaimDef(
-            (claimName, claimVersion, issuerId))
-        issuerPubKey = self.activeWallet.getIssuerPublicKey(
-            (issuerId, claimDef.seqNo))
-        pk = {
-            issuerId: issuerPubKey
-        }
+    def newProofBuilder(self, *claimDefKeys):
+        pk = {}
+        for claimDefKey in claimDefKeys:
+            claimName, claimVersion, issuerId = claimDefKey
+            # Assuming the claim def and issuer key come from the same entity
+            claimDef = self.activeWallet.getClaimDef(claimDefKey)
+            issuerPubKey = self.activeWallet.getIssuerPublicKey(
+                (issuerId, claimDef.seqNo))
+            pk[issuerId] = issuerPubKey
+
         masterSecret = self.activeWallet.masterSecret
-        # if masterSecret:
-        #     masterSecret = int(masterSecret)
-        proofBuilder = ProofBuilder(pk, masterSecret)
-        if not masterSecret:
-            self.activeWallet.addMasterSecret(proofBuilder.masterSecret)
+        vprime = self.activeWallet.getVPrimes(*tuple(pk.keys()))
+        proofBuilder = ProofBuilder(pk, masterSecret, vprime=vprime)
         # TODO: claimName, claimVersion and issuerId can be replaced with a
         # sequence number
         self.activeWallet.proofBuilders[proofBuilder.id] = (proofBuilder,
@@ -793,8 +791,7 @@ class SovrinCli(PlenumCli):
             encodedAttrs = {
                 issuer: next(iter(attribs.values()))
             }
-            proof = ProofBuilder.prepareProofAsDict(issuer=issuer,
-                                                    credDefPks=credDefPks,
+            proof = ProofBuilder.prepareProofAsDict(issuerPks=credDefPks,
                                                     masterSecret=masterSecret,
                                                     creds={issuer: cred},
                                                     revealedAttrs=revealedAttrs,
@@ -872,9 +869,6 @@ class SovrinCli(PlenumCli):
     def printUsage(self, msgs):
         self.print("\n{}".format(USAGE_TEXT))
         self.printUsageMsgs(msgs)
-
-    # def _loadInvitation(self, invitationData):
-    #     self.agent.loadInvitation(invitationData)
 
     def _loadFile(self, matchedVars):
         if matchedVars.get('load_file') == 'load':
@@ -1007,7 +1001,7 @@ class SovrinCli(PlenumCli):
         # TODO: Should check for an existing proof builder if that exists for
         # the claim definition and issuer key
         name, version, origin = claimDefKey
-        proofBuilder = self.newProofBuilder(name, version, origin)
+        proofBuilder = self.newProofBuilder(claimDefKey)
         uValue = proofBuilder.U[origin]
         op = {
             NONCE: link.invitationNonce,

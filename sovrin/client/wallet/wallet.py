@@ -6,7 +6,7 @@ import uuid
 import operator
 
 from collections import deque
-from typing import Dict, List, Iterable
+from typing import Dict
 from typing import Optional
 
 from ledger.util import F
@@ -17,17 +17,18 @@ from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, TYPE, NYM, STEWARD, ROLE, RAW, \
-    ORIGIN
+    IDENTIFIER, NAME, VERSION, TYPE, NYM, STEWARD, ROLE, ORIGIN
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link
+from sovrin.client.wallet.prover_wallet import ProverWallet
 from sovrin.common.did_method import DefaultDidMethods
 from sovrin.common.exceptions import LinkNotFound
-from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF, \
+from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, \
+    GET_CRED_DEF, \
     GET_NYM, SPONSOR, ATTR_NAMES, ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
@@ -37,7 +38,6 @@ from sovrin.common.util import getEncodedAttrs, stringDictToCharmDict
 
 ENCODING = "utf-8"
 
-
 logger = getlogger()
 
 
@@ -45,6 +45,7 @@ class Sponsoring:
     """
     Mixin to add sponsoring behaviors to a Wallet
     """
+
     def __init__(self):
         self._sponsored = {}  # type: Dict[Identifier, Identity]
 
@@ -63,49 +64,51 @@ class Sponsoring:
         return len(self._pending)
 
 
-class Wallet(PWallet, Sponsoring):
+# TODO: Maybe we should have a thinner wallet which should not have ProverWallet
+class Wallet(PWallet, Sponsoring, ProverWallet):
     clientNotPresentMsg = "The wallet does not have a client associated with it"
 
     def __init__(self,
                  name: str,
-                 supportedDidMethods: DidMethods=None):
+                 supportedDidMethods: DidMethods = None):
         PWallet.__init__(self,
                          name,
                          supportedDidMethods or DefaultDidMethods)
         Sponsoring.__init__(self)
-
-        self._credMasterSecret = None
-        self._attributes = {}       # type: Dict[(str, Identifier,
+        ProverWallet.__init__(self)
+        self._attributes = {}  # type: Dict[(str, Identifier,
         # Optional[Identifier]), Attribute]
-        self._claimDefs = {}         # type: Dict[(str, str, str), ClaimDef]
-        self._claimDefSks = {}       # type: Dict[(str, str, str), ClaimDefSk]
-        self._credentials = {}      # type: Dict[str, Credential]
-        self._links = {}            # type: Dict[str, Link]
-        self.knownIds = {}          # type: Dict[str, Identifier]
+        self._claimDefs = {}  # type: Dict[(str, str, str), ClaimDef]
+        self._claimDefSks = {}  # type: Dict[(str, str, str), ClaimDefSk]
+        self._credentials = {}  # type: Dict[str, Credential]
+        self._links = {}  # type: Dict[str, Link]
+        self.knownIds = {}  # type: Dict[str, Identifier]
 
         # Attributes this wallet has for others. Think of an Issuer's attribute
         #  repo containing attributes for different Provers. Key is a nonce and
         #  value is a map of attributes
-        self.attributesFor = {}     # type: Dict[str, Dict]
+        self.attributesFor = {}  # type: Dict[str, Dict]
 
         # Attributes this wallet has from others. Think of an Prover's
         # attribute repo containing attributes from different Issuers. Key is a
         # identifier and value is a map of attributes
-        self.attributesFrom = {}    # type: Dict[str, Dict]
+        self.attributesFrom = {}  # type: Dict[str, Dict]
 
         # TODO: Shouldnt proof builders be uniquely identified by claim def
         # and issuerId
         # TODO: Create claim objects
+        # TODO: Do not persist proof builders
         self.proofBuilders = {}
 
         self._issuerSks = {}
         self._issuerPks = {}
         # transactions not yet submitted
-        self._pending = deque()     # type Tuple[Request, Tuple[str, Identifier, Optional[Identifier]]
+        self._pending = deque()  # type Tuple[Request, Tuple[str, Identifier,
+        #  Optional[Identifier]]
 
         # pending transactions that have been prepared (probably submitted)
-        self._prepared = {}         # type: Dict[(Identifier, int), Request]
-        self.lastKnownSeqs = {}     # type: Dict[str, int]
+        self._prepared = {}  # type: Dict[(Identifier, int), Request]
+        self.lastKnownSeqs = {}  # type: Dict[str, int]
 
         self.replyHandler = {
             ATTRIB: self._attribReply,
@@ -213,20 +216,21 @@ class Wallet(PWallet, Sponsoring):
         for pid, (pb, _, _, _) in self.proofBuilders.items():
             if not pb.credential:
                 continue
-            if issuerId in pb.credDefPks:
+            if issuerId in pb.issuerPks:
                 if not pb.encodedAttrs or issuerId not in pb.encodedAttrs:
                     self.setProofBuilderAttributes(pb)
                     if issuerId not in pb.encodedAttrs:
                         raise Exception("Attributes not present")
                 revealedAttrs = list(matchedAttrs)
-                proof = ProofBuilder.prepareProofAsDict(issuer=issuerId,
-                                                        credDefPks=pb.credDefPks,
+                proof = ProofBuilder.prepareProofAsDict(issuerPks=pb.issuerPks,
                                                         masterSecret=pb.masterSecret,
-                                                        creds={issuerId: pb.credential},
+                                                        creds={
+                                                            issuerId:
+                                                                pb.credential},
                                                         revealedAttrs=revealedAttrs,
                                                         nonce=nonce,
                                                         encodedAttrs=pb.encodedAttrs)
-                pk = pb.credDefPks[issuerId]
+                pk = pb.issuerPks[issuerId]
                 issuerPubKey = self.getIssuerPublicKey(seqNo=pk.uid)
                 claimDef = self.getClaimDef(seqNo=issuerPubKey.claimDefSeqNo)
                 return proof, {issuerId: pb.encodedAttrs.get(issuerId)}, \
@@ -235,7 +239,7 @@ class Wallet(PWallet, Sponsoring):
     def setProofBuilderAttributes(self, pb: ProofBuilder):
         if pb.encodedAttrs is None:
             pb.encodedAttrs = {}
-        for iid, pk in pb.credDefPks.items():
+        for iid, pk in pb.issuerPks.items():
             if iid in self.attributesFrom:
                 attributes = self.attributesFrom[iid]
                 pb.encodedAttrs.update(getEncodedAttrs(iid, attributes))
@@ -307,8 +311,8 @@ class Wallet(PWallet, Sponsoring):
     def getCredential(self, name: str):
         return self._credentials.get(name)
 
-    def addMasterSecret(self, masterSecret):
-        self._credMasterSecret = masterSecret
+    # def addMasterSecret(self, masterSecret):
+    #     self._credMasterSecret = masterSecret
 
     def addLink(self, link: Link):
         self._links[link.key] = link
@@ -319,10 +323,6 @@ class Wallet(PWallet, Sponsoring):
             logger.debug("Wallet has links {}".format(self._links))
             raise LinkNotFound(l.name)
         return l
-
-    @property
-    def masterSecret(self):
-        return self._credMasterSecret
 
     @property
     def credNames(self):
@@ -368,7 +368,8 @@ class Wallet(PWallet, Sponsoring):
         return sorted([req for req, _ in new.values()],
                       key=operator.attrgetter("reqId"))
 
-    def handleIncomingReply(self, observer_name, reqId, frm, result, numReplies):
+    def handleIncomingReply(self, observer_name, reqId, frm, result,
+                            numReplies):
         """
         Called by an external entity, like a Client, to notify of incoming
         replies
@@ -411,7 +412,7 @@ class Wallet(PWallet, Sponsoring):
     def _getClaimDefReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
         claimDef = self.getClaimDef((data.get(NAME), data.get(VERSION),
-                                    data.get(ORIGIN)))
+                                     data.get(ORIGIN)))
         if claimDef:
             if not claimDef.seqNo:
                 claimDef.seqNo = data.get(F.seqNo.name)
@@ -573,7 +574,8 @@ class Wallet(PWallet, Sponsoring):
             self.pendRequest(req, None)
         return len(self._pending)
 
-    def getIssuerPublicKey(self, key=None, seqNo=None) -> Optional[IssuerPubKey]:
+    def getIssuerPublicKey(self, key=None, seqNo=None) -> Optional[
+        IssuerPubKey]:
         assert key or seqNo
         if key:
             return self._issuerPks.get(key)
@@ -583,7 +585,8 @@ class Wallet(PWallet, Sponsoring):
                     return pk
         return self._issuerPks.get(key)
 
-    def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo) -> Optional[IssuerPubKey]:
+    def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo) -> Optional[
+        IssuerPubKey]:
         # Assuming only one identifier per claimDefSeqNo
         for k, v in self._issuerPks.items():
             if k[1] == claimDefSeqNo:
@@ -601,7 +604,8 @@ class Wallet(PWallet, Sponsoring):
             if (name, version, origin) == claimDefKey and issuerId in pb.U:
                 logger.debug("{} adding credential to proof builder")
                 credential = ATypes.Credential(credential.A, credential.e,
-                                        pb.vprime[issuerId] + credential.v)
+                                               pb.vprime[
+                                                   issuerId] + credential.v)
                 pb.setCredential(credential)
                 return
 
