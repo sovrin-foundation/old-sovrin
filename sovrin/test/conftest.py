@@ -65,6 +65,7 @@ def steward(nodeSet, looper, tdir, up, stewardWallet):
     s.registerObserver(stewardWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
+    makePendingTxnsRequest(s, stewardWallet)
     return s
 
 # @pytest.fixture(scope="module")
@@ -86,9 +87,9 @@ def steward(nodeSet, looper, tdir, up, stewardWallet):
 #     return stewardAndWallet[1]
 
 
-@pytest.fixture(scope="module")
-def updatedSteward(steward, stewardWallet):
-    makePendingTxnsRequest(steward, stewardWallet)
+# @pytest.fixture(scope="module")
+# def updatedSteward(steward, stewardWallet):
+#     makePendingTxnsRequest(steward, stewardWallet)
 
 
 @pytest.fixture(scope="module")

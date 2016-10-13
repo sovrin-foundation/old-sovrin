@@ -771,25 +771,26 @@ def faberAdded(poolNodesCreated,
              aliceCLI,
              faberInviteLoaded,
              aliceConnected,
-             stewardClientAndWallet):
-    client, wallet = stewardClientAndWallet
+            steward, stewardWallet):
+    # client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
-    createNym(looper, li.remoteIdentifier, client, wallet, role=SPONSOR)
+    createNym(looper, li.remoteIdentifier, li.remoteIdentifier,
+              steward, stewardWallet, role=SPONSOR)
 
 
-@pytest.fixture(scope="module")
-def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
-                           poolTxnStewardData):
-    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
-                                              tdirWithDomainTxns,
-                                              clientClass=TestClient,
-                                              walletClass=Wallet)
-    client.registerObserver(wallet.handleIncomingReply)
-
-    looper.add(client)
-    looper.run(client.ensureConnectedToNodes())
-    makePendingTxnsRequest(client, wallet)
-    return client, wallet
+# @pytest.fixture(scope="module")
+# def stewardClientAndWallet(poolNodesCreated, looper, tdirWithDomainTxns,
+#                            poolTxnStewardData, steward, stewardWallet):
+#     # client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
+#     #                                           tdirWithDomainTxns,
+#     #                                           clientClass=TestClient,
+#     #                                           walletClass=Wallet)
+#     # client.registerObserver(wallet.handleIncomingReply)
+#     #
+#     # looper.add(client)
+#     # looper.run(client.ensureConnectedToNodes())
+#     # makePendingTxnsRequest(client, wallet)
+#     return steward, stewardWallet
 
 
 @pytest.fixture(scope="module")
