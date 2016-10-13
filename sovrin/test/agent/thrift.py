@@ -1,15 +1,12 @@
 import os
-import random
 
 from plenum.common.log import getlogger
 
 from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
-from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
-import sovrin.test.random_data as randomData
 
 from sovrin.test.agent.helper import getAgentCmdLineParams
 
