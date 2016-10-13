@@ -538,7 +538,8 @@ class IdentityGraph(OrientDbGraphStore):
             raise ValueError("Unknown role {} for nym, cannot add nym to graph"
                              .format(role))
         nym = txn[TARGET_NYM]
-        verkey = txn.get(VERKEY, '')
+        # Not using `txn.get(VERKEY, '') as txn might have VERKEY but set as None`
+        verkey = txn.get(VERKEY) or ''
         try:
             txnId = txn[TXN_ID]
             self.addNym(txnId, nym, verkey, role,

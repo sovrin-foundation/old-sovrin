@@ -5,6 +5,7 @@ from ledger.util import F
 
 from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import NAME, VERSION, DATA
+from plenum.common.util import getMaxFailures
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
 from sovrin.common.txn import ATTR_NAMES
@@ -13,7 +14,7 @@ from sovrin.common.txn import ATTR_NAMES
 @pytest.fixture(scope="module")
 def curiousClient(userWalletA, nodeSet, looper, tdir):
     from sovrin.test.helper import genTestClient
-    client, _ = genTestClient(nodeSet, tmpdir=tdir)
+    client, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
     client.registerObserver(userWalletA.handleIncomingReply)
     looper.add(client)
     looper.run(client.ensureConnectedToNodes())
@@ -50,9 +51,9 @@ def testProverGetsCredDef(claimDefinitionAdded, userWalletA, tdir,
                   sponsorWallet.defaultId)
     req = userWalletA.requestClaimDef(credDefKey, userWalletA.defaultId)
     curiousClient.submitReqs(req)
-
+    f = getMaxFailures(len(nodeSet))
     looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
-                          req.reqId, nodeSet.f,
+                          req.reqId, f,
                           retryWait=1, timeout=5))
     reply, status = curiousClient.getReply(req.reqId)
     assert status == "CONFIRMED"
@@ -71,8 +72,9 @@ def testGetIssuerKey(claimDefinitionAdded, userWalletA, tdir,
     req = userWalletA.requestIssuerKey(key,
                                        userWalletA.defaultId)
     curiousClient.submitReqs(req)
+    f = getMaxFailures(len(nodeSet))
     looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
-                          req.reqId, nodeSet.f,
+                          req.reqId, f,
                           retryWait=1, timeout=5))
     reply, status = curiousClient.getReply(req.reqId)
     assert status == "CONFIRMED"
