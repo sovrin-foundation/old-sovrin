@@ -106,7 +106,8 @@ def anotherSponsor(nodeSet, steward, stewardWallet, tdir, looper):
     c.registerObserver(w.handleIncomingReply)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    createNym(looper, signer.identifier, signer.verkey, steward, stewardWallet, SPONSOR)
+    createNym(looper, signer.identifier, signer.verkey, steward, stewardWallet,
+              SPONSOR)
     return c, w
 
 
@@ -131,7 +132,7 @@ def testNonStewardCannotCreateASponsor(nodeSet, client1, wallet1, looper):
                         contains="UnknownIdentifier")
 
 
-def testStewardCreatesASponsor(updatedSteward, addedSponsor):
+def testStewardCreatesASponsor(steward, addedSponsor):
     pass
 
 
@@ -158,7 +159,7 @@ def testNonSponsorCannotCreateAUser(nodeSet, looper, nonSponsor):
                         contains="UnknownIdentifier")
 
 
-def testSponsorCreatesAUser(updatedSteward, userWalletA):
+def testSponsorCreatesAUser(steward, userWalletA):
     pass
 
 
