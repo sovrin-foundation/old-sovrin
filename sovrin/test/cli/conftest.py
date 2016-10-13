@@ -16,7 +16,8 @@ from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
-from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest
+from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest, \
+    buildStewardClient
 
 plenum.common.util.loggingConfigured = False
 
@@ -58,13 +59,13 @@ def cli(looper, tdir):
     return newCLI(looper, tdir)
 
 
-@pytest.fixture(scope="module")
-def stewardCreated(cli, createAllNodes, stewardSigner):
-    steward = cli.newClient(clientName="steward", signer=stewardSigner)
-    for node in cli.nodes.values():
-        node.whitelistClient(steward.name)
-    cli.looper.run(steward.ensureConnectedToNodes())
-    return steward
+# @pytest.fixture(scope="module")
+# def stewardCreated(cli, createAllNodes, stewardSigner):
+#     steward = cli.newClient(clientName="steward", signer=stewardSigner)
+#     for node in cli.nodes.values():
+#         node.whitelistClient(steward.name)
+#     cli.looper.run(steward.ensureConnectedToNodes())
+#     return steward
 
 
 @pytest.fixture(scope="module")
@@ -135,6 +136,7 @@ def acmeMap(acmeAgentPort):
             "rcvd-claim-transcript-version": "1.2"
             }
 
+
 @pytest.fixture(scope="module")
 def thriftMap(thriftAgentPort):
     endpoint = "127.0.0.1:{}".format(thriftAgentPort)
@@ -149,7 +151,6 @@ def thriftMap(thriftAgentPort):
             "claim-requests": "Loan-Application-Basic, Loan-Application-KYC",
             "claim-ver-req-to-show": "0.1"
             }
-
 
 
 @pytest.fixture(scope="module")
@@ -285,6 +286,7 @@ def unsycedAcceptedInviteWithoutClaimOut(syncedInviteAcceptedOutWithoutClaims):
     ] + syncedInviteAcceptedOutWithoutClaims + \
            ["Confirmed identifier written to Sovrin."]
 
+
 @pytest.fixture(scope="module")
 def unsycedAlreadyAcceptedInviteAcceptedOut():
     return [
@@ -293,6 +295,7 @@ def unsycedAlreadyAcceptedInviteAcceptedOut():
         "Synchronizing...",
         "Already accepted"
     ]
+
 
 @pytest.fixture(scope="module")
 def showTranscriptClaimProofOut():
@@ -484,6 +487,7 @@ def jobCertClaimAttrValueMap():
         "attr-salary_bracket": "between $50,000 to $100,000"
     }
 
+
 @pytest.fixture(scope="module")
 def jobCertificateClaimValueMap(jobCertClaimAttrValueMap):
     basic = {
@@ -494,6 +498,7 @@ def jobCertificateClaimValueMap(jobCertClaimAttrValueMap):
     }
     basic.update(jobCertClaimAttrValueMap)
     return basic
+
 
 @pytest.fixture(scope="module")
 def jobCertificateClaimMap():
@@ -541,6 +546,7 @@ def rcvdTranscriptClaimOut():
             "status: {attr-status}"
     ]
 
+
 @pytest.fixture(scope="module")
 def rcvdJobCertClaimOut():
     return ["Found claim {name} in link {inviter}",
@@ -554,6 +560,7 @@ def rcvdJobCertClaimOut():
             "experience: {attr-experience}",
             "salary_bracket: {attr-salary_bracket}"
     ]
+
 
 @pytest.fixture(scope="module")
 def showTranscriptClaimOut(nextCommandsToTryUsageLine):
@@ -766,6 +773,11 @@ def do(ctx):
 
 
 @pytest.fixture(scope="module")
+def steward(poolNodesCreated, looper, tdir, stewardWallet):
+    return buildStewardClient(looper, tdir, stewardWallet)
+
+
+@pytest.fixture(scope="module")
 def faberAdded(poolNodesCreated,
              looper,
              aliceCLI,
@@ -774,8 +786,8 @@ def faberAdded(poolNodesCreated,
             steward, stewardWallet):
     # client, wallet = stewardClientAndWallet
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
-    createNym(looper, li.remoteIdentifier, li.remoteIdentifier,
-              steward, stewardWallet, role=SPONSOR)
+    createNym(looper, li.remoteIdentifier, steward, stewardWallet,
+              role=SPONSOR)
 
 
 # @pytest.fixture(scope="module")

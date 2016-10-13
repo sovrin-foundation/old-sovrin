@@ -20,7 +20,7 @@ from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import TestNodeSet,\
     genTestClient, createNym, addUser, TestNode, makePendingTxnsRequest, \
-    getStewardConnectedToPool
+    buildStewardClient
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
@@ -61,12 +61,13 @@ def looper():
 
 @pytest.fixture(scope="module")
 def steward(nodeSet, looper, tdir, up, stewardWallet):
-    s, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
-    s.registerObserver(stewardWallet.handleIncomingReply)
-    looper.add(s)
-    looper.run(s.ensureConnectedToNodes())
-    makePendingTxnsRequest(s, stewardWallet)
-    return s
+    return buildStewardClient(looper, tdir, stewardWallet)
+    # s, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
+    # s.registerObserver(stewardWallet.handleIncomingReply)
+    # looper.add(s)
+    # looper.run(s.ensureConnectedToNodes())
+    # makePendingTxnsRequest(s, stewardWallet)
+    # return s
 
 # @pytest.fixture(scope="module")
 # def stewardAndWallet(nodeSet, looper, tdirWithDomainTxns,
@@ -222,10 +223,10 @@ def addedSponsor(nodeSet, steward, stewardWallet, looper,
                  sponsorWallet):
     createNym(looper,
               sponsorWallet.defaultId,
-              sponsorWallet.getVerkey(),
               steward,
               stewardWallet,
-              SPONSOR)
+              role=SPONSOR,
+              verkey=sponsorWallet.getVerkey())
     return sponsorWallet
 
 

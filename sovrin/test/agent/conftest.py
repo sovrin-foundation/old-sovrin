@@ -20,8 +20,8 @@ from sovrin.test.agent.helper import ensureAgentsConnected, buildFaberWallet, \
     buildAcmeWallet, buildThriftWallet
 from sovrin.test.agent.thrift import runThrift
 from sovrin.test.helper import addClaimDefAndIssuerKeys
-from sovrin.test.helper import createNym, addAttributeAndCheck, \
-    getStewardConnectedToPool
+from sovrin.test.helper import createNym, addAttributeAndCheck
+
 from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
     tdirWithDomainTxns, genesisTxns
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
@@ -401,10 +401,10 @@ def createAgentAndAddEndpoint(looper, agentNym, agentVerkey, agentPort, steward,
                               stewardWallet):
     createNym(looper,
               agentNym,
-              agentVerkey,
               steward,
               stewardWallet,
-              role=SPONSOR)
+              role=SPONSOR,
+              verkey=agentVerkey)
     ep = '127.0.0.1:{}'.format(agentPort)
     attributeData = json.dumps({ENDPOINT: ep})
 

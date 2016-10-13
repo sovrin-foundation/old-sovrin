@@ -392,7 +392,8 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
     return s
 
 
-def createNym(looper, nym, verkey, creatorClient, creatorWallet: Wallet, role=None):
+def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
+              verkey=None):
     idy = Identity(identifier=nym,
                    verkey=verkey,
                    role=role)
@@ -410,7 +411,7 @@ def addUser(looper, creatorClient, creatorWallet, name):
     wallet = Wallet(name)
     idr = wallet.addIdentifier()
     verkey = wallet.getVerkey(idr)
-    createNym(looper, idr, verkey, creatorClient, creatorWallet)
+    createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
     return wallet
 
 
@@ -543,15 +544,24 @@ def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
     return claimDef.seqNo, ipk.seqNo
 
 
-def getStewardConnectedToPool(looper, tdirWithDomainTxns,
-                           poolTxnStewardData):
-    client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
-                                              tdirWithDomainTxns,
-                                              clientClass=TestClient,
-                                              walletClass=Wallet)
-    client.registerObserver(wallet.handleIncomingReply)
+# def getStewardConnectedToPool(looper, tdirWithDomainTxns,
+#                            poolTxnStewardData):
+#     client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
+#                                               tdirWithDomainTxns,
+#                                               clientClass=TestClient,
+#                                               walletClass=Wallet)
+#     client.registerObserver(wallet.handleIncomingReply)
+#
+#     looper.add(client)
+#     looper.run(client.ensureConnectedToNodes())
+#     makePendingTxnsRequest(client, wallet)
+#     return client, wallet
 
-    looper.add(client)
-    looper.run(client.ensureConnectedToNodes())
-    makePendingTxnsRequest(client, wallet)
-    return client, wallet
+
+def buildStewardClient(looper, tdir, stewardWallet):
+    s, _ = genTestClient(tmpdir=tdir, usePoolLedger=True)
+    s.registerObserver(stewardWallet.handleIncomingReply)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    makePendingTxnsRequest(s, stewardWallet)
+    return s

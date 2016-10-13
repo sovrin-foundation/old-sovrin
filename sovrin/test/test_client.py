@@ -106,8 +106,8 @@ def anotherSponsor(nodeSet, steward, stewardWallet, tdir, looper):
     c.registerObserver(w.handleIncomingReply)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    createNym(looper, signer.identifier, signer.verkey, steward, stewardWallet,
-              SPONSOR)
+    createNym(looper, signer.identifier, steward, stewardWallet,
+              role=SPONSOR, verkey=signer.verkey)
     return c, w
 
 

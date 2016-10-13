@@ -963,7 +963,8 @@ class SovrinCli(PlenumCli):
             except NotConnectedToNetwork:
                 self._printCannotSyncSinceNotConnectedEnvMessage()
         else:
-            self._printCannotSyncSinceNotConnectedEnvMessage()
+            if not self.activeEnv:
+                self._printCannotSyncSinceNotConnectedEnvMessage()
 
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
