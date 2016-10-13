@@ -115,7 +115,7 @@ def testCreateStewardWallet(stewardWallet):
 
 def testNonStewardCannotCreateASponsor(genned, client1, wallet1, looper):
     seed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner(seed)
+    sponsorSigner = SimpleSigner(seed=seed)
 
     sponsorNym = sponsorSigner.identifier
 
