@@ -36,14 +36,14 @@ def allPluginsPath():
     return [getPluginPath('stats_consumer')]
 
 
-# @pytest.fixture(scope="module")
-# def stewardWallet():
-#     wallet = Wallet('steward')
-#     seed = b'is a pit   seed, or somepin else'
-#     signer = SimpleSigner(seed=seed)
-#     assert signer.verkey == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
-#     wallet.addSigner(signer=signer)
-#     return wallet
+@pytest.fixture(scope="module")
+def stewardWallet():
+    wallet = Wallet('steward')
+    seed = b'is a pit   seed, or somepin else'
+    signer = SimpleSigner(seed=seed)
+    assert signer.verkey == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
+    wallet.addSigner(signer=signer)
+    return wallet
 
 
 @pytest.fixture(scope="module")
@@ -136,7 +136,7 @@ def startedNodes(nodeSet, looper):
 def client1Signer():
     seed = b'client1Signer secret key........'
     signer = SimpleSigner(seed=seed)
-    assert signer.verstr == '6JvpZp2haQgisbXEXE9NE6n3Tuv77MZb5HdF9jS5qY8m'
+    assert signer.verkey == '6JvpZp2haQgisbXEXE9NE6n3Tuv77MZb5HdF9jS5qY8m'
     return signer
 
 

@@ -117,7 +117,7 @@ def testNonStewardCannotCreateASponsor(genned, client1, wallet1, looper):
     seed = b'this is a secret sponsor seed...'
     sponsorSigner = SimpleSigner(seed)
 
-    sponsorNym = sponsorSigner.verstr
+    sponsorNym = sponsorSigner.identifier
 
     op = {
         TARGET_NYM: sponsorNym,
@@ -146,7 +146,7 @@ def testNonSponsorCannotCreateAUser(genned, looper, nonSponsor):
     useed = b'this is a secret apricot seed...'
     userSigner = SimpleSigner(seed=useed)
 
-    userNym = userSigner.verstr
+    userNym = userSigner.identifier
 
     op = {
         TARGET_NYM: userNym,
@@ -165,7 +165,7 @@ def testSponsorCreatesAUser(updatedSteward, userWalletA):
 def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
                                sponsor, sponsorWallet):
     usigner = SimpleSigner()
-    nym = usigner.verstr
+    nym = usigner.verkey
     idy = Identity(identifier=nym)
     sponsorWallet.addSponsoredIdentity(idy)
     # Creating a NYM request with same nym again
@@ -188,7 +188,7 @@ def nymsAddedInQuickSuccession(genned, addedSponsor, looper,
     for name, node in genned.nodes.items():
         txns = node.domainLedger.getAllTxn()
         for seq, txn in txns.items():
-            if txn[TXN_TYPE] == NYM and txn[TARGET_NYM] == usigner.verstr:
+            if txn[TXN_TYPE] == NYM and txn[TARGET_NYM] == usigner.identifier:
                 count += 1
 
     assert(count == len(genned.nodes))
