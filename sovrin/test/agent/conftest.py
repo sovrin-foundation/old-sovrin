@@ -25,6 +25,13 @@ from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
     tdirWithDomainTxns, genesisTxns
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
+# noinspection PyUnresolvedReferences
+from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
+    genesisTxns
+
+# noinspection PyUnresolvedReferences
+from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
+
 
 @pytest.fixture(scope="module")
 def emptyLooper():
