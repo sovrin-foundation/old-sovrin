@@ -965,12 +965,6 @@ class SovrinCli(PlenumCli):
         else:
             if not self.activeEnv:
                 self._printCannotSyncSinceNotConnectedEnvMessage()
-            elif not self.activeClient.hasSufficientConnections:
-                # TODO: This is not needed since the client would queue the
-                # request anyway
-                self.print("Cannot sync because not connected. "
-                           "Please confirm if Sovrin network is running.")
-
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
             self._getMatchingInvitationsDetail(linkName)

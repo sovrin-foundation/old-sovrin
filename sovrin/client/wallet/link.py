@@ -2,7 +2,7 @@ from typing import Dict
 
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
-from plenum.common.util import prettyDate
+from plenum.common.util import prettyDateDifference
 from sovrin.common.exceptions import InvalidLinkException, \
     RemoteEndpointNotFound
 from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
@@ -91,7 +91,7 @@ class Link:
         if isinstance(targetEndPoint, tuple):
             targetEndPoint = "{}:{}".format(*targetEndPoint)
         linkStatus = 'not verified, target verkey unknown'
-        linkLastSynced = prettyDate(self.linkLastSynced) or \
+        linkLastSynced = prettyDateDifference(self.linkLastSynced) or \
                          constant.LINK_NOT_SYNCHRONIZED
 
         if linkLastSynced != constant.LINK_NOT_SYNCHRONIZED and \

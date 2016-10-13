@@ -190,14 +190,16 @@ class WalletedAgent(Agent):
             self.syncClient()
         self.loop = asyncio.get_event_loop()
         self.msgHandlers = {
-            PING: self._handlePing,
             ERROR: self._handleError,
-            AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
-            CLAIM: self._handleReqClaimResponse,
+            EVENT: self._eventHandler,
+
+            PING: self._handlePing,
             ACCEPT_INVITE: self._acceptInvite,
             REQUEST_CLAIM: self._reqClaim,
             CLAIM_PROOF: self.verifyClaimProof,
-            EVENT: self._eventHandler,
+
+            AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
+            CLAIM: self._handleReqClaimResponse,
             CLAIM_PROOF_STATUS: self.handleClaimProofStatus,
             NEW_AVAILABLE_CLAIMS: self._handleNewAvailableClaimsDataResponse
         }
@@ -372,7 +374,8 @@ class WalletedAgent(Agent):
             frmHa = self.endpoint.getRemote(frm).ha
             handler((body, (frm, frmHa)))
         else:
-            raise NotImplementedError
+            raise NotImplementedError("No type handle found for {} message".
+                                      format(typ))
 
     def _handleError(self, msg):
         body, _ = msg
@@ -453,10 +456,6 @@ class WalletedAgent(Agent):
                 name, version = cl[NAME], cl[VERSION]
                 availableClaims.append((name, version,
                                         li.remoteIdentifier))
-                # TODO: Handle case where agent can send claims in batches.
-                # So consider a scenario where first time an accept invite is
-                # sent, agent sends 2 claims and the second time accept
-                # invite is sent, agent sends 3 claims.
 
         return availableClaims
 
@@ -465,6 +464,10 @@ class WalletedAgent(Agent):
         newAvailableClaims = self._getNewAvailableClaims(
             li, rcvdAvailableClaims)
 
+        # TODO: Handle case where agent can send claims in batches.
+        # So consider a scenario where first time an accept invite is
+        # sent, agent sends 2 claims and the second time accept
+        # invite is sent, agent sends 3 claims.
         if newAvailableClaims:
             li.availableClaims.extend(newAvailableClaims)
 
