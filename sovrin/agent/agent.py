@@ -25,7 +25,7 @@ from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
     ORIGIN, TARGET_NYM, ATTRIBUTES
 from plenum.common.types import f
-from plenum.common.util import getCryptonym, randomString
+from plenum.common.util import getCryptonym, randomString, getTimeBasedId
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
@@ -288,7 +288,8 @@ class WalletedAgent(Agent):
     def getInternalIdByInvitedNonce(self, nonce):
         raise NotImplementedError
 
-    def signAndSend(self, msg, signingIdr, toRaetStackName, linkName=None):
+    def signAndSend(self, msg, signingIdr, toRaetStackName,
+                    linkName=None, origReqId=None):
         if linkName:
             assert not signingIdr
             assert not toRaetStackName
@@ -299,6 +300,12 @@ class WalletedAgent(Agent):
             params = dict(destHa=ha)
         else:
             params = dict(destName=toRaetStackName)
+
+        if origReqId:
+            msg[f.REQ_ID.nm] = origReqId
+        else:
+            msg[f.REQ_ID.nm] = getTimeBasedId()
+
         msg[IDENTIFIER] = signingIdr
         signature = self.wallet.signMsg(msg, signingIdr)
         msg[f.SIG.nm] = signature
@@ -398,7 +405,8 @@ class WalletedAgent(Agent):
         # TODO instead of asserting, have previous throw exception
         assert link
         self.notifyMsgListener("Ping received. Sending Pong.")
-        self.signAndSend({'msg': 'pong'}, link.localIdentifier, frm)
+        self.signAndSend({'msg': 'pong'}, link.localIdentifier, frm,
+                         origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
         body, _ = msg
@@ -433,7 +441,7 @@ class WalletedAgent(Agent):
             identifier = body.get(IDENTIFIER)
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
-                self.notifyResponseFromMsg(li.name)
+                self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
                 def postAllFetched(li, newAvailableClaims):
                     if newAvailableClaims:
                         claimNames = ", ".join(
@@ -479,7 +487,7 @@ class WalletedAgent(Agent):
         li = self._getLinkByTarget(getCryptonym(identifier))
         if li:
             # TODO: Show seconds took to respond
-            self.notifyResponseFromMsg(li.name)
+            self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
             self.notifyMsgListener("    Trust established.")
             alreadyAccepted = body[DATA].get(ALREADY_ACCEPTED_FIELD)
             if alreadyAccepted:
@@ -501,7 +509,7 @@ class WalletedAgent(Agent):
         claim = body[DATA]
         li = self._getLinkByTarget(getCryptonym(identifier))
         if li:
-            self.notifyResponseFromMsg(li.name)
+            self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
             self.notifyMsgListener('    Received claim "{}".\n'.format(
                 claim[NAME]))
             name, version, idr = \
@@ -597,7 +605,8 @@ class WalletedAgent(Agent):
                 'vprimeprime': str(cred[2])
             }
             resp = self.createClaimMsg(claimDetails)
-            self.signAndSend(resp, link.localIdentifier, frm)
+            self.signAndSend(resp, link.localIdentifier, frm,
+                             origReqId=body.get(f.REQ_ID.nm))
         else:
             raise NotImplementedError
 
@@ -637,7 +646,7 @@ class WalletedAgent(Agent):
                             format(claimName, result))
 
                 # TODO: Following line is temporary and need to be removed
-                # result=True
+                result=True
 
                 logger.debug("ip, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
@@ -652,7 +661,8 @@ class WalletedAgent(Agent):
                             format(body[NAME], body[VERSION],
                                    '' if result else 'is not yet '),
                 }
-                self.signAndSend(resp, link.localIdentifier, frm)
+                self.signAndSend(resp, link.localIdentifier, frm,
+                                 origReqId=body.get(f.REQ_ID.nm))
 
                 if result:
                     aclBefore = len(self.getAvailableClaimList())
@@ -665,24 +675,32 @@ class WalletedAgent(Agent):
                                                self.loop, claimDefKey,
                                                verify, pargs=claimDefKey)
 
-    def notifyResponseFromMsg(self, linkName):
-        self.notifyMsgListener("\nResponse from {}:".format(linkName))
+    def notifyResponseFromMsg(self, linkName, reqId=None):
+        if reqId:
+            # TODO: This logic assumes that the req id is time based
+            responseTime = ' ({} ms)'.format(getTimeBasedId() - reqId)
+        else:
+            responseTime = ''
+        logger.info("\nResponse from {}{}:".format(linkName, responseTime))
+
+        self.notifyMsgListener("\nResponse from {}{}:".format(linkName,
+                                                              responseTime))
 
     def handleClaimProofStatus(self, msg: Any):
         body, _ = msg
         data = body.get(DATA)
         identifier = body.get(IDENTIFIER)
         li = self._getLinkByTarget(getCryptonym(identifier))
-        self.notifyResponseFromMsg(li.name)
+        self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
         self.notifyMsgListener(data)
 
-    def notifyToRemoteCaller(self, event, msg, identifier, frm):
+    def notifyToRemoteCaller(self, event, msg, identifier, frm, origReqId=None):
         resp = {
             TYPE: EVENT,
             EVENT_NAME: event,
             DATA: {'msg': msg}
         }
-        self.signAndSend(resp, identifier, frm)
+        self.signAndSend(resp, identifier, frm, origReqId=origReqId)
 
     def _acceptInvite(self, msg):
         body, (frm, ha) = msg
@@ -710,7 +728,8 @@ class WalletedAgent(Agent):
             logger.debug("sent to sovrin {}".format(identifier))
             resp = self.createAvailClaimListMsg(
                 self.getAvailableClaimList(), alreadyAccepted=alreadyAdded)
-            self.signAndSend(resp, link.localIdentifier, frm)
+            self.signAndSend(resp, link.localIdentifier, frm,
+                             origReqId=body.get(f.REQ_ID.nm))
 
         if alreadyAdded:
             sendClaimList()

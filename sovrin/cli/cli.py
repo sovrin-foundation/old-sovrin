@@ -26,7 +26,7 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.types import f
-from plenum.common.util import randomString
+from plenum.common.util import randomString, getTimeBasedId
 from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE, \
     EVENT_NOTIFY_MSG
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
@@ -961,10 +961,10 @@ class SovrinCli(PlenumCli):
             try:
                 self.agent.sync(li.name, doneCallback)
             except NotConnectedToNetwork:
-                self.print("Not connected to any network yet")
-        else:
-            if not self.activeEnv:
                 self._printCannotSyncSinceNotConnectedEnvMessage()
+        else:
+            self._printCannotSyncSinceNotConnectedEnvMessage()
+
     def _getOneLinkForFurtherProcessing(self, linkName):
         totalFound, exactlyMatchedLinks, likelyMatchedLinks = \
             self._getMatchingInvitationsDetail(linkName)
@@ -985,6 +985,7 @@ class SovrinCli(PlenumCli):
     def _sendReqToTargetEndpoint(self, op, link: Link):
         op[f.IDENTIFIER.nm] = link.verkey
         op[NONCE] = link.invitationNonce
+        op[f.REQ_ID.nm] = getTimeBasedId()
         signature = self.activeWallet.signMsg(op, link.verkey)
         op[f.SIG.nm] = signature
         self.sendToAgent(op, link)
@@ -1084,7 +1085,8 @@ class SovrinCli(PlenumCli):
         self._printShowAndLoadFileSuggestion()
 
     def _isConnectedToAnyEnv(self):
-        return self.activeEnv and self.activeClient and self.activeClient.hasSufficientConnections
+        return self.activeEnv and self.activeClient and \
+               self.activeClient.hasSufficientConnections
 
     def _acceptInvitationLink(self, matchedVars):
         if matchedVars.get('accept_link_invite') == 'accept invitation from':
