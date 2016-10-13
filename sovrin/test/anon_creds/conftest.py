@@ -63,7 +63,7 @@ def proverAttributes():
 
 
 @pytest.fixture(scope="module")
-def addedIPV(looper, genned, addedSponsor, sponsor, sponsorWallet,
+def addedIPV(looper, nodeSet, addedSponsor, sponsor, sponsorWallet,
              issuerWallet, proverWallet, verifierWallet, issuerHA, proverHA,
              verifierHA):
     """
@@ -90,16 +90,16 @@ def claimDef(attrNames):
 
 
 @pytest.fixture(scope="module")
-def claimDefSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorWallet, looper, tdir, nodeSet,
+def claimDefSecretKeyAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir,
                           staticPrimes):
     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
     return sponsorWallet.addClaimDefSk(str(csk))
 
 
 @pytest.fixture(scope="module")
-def claimDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
-                         sponsorWallet, looper, tdir, nodeSet, attrNames,
+def claimDefinitionAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+                         sponsorWallet, looper, tdir, attrNames,
                          claimDef, claimDefSecretKeyAdded):
     old = sponsorWallet.pendingCount
     data = claimDef.get(serFmt=SerFmt.base58)
@@ -125,8 +125,8 @@ def claimDefinitionAdded(genned, updatedSteward, addedSponsor, sponsor,
 
 
 @pytest.fixture(scope="module")
-def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorWallet, looper, tdir, nodeSet,
+def issuerSecretKeyAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir,
                           staticPrimes, claimDefSecretKeyAdded,
                          claimDefinitionAdded):
     csk = CredDefSecretKey.fromStr(sponsorWallet.getClaimDefSk(claimDefSecretKeyAdded))
@@ -139,8 +139,8 @@ def issuerSecretKeyAdded(genned, updatedSteward, addedSponsor, sponsor,
 
 
 @pytest.fixture(scope="module")
-def issuerPublicKeysAdded(genned, updatedSteward, addedSponsor, sponsor,
-                              sponsorWallet, looper, tdir, nodeSet,
+def issuerPublicKeysAdded(nodeSet, updatedSteward, addedSponsor, sponsor,
+                              sponsorWallet, looper, tdir,
                           staticPrimes, claimDefinitionAdded,
                           issuerSecretKeyAdded):
     isk = sponsorWallet.getIssuerSecretKey(issuerSecretKeyAdded)

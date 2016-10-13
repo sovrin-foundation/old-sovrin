@@ -45,10 +45,9 @@ from sovrin.client.wallet.wallet import Wallet
 # pressing issues.
 
 @pytest.mark.skipif(True, reason="Refactoring incomplete")
-def testAnonCredFlow(genned,
+def testAnonCredFlow(nodeSet,
                      looper,
                      tdir,
-                     nodeSet,
                      issuerWallet: Wallet,
                      proverWallet: Wallet,
                      verifierWallet,
@@ -86,9 +85,12 @@ def testAnonCredFlow(genned,
 
     attrNames = tuple(attributes.keys())
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
-    issuerC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa())
-    proverC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa())
-    verifierC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa())
+    issuerC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa(),
+                               usePoolLedger=True)
+    proverC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa(),
+                               usePoolLedger=True)
+    verifierC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa(),
+                                 usePoolLedger=True)
 
     looper.add(issuerC)
     looper.add(proverC)
