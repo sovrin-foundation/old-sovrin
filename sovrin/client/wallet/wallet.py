@@ -32,7 +32,7 @@ from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, GET_CRED_DEF
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
-from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.protocol.utils import strToCharmInteger, generateMasterSecret
 from sovrin.common.util import getEncodedAttrs, stringDictToCharmDict
 
 ENCODING = "utf-8"
@@ -307,8 +307,8 @@ class Wallet(PWallet, Sponsoring):
     def getCredential(self, name: str):
         return self._credentials.get(name)
 
-    def addMasterSecret(self, masterSecret):
-        self._credMasterSecret = masterSecret
+    # def addMasterSecret(self, masterSecret):
+    #     self._credMasterSecret = masterSecret
 
     def addLink(self, link: Link):
         self._links[link.key] = link
@@ -322,6 +322,8 @@ class Wallet(PWallet, Sponsoring):
 
     @property
     def masterSecret(self):
+        if not self._credMasterSecret:
+            self._credMasterSecret = generateMasterSecret()
         return self._credMasterSecret
 
     @property

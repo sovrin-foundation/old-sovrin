@@ -5,19 +5,11 @@ import uuid
 import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
-from plenum.common.txn import NAME, TYPE
-from plenum.common.txn import VERSION
 from plenum.test.eventually import eventually
-from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
-from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.txn import SPONSOR, ENDPOINT, ATTR_NAMES
-from sovrin.test.helper import createNym, TestClient, makePendingTxnsRequest, \
-    buildStewardClient
+from sovrin.common.txn import SPONSOR, ENDPOINT
+from sovrin.test.helper import createNym, buildStewardClient
 
 plenum.common.util.loggingConfigured = False
 
@@ -57,15 +49,6 @@ def nodesCli(looper, tdir, nodeNames):
 @pytest.fixture("module")
 def cli(looper, tdir):
     return newCLI(looper, tdir)
-
-
-# @pytest.fixture(scope="module")
-# def stewardCreated(cli, createAllNodes, stewardSigner):
-#     steward = cli.newClient(clientName="steward", signer=stewardSigner)
-#     for node in cli.nodes.values():
-#         node.whitelistClient(steward.name)
-#     cli.looper.run(steward.ensureConnectedToNodes())
-#     return steward
 
 
 @pytest.fixture(scope="module")

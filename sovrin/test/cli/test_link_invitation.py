@@ -2,8 +2,7 @@ import pytest
 from plenum.test.eventually import eventually
 from sovrin.cli.helper import NEXT_COMMANDS_TO_TRY_TEXT
 
-from sovrin.client.wallet.link import constant
-from sovrin.common.txn import USER, ENDPOINT
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, getLinkInvitation
 from sovrin.test.helper import addRawAttribute
 

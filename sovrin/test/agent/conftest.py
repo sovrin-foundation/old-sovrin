@@ -58,6 +58,7 @@ def aliceWallet(walletBuilder):
 def faberWallet():
     return buildFaberWallet()
 
+
 @pytest.fixture(scope="module")
 def acmeWallet():
     return buildAcmeWallet()
@@ -255,6 +256,7 @@ def faberLinkAdded(faberIsRunning):
 @pytest.fixture(scope="module")
 def acmeLinkAdded(acmeIsRunning):
     pass
+
 
 @pytest.fixture(scope="module")
 def faberNonceForAlice():

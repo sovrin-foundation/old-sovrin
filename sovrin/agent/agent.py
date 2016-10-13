@@ -354,8 +354,8 @@ class WalletedAgent(Agent):
     def notifyMsgListener(self, msg):
         self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
 
-    def isSignatureVerifRespRequired(self, type):
-        return type in self.lockedMsgs and type not in [EVENT]
+    def isSignatureVerifRespRequired(self, typ):
+        return typ in self.lockedMsgs and typ not in [EVENT]
 
     def sendSigVerifResponseMsg(self, respMsg, to, reqMsgTyp):
         if self.isSignatureVerifRespRequired(reqMsgTyp):
@@ -527,7 +527,8 @@ class WalletedAgent(Agent):
         else:
             self.notifyMsgListener("No matching link found")
 
-    def _isVerified(self, msg: Dict[str, str]):
+    @staticmethod
+    def _isVerified(msg: Dict[str, str]):
         signature = msg.get(f.SIG.nm)
         identifier = msg.get(IDENTIFIER)
         msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
@@ -535,8 +536,6 @@ class WalletedAgent(Agent):
         # ASSUMPTION!!! Sovrin needs to provide the current key.
         if not verifySig(identifier, signature, msgWithoutSig):
             raise SignatureRejected
-            # DEPR
-            # self.notifyMsgListener("Signature rejected")
         else:
             return True
 

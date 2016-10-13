@@ -217,40 +217,51 @@ class SovrinCli(PlenumCli):
                         ])
         return actions
 
-    def _getSetAttrUsage(self):
+    @staticmethod
+    def _getSetAttrUsage():
         return ['set <attr-name> to <attr-value>']
 
-    def _getSendClaimProofReqUsage(self, claimProofReqName=None, inviterName=None):
+    @staticmethod
+    def _getSendClaimProofReqUsage(claimProofReqName=None, inviterName=None):
         return ['send claim {} to {}'.format(
             claimProofReqName or "<claim-req-name>",
             inviterName or "<inviter-name>")]
 
-    def _getShowFileUsage(self, filePath=None):
+    @staticmethod
+    def _getShowFileUsage(filePath=None):
         return ['show {}'.format(filePath or "<file-path>")]
 
-    def _getLoadFileUsage(self, filePath=None):
+    @staticmethod
+    def _getLoadFileUsage(filePath=None):
         return ['load {}'.format(filePath or "<file-path>")]
 
-    def _getShowClaimReqUsage(self, claimReqName=None):
+    @staticmethod
+    def _getShowClaimReqUsage(claimReqName=None):
         return ['show claim request "{}"'.format(
             claimReqName or '<claim-request-name>')]
 
-    def _getShowClaimUsage(self, claimName=None):
+    @staticmethod
+    def _getShowClaimUsage(claimName=None):
         return ['show claim "{}"'.format(claimName or "<claim-name>")]
 
-    def _getReqClaimUsage(self, claimName=None):
+    @staticmethod
+    def _getReqClaimUsage(claimName=None):
         return ['request claim "{}"'.format(claimName or "<claim-name>")]
 
-    def _getShowLinkUsage(self, linkName=None):
+    @staticmethod
+    def _getShowLinkUsage(linkName=None):
         return ['show link "{}"'.format(linkName or "<link-name>")]
 
-    def _getSyncLinkUsage(self, linkName=None):
+    @staticmethod
+    def _getSyncLinkUsage(linkName=None):
         return ['sync "{}"'.format(linkName or "<link-name>")]
 
-    def _getAcceptLinkUsage(self, linkName=None):
+    @staticmethod
+    def _getAcceptLinkUsage(linkName=None):
         return ['accept invitation from "{}"'.format(linkName or "<link-name>")]
 
-    def _getPromptUsage(self):
+    @staticmethod
+    def _getPromptUsage():
         return ["prompt <principal name>"]
 
     @property

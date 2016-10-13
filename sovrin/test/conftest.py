@@ -8,7 +8,6 @@ from plenum.common.looper import Looper
 from plenum.common.plugin_helper import loadPlugins
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import VERKEY
-from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.conftest import getValueFromModule
 from plenum.test.plugin.helper import getPluginPath
 from sovrin.client.wallet.wallet import Wallet

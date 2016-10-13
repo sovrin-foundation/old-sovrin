@@ -1,8 +1,6 @@
 from _sha256 import sha256
 from copy import deepcopy
 
-from base58 import b58decode
-
 from plenum.common.exceptions import UnknownIdentifier
 from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH
 

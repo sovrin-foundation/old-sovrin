@@ -1,5 +1,4 @@
-import json
-from typing import Optional, Dict
+from typing import Optional
 
 from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.credential_definition import CredentialDefinition

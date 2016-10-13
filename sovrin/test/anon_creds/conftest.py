@@ -79,8 +79,8 @@ def addedIPV(looper, nodeSet, addedSponsor, sponsor, sponsorWallet,
 
 @pytest.fixture(scope="module")
 def attrNames():
-    return ["first_name", "last_name", "birth_date", "expire_date", \
-           "undergrad", "postgrad"]
+    return ["first_name", "last_name", "birth_date", "expire_date",
+            "undergrad", "postgrad"]
 
 
 @pytest.fixture(scope="module")
