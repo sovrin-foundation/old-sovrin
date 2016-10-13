@@ -22,6 +22,13 @@ from sovrin.test.helper import addClaimDefAndIssuerKeys
 from sovrin.test.helper import createNym, addAttributeAndCheck, \
     getStewardConnectedToPool
 
+# noinspection PyUnresolvedReferences
+from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
+    genesisTxns
+
+# noinspection PyUnresolvedReferences
+from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
+
 
 @pytest.fixture(scope="module")
 def emptyLooper():
