@@ -13,7 +13,7 @@ from ledger.util import F
 
 import anoncreds.protocol.types as ATypes
 from anoncreds.protocol.proof_builder import ProofBuilder
-from plenum.client.wallet import Wallet as PWallet, RequestIdStore
+from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
@@ -68,11 +68,9 @@ class Wallet(PWallet, Sponsoring):
 
     def __init__(self,
                  name: str,
-                 requestIdStore: RequestIdStore=None,
                  supportedDidMethods: DidMethods=None):
         PWallet.__init__(self,
                          name,
-                         requestIdStore,
                          supportedDidMethods or DefaultDidMethods)
         Sponsoring.__init__(self)
 
