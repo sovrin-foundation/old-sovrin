@@ -172,8 +172,12 @@ def faberAdded(gennedTxnPoolNodeSet,
             faberAgentPort,
                faberAgent):
 
-    attrib = createAgentAndAddEndpoint(emptyLooper, faberAgent.wallet.defaultId,
-                                       faberAgentPort, steward, stewardWallet)
+    attrib = createAgentAndAddEndpoint(emptyLooper,
+                                       faberAgent.wallet.defaultId,
+                                       faberAgent.wallet.getVerkey(),
+                                       faberAgentPort,
+                                       steward,
+                                       stewardWallet)
     return attrib
 
 
@@ -220,8 +224,12 @@ def acmeAdded(gennedTxnPoolNodeSet,
                emptyLooper,
             acmeAgentPort,
                acmeAgent):
-    attrib = createAgentAndAddEndpoint(emptyLooper, acmeAgent.wallet.defaultId,
-                                       acmeAgentPort, steward, stewardWallet)
+    attrib = createAgentAndAddEndpoint(emptyLooper,
+                                       acmeAgent.wallet.defaultId,
+                                       acmeAgent.wallet.getVerkey(),
+                                       acmeAgentPort,
+                                       steward,
+                                       stewardWallet)
     return attrib
 
 
@@ -403,10 +411,11 @@ def checkAcceptInvitation(emptyLooper,
         emptyLooper.run(eventually(chk))
 
 
-def createAgentAndAddEndpoint(looper, agentNym, agentPort, steward,
+def createAgentAndAddEndpoint(looper, agentNym, agentVerkey, agentPort, steward,
                               stewardWallet):
     createNym(looper,
               agentNym,
+              agentVerkey,
               steward,
               stewardWallet,
               role=SPONSOR)

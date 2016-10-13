@@ -1,12 +1,5 @@
 import pytest
-from plenum.common.txn import TYPE, NONCE
-
-from plenum.common.types import f
-from plenum.test.eventually import eventually
-from sovrin.agent.agent import WalletedAgent
 from sovrin.test.agent.conftest import checkAcceptInvitation
-
-from sovrin.test.agent.helper import ensureAgentsConnected
 
 
 def testFaberCreateLink(faberLinkAdded):

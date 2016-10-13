@@ -5,6 +5,7 @@ import libnacl.public
 import pytest
 
 from plenum.common.log import getlogger
+from plenum.common.signer_did import DidSigner
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import REQNACK, ENC, DATA
 from plenum.common.types import f, OP_FIELD_NAME
@@ -104,7 +105,7 @@ def anotherSponsor(genned, steward, stewardWallet, tdir, looper):
     c.registerObserver(w.handleIncomingReply)
     looper.add(c)
     looper.run(c.ensureConnectedToNodes())
-    createNym(looper, signer.verstr, steward, stewardWallet, SPONSOR)
+    createNym(looper, signer.identifier, signer.verkey, steward, stewardWallet, SPONSOR)
     return c, w
 
 

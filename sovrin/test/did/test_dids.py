@@ -59,7 +59,6 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.test.helper import addUser
 
 
-@pytest.mark.skip("Not yet implemented")
 def testNewIdentifierInWalletIsDid():
     wallet = Wallet('my wallet')
     idr = wallet.addIdentifier()

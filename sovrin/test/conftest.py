@@ -36,14 +36,14 @@ def allPluginsPath():
     return [getPluginPath('stats_consumer')]
 
 
-@pytest.fixture(scope="module")
-def stewardWallet():
-    wallet = Wallet('steward')
-    seed = b'is a pit   seed, or somepin else'
-    signer = SimpleSigner(seed=seed)
-    assert signer.verstr == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
-    wallet.addSigner(signer=signer)
-    return wallet
+# @pytest.fixture(scope="module")
+# def stewardWallet():
+#     wallet = Wallet('steward')
+#     seed = b'is a pit   seed, or somepin else'
+#     signer = SimpleSigner(seed=seed)
+#     assert signer.verkey == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
+#     wallet.addSigner(signer=signer)
+#     return wallet
 
 
 @pytest.fixture(scope="module")
@@ -186,7 +186,12 @@ def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
 
 @pytest.fixture(scope="module")
 def addedSponsor(genned, steward, stewardWallet, looper, sponsorWallet):
-    createNym(looper, sponsorWallet.defaultId, steward, stewardWallet, SPONSOR)
+    createNym(looper,
+              sponsorWallet.defaultId,
+              sponsorWallet.getVerkey(),
+              steward,
+              stewardWallet,
+              SPONSOR)
     return sponsorWallet
 
 
