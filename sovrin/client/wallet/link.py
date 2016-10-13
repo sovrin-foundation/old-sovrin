@@ -49,8 +49,6 @@ class Link:
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
-        # DEPR
-        # self.nonce = nonce or getNonce()
         self.invitationNonce = invitationNonce
         self.invitationData = invitationData
 

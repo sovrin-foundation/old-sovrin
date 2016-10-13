@@ -16,7 +16,8 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT
 from sovrin.test.agent.acme import runAcme
 from sovrin.test.agent.faber import runFaber
-from sovrin.test.agent.helper import ensureAgentsConnected
+from sovrin.test.agent.helper import ensureAgentsConnected, buildFaberWallet, \
+    buildAcmeWallet, buildThriftWallet
 from sovrin.test.agent.thrift import runThrift
 from sovrin.test.helper import addClaimDefAndIssuerKeys
 from sovrin.test.helper import createNym, addAttributeAndCheck, \
@@ -59,15 +60,6 @@ def emptyLooper():
 
 
 @pytest.fixture(scope="module")
-def faberWallet():
-    name = "FaberCollege"
-    wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner(
-        seed=b'Faber000000000000000000000000000'))
-    return wallet
-
-
-@pytest.fixture(scope="module")
 def walletBuilder():
     def _(name):
         wallet = Wallet(name)
@@ -82,21 +74,17 @@ def aliceWallet(walletBuilder):
 
 
 @pytest.fixture(scope="module")
+def faberWallet():
+    return buildFaberWallet()
+
+@pytest.fixture(scope="module")
 def acmeWallet():
-    name = "AcmeCorp"
-    wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner(
-        seed=b'Acme0000000000000000000000000000'))
-    return wallet
+    return buildAcmeWallet()
 
 
 @pytest.fixture(scope="module")
 def thriftWallet():
-    name = "ThriftBank"
-    wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner(
-        seed=b'Thrift00000000000000000000000000'))
-    return wallet
+    return buildThriftWallet()
 
 
 @pytest.fixture(scope="module")
@@ -186,7 +174,6 @@ def faberAdded(nodeSet,
 def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
                    faberAgent, faberAdded):
     faber = faberAgent
-    faber.addKeyIfNotAdded()
     faberWallet.pendSyncRequests()
     prepared = faberWallet.preparePending()
     faber.client.submitReqs(*prepared)
@@ -214,7 +201,6 @@ def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet):
                      basedirpath=tdirWithPoolTxns,
                      port=acmeAgentPort,
                      startRunning=False, bootstrap=False)
-    agent.addKeyIfNotAdded()
     return agent
 
 
@@ -264,7 +250,6 @@ def thriftAgent(tdirWithPoolTxns, thriftAgentPort, thriftWallet):
                      basedirpath=tdirWithPoolTxns,
                      port=thriftAgentPort,
                      startRunning=False, bootstrap=False)
-    agent.addKeyIfNotAdded()
     return agent
 
 

@@ -8,7 +8,7 @@ from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
-from sovrin.test.agent.helper import getAgentCmdLineParams
+from sovrin.test.agent.helper import getAgentCmdLineParams, buildThriftWallet
 
 logger = getlogger()
 
@@ -46,16 +46,11 @@ class ThriftAgent(WalletedAgent):
         else:
             raise NonceNotFound
 
-    def addKeyIfNotAdded(self):
-        wallet = self.wallet
-        if not wallet.identifiers:
-            wallet.addSigner(seed=b'Thrift00000000000000000000000000')
-
     def getAvailableClaimList(self):
         return []
 
-    def postClaimVerification(self, claimName):
-        pass
+    def newAvailableClaimsPostClaimVerif(self, claimName):
+        return []
 
     def addClaimDefsToWallet(self):
         pass
@@ -63,23 +58,15 @@ class ThriftAgent(WalletedAgent):
     def getAttributes(self, nonce):
         pass
 
-    # def addLinksToWallet(self):
-    #     wallet = self.wallet
-    #     idr = wallet.defaultId
-    #     link = Link(random.choice(randomData.NAMES), idr,
-    #                 invitationNonce="77fbf9dc8c8e6acde33de98c6d747b28c")
-    #     wallet.addLink(link)
-
     def bootstrap(self):
-        self.addKeyIfNotAdded()
-        # self.addLinksToWallet()
         self.addClaimDefsToWallet()
 
 
 def runThrift(name=None, wallet=None, basedirpath=None, port=None,
              startRunning=True, bootstrap=True):
 
-    return runAgent(ThriftAgent, name or "Thrift Bank", wallet, basedirpath,
+    return runAgent(ThriftAgent, name or "Thrift Bank",
+                    wallet or buildThriftWallet(), basedirpath,
                     port, startRunning, bootstrap)
 
 

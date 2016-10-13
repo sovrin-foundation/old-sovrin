@@ -1,9 +1,11 @@
 import argparse
 
 import sys
+
+from plenum.common.signer_simple import SimpleSigner
 from plenum.test.eventually import eventually
-from plenum.test.helper import checkRemoteExists, CONNECTED, logger
-from raet.road.estating import RemoteEstate
+from plenum.test.helper import checkRemoteExists, CONNECTED
+from sovrin.client.wallet.wallet import Wallet
 
 
 def connectAgents(agent1, agent2):
@@ -40,3 +42,27 @@ def getAgentCmdLineParams():
         return port, credDefSeq, issuerSeq
     else:
         return None, None, None
+
+
+def buildFaberWallet():
+    name = "FaberCollege"
+    wallet = Wallet(name)
+    wallet.addSigner(signer=SimpleSigner(
+        seed=b'Faber000000000000000000000000000'))
+    return wallet
+
+
+def buildAcmeWallet():
+    name = "AcmeCorp"
+    wallet = Wallet(name)
+    wallet.addSigner(signer=SimpleSigner(
+        seed=b'Acme0000000000000000000000000000'))
+    return wallet
+
+
+def buildThriftWallet():
+    name = "ThriftBank"
+    wallet = Wallet(name)
+    wallet.addSigner(signer=SimpleSigner(
+        seed=b'Thrift00000000000000000000000000'))
+    return wallet

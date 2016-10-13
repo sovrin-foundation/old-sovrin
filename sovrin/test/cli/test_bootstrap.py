@@ -820,8 +820,7 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims):
     mapping.update(agentMap)
     if newAvailableClaims:
         mapping['new-available-claims'] = newAvailableClaims
-        expectMsgs.append("{inviter} link has now new available claim(s): "
-                          "{new-available-claims}")
+        expectMsgs.append("Available claims: {new-available-claims}")
 
     do("send claim {claim-req-to-match} to {inviter}",
                                     within=7,

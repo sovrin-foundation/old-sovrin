@@ -354,11 +354,11 @@ class WalletedAgent(Agent):
     def notifyMsgListener(self, msg):
         self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
 
-    def isMsgProcessingProgressRespRequired(self, type):
-        return type not in [EVENT]
+    def isSignatureVerifRespRequired(self, type):
+        return type in self.lockedMsgs and type not in [EVENT]
 
-    def sendProgressResponseMsg(self, respMsg, to, reqMsgTyp):
-        if self.isMsgProcessingProgressRespRequired(reqMsgTyp):
+    def sendSigVerifResponseMsg(self, respMsg, to, reqMsgTyp):
+        if self.isSignatureVerifRespRequired(reqMsgTyp):
             self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
                                       respMsg, self.wallet.defaultId, to)
 
@@ -369,10 +369,10 @@ class WalletedAgent(Agent):
             try:
                 self._isVerified(body)
             except SignatureRejected:
-                self.sendProgressResponseMsg("\nSignature rejected.",
+                self.sendSigVerifResponseMsg("\nSignature rejected.",
                                              frm, typ)
                 return
-        self.sendProgressResponseMsg("\nSignature accepted.", frm, typ)
+        self.sendSigVerifResponseMsg("\nSignature accepted.", frm, typ)
 
         handler = self.msgHandlers.get(typ)
         if handler:
@@ -442,14 +442,13 @@ class WalletedAgent(Agent):
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
+
                 def postAllFetched(li, newAvailableClaims):
                     if newAvailableClaims:
                         claimNames = ", ".join(
                             [n for n, _, _ in newAvailableClaims])
-
                         self.notifyMsgListener(
-                            "    {} link has now new available claim(s): {}\n".
-                            format(li.name, claimNames))
+                            "    Available claims: {}\n".format(claimNames))
 
                 self._processNewAvailableClaimsData(
                     li, body[DATA][CLAIMS_LIST_FIELD], postAllFetched)
@@ -646,7 +645,7 @@ class WalletedAgent(Agent):
                             format(claimName, result))
 
                 # TODO: Following line is temporary and need to be removed
-                result=True
+                # result = True
 
                 logger.debug("ip, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
@@ -657,7 +656,8 @@ class WalletedAgent(Agent):
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:
-                        '    Your claim {} {} has been received and {}verified'.
+                        '    Your claim {} {} has been received '
+                        'and {}verified\n'.
                             format(body[NAME], body[VERSION],
                                    '' if result else 'is not yet '),
                 }
@@ -665,11 +665,8 @@ class WalletedAgent(Agent):
                                  origReqId=body.get(f.REQ_ID.nm))
 
                 if result:
-                    aclBefore = len(self.getAvailableClaimList())
-                    self.postClaimVerification(claimName)
-                    aclAfter = len(self.getAvailableClaimList())
-                    if aclAfter > aclBefore:
-                        self.sendNewAvailableClaimsData(frm, link)
+                    nac = self.newAvailableClaimsPostClaimVerif(claimName)
+                    self.sendNewAvailableClaimsData(nac, frm, link)
 
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
                                                self.loop, claimDefKey,
@@ -678,10 +675,10 @@ class WalletedAgent(Agent):
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:
             # TODO: This logic assumes that the req id is time based
-            responseTime = ' ({} ms)'.format(getTimeBasedId() - reqId)
+            curTime = getTimeBasedId()
+            responseTime = ' ({} ms)'.format((curTime - reqId)/1000)
         else:
             responseTime = ''
-        logger.info("\nResponse from {}{}:".format(linkName, responseTime))
 
         self.notifyMsgListener("\nResponse from {}{}:".format(linkName,
                                                               responseTime))
@@ -768,12 +765,13 @@ class WalletedAgent(Agent):
     def getAttributes(self, nonce):
         raise NotImplementedError
 
-    def postClaimVerification(self, claimName):
+    def newAvailableClaimsPostClaimVerif(self, claimName):
         raise NotImplementedError
 
-    def sendNewAvailableClaimsData(self, frm, link):
-        resp = self.createNewAvailableClaimsMsg(self.getAvailableClaimList())
-        self.signAndSend(resp, link.localIdentifier, frm)
+    def sendNewAvailableClaimsData(self, nac, frm, link):
+        if len(nac) > 0:
+            resp = self.createNewAvailableClaimsMsg(nac)
+            self.signAndSend(resp, link.localIdentifier, frm)
 
     def addClaimDefs(self, name, version, attrNames,
                              staticPrime, credDefSeqNo, issuerKeySeqNo):
@@ -911,6 +909,7 @@ class WalletedAgent(Agent):
         req = self.wallet.requestAttribute(
             attrib, sender=self.wallet.defaultId)
         self.client.submitReqs(req)
+
         if doneCallback:
             self.loop.call_later(.2,
                                  ensureReqCompleted,

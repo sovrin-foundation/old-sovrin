@@ -11,7 +11,7 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
 from anoncreds.test.conftest import staticPrimes
-from sovrin.test.agent.helper import getAgentCmdLineParams
+from sovrin.test.agent.helper import getAgentCmdLineParams, buildFaberWallet
 
 logger = getlogger()
 
@@ -87,16 +87,11 @@ class FaberAgent(WalletedAgent):
         else:
             raise NonceNotFound
 
-    def addKeyIfNotAdded(self):
-        wallet = self.wallet
-        if not wallet.identifiers:
-            wallet.addSigner(seed=b'Faber000000000000000000000000000')
-
     def getAvailableClaimList(self):
         return self.availableClaims
 
-    def postClaimVerification(self, claimName):
-        pass
+    def newAvailableClaimsPostClaimVerif(self, claimName):
+        return []
 
     def initAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()
@@ -133,9 +128,7 @@ class FaberAgent(WalletedAgent):
         attribs = attribsDef.attribs(**attrs)
         return attribs
 
-
     def bootstrap(self):
-        self.addKeyIfNotAdded()
         self.addClaimDefsToWallet()
         self.initAvailableClaimList()
 
@@ -143,7 +136,8 @@ class FaberAgent(WalletedAgent):
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,
              startRunning=True, bootstrap=True):
 
-    return runAgent(FaberAgent, name or "Faber College", wallet, basedirpath,
+    return runAgent(FaberAgent, name or "Faber College",
+                    wallet or buildFaberWallet(), basedirpath,
                     port, startRunning, bootstrap)
 
 

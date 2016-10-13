@@ -11,7 +11,7 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
 from anoncreds.test.conftest import staticPrimes
-from sovrin.test.agent.helper import getAgentCmdLineParams
+from sovrin.test.agent.helper import getAgentCmdLineParams, buildAcmeWallet
 
 logger = getlogger()
 
@@ -86,25 +86,20 @@ class AcmeAgent(WalletedAgent):
         else:
             raise NonceNotFound
 
-    def addKeyIfNotAdded(self):
-        wallet = self.wallet
-        if not wallet.identifiers:
-            wallet.addSigner(seed=b'Acme0000000000000000000000000000')
-
     def getAvailableClaimList(self):
         return self.availableClaims
 
-    def postClaimVerification(self, claimName):
+    def newAvailableClaimsPostClaimVerif(self, claimName):
         if claimName == "Job-Application":
-            self.addAvailableClaimList()
+            return self.getJobCertAvailableClaimList()
 
-    def addAvailableClaimList(self):
+    def getJobCertAvailableClaimList(self):
         claimDefSeqNo, _ = self._seqNos.get(("Job-Certificate", "0.2"))
-        self.availableClaims.append({
+        return [{
             NAME: "Job-Certificate",
             VERSION: "0.2",
             "claimDefSeqNo": claimDefSeqNo
-        })
+        }]
 
     def addClaimDefsToWallet(self):
         name, version = "Job-Certificate", "0.2"
@@ -133,16 +128,15 @@ class AcmeAgent(WalletedAgent):
         attribs = attribsDef.attribs(**attrs)
         return attribs
 
-
     def bootstrap(self):
-        self.addKeyIfNotAdded()
         self.addClaimDefsToWallet()
 
 
 def runAcme(name=None, wallet=None, basedirpath=None, port=None,
             startRunning=True, bootstrap=True):
 
-    return runAgent(AcmeAgent, name or "Acme Corp", wallet, basedirpath,
+    return runAgent(AcmeAgent, name or "Acme Corp",
+                    wallet or buildAcmeWallet(), basedirpath,
              port, startRunning, bootstrap)
 
 if __name__ == "__main__":
