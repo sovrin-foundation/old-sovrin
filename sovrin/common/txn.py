@@ -178,13 +178,13 @@ def getGenesisTxnsForLocal():
                  "e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683",
              TXN_TYPE: NYM},
             {ALIAS: "Jason",
-             TARGET_NYM: "LfBBJfABWvtHzoU674dyCU/5SYwUyxueEpc8KSfaD6Y=",
+             TARGET_NYM: "46Kq4hASUdvUbwR7s7Pie3x8f4HRB3NLay7Z9jh9eZsB",
              "identifier": "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC",
              TXN_ID:
                  "e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919684",
              TXN_TYPE: NYM},
             {ALIAS: "John",
-             TARGET_NYM: "K8KACzMW4Akgn/11fasZzPCuhLx66QZU4egXEtJw9lM=",
+             TARGET_NYM: "3wpYnGqceZ8DzN3guiTd9rrYkWTwTHCChBSuo6cvkXTG",
              "identifier": "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC",
              TXN_ID:
                  "e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919685",
@@ -204,6 +204,7 @@ def getTxnOrderedFields():
         (TXN_TIME, (str, float)),
         (TXN_TYPE, (str, str)),
         (TARGET_NYM, (str, str)),
+        (VERKEY, (str, str)),
         (DATA, (str, str)),
         (ALIAS, (str, str)),
         (RAW, (str, str)),

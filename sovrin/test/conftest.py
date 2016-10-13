@@ -3,8 +3,11 @@ import pytest
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.ledger import Ledger
 from ledger.serializers.compact_serializer import CompactSerializer
+
+from plenum.common.looper import Looper
 from plenum.common.plugin_helper import loadPlugins
 from plenum.common.signer_simple import SimpleSigner
+from plenum.common.txn import VERKEY
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.test.conftest import getValueFromModule
 from plenum.test.plugin.helper import getPluginPath
@@ -16,13 +19,15 @@ from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import TestNodeSet,\
-    genTestClient, createNym, addUser, TestNode, makePendingTxnsRequest
+    genTestClient, createNym, addUser, TestNode, makePendingTxnsRequest, \
+    getStewardConnectedToPool
 
 # noinspection PyUnresolvedReferences
-from plenum.test.conftest import tdir, looper, counter, unstartedLooper, \
-    nodeReg, up, ready, keySharedNodes, whitelist, logcapture, tconf, \
+from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
+    whitelist, logcapture, tconf, keySharedNodes, startedNodes, \
     tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, poolTxnNodeNames,\
-    allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns
+    allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
+    poolTxnStewardData, poolTxnStewardNames
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -37,22 +42,48 @@ def allPluginsPath():
 
 
 @pytest.fixture(scope="module")
-def stewardWallet():
+def stewardWallet(poolTxnStewardData):
+    name, sigseed = poolTxnStewardData
     wallet = Wallet('steward')
-    seed = b'is a pit   seed, or somepin else'
-    signer = SimpleSigner(seed=seed)
-    assert signer.verkey == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
-    wallet.addSigner(signer=signer)
+    wallet.addSigner(seed=sigseed)
+    # seed = b'is a pit   seed, or somepin else'
+    # signer = SimpleSigner(seed=seed)
+    # assert signer.verkey == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
+    # wallet.addSigner(signer=signer)
     return wallet
 
 
 @pytest.fixture(scope="module")
-def steward(genned, looper, tdir, up, stewardWallet):
-    s, _ = genTestClient(genned, tmpdir=tdir)
+def looper():
+    with Looper() as l:
+        yield l
+
+
+@pytest.fixture(scope="module")
+def steward(nodeSet, looper, tdir, up, stewardWallet):
+    s, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
     s.registerObserver(stewardWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
+
+# @pytest.fixture(scope="module")
+# def stewardAndWallet(nodeSet, looper, tdirWithDomainTxns,
+#                      poolTxnStewardData):
+#     steward, wallet = getStewardConnectedToPool(looper,
+#                                                 tdirWithDomainTxns,
+#                                                 poolTxnStewardData)
+#     return steward, wallet
+
+
+# @pytest.fixture(scope="module")
+# def steward(stewardAndWallet):
+#     return stewardAndWallet[0]
+#
+#
+# @pytest.fixture(scope="module")
+# def stewardWallet(stewardAndWallet):
+#     return stewardAndWallet[1]
 
 
 @pytest.fixture(scope="module")
@@ -67,7 +98,8 @@ def genesisTxns(stewardWallet: Wallet):
         TXN_TYPE: NYM,
         TARGET_NYM: nym,
         TXN_ID: "9c86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
-        ROLE: STEWARD
+        ROLE: STEWARD,
+        VERKEY: stewardWallet.getVerkey()
     },]
 
 
@@ -76,27 +108,27 @@ def domainTxnOrderedFields():
     return getTxnOrderedFields()
 
 
-@pytest.fixture(scope="module")
-def gennedTdir(genesisTxns, tdir, domainTxnOrderedFields):
-    config = getConfig(tdir)
-    createGenesisTxnFile(genesisTxns, tdir, config.domainTransactionsFile,
-                         domainTxnOrderedFields)
-    return tdir
+# @pytest.fixture(scope="module")
+# def gennedTdir(genesisTxns, tdir, domainTxnOrderedFields):
+#     config = getConfig(tdir)
+#     createGenesisTxnFile(genesisTxns, tdir, config.domainTransactionsFile,
+#                          domainTxnOrderedFields)
+#     return tdir
+#
+#
+# @pytest.yield_fixture(scope="module")
+# def nodeSet(request, tdir, nodeReg, allPluginsPath):
+#
+#     primaryDecider = getValueFromModule(request, "PrimaryDecider", None)
+#     with TestNodeSet(nodeReg=nodeReg, tmpdir=tdir,
+#                      primaryDecider=primaryDecider,
+#                      pluginPaths=allPluginsPath) as ns:
+#         yield ns
 
 
-@pytest.yield_fixture(scope="module")
-def nodeSet(request, tdir, nodeReg, allPluginsPath):
-
-    primaryDecider = getValueFromModule(request, "PrimaryDecider", None)
-    with TestNodeSet(nodeReg=nodeReg, tmpdir=tdir,
-                     primaryDecider=primaryDecider,
-                     pluginPaths=allPluginsPath) as ns:
-        yield ns
-
-
-@pytest.fixture(scope="module")
-def genned(gennedTdir, nodeSet):
-    return nodeSet
+# @pytest.fixture(scope="module")
+# def genned(gennedTdir, nodeSet):
+#     return nodeSet
 
 
 @pytest.fixture(scope="module")
@@ -121,15 +153,15 @@ def updatedDomainTxnFile(tdir, tdirWithDomainTxns, genesisTxns,
 
 
 @pytest.fixture(scope="module")
-def gennedTxnPoolNodeSet(updatedDomainTxnFile, txnPoolNodeSet):
+def nodeSet(updatedDomainTxnFile, txnPoolNodeSet):
     return txnPoolNodeSet
 
 
-@pytest.fixture(scope="module")
-def startedNodes(nodeSet, looper):
-    for n in nodeSet:
-        n.start(looper.loop)
-    return nodeSet
+# @pytest.fixture(scope="module")
+# def startedNodes(nodeSet, looper):
+#     for n in nodeSet:
+#         n.start(looper.loop)
+#     return nodeSet
 
 
 @pytest.fixture(scope="module")
@@ -147,7 +179,7 @@ def sponsorCli(looper, tdir):
 
 @pytest.fixture(scope="module")
 def clientAndWallet1(client1Signer, looper, nodeSet, tdir, up):
-    client, wallet = genTestClient(nodeSet, tmpdir=tdir)
+    client, wallet = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
     wallet = Wallet(client.name)
     wallet.addSigner(signer=client1Signer)
     return client, wallet
@@ -175,8 +207,8 @@ def sponsorWallet():
 
 
 @pytest.fixture(scope="module")
-def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
-    s, _ = genTestClient(genned, tmpdir=tdir)
+def sponsor(nodeSet, addedSponsor, sponsorWallet, looper, tdir):
+    s, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
     s.registerObserver(sponsorWallet.handleIncomingReply)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
@@ -185,7 +217,8 @@ def sponsor(genned, addedSponsor, sponsorWallet, looper, tdir):
 
 
 @pytest.fixture(scope="module")
-def addedSponsor(genned, steward, stewardWallet, looper, sponsorWallet):
+def addedSponsor(nodeSet, steward, stewardWallet, looper,
+                 sponsorWallet):
     createNym(looper,
               sponsorWallet.defaultId,
               sponsorWallet.getVerkey(),
@@ -196,12 +229,12 @@ def addedSponsor(genned, steward, stewardWallet, looper, sponsorWallet):
 
 
 @pytest.fixture(scope="module")
-def userWalletA(genned, addedSponsor, sponsorWallet, looper, sponsor):
+def userWalletA(nodeSet, addedSponsor, sponsorWallet, looper, sponsor):
     return addUser(looper, sponsor, sponsorWallet, 'userA')
 
 
 @pytest.fixture(scope="module")
-def userWalletB(genned, addedSponsor, sponsorWallet, looper, sponsor):
+def userWalletB(nodeSet, addedSponsor, sponsorWallet, looper, sponsor):
     return addUser(looper, sponsor, sponsorWallet, 'userB')
 
 
@@ -216,8 +249,8 @@ def userIdB(userWalletB):
 
 
 @pytest.fixture(scope="module")
-def userClientA(genned, userWalletA, looper, tdir):
-    u, _ = genTestClient(genned, tmpdir=tdir)
+def userClientA(nodeSet, userWalletA, looper, tdir):
+    u, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
     u.registerObserver(userWalletA.handleIncomingReply)
     looper.add(u)
     looper.run(u.ensureConnectedToNodes())

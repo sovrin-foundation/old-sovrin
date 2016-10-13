@@ -21,12 +21,12 @@ from sovrin.test.agent.thrift import runThrift
 from sovrin.test.helper import addClaimDefAndIssuerKeys
 from sovrin.test.helper import createNym, addAttributeAndCheck, \
     getStewardConnectedToPool
-from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
+from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
     tdirWithDomainTxns, genesisTxns
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 # noinspection PyUnresolvedReferences
-from sovrin.test.conftest import gennedTxnPoolNodeSet, updatedDomainTxnFile, \
+from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
     genesisTxns
 
 # noinspection PyUnresolvedReferences
@@ -39,23 +39,23 @@ def emptyLooper():
         yield l
 
 
-@pytest.fixture(scope="module")
-def stewardAndWallet(gennedTxnPoolNodeSet, emptyLooper, tdirWithDomainTxns,
-                     poolTxnStewardData):
-    steward, wallet = getStewardConnectedToPool(emptyLooper,
-                                                tdirWithDomainTxns,
-                                                poolTxnStewardData)
-    return steward, wallet
-
-
-@pytest.fixture(scope="module")
-def steward(stewardAndWallet):
-    return stewardAndWallet[0]
-
-
-@pytest.fixture(scope="module")
-def stewardWallet(stewardAndWallet):
-    return stewardAndWallet[1]
+# @pytest.fixture(scope="module")
+# def stewardAndWallet(nodeSet, emptyLooper, tdirWithDomainTxns,
+#                      poolTxnStewardData):
+#     steward, wallet = getStewardConnectedToPool(emptyLooper,
+#                                                 tdirWithDomainTxns,
+#                                                 poolTxnStewardData)
+#     return steward, wallet
+#
+#
+# @pytest.fixture(scope="module")
+# def steward(stewardAndWallet):
+#     return stewardAndWallet[0]
+#
+#
+# @pytest.fixture(scope="module")
+# def stewardWallet(stewardAndWallet):
+#     return stewardAndWallet[1]
 
 
 @pytest.fixture(scope="module")
@@ -88,6 +88,7 @@ def acmeWallet():
     wallet.addSigner(signer=SimpleSigner(
         seed=b'Acme0000000000000000000000000000'))
     return wallet
+
 
 @pytest.fixture(scope="module")
 def thriftWallet():
@@ -130,7 +131,7 @@ def aliceIsRunning(emptyLooper, aliceAgent):
 
 
 @pytest.fixture(scope="module")
-def aliceAgentConnected(gennedTxnPoolNodeSet,
+def aliceAgentConnected(nodeSet,
                         aliceAgent,
                         aliceIsRunning,
                         emptyLooper):
@@ -165,7 +166,7 @@ def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet):
 
 
 @pytest.fixture(scope="module")
-def faberAdded(gennedTxnPoolNodeSet,
+def faberAdded(nodeSet,
                steward,
                stewardWallet,
                emptyLooper,
@@ -218,7 +219,7 @@ def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet):
 
 
 @pytest.fixture(scope="module")
-def acmeAdded(gennedTxnPoolNodeSet,
+def acmeAdded(nodeSet,
                steward,
                stewardWallet,
                emptyLooper,
