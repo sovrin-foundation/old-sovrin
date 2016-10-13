@@ -358,15 +358,14 @@ class WalletedAgent(Agent):
     def handleEndpointMessage(self, msg):
         body, frm = msg
         typ = body.get(TYPE)
-        self.sendProgressResponseMsg("\nRequest received by target:", frm, typ)
         if typ in self.lockedMsgs:
             try:
                 self._isVerified(body)
             except SignatureRejected:
-                self.sendProgressResponseMsg("    Signature rejected.",
+                self.sendProgressResponseMsg("\nSignature rejected.",
                                              frm, typ)
                 return
-        self.sendProgressResponseMsg("    Signature accepted.", frm, typ)
+        self.sendProgressResponseMsg("\nSignature accepted.", frm, typ)
 
         handler = self.msgHandlers.get(typ)
         if handler:
@@ -437,11 +436,11 @@ class WalletedAgent(Agent):
                 self.notifyResponseFromMsg(li.name)
                 def postAllFetched(li, newAvailableClaims):
                     if newAvailableClaims:
-                        claimNames = ",".join(
+                        claimNames = ", ".join(
                             [n for n, _, _ in newAvailableClaims])
 
                         self.notifyMsgListener(
-                            "    {} link has now new available claims: {}".
+                            "    {} link has now new available claim(s): {}\n".
                             format(li.name, claimNames))
 
                 self._processNewAvailableClaimsData(
@@ -503,7 +502,8 @@ class WalletedAgent(Agent):
         li = self._getLinkByTarget(getCryptonym(identifier))
         if li:
             self.notifyResponseFromMsg(li.name)
-            self.notifyMsgListener("    Received {}.\n".format(claim[NAME]))
+            self.notifyMsgListener('    Received claim "{}".\n'.format(
+                claim[NAME]))
             name, version, idr = \
                 claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
             attributes = claim['attributes']

@@ -241,6 +241,7 @@ def connectIfNotAlreadyConnected(do, expectMsgs, userCli, userMap):
                                     expect=expectMsgs,
                                     mapper=userMap)
 
+
 def checkWalletStates(userCli,
                       totalLinks,
                       totalAvailableClaims,
@@ -266,6 +267,7 @@ def checkWalletStates(userCli,
     else:
         check()
 
+
 @pytest.fixture(scope="module")
 def aliceCli(be, do, aliceCLI, newKeyringOut, aliceMap):
     be(aliceCLI)
@@ -286,6 +288,13 @@ def testShowInviteNotExists(be, do, aliceCli, fileNotExists, faberMap):
                       totalCredDefs=0, totalClaimsRcvd=0)
     be(aliceCli)
     do('show {invite-not-exists}',  expect=fileNotExists, mapper=faberMap)
+
+
+def testShowInviteWithDirPath(be, do, aliceCli, fileNotExists, faberMap):
+    checkWalletStates(aliceCli, totalLinks=0, totalAvailableClaims=0,
+                      totalCredDefs=0, totalClaimsRcvd=0)
+    be(aliceCli)
+    do('show sample',  expect=fileNotExists, mapper=faberMap)
 
 
 def testLoadLinkInviteWithoutSig():
@@ -458,24 +467,6 @@ def getSignedRespMsg(msg, signer):
     return msg
 
 
-# TODO: Need to make this working
-# def testAcceptInviteRespWithInvalidSig(aliceCli, faberAddedByPhil,
-#                                        faberIsRunning,
-#                                        faberInviteSyncedWithEndpoint,
-#                                        faberCli):
-#     faber, _ = faberIsRunning
-#     msg = WalletedAgent.createAvailClaimListMsg(faber.getAvailableClaimList())
-#     sig = aliceCli.activeWallet.signMsg(msg)
-#     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
-#     msg[f.SIG.nm] = sig
-#     msg[TYPE] = AVAIL_CLAIM_LIST
-#
-#     aliceCli.agent.handleEndpointMessage((msg, faber.endpoint.name))
-#     # TODO Why are we calling a protected method here? A CLI test should test it through the CLI.
-#     # aliceCli.agent._handleAcceptInviteResponse((msg, (None, None)))
-#     assert "Signature rejected" in aliceCli.lastCmdOutput
-
-
 def acceptInvitation(be, do, userCli, agentMap, expect):
     be(userCli)
     do("accept invitation from {inviter}",
@@ -523,6 +514,9 @@ def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
     li.linkStatus = constant.LINK_STATUS_ACCEPTED
 
 
+# TODO: Write tests which sends request with invalid signature
+# TODO: Write tests which receives response with invalid signature
+
 def testShowFaberLinkAfterInviteAccept(be, do, aliceCli, faberMap,
                                        showAcceptedLinkOut,
                                        aliceAcceptedFaberInvitation):
@@ -562,10 +556,11 @@ def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
                                     mapper=faberMap)
 
 
-def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
-                           faberIsRunning,
-                           aliceAcceptedFaberInvitation
-                           ):
+@pytest.fixture(scope="module")
+def aliceRequestedTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
+                                       reqClaimOut,
+                                       faberIsRunning,
+                                       aliceAcceptedFaberInvitation):
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
                       totalCredDefs=1, totalClaimsRcvd=0)
@@ -575,6 +570,10 @@ def testReqTranscriptClaim(be, do, aliceCli, transcriptClaimMap, reqClaimOut,
 
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
                       totalCredDefs=1, totalClaimsRcvd=1, within=2)
+
+
+def testAliceReqClaim(aliceRequestedTranscriptClaim):
+    pass
 
 
 def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
@@ -592,42 +591,8 @@ def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
                                     mapper=transcriptClaimMap)
 
 
-# TODO: Need to make this working
-# def testReqClaimResponseWithInvalidSig(aliceCli, faberCli, faberIsRunning,
-#                                        faberInviteSyncedWithEndpoint):
-#     faber, _ = faberIsRunning
-#     aliceSigner = aliceCli.activeWallet._getIdData(
-#         aliceCli.activeWallet.defaultId).signer
-#
-#     msg = WalletedAgent.createClaimMsg(faber.getAvailableClaimList())
-#     msg[IDENTIFIER] = faberCli.activeWallet.defaultId
-#
-#     reqClaimResp = getSignedRespMsg(msg, aliceSigner)
-#     aliceCli.agent.handleEndpointMessage((reqClaimResp, (None, None)))
-#     assert "Signature rejected" in aliceCli.lastCmdOutput
-
-
-@pytest.fixture(scope="module")
-def aliceRequestedFaberTranscriptClaim(be, do, aliceCli, faberCli,
-                                       faberAddedByPhil,
-                                       faberLinkAdded,
-                                       aliceAcceptedFaberInvitation
-                                       ):
-    be(aliceCli)
-    do("request claim Transcript",  within=5,
-                                    expect=[ "Signature accepted.",
-                                             "Received Transcript."])
-    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
-                      totalCredDefs=1, totalClaimsRcvd=1)
-    return aliceCli
-
-
-def testAliceReqClaim(aliceRequestedFaberTranscriptClaim):
-    pass
-
-
 def testShowFaberClaimPostReqClaim(be, do, aliceCli,
-                                   aliceRequestedFaberTranscriptClaim,
+                                   aliceRequestedTranscriptClaim,
                                    transcriptClaimValueMap,
                                    rcvdTranscriptClaimOut):
     be(aliceCli)
@@ -674,7 +639,7 @@ def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
 @pytest.fixture(scope="module")
 def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    unsycedAcceptedInviteWithoutClaimOut,
-                                   aliceRequestedFaberTranscriptClaim,
+                                   aliceRequestedTranscriptClaim,
                                    acmeInviteLoadedByAlice, acmeAddedByPhil,
                                    acmeIsRunning, acmeMap, acmeLinkAdded,
                                    acmeCli, acmeWithEndpointAdded):
@@ -855,7 +820,7 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims):
     mapping.update(agentMap)
     if newAvailableClaims:
         mapping['new-available-claims'] = newAvailableClaims
-        expectMsgs.append("{inviter} link has now new available claims: "
+        expectMsgs.append("{inviter} link has now new available claim(s): "
                           "{new-available-claims}")
 
     do("send claim {claim-req-to-match} to {inviter}",
@@ -867,7 +832,7 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims):
 @pytest.fixture(scope="module")
 def jobApplicationClaimSent(be, do, aliceCli, acmeMap,
                                     aliceAcceptedAcmeJobInvitation,
-                                  aliceRequestedFaberTranscriptClaim,
+                                  aliceRequestedTranscriptClaim,
                                   aliceSelfAttestsAttributes):
 
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,

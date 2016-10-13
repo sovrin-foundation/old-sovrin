@@ -32,7 +32,7 @@ class constant:
     LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
     UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
-    LINK_ITEM_PREFIX = '\n\t'
+    LINK_ITEM_PREFIX = '\n    '
 
     NOT_AVAILABLE = "Not Available"
 

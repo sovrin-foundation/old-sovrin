@@ -851,7 +851,7 @@ class SovrinCli(PlenumCli):
 
     def printUsageMsgs(self, msgs):
         for m in msgs:
-            self.print('  {}'.format(m))
+            self.print('    {}'.format(m))
         self.print("\n")
 
     def printSuggestion(self, msgs):
@@ -898,11 +898,11 @@ class SovrinCli(PlenumCli):
         sampleExplicitFilePath = curDirPath + "/../../" + givenPath
         sampleImplicitFilePath = curDirPath + "/../../sample/" + givenPath
 
-        if os.path.exists(givenPath):
+        if os.path.isfile(givenPath):
             return givenPath
-        elif os.path.exists(sampleExplicitFilePath):
+        elif os.path.isfile(sampleExplicitFilePath):
             return sampleExplicitFilePath
-        elif os.path.exists(sampleImplicitFilePath):
+        elif os.path.isfile(sampleImplicitFilePath):
             return sampleImplicitFilePath
         else:
             return None
@@ -1406,7 +1406,7 @@ class SovrinCli(PlenumCli):
         self.print(str(claimProofReq))
 
         for ml, (name, ver, _), commonAttrs, allAttrs in matchingLinkAndRcvdClaims:
-            self.print('\n      Claim proof ({} v{} from {})'.format(
+            self.print('\n    Claim proof ({} v{} from {})'.format(
                 name, ver, ml.name))
             for k, v in allAttrs.items():
                 self.print('        ' + k + ': ' + v + ' (verifiable)')

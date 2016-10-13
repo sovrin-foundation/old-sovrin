@@ -19,8 +19,8 @@ class ClaimProofRequest:
     @property
     def attributeValues(self):
         return \
-            'Attributes:' + '\n      ' + \
-            format("\n      ".join(
+            'Attributes:' + '\n    ' + \
+            format("\n    ".join(
             ['{}: {}'.format(k, v)
              for k,v in self.attributes.items()]))
 

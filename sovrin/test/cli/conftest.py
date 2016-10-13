@@ -524,7 +524,7 @@ def reqClaimOut1():
             "Requesting claim {name} from {inviter}...",
             "Getting Claim Definition from Sovrin",
             "Signature accepted.",
-            "Received {name}."]
+            'Received claim "{name}".']
 
 
 @pytest.fixture(scope="module")
