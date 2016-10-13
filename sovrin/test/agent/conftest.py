@@ -40,25 +40,6 @@ def emptyLooper():
         yield l
 
 
-# @pytest.fixture(scope="module")
-# def stewardAndWallet(nodeSet, emptyLooper, tdirWithDomainTxns,
-#                      poolTxnStewardData):
-#     steward, wallet = getStewardConnectedToPool(emptyLooper,
-#                                                 tdirWithDomainTxns,
-#                                                 poolTxnStewardData)
-#     return steward, wallet
-#
-#
-# @pytest.fixture(scope="module")
-# def steward(stewardAndWallet):
-#     return stewardAndWallet[0]
-#
-#
-# @pytest.fixture(scope="module")
-# def stewardWallet(stewardAndWallet):
-#     return stewardAndWallet[1]
-
-
 @pytest.fixture(scope="module")
 def walletBuilder():
     def _(name):

@@ -45,11 +45,8 @@ def allPluginsPath():
 def stewardWallet(poolTxnStewardData):
     name, sigseed = poolTxnStewardData
     wallet = Wallet('steward')
-    wallet.addSigner(seed=sigseed)
-    # seed = b'is a pit   seed, or somepin else'
-    # signer = SimpleSigner(seed=seed)
-    # assert signer.verkey == '435Vu5FpttWvn74ZTqUb79q2Jnjg4xCC9VCMUVi2ZWLM'
-    # wallet.addSigner(signer=signer)
+    signer = SimpleSigner(seed=sigseed)
+    wallet.addSigner(signer=signer)
     return wallet
 
 
@@ -62,35 +59,6 @@ def looper():
 @pytest.fixture(scope="module")
 def steward(nodeSet, looper, tdir, up, stewardWallet):
     return buildStewardClient(looper, tdir, stewardWallet)
-    # s, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
-    # s.registerObserver(stewardWallet.handleIncomingReply)
-    # looper.add(s)
-    # looper.run(s.ensureConnectedToNodes())
-    # makePendingTxnsRequest(s, stewardWallet)
-    # return s
-
-# @pytest.fixture(scope="module")
-# def stewardAndWallet(nodeSet, looper, tdirWithDomainTxns,
-#                      poolTxnStewardData):
-#     steward, wallet = getStewardConnectedToPool(looper,
-#                                                 tdirWithDomainTxns,
-#                                                 poolTxnStewardData)
-#     return steward, wallet
-
-
-# @pytest.fixture(scope="module")
-# def steward(stewardAndWallet):
-#     return stewardAndWallet[0]
-#
-#
-# @pytest.fixture(scope="module")
-# def stewardWallet(stewardAndWallet):
-#     return stewardAndWallet[1]
-
-
-# @pytest.fixture(scope="module")
-# def updatedSteward(steward, stewardWallet):
-#     makePendingTxnsRequest(steward, stewardWallet)
 
 
 @pytest.fixture(scope="module")
@@ -108,29 +76,6 @@ def genesisTxns(stewardWallet: Wallet):
 @pytest.fixture(scope="module")
 def domainTxnOrderedFields():
     return getTxnOrderedFields()
-
-
-# @pytest.fixture(scope="module")
-# def gennedTdir(genesisTxns, tdir, domainTxnOrderedFields):
-#     config = getConfig(tdir)
-#     createGenesisTxnFile(genesisTxns, tdir, config.domainTransactionsFile,
-#                          domainTxnOrderedFields)
-#     return tdir
-#
-#
-# @pytest.yield_fixture(scope="module")
-# def nodeSet(request, tdir, nodeReg, allPluginsPath):
-#
-#     primaryDecider = getValueFromModule(request, "PrimaryDecider", None)
-#     with TestNodeSet(nodeReg=nodeReg, tmpdir=tdir,
-#                      primaryDecider=primaryDecider,
-#                      pluginPaths=allPluginsPath) as ns:
-#         yield ns
-
-
-# @pytest.fixture(scope="module")
-# def genned(gennedTdir, nodeSet):
-#     return nodeSet
 
 
 @pytest.fixture(scope="module")
@@ -157,13 +102,6 @@ def updatedDomainTxnFile(tdir, tdirWithDomainTxns, genesisTxns,
 @pytest.fixture(scope="module")
 def nodeSet(updatedDomainTxnFile, txnPoolNodeSet):
     return txnPoolNodeSet
-
-
-# @pytest.fixture(scope="module")
-# def startedNodes(nodeSet, looper):
-#     for n in nodeSet:
-#         n.start(looper.loop)
-#     return nodeSet
 
 
 @pytest.fixture(scope="module")

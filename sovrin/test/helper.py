@@ -544,20 +544,6 @@ def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
     return claimDef.seqNo, ipk.seqNo
 
 
-# def getStewardConnectedToPool(looper, tdirWithDomainTxns,
-#                            poolTxnStewardData):
-#     client, wallet = buildPoolClientAndWallet(poolTxnStewardData,
-#                                               tdirWithDomainTxns,
-#                                               clientClass=TestClient,
-#                                               walletClass=Wallet)
-#     client.registerObserver(wallet.handleIncomingReply)
-#
-#     looper.add(client)
-#     looper.run(client.ensureConnectedToNodes())
-#     makePendingTxnsRequest(client, wallet)
-#     return client, wallet
-
-
 def buildStewardClient(looper, tdir, stewardWallet):
     s, _ = genTestClient(tmpdir=tdir, usePoolLedger=True)
     s.registerObserver(stewardWallet.handleIncomingReply)
