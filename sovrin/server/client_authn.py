@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from base58 import b58decode
 
+from plenum.common.exceptions import UnknownIdentifier
 from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH
 
 from plenum.server.client_authn import NaclAuthNr
@@ -32,7 +33,8 @@ class TxnBasedAuthNr(NaclAuthNr):
         raise RuntimeError('Add verification keys through the ADDNYM txn')
 
     def getVerkey(self, identifier):
-        txn = self.storage.getAddNymTxn(identifier)
-        if not txn:
-            raise KeyError('unknown identifier')
-        return b58decode(identifier.encode())
+        nym = self.storage.getNym(identifier)
+        if not nym:
+            raise UnknownIdentifier(identifier)
+        verkey = nym.oRecordData['verkey']
+        return verkey

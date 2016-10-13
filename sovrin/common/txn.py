@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME, \
     RAW, ENC, HASH, NAME, VERSION, TYPE, KEYS, IP, PORT, POOL_TXN_TYPES, ALIAS, \
-    STEWARD, NYM
+    STEWARD, NYM, VERKEY
 from plenum.common.types import f
 
 ROLE = 'role'
@@ -18,7 +18,7 @@ ENC_TYPE = "encType"
 SKEY = "secretKey"
 REF = "ref"
 
-allOpKeys = (TXN_TYPE, TARGET_NYM, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
+allOpKeys = (TXN_TYPE, TARGET_NYM, VERKEY, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
              ENC, HASH, ALIAS)
 reqOpKeys = (TXN_TYPE,)
 

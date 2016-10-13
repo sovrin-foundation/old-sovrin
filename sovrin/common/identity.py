@@ -1,4 +1,4 @@
-from plenum.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, STEWARD
+from plenum.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, STEWARD, VERKEY
 from plenum.common.types import Identifier
 from sovrin.common.generates_request import GeneratesRequest
 from sovrin.common.txn import SPONSOR, GET_NYM
@@ -35,9 +35,11 @@ class Identity(GeneratesRequest):
 
     def _op(self):
         op = {
-            TARGET_NYM: self.identifier,
-            TXN_TYPE: NYM
+            TXN_TYPE: NYM,
+            TARGET_NYM: self.identifier
         }
+        if self.verkey:
+            op[VERKEY] = self.verkey
         if self.role:
             op[ROLE] = self.role
         return op

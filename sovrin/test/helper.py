@@ -392,8 +392,9 @@ def clientFromSigner(signer, looper, nodeSet, tdir):
     return s
 
 
-def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
+def createNym(looper, nym, verkey, creatorClient, creatorWallet: Wallet, role=None):
     idy = Identity(identifier=nym,
+                   verkey=verkey,
                    role=role)
     creatorWallet.addSponsoredIdentity(idy)
     reqs = creatorWallet.preparePending()
@@ -407,8 +408,9 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
 
 def addUser(looper, creatorClient, creatorWallet, name):
     wallet = Wallet(name)
-    wallet.addSigner()
-    createNym(looper, wallet.defaultId, creatorClient, creatorWallet)
+    idr = wallet.addIdentifier()
+    verkey = wallet.getVerkey(idr)
+    createNym(looper, idr, verkey, creatorClient, creatorWallet)
     return wallet
 
 
