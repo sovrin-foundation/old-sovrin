@@ -434,6 +434,7 @@ def syncInvite(be, do, userCli, expectedMsgs, mapping):
                                     expect=expectedMsgs,
                                     mapper=mapping)
 
+
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI,
                                   faberInviteSyncedWithoutEndpoint,

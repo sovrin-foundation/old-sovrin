@@ -45,7 +45,7 @@ def stewardWallet(poolTxnStewardData):
     name, sigseed = poolTxnStewardData
     wallet = Wallet('steward')
     signer = SimpleSigner(seed=sigseed)
-    wallet.addSigner(signer=signer)
+    wallet.addIdentifier(signer=signer)
     return wallet
 
 
@@ -120,7 +120,7 @@ def sponsorCli(looper, tdir):
 def clientAndWallet1(client1Signer, looper, nodeSet, tdir, up):
     client, wallet = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
     wallet = Wallet(client.name)
-    wallet.addSigner(signer=client1Signer)
+    wallet.addIdentifier(signer=client1Signer)
     return client, wallet
 
 
@@ -141,7 +141,7 @@ def wallet1(clientAndWallet1):
 def sponsorWallet():
     wallet = Wallet('sponsor')
     seed = b'sponsors are people too.........'
-    wallet.addSigner(seed=seed)
+    wallet.addIdentifier(seed=seed)
     return wallet
 
 

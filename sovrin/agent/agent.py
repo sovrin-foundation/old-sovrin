@@ -20,12 +20,14 @@ from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.motor import Motor
 from plenum.common.port_dispenser import genHa
+from plenum.common.signer_did import DidSigner
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.startable import Status
 from plenum.common.txn import TYPE, DATA, IDENTIFIER, NONCE, NAME, VERSION, \
     ORIGIN, TARGET_NYM, ATTRIBUTES
 from plenum.common.types import f
 from plenum.common.util import getCryptonym, randomString, getTimeBasedId
+from plenum.common.verifier import DidVerifier
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
@@ -536,6 +538,7 @@ class WalletedAgent(Agent):
 
     @staticmethod
     def _isVerified(msg: Dict[str, str]):
+        # v = DidVerifier()
         signature = msg.get(f.SIG.nm)
         identifier = msg.get(IDENTIFIER)
         msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
@@ -845,7 +848,7 @@ class WalletedAgent(Agent):
         # TODO: Assuming it is cryptographic identifier
         alias = "cid-" + str(len(self.wallet.identifiers) + 1)
         signer = SimpleSigner(alias=alias)
-        self.wallet.addSigner(signer=signer)
+        self.wallet.addIdentifier(signer=signer)
 
         self.notifyMsgListener("Creating Link for {}.".
                                format(linkInvitationName))

@@ -385,7 +385,7 @@ def genTestClientProvider(nodes: TestNodeSet = None,
 
 def clientFromSigner(signer, looper, nodeSet, tdir):
     wallet = Wallet(signer.identifier)
-    wallet.addSigner(signer)
+    wallet.addIdentifier(signer)
     s = genTestClient(nodeSet, tmpdir=tdir, identifier=signer.identifier)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
@@ -409,7 +409,7 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
 
 def addUser(looper, creatorClient, creatorWallet, name):
     wallet = Wallet(name)
-    idr = wallet.addIdentifier()
+    idr, _ = wallet.addIdentifier()
     verkey = wallet.getVerkey(idr)
     createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
     return wallet
@@ -476,7 +476,7 @@ class TestGraphStorage:
 def _newWallet(name=None):
     signer = SimpleSigner()
     w = Wallet(name or signer.identifier)
-    w.addSigner(signer=signer)
+    w.addIdentifier(signer=signer)
     return w
 
 
