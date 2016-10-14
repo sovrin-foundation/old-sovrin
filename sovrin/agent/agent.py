@@ -631,26 +631,25 @@ class WalletedAgent(Agent):
                 encodedAttrs[iid] = stringDictToCharmDict(attrs)
             revealedAttrs = body['verifiableAttrs']
             nonce = int(body[NONCE], 16)
-            # Converting from list to tuple
-            claimDefKey = tuple((body['claimDefKey']))
+            claimDefKeys = body['claimDefKeys']
 
-            def verify(r, e, name, version, origin):
+            def verify(r, e, claimDefKeys):
                 # This assumes that author of claimDef is same as the author of
                 # issuerPublicKey
                 # TODO: Do json validation
                 nonlocal proof, nonce, body
-                claimDefKey = name, version, origin
-                claimDef = self.wallet.getClaimDef(key=claimDefKey)
-                issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
-                    claimDef.seqNo)
-                proof = ProofBuilder.prepareProofFromDict({
-                    'issuer': origin, 'proof': proof
-                })
+
+                credDefPks = {}
+                for claimDefKey in claimDefKeys:
+                    name, version, origin = claimDef
+                    claimDef = self.wallet.getClaimDef(key=claimDefKey)
+                    issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
+                        claimDef.seqNo)
+                    credDefPks[origin] = issuerKey
+
                 claimName = body[NAME]
-                ipk = {
-                    origin: issuerKey
-                }
-                result = Verifier.verifyProof(ipk, proof, nonce,
+
+                result = Verifier.verifyProof(credDefPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
                 logger.info("claim {} verification result: {}".
@@ -659,9 +658,9 @@ class WalletedAgent(Agent):
                 # TODO: Following line is temporary and need to be removed
                 # result = True
 
-                logger.debug("ip, proof, nonce, encoded, revealed is "
+                logger.debug("credDefPks, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
-                             format(ipk, proof, nonce,
+                             format(credDefPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs))
                 logger.debug("result is {}".format(str(result)))
@@ -680,8 +679,8 @@ class WalletedAgent(Agent):
                     self._postClaimVerif(claimName, link, frm)
 
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
-                                               self.loop, claimDefKey,
-                                               verify, pargs=claimDefKey)
+                                               self.loop, claimDefKeys,
+                                               verify, pargs=claimDefKeys)
 
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:

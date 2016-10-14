@@ -207,34 +207,49 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         # Assuming building proof from a single claim
         attrNames = set(cpr.attributes.keys())
         matchedAttrs = set()
-        issuerId = None
+        issuerIds = []
         for iid, attributes in self.attributesFrom.items():
             commonAttrs = attrNames.intersection(set(attributes.keys()))
             if len(matchedAttrs) < len(commonAttrs):
                 matchedAttrs = commonAttrs
-                issuerId = iid
-        for pid, (pb, _, _, _) in self.proofBuilders.items():
-            if not pb.credential:
-                continue
-            if issuerId in pb.issuerPks:
-                if not pb.encodedAttrs or issuerId not in pb.encodedAttrs:
-                    self.setProofBuilderAttributes(pb)
-                    if issuerId not in pb.encodedAttrs:
-                        raise Exception("Attributes not present")
-                revealedAttrs = list(matchedAttrs)
-                proof = ProofBuilder.prepareProofAsDict(issuerPks=pb.issuerPks,
-                                                        masterSecret=pb.masterSecret,
-                                                        creds={
-                                                            issuerId:
-                                                                pb.credential},
-                                                        revealedAttrs=revealedAttrs,
-                                                        nonce=nonce,
-                                                        encodedAttrs=pb.encodedAttrs)
-                pk = pb.issuerPks[issuerId]
-                issuerPubKey = self.getIssuerPublicKey(seqNo=pk.uid)
-                claimDef = self.getClaimDef(seqNo=issuerPubKey.claimDefSeqNo)
-                return proof, {issuerId: pb.encodedAttrs.get(issuerId)}, \
-                       revealedAttrs, claimDef.key
+                issuerIds.append(iid)
+
+        creds = {}
+        issuerPks = {}
+        encodedAttrs = {}
+        claimDefKeys = {}
+        revealedAttrs = []
+
+        for issuerId in issuerIds:
+            for pid, (pb, _, _, _) in self.proofBuilders.items():
+                if not pb.credential:
+                    continue
+
+                if issuerId in pb.issuerPks:
+                    if not pb.encodedAttrs or issuerId not in pb.encodedAttrs:
+                        self.setProofBuilderAttributes(pb)
+                        if issuerId not in pb.encodedAttrs:
+                            raise Exception("Attributes not present")
+
+                    pk = pb.issuerPks[issuerId]
+                    issuerPubKey = self.getIssuerPublicKey(seqNo=pk.uid)
+                    claimDef = self.getClaimDef(
+                        seqNo=issuerPubKey.claimDefSeqNo)
+
+                    claimDefKeys[issuerPubKey.claimDefSeqNo] = claimDef
+                    revealedAttrs.extend(list(matchedAttrs))
+                    issuerPks.update(pb.issuerPks)
+                    creds[issuerId] = pb.credential
+                    encodedAttrs.update(pb.encodedAttrs)
+
+
+        proof = ProofBuilder.prepareProofAsDict(issuerPks=issuerPks,
+                                                masterSecret=self.masterSecret,
+                                                creds=creds,
+                                                revealedAttrs=revealedAttrs,
+                                                nonce=nonce,
+                                                encodedAttrs=encodedAttrs)
+        return proof, encodedAttrs, revealedAttrs, claimDefKeys
 
     def setProofBuilderAttributes(self, pb: ProofBuilder):
         if pb.encodedAttrs is None:

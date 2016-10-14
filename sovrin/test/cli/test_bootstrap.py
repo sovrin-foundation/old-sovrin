@@ -895,154 +895,154 @@ def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
 # test works correctly all the time and also we start supporting
 # building and sending claim proofs from more than one claim
 
-# def testShowAcmeLinkAfterClaimSent(be, do, aliceCli, acmeMap,
-#                                    jobApplicationClaimSent,
-#                                    showAcceptedLinkWithAvailableClaimsOut):
-#
-#     be(aliceCli)
-#     mapping = {}
-#     mapping.update(acmeMap)
-#     mapping["claims"] = "Job-Certificate"
-#
-#     acmeMap.update(acmeMap)
-#     do("show link {inviter}",       expect=showAcceptedLinkWithAvailableClaimsOut,
-#                                     mapper=mapping)
-#
-#
-# def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
-#                          showJobCertClaimOut,
-#                          jobApplicationClaimSent):
-#
-#     be(aliceCli)
-#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=1)
-#     do("show claim {name}",
-#                                     within=2,
-#                                     expect=showJobCertClaimOut,
-#                                     mapper=jobCertificateClaimMap)
-#
-#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=1)
-#
-#
-# @pytest.fixture(scope="module")
-# def jobCertClaimRequested(be, do, aliceCli,
-#                         jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
-#                         jobApplicationClaimSent):
-#
-#     def removeClaimDef():
-#         inviter = jobCertificateClaimMap["inviter"]
-#         links = aliceCli.activeWallet.getMatchingLinks(inviter)
-#         assert len(links) == 1
-#         faberId = links[0].remoteIdentifier
-#         name, version = jobCertificateClaimMap["name"], \
-#                         jobCertificateClaimMap["version"]
-#         aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
-#
-#     # Removing claim def to check if it fetches the claim def again or not
-#     removeClaimDef()
-#
-#     be(aliceCli)
-#
-#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-#                       totalCredDefs=1, totalClaimsRcvd=1)
-#
-#     do("request claim {name}",      within=7,
-#                                     expect=reqClaimOut1,
-#                                     mapper=jobCertificateClaimMap)
-#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#
-#
-# def testReqJobCertClaim(jobCertClaimRequested):
-#     pass
-#
-#
-# def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
-#                                   jobCertClaimRequested,
-#                                   jobCertificateClaimValueMap,
-#                                   rcvdJobCertClaimOut):
-#     be(aliceCli)
-#     do("show claim {name}",
-#                                     expect=rcvdJobCertClaimOut,
-#                                     mapper=jobCertificateClaimValueMap)
-#
-#
-# @pytest.fixture(scope="module")
-# def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap,
-#                               jobCertClaimRequested,
-#                               thriftAddedByPhil,
-#                               thriftWithEndpointAdded):
-#     be(aliceCli)
-#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2, within=2)
-#
-#     do('load {invite}',             expect=loadInviteOut, mapper=thriftMap)
-#
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#     return aliceCli
-#
-#
-# def testAliceLoadedThriftLoanApplication(thriftInviteLoadedByAlice):
-#     pass
-#
-#
-# @pytest.fixture(scope="module")
-# def aliceAcceptedThriftLoanApplication(be, do, aliceCli, thriftMap,
-#                                        connectedToTest,
-#                                        thriftIsRunning,
-#                                        thriftInviteLoadedByAlice,
-#                                        syncedInviteAcceptedOutWithoutClaims):
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2, within=2)
-#
-#     connectIfNotAlreadyConnected(do, connectedToTest, aliceCli, thriftMap)
-#
-#     acceptInvitation(be, do, aliceCli, thriftMap,
-#                      syncedInviteAcceptedOutWithoutClaims)
-#
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#     return aliceCli
-#
-#
-# def testAliceAcceptsThriftLoanApplication(aliceAcceptedThriftLoanApplication):
-#     pass
-#
-#
-#
-# @pytest.fixture(scope="module")
-# def bankBasicClaimSent(be, do, aliceCli, thriftMap,
-#                        aliceAcceptedThriftLoanApplication):
-#     mapping = {}
-#     mapping.update(thriftMap)
-#     mapping["claim-req-to-match"] = "Loan-Application-Basic"
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#     extraMsgs = ["Loan eligibility criteria satisfied, "
-#                  "please send another claim 'Loan-Application-KYC'"]
-#     sendClaim(be, do, aliceCli, mapping, None, extraMsgs)
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#
-#
-# def testAliceSendBankBasicClaim(bankBasicClaimSent):
-#     pass
-#
-#
-# @pytest.fixture(scope="module")
-# def bankKYCClaimSent(be, do, aliceCli, thriftMap,
-#                      bankBasicClaimSent):
-#     mapping = {}
-#     mapping.update(thriftMap)
-#     mapping["claim-req-to-match"] = "Loan-Application-KYC"
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#     sendClaim(be, do, aliceCli, mapping, None)
-#     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
-#                       totalCredDefs=2, totalClaimsRcvd=2)
-#
-#
-# def testAliceSendBankKYCClaim(bankKYCClaimSent):
-#     pass
+def testShowAcmeLinkAfterClaimSent(be, do, aliceCli, acmeMap,
+                                   jobApplicationClaimSent,
+                                   showAcceptedLinkWithAvailableClaimsOut):
+
+    be(aliceCli)
+    mapping = {}
+    mapping.update(acmeMap)
+    mapping["claims"] = "Job-Certificate"
+
+    acmeMap.update(acmeMap)
+    do("show link {inviter}",       expect=showAcceptedLinkWithAvailableClaimsOut,
+                                    mapper=mapping)
+
+
+def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
+                         showJobCertClaimOut,
+                         jobApplicationClaimSent):
+
+    be(aliceCli)
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=1)
+    do("show claim {name}",
+                                    within=2,
+                                    expect=showJobCertClaimOut,
+                                    mapper=jobCertificateClaimMap)
+
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=1)
+
+
+@pytest.fixture(scope="module")
+def jobCertClaimRequested(be, do, aliceCli,
+                        jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
+                        jobApplicationClaimSent):
+
+    def removeClaimDef():
+        inviter = jobCertificateClaimMap["inviter"]
+        links = aliceCli.activeWallet.getMatchingLinks(inviter)
+        assert len(links) == 1
+        faberId = links[0].remoteIdentifier
+        name, version = jobCertificateClaimMap["name"], \
+                        jobCertificateClaimMap["version"]
+        aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
+
+    # Removing claim def to check if it fetches the claim def again or not
+    removeClaimDef()
+
+    be(aliceCli)
+
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
+                      totalCredDefs=1, totalClaimsRcvd=1)
+
+    do("request claim {name}",      within=7,
+                                    expect=reqClaimOut1,
+                                    mapper=jobCertificateClaimMap)
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+
+
+def testReqJobCertClaim(jobCertClaimRequested):
+    pass
+
+
+def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
+                                  jobCertClaimRequested,
+                                  jobCertificateClaimValueMap,
+                                  rcvdJobCertClaimOut):
+    be(aliceCli)
+    do("show claim {name}",
+                                    expect=rcvdJobCertClaimOut,
+                                    mapper=jobCertificateClaimValueMap)
+
+
+@pytest.fixture(scope="module")
+def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap,
+                              jobCertClaimRequested,
+                              thriftAddedByPhil,
+                              thriftWithEndpointAdded):
+    be(aliceCli)
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2, within=2)
+
+    do('load {invite}',             expect=loadInviteOut, mapper=thriftMap)
+
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+    return aliceCli
+
+
+def testAliceLoadedThriftLoanApplication(thriftInviteLoadedByAlice):
+    pass
+
+
+@pytest.fixture(scope="module")
+def aliceAcceptedThriftLoanApplication(be, do, aliceCli, thriftMap,
+                                       connectedToTest,
+                                       thriftIsRunning,
+                                       thriftInviteLoadedByAlice,
+                                       syncedInviteAcceptedOutWithoutClaims):
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2, within=2)
+
+    connectIfNotAlreadyConnected(do, connectedToTest, aliceCli, thriftMap)
+
+    acceptInvitation(be, do, aliceCli, thriftMap,
+                     syncedInviteAcceptedOutWithoutClaims)
+
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+    return aliceCli
+
+
+def testAliceAcceptsThriftLoanApplication(aliceAcceptedThriftLoanApplication):
+    pass
+
+
+
+@pytest.fixture(scope="module")
+def bankBasicClaimSent(be, do, aliceCli, thriftMap,
+                       aliceAcceptedThriftLoanApplication):
+    mapping = {}
+    mapping.update(thriftMap)
+    mapping["claim-req-to-match"] = "Loan-Application-Basic"
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+    extraMsgs = ["Loan eligibility criteria satisfied, "
+                 "please send another claim 'Loan-Application-KYC'"]
+    sendClaim(be, do, aliceCli, mapping, None, extraMsgs)
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+
+
+def testAliceSendBankBasicClaim(bankBasicClaimSent):
+    pass
+
+
+@pytest.fixture(scope="module")
+def bankKYCClaimSent(be, do, aliceCli, thriftMap,
+                     bankBasicClaimSent):
+    mapping = {}
+    mapping.update(thriftMap)
+    mapping["claim-req-to-match"] = "Loan-Application-KYC"
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+    sendClaim(be, do, aliceCli, mapping, None)
+    checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
+                      totalCredDefs=2, totalClaimsRcvd=2)
+
+
+def testAliceSendBankKYCClaim(bankKYCClaimSent):
+    pass

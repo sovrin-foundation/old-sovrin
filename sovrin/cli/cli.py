@@ -1308,9 +1308,10 @@ class SovrinCli(PlenumCli):
                     nonce = int(link.invitationNonce, 16)
                     self.logger.debug("Building proof using {} for {}".
                                       format(claimPrfReq, link))
-                    proof, encodedAttrs, verifiableAttrs, claimDefKey = \
+                    proof, encodedAttrs, verifiableAttrs, claimDefKeys = \
                         self.activeWallet.buildClaimProof(
                             nonce, claimPrfReq)
+
                     ctxLink, curClaimReq, selfAttestedAttrs = self.curContext
                     self.logger.debug("Current context {} {} {}".
                                       format(*self.curContext))
@@ -1326,7 +1327,7 @@ class SovrinCli(PlenumCli):
                         'encodedAttrs': encodedAttrs,
                         'verifiableAttrs': verifiableAttrs,
                         'selfAttestedAttrs': selfAttestedAttrs,
-                        'claimDefKey': list(claimDefKey)
+                        'claimDefKeys': claimDefKeys
                     }
                     signature = self.activeWallet.signMsg(op, link.verkey)
                     op[f.SIG.nm] = signature
