@@ -226,8 +226,15 @@ class WalletedAgent(Agent):
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
                CLAIM, AVAIL_CLAIM_LIST, EVENT
 
-    def getClaimList(self, claimNames=None):
+    def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
+
+    def isClaimAvailable(self, link, claimName):
+        raise NotImplementedError
+
+    def _postClaimVerif(self, claimName, link, frm):
+        link.verifiedClaimProofs.append(claimName)
+        self.postClaimVerif(claimName, link, frm)
 
     def getAvailableClaimList(self):
         raise NotImplementedError
@@ -579,6 +586,12 @@ class WalletedAgent(Agent):
         link = self.verifyAndGetLink(msg)
         if link:
             name = body[NAME]
+            if not self.isClaimAvailable(link, name):
+                self.notifyToRemoteCaller(
+                    EVENT_NOTIFY_MSG, "This claim is not yet available",
+                    self.wallet.defaultId, frm, origReqId=body.get(f.REQ_ID.nm))
+                return
+
             version = body[VERSION]
             origin = body[ORIGIN]
             # TODO: Need to do validation
@@ -664,8 +677,7 @@ class WalletedAgent(Agent):
                                  origReqId=body.get(f.REQ_ID.nm))
 
                 if result:
-                    nac = self.newAvailableClaimsPostClaimVerif(claimName)
-                    self.sendNewAvailableClaimsData(nac, frm, link)
+                    self._postClaimVerif(claimName, link, frm)
 
             getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
                                                self.loop, claimDefKey,
@@ -674,8 +686,12 @@ class WalletedAgent(Agent):
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:
             # TODO: This logic assumes that the req id is time based
-            curTime = getTimeBasedId()
-            responseTime = ' ({} ms)'.format((curTime - reqId)/1000)
+            timeTakenInMillis = (getTimeBasedId() - reqId)/1000
+
+            if timeTakenInMillis >= 1000:
+                responseTime = ' ({} sec)'.format(round(timeTakenInMillis/1000, 2))
+            else:
+                responseTime = ' ({} ms)'.format(round(timeTakenInMillis, 2))
         else:
             responseTime = ''
 
@@ -690,13 +706,13 @@ class WalletedAgent(Agent):
         self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
         self.notifyMsgListener(data)
 
-    def notifyToRemoteCaller(self, event, msg, identifier, frm, origReqId=None):
+    def notifyToRemoteCaller(self, event, msg, signingIdr, frm, origReqId=None):
         resp = {
             TYPE: EVENT,
             EVENT_NAME: event,
             DATA: {'msg': msg}
         }
-        self.signAndSend(resp, identifier, frm, origReqId=origReqId)
+        self.signAndSend(resp, signingIdr, frm, origReqId=origReqId)
 
     def _acceptInvite(self, msg):
         body, (frm, ha) = msg

@@ -86,8 +86,19 @@ class AcmeAgent(WalletedAgent):
         else:
             raise NonceNotFound
 
+    def isClaimAvailable(self, link, claimName):
+        if claimName == "Job-Certificate" and \
+                        "Job-Application" in link.verifiedClaimProofs:
+            return True
+        else:
+            return False
+
     def getAvailableClaimList(self):
         return self.availableClaims
+
+    def postClaimVerif(self, claimName, link, frm):
+        nac = self.newAvailableClaimsPostClaimVerif(claimName)
+        self.sendNewAvailableClaimsData(nac, frm, link)
 
     def newAvailableClaimsPostClaimVerif(self, claimName):
         if claimName == "Job-Application":

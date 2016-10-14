@@ -58,7 +58,8 @@ class Link:
         self.internalId = internalId
 
         self.claimProofRequests = claimProofRequests or []
-        self.availableClaims = []
+        self.verifiedClaimProofs = []
+        self.availableClaims = []      # type: List[tupe(name, version, origin)]
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
