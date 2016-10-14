@@ -311,9 +311,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
     def getCredential(self, name: str):
         return self._credentials.get(name)
 
-    # def addMasterSecret(self, masterSecret):
-    #     self._credMasterSecret = masterSecret
-
     def addLink(self, link: Link):
         self._links[link.key] = link
 
