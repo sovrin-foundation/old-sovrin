@@ -178,7 +178,7 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
 
 
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
-                                       loop, *claimDefKeys, clbk, pargs=None):
+                                       loop, claimDefKey, clbk, pargs=None):
 
     # This assumes that author of claimDef is same as the author of
     # issuerPublicKey
@@ -189,19 +189,18 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
                                    seqNo, clbk, pargs)
 
-    for claimDefKey in claimDefKeys:
-        chk = partial(wallet.isClaimDefComplete, claimDefKey)
-        if not chk():
-            req = wallet.requestClaimDef(claimDefKey, wallet.defaultId)
-            client.submitReqs(req)
-            displayer("Getting Claim Definition from Sovrin: {} {}"
-                      .format(claimDefKey[0], claimDefKey[1]))
-            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
-                            _getKey, None, None, chk)
-        else:
-            claimDef = wallet.getClaimDef(key=claimDefKey)
-            getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop,
-                                       claimDef.origin, claimDef.seqNo, clbk, pargs)
+    chk = partial(wallet.isClaimDefComplete, claimDefKey)
+    if not chk():
+        req = wallet.requestClaimDef(claimDefKey, wallet.defaultId)
+        client.submitReqs(req)
+        displayer("Getting Claim Definition from Sovrin: {} {}"
+                  .format(claimDefKey[0], claimDefKey[1]))
+        loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+                        _getKey, None, None, chk)
+    else:
+        claimDef = wallet.getClaimDef(key=claimDefKey)
+        getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop,
+                                   claimDef.origin, claimDef.seqNo, clbk, pargs)
 
 
 # TODO: Should have a timeout, should not have kwargs

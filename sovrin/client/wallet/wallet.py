@@ -242,7 +242,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
                     creds[issuerId] = pb.credential
                     encodedAttrs.update(pb.encodedAttrs)
 
-
         proof = ProofBuilder.prepareProofAsDict(issuerPks=issuerPks,
                                                 masterSecret=self.masterSecret,
                                                 creds=creds,

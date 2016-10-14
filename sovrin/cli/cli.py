@@ -1327,7 +1327,8 @@ class SovrinCli(PlenumCli):
                         'encodedAttrs': encodedAttrs,
                         'verifiableAttrs': verifiableAttrs,
                         'selfAttestedAttrs': selfAttestedAttrs,
-                        'claimDefKeys': claimDefKeys
+                        'claimDefKeys': [list(cd.key) for cd in
+                                         claimDefKeys.values()]
                     }
                     signature = self.activeWallet.signMsg(op, link.verkey)
                     op[f.SIG.nm] = signature
