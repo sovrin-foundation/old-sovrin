@@ -634,17 +634,24 @@ class WalletedAgent(Agent):
                 encodedAttrs[iid] = stringDictToCharmDict(attrs)
             revealedAttrs = body['verifiableAttrs']
             nonce = int(body[NONCE], 16)
-            claimDefKeys = body['claimDefKeys']
+            claimDefKeys = [tuple(_) for _ in body['claimDefKeys']]
 
-            def verify(r, e, claimDefKeys):
-                # This assumes that author of claimDef is same as the author of
-                # issuerPublicKey
+            fetchedClaimDefs = 0
+
+            def verify(r, e):
+                # ASSUMPTION: This assumes that author of claimDef is same
+                # as the author of issuerPublicKey
                 # TODO: Do json validation
-                nonlocal proof, nonce, body
+                nonlocal proof, nonce, body, claimDefKeys, fetchedClaimDefs
+                # TODO: This is not thread safe, can lead to race condition
+                fetchedClaimDefs += 1
+                if fetchedClaimDefs < len(claimDefKeys):
+                    return
 
+                proof = ProofBuilder.prepareProofFromDict(proof)
                 credDefPks = {}
                 for claimDefKey in claimDefKeys:
-                    name, version, origin = claimDef
+                    name, version, origin = claimDefKey
                     claimDef = self.wallet.getClaimDef(key=claimDefKey)
                     issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
                         claimDef.seqNo)
@@ -681,9 +688,10 @@ class WalletedAgent(Agent):
                 if result:
                     self._postClaimVerif(claimName, link, frm)
 
-            getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client, print,
-                                               self.loop, claimDefKeys,
-                                               verify, pargs=claimDefKeys)
+            for claimDefKey in claimDefKeys:
+                getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client,
+                                                   print, self.loop, claimDefKey,
+                                                   verify)
 
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:

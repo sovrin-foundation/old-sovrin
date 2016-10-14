@@ -1012,7 +1012,6 @@ def testAliceAcceptsThriftLoanApplication(aliceAcceptedThriftLoanApplication):
     pass
 
 
-
 @pytest.fixture(scope="module")
 def bankBasicClaimSent(be, do, aliceCli, thriftMap,
                        aliceAcceptedThriftLoanApplication):

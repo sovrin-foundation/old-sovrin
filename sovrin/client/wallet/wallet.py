@@ -207,12 +207,14 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         # Assuming building proof from a single claim
         attrNames = set(cpr.attributes.keys())
         matchedAttrs = set()
-        issuerIds = []
+        issuerAttrs = {}
         for iid, attributes in self.attributesFrom.items():
-            commonAttrs = attrNames.intersection(set(attributes.keys()))
-            if len(matchedAttrs) < len(commonAttrs):
-                matchedAttrs = commonAttrs
-                issuerIds.append(iid)
+            lookingFor = attrNames - matchedAttrs
+            commonAttrs = lookingFor.intersection(set(attributes.keys()))
+            issuerAttrs[iid] = commonAttrs
+            matchedAttrs.update(commonAttrs)
+            if len(matchedAttrs) == len(attrNames):
+                break
 
         creds = {}
         issuerPks = {}
@@ -220,7 +222,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         claimDefKeys = {}
         revealedAttrs = []
 
-        for issuerId in issuerIds:
+        for issuerId, attrs in issuerAttrs.items():
             for pid, (pb, _, _, _) in self.proofBuilders.items():
                 if not pb.credential:
                     continue
@@ -237,7 +239,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
                         seqNo=issuerPubKey.claimDefSeqNo)
 
                     claimDefKeys[issuerPubKey.claimDefSeqNo] = claimDef
-                    revealedAttrs.extend(list(matchedAttrs))
+                    revealedAttrs.extend(list(attrs))
                     issuerPks.update(pb.issuerPks)
                     creds[issuerId] = pb.credential
                     encodedAttrs.update(pb.encodedAttrs)
