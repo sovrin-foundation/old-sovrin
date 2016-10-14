@@ -52,43 +52,12 @@ DID forms tests
 """
 
 
-# Empty verkey tests
-import pytest
-
-from sovrin.client.wallet.wallet import Wallet
-from sovrin.test.helper import addUser
+def testNewIdentifierInWalletIsDid(abbrevIdr):
+    assert len(abbrevIdr) == 22
 
 
-def testNewIdentifierInWalletIsDid():
-    wallet = Wallet('my wallet')
-    idr, _ = wallet.addIdentifier()
-    assert len(idr) == 22
+def testDefaultVerkeyIsAbbreviated(abbrevVerkey):
+    assert len(abbrevVerkey) == 23
+    assert abbrevVerkey[0] == '~'
 
 
-@pytest.mark.skip("Not yet implemented")
-def testAddDidWithoutAVerkey(addedSponsor, looper, sponsor, sponsorWallet):
-    """{ type: NYM, dest: <id1> }"""
-    addUser(looper, sponsor, sponsorWallet, 'userA')
-
-
-@pytest.mark.skip("Not yet implemented")
-def testRetrieveEmptyVerkey():
-    """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
-
-
-@pytest.mark.skip("Not yet implemented")
-def testChangeEmptyVerkeyToNewVerkey():
-    """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    raise NotImplementedError
-
-
-@pytest.mark.skip("Not yet implemented")
-def testRetrieveChangedVerkey():
-    """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
-
-
-@pytest.mark.skip("Not yet implemented")
-def testVerifySigWithChangedVerkey():
-    raise NotImplementedError

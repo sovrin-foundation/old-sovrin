@@ -44,7 +44,7 @@ def emptyLooper():
 def walletBuilder():
     def _(name):
         wallet = Wallet(name)
-        wallet.addSigner(signer=SimpleSigner())
+        wallet.addIdentifier(signer=SimpleSigner())
         return wallet
     return _
 

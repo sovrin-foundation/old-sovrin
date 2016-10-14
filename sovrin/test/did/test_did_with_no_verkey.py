@@ -51,44 +51,39 @@ DID forms tests
     Any other forms are rejected.
 """
 
-
-# Empty verkey tests
 import pytest
-
-from sovrin.client.wallet.wallet import Wallet
 from sovrin.test.helper import addUser
 
+ni = pytest.mark.skip("Not yet implemented")
 
-def testNewIdentifierInWalletIsDid():
-    wallet = Wallet('my wallet')
-    idr, _ = wallet.addIdentifier()
-    assert len(idr) == 22
+@ni
+def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
+    assert wallet.getverkey(noKeyIdr) is None
 
 
-@pytest.mark.skip("Not yet implemented")
 def testAddDidWithoutAVerkey(addedSponsor, looper, sponsor, sponsorWallet):
     """{ type: NYM, dest: <id1> }"""
     addUser(looper, sponsor, sponsorWallet, 'userA')
 
 
-@pytest.mark.skip("Not yet implemented")
+@ni
 def testRetrieveEmptyVerkey():
     """{ type: GET_NYM, dest: <id1> }"""
     raise NotImplementedError
 
 
-@pytest.mark.skip("Not yet implemented")
+@ni
 def testChangeEmptyVerkeyToNewVerkey():
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
     raise NotImplementedError
 
 
-@pytest.mark.skip("Not yet implemented")
+@ni
 def testRetrieveChangedVerkey():
     """{ type: GET_NYM, dest: <id1> }"""
     raise NotImplementedError
 
 
-@pytest.mark.skip("Not yet implemented")
+@ni
 def testVerifySigWithChangedVerkey():
     raise NotImplementedError

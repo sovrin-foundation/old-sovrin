@@ -47,7 +47,7 @@ def getAgentCmdLineParams():
 def buildFaberWallet():
     name = "FaberCollege"
     wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner(
+    wallet.addIdentifier(signer=SimpleSigner(
         seed=b'Faber000000000000000000000000000'))
     return wallet
 
@@ -55,7 +55,7 @@ def buildFaberWallet():
 def buildAcmeWallet():
     name = "AcmeCorp"
     wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner(
+    wallet.addIdentifier(signer=SimpleSigner(
         seed=b'Acme0000000000000000000000000000'))
     return wallet
 
@@ -63,6 +63,6 @@ def buildAcmeWallet():
 def buildThriftWallet():
     name = "ThriftBank"
     wallet = Wallet(name)
-    wallet.addSigner(signer=SimpleSigner(
+    wallet.addIdentifier(signer=SimpleSigner(
         seed=b'Thrift00000000000000000000000000'))
     return wallet
