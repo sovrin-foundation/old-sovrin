@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import time
 from plenum.common.types import f
 
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
@@ -759,9 +760,10 @@ def aliceSelfAttestsAttributes(be, do, aliceCli, acmeMap,
     return mapping
 
 
-def testShowJobApplicationClaimReqAfterSetAttr(do,
+def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli,
                                                showJobAppClaimReqOut,
                                                aliceSelfAttestsAttributes):
+    be(aliceCli)
     do("show claim request {claim-req-to-show}",
                                     expect=showJobAppClaimReqOut,
                                     mapper=aliceSelfAttestsAttributes)
@@ -808,7 +810,7 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
              expect=["Nonce not found".format(msg)])
 
 
-def sendClaim(be, do, userCli, agentMap, newAvailableClaims):
+def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
     be(userCli)
 
     expectMsgs = [
@@ -816,6 +818,8 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims):
         "{claim-ver-req-to-show} has been "
         "received and verified"
     ]
+    if extraMsgs:
+        expectMsgs.extend(extraMsgs)
     mapping = {}
     mapping.update(agentMap)
     if newAvailableClaims:
@@ -826,6 +830,47 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims):
                                     within=7,
                                     expect=expectMsgs,
                                     mapper=mapping)
+
+
+def testReqUnavailableClaim(be, do, aliceCli,
+                            acmeMap,
+                            reqClaimOut1,
+                            acmeIsRunning,
+                            aliceAcceptedAcmeJobInvitation):
+
+    acme, _ = acmeIsRunning
+    be(aliceCli)
+
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
+                      totalCredDefs=1, totalClaimsRcvd=1)
+
+    link = aliceCli.activeWallet._links[acmeMap.get('inviter')]
+    oldAvailableClaims = []
+    oldCredDefs = {}
+    for ac in link.availableClaims:
+        oldAvailableClaims.append(ac)
+
+    for cd in aliceCli.activeWallet._claimDefs.values():
+        oldCredDefs[cd.key] = cd
+
+    newAvailableClaims = acme.getJobCertAvailableClaimList()
+
+    def dummyPostCredDef(li, nac):
+        pass
+
+    aliceCli.agent._processNewAvailableClaimsData(
+        link, newAvailableClaims, dummyPostCredDef)
+
+    time.sleep(3)
+
+    do("request claim Job-Certificate",
+       within=7,
+       expect=["This claim is not yet available"])
+
+    link.availableClaims = oldAvailableClaims
+    aliceCli.activeWallet._claimDefs = oldCredDefs
+    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
+                      totalCredDefs=1, totalClaimsRcvd=1)
 
 
 @pytest.fixture(scope="module")
@@ -846,8 +891,9 @@ def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
     pass
 
 
-# TODO: Need to uncomment below tests once above send claim test
-# (testAliceSendClaimProofToAcme) works correctly
+# TODO: Need to uncomment below tests once above testAliceSendClaimProofToAcme
+# test works correctly all the time and also we start supporting
+# building and sending claim proofs from more than one claim
 
 # def testShowAcmeLinkAfterClaimSent(be, do, aliceCli, acmeMap,
 #                                    jobApplicationClaimSent,
@@ -974,7 +1020,9 @@ def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
 #     mapping["claim-req-to-match"] = "Loan-Application-Basic"
 #     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
 #                       totalCredDefs=2, totalClaimsRcvd=2)
-#     sendClaim(be, do, aliceCli, mapping, None)
+#     extraMsgs = ["Loan eligibility criteria satisfied, "
+#                  "please send another claim 'Loan-Application-KYC'"]
+#     sendClaim(be, do, aliceCli, mapping, None, extraMsgs)
 #     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
 #                       totalCredDefs=2, totalClaimsRcvd=2)
 #

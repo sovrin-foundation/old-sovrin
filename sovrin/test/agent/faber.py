@@ -87,11 +87,17 @@ class FaberAgent(WalletedAgent):
         else:
             raise NonceNotFound
 
+    def isClaimAvailable(self, link, claimName):
+        if claimName == "Transcript":
+            return True
+        else:
+            return False
+
     def getAvailableClaimList(self):
         return self.availableClaims
 
-    def newAvailableClaimsPostClaimVerif(self, claimName):
-        return []
+    def postClaimVerif(self, claimName, link, frm):
+        pass
 
     def initAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()

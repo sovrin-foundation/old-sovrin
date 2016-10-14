@@ -2,7 +2,7 @@ import os
 
 from plenum.common.log import getlogger
 
-from sovrin.agent.agent import WalletedAgent, runAgent
+from sovrin.agent.agent import WalletedAgent, runAgent, EVENT_NOTIFY_MSG
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
@@ -46,11 +46,19 @@ class ThriftAgent(WalletedAgent):
         else:
             raise NonceNotFound
 
+    def isClaimAvailable(self, link, claimName):
+        return True
+
     def getAvailableClaimList(self):
         return []
 
-    def newAvailableClaimsPostClaimVerif(self, claimName):
-        return []
+    def postClaimVerif(self, claimName, link, frm):
+        if claimName == "Loan-Application-Basic":
+            self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                      "    Loan eligibility criteria satisfied,"
+                                      " please send another claim "
+                                      "'Loan-Application-KYC'\n",
+                                      self.wallet.defaultId, frm)
 
     def addClaimDefsToWallet(self):
         pass

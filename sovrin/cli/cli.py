@@ -292,7 +292,7 @@ class SovrinCli(PlenumCli):
                    self._getReqClaimUsage(claimName)
             self.printSuggestion(msgs)
         elif claimProofReqsCount > 0:
-            self._printShowClaimReqUsage()
+            self.printSuggestion(self._getShowClaimReqUsage())
         else:
             self.print("")
 
@@ -1034,7 +1034,7 @@ class SovrinCli(PlenumCli):
             self._sendAcceptInviteToTargetEndpoint(link)
         else:
             self.print("Remote endpoint not found, "
-                       "can not connect to {}".format(link.name))
+                       "can not connect to {}\n".format(link.name))
 
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
@@ -1276,6 +1276,7 @@ class SovrinCli(PlenumCli):
                 if not self._isConnectedToAnyEnv():
                     self._printNotConnectedEnvMessage()
                     return True
+
                 claimDefKey = (name, version, origin)
                 getCredDefIsrKeyAndExecuteCallback(self.activeWallet,
                                                    self.activeClient,
