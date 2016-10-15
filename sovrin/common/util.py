@@ -131,6 +131,7 @@ def getNonce(length=32):
     return "".join([random.choice(hexChars) for i in range(length)])
 
 
+# TODO: Bad interface, should return just attributes in a dictionary
 def getEncodedAttrs(issuerId, attributes):
     attribTypes = []
     for nm in attributes.keys():
@@ -174,13 +175,16 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
                             clbk, None, None, chk)
     else:
         # Since reply and error will be none
-        clbk(None, None, *pargs)
+        if pargs is None:
+            clbk(None, None)
+        else:
+            clbk(None, None, *pargs)
 
 
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
                                        loop, claimDefKey, clbk, pargs=None):
 
-    # This assumes that author of claimDef is same as the author of
+    # ATTENTION: This assumes that author of claimDef is same as the author of
     # issuerPublicKey
     def _getKey(result, error):
         data = json.loads(result.get(DATA))

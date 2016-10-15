@@ -5,6 +5,7 @@ from anoncreds.protocol.credential_definition import CredentialDefinition
 from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, TARGET_NYM, TYPE,\
     ORIGIN
 from plenum.common.types import Identifier
+from sovrin.anon_creds.constant import ZERO_INDEX
 from sovrin.common.txn import CRED_DEF, GET_CRED_DEF, ATTR_NAMES, ISSUER_KEY, \
     GET_ISSUER_KEY, REF
 from sovrin.common.types import Request
@@ -136,3 +137,14 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     def getRequest(self, requestAuthor: Identifier):
         if not self.seqNo:
             return Request(identifier=requestAuthor, operation=self._opForGet())
+
+    @property
+    def attributeNames(self):
+        R = getattr(self, "R", None)
+        if not R:
+            raise RuntimeError("Cannot get attribute names since key has not been fetched completely")
+        return [n for n in R.keys() if n != ZERO_INDEX]
+
+    def canBeUsedForAttrsFrom(self, issuerId, attrNames):
+        return issuerId == self.origin and \
+               set(attrNames).issubset(set(self.attributeNames))

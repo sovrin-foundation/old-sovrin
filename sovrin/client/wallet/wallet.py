@@ -80,6 +80,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         # Optional[Identifier]), Attribute]
         self._claimDefs = {}  # type: Dict[(str, str, str), ClaimDef]
         self._claimDefSks = {}  # type: Dict[(str, str, str), ClaimDefSk]
+        # TODO: Need to move to prover wallet
         self._credentials = {}  # type: Dict[str, Credential]
         self._links = {}  # type: Dict[str, Link]
         self.knownIds = {}  # type: Dict[str, Identifier]
@@ -89,6 +90,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         #  value is a map of attributes
         self.attributesFor = {}  # type: Dict[str, Dict]
 
+        # TODO: Move it to prover wallet
         # Attributes this wallet has from others. Think of an Prover's
         # attribute repo containing attributes from different Issuers. Key is a
         # identifier and value is a map of attributes
@@ -222,27 +224,19 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         claimDefKeys = {}
         revealedAttrs = []
 
+        # Use credential for each each issuer's attributes
         for issuerId, attrs in issuerAttrs.items():
-            for pid, (pb, _, _, _) in self.proofBuilders.items():
-                if not pb.credential:
-                    continue
-
-                if issuerId in pb.issuerPks:
-                    if not pb.encodedAttrs or issuerId not in pb.encodedAttrs:
-                        self.setProofBuilderAttributes(pb)
-                        if issuerId not in pb.encodedAttrs:
-                            raise Exception("Attributes not present")
-
-                    pk = pb.issuerPks[issuerId]
-                    issuerPubKey = self.getIssuerPublicKey(seqNo=pk.uid)
-                    claimDef = self.getClaimDef(
-                        seqNo=issuerPubKey.claimDefSeqNo)
-
-                    claimDefKeys[issuerPubKey.claimDefSeqNo] = claimDef
+            # Get issuer key for these `attrs`
+            # Then get credential for that issuer key
+            for uid, ipk in self._issuerPks.items():
+                if ipk.canBeUsedForAttrsFrom(issuerId, attrs):
+                    issuerPks[issuerId] = ipk
+                    creds[issuerId] = self.getCredentialByIssuerKey(
+                        seqNo=ipk.seqNo).toNamedTuple
+                    claimDef = self.getClaimDef(seqNo=ipk.claimDefSeqNo)
+                    claimDefKeys[issuerId] = list(claimDef.key)
                     revealedAttrs.extend(list(attrs))
-                    issuerPks.update(pb.issuerPks)
-                    creds[issuerId] = pb.credential
-                    encodedAttrs.update(pb.encodedAttrs)
+                    encodedAttrs.update(getEncodedAttrs(issuerId, self.attributesFrom[issuerId]))
 
         proof = ProofBuilder.prepareProofAsDict(issuerPks=issuerPks,
                                                 masterSecret=self.masterSecret,
@@ -326,6 +320,18 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
 
     def getCredential(self, name: str):
         return self._credentials.get(name)
+
+    def getCredentialByIssuerKey(self, seqNo: int, required=False):
+        issuerPk = self.getIssuerPublicKey(seqNo=seqNo)
+        if not issuerPk:
+            raise RuntimeError("Cannot find issuer key with seqNo {} in wallet"
+                               .format(seqNo))
+        for cred in self._credentials.values():
+            if cred.issuerKeyId == seqNo:
+                return cred
+        if required:
+            raise RuntimeError("Credential not found in wallet for issuer key"
+                               " {}".format(issuerPk))
 
     def addLink(self, link: Link):
         self._links[link.key] = link
@@ -598,37 +604,37 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
                     return pk
         return self._issuerPks.get(key)
 
-    def getIssuerPublicKeyForClaimDef(self, seqNo=None, key=None) -> \
+    def getIssuerPublicKeyForClaimDef(self, issuerId, seqNo=None,
+                                      claimDefKey=None, required=False) -> \
             Optional[IssuerPubKey]:
+        notFoundMsg = "Issuer public key not found"
         if not seqNo:
-            claimDef = self.getClaimDef(key=key)
+            claimDef = self.getClaimDef(key=claimDefKey)
             if not claimDef:
                 logger.info("Cannot get issuer key by claim def since claim "
-                            "def not fetched yet: {}".format(key))
+                            "def not fetched yet: {}".format(claimDefKey))
+                if required:
+                    raise RuntimeError(notFoundMsg)
                 return None
             else:
                 seqNo = claimDef.seqNo
-        # Assuming only one identifier per claimDefSeqNo
-        for k, v in self._issuerPks.items():
-            if seqNo and k[1] == seqNo:
-                return v
+        ipk = self.getIssuerPublicKey(key=(issuerId, seqNo))
+        if ipk:
+            return ipk
+
+        if required:
+            raise RuntimeError(notFoundMsg)
+
+    def getAllIssuerKeysForClaimDef(self, seqNo):
+        return [ipk for ipk in self._issuerPks.values()
+                if ipk.claimDefSeqNo == seqNo]
 
     def getAvailableClaimList(self):
         resp = []
         for k, v in self._claimDefs.items():
-            ipk = self.getIssuerPublicKeyForClaimDef(v.seqNo)
-            resp.append((v, ipk))
+            ipks = self.getAllIssuerKeysForClaimDef(v.seqNo)
+            resp.extend([(v, ipk) for ipk in ipks])
         return resp
-
-    def addCredentialToProofBuilder(self, claimDefKey, issuerId, credential):
-        for pb, name, version, origin in self.proofBuilders.values():
-            if (name, version, origin) == claimDefKey and issuerId in pb.U:
-                logger.debug("{} adding credential to proof builder")
-                credential = ATypes.Credential(credential.A, credential.e,
-                                               pb.vprime[
-                                                   issuerId] + credential.v)
-                pb.setCredential(credential)
-                return
 
     def isClaimDefComplete(self, claimDefKey):
         claimDef = self.getClaimDef(key=claimDefKey)
@@ -637,3 +643,10 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
     def isIssuerKeyComplete(self, origin, reference):
         ipk = self.getIssuerPublicKey(key=(origin, reference))
         return ipk and ipk.seqNo
+
+    # TODO: Move to prover wallet
+    def getIssuedAttributes(self, issuerId, encoded=False):
+        attributes = self.attributesFrom.get(issuerId, {})
+        if encoded:
+            attributes = getEncodedAttrs(issuerId, attributes).get(issuerId)
+        return attributes

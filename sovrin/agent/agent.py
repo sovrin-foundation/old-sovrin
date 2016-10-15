@@ -528,7 +528,8 @@ class WalletedAgent(Agent):
             claimDefKey = (name, version, claimAuthor)
             attributes = claim['attributes']
             self.wallet.addAttrFrom(issuerId, attributes)
-            issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(key=claimDefKey)
+            issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
+                issuerId=issuerId, claimDefKey=claimDefKey)
             if not issuerKey:
                 raise RuntimeError("Issuer key not available for claim def {}".
                                    format(claimDefKey))
@@ -538,14 +539,6 @@ class WalletedAgent(Agent):
                 v=claim[V_PRIME_PRIME],
                 vprime=vprime)
             self.wallet.addCredential(str(uuid.uuid4()), credential)
-            # credential = Credential(*(strToCharmInteger(x) for x in
-            #                           [claim[CRED_A], claim[CRED_E],
-            #                            claim[V_PRIME_PRIME]]))
-
-            # self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
-            #                                   data[f.IDENTIFIER.nm]),
-            #                                  data[f.IDENTIFIER.nm],
-            #                                  credential)
         else:
             self.notifyMsgListener("No matching link found")
 
@@ -619,7 +612,8 @@ class WalletedAgent(Agent):
                                                 attributes).values()))
             sk = CredDefSecretKey.fromStr(
                 self.wallet.getClaimDefSk(claimDef.secretKey))
-            pk = self.wallet.getIssuerPublicKeyForClaimDef(claimDef.seqNo)
+            pk = self.wallet.getIssuerPublicKeyForClaimDef(link.localIdentifier,
+                                                           claimDef.seqNo)
             cred = Issuer.generateCredential(uValue, encodedAttrs, pk, sk)
             claimDetails = {
                 NAME: claimDef.name,
@@ -647,7 +641,7 @@ class WalletedAgent(Agent):
                 encodedAttrs[iid] = stringDictToCharmDict(attrs)
             revealedAttrs = body['verifiableAttrs']
             nonce = int(body[NONCE], 16)
-            claimDefKeys = [tuple(_) for _ in body['claimDefKeys']]
+            claimDefKeys = {iid: tuple(_) for iid, _ in body['claimDefKeys'].items()}
 
             fetchedClaimDefs = 0
 
@@ -662,17 +656,17 @@ class WalletedAgent(Agent):
                     return
 
                 proof = ProofBuilder.prepareProofFromDict(proof)
-                credDefPks = {}
-                for claimDefKey in claimDefKeys:
-                    name, version, origin = claimDefKey
+                issuerPks = {}
+                for issuerId, claimDefKey in claimDefKeys.items():
+                    # name, version, origin = claimDefKey
                     claimDef = self.wallet.getClaimDef(key=claimDefKey)
                     issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
-                        claimDef.seqNo)
-                    credDefPks[origin] = issuerKey
+                        issuerId=issuerId, seqNo=claimDef.seqNo)
+                    issuerPks[issuerId] = issuerKey
 
                 claimName = body[NAME]
 
-                result = Verifier.verifyProof(credDefPks, proof, nonce,
+                result = Verifier.verifyProof(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
                 logger.info("claim {} verification result: {}".
@@ -681,9 +675,9 @@ class WalletedAgent(Agent):
                 # TODO: Following line is temporary and need to be removed
                 # result = True
 
-                logger.debug("credDefPks, proof, nonce, encoded, revealed is "
+                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
-                             format(credDefPks, proof, nonce,
+                             format(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs))
                 logger.debug("result is {}".format(str(result)))
@@ -701,7 +695,7 @@ class WalletedAgent(Agent):
                 if result:
                     self._postClaimVerif(claimName, link, frm)
 
-            for claimDefKey in claimDefKeys:
+            for claimDefKey in claimDefKeys.values():
                 getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client,
                                                    print, self.loop, claimDefKey,
                                                    verify)
@@ -824,12 +818,12 @@ class WalletedAgent(Agent):
         }
         wallet = self.wallet
         claimDef = ClaimDef(seqNo=credDefSeqNo,
-                           attrNames=claimDef[ATTR_NAMES],
-                           name=claimDef[NAME],
-                           version=claimDef[VERSION],
-                           origin=wallet.defaultId,
-                           typ=claimDef[TYPE],
-                           secretKey=sid)
+                            attrNames=claimDef[ATTR_NAMES],
+                            name=claimDef[NAME],
+                            version=claimDef[VERSION],
+                            origin=wallet.defaultId,
+                            typ=claimDef[TYPE],
+                            secretKey=sid)
         wallet._claimDefs[(name, version, wallet.defaultId)] = claimDef
         isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
         self.wallet.addIssuerSecretKey(isk)
