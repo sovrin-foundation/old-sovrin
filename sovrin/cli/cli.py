@@ -15,7 +15,7 @@ import sovrin.anon_creds.cred_def as CredDefModule
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
-from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.protocol.utils import strToCryptoInteger
 from anoncreds.test.conftest import staticPrimes
 from anoncreds.test.cred_def_test_store import MemoryCredDefStore
 from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
@@ -799,7 +799,7 @@ class SovrinCli(PlenumCli):
 
     @staticmethod
     def getCryptoInteger(x):
-        return strToCharmInteger(x) if isinstance(x, str) else x
+        return strToCryptoInteger(x) if isinstance(x, str) else x
 
     def _verifyProofAction(self, matchedVars):
         if matchedVars.get('verif_proof') == 'verify status is':

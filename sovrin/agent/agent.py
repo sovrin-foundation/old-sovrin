@@ -11,7 +11,7 @@ from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.protocol.utils import strToCryptoInteger
 from anoncreds.protocol.verifier import Verifier
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
@@ -604,7 +604,7 @@ class WalletedAgent(Agent):
             version = body[VERSION]
             origin = body[ORIGIN]
             # TODO: Need to do validation
-            uValue = strToCharmInteger(body['U'])
+            uValue = strToCryptoInteger(body['U'])
             claimDef = self.wallet.getClaimDef(key=(name, version, origin))
             attributes = self._getClaimsAttrsFor(link.internalId,
                                                  claimDef.attrNames)

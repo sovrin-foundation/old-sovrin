@@ -13,7 +13,7 @@ import libnacl.secret
 from ledger.util import F
 
 from anoncreds.protocol.types import AttribType, AttribDef
-from anoncreds.protocol.utils import strToCharmInteger, isCharmInteger
+from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
 from plenum.common.signing import serializeForSig
 from plenum.common.txn import KEYS, DATA, ORIGIN
 from plenum.common.types import f
@@ -146,13 +146,13 @@ def getEncodedAttrs(issuerId, attributes):
 def stringDictToCharmDict(dictionary):
     for k, v in dictionary.items():
         if isinstance(v, str):
-            dictionary[k] = strToCharmInteger(v)
+            dictionary[k] = strToCryptoInteger(v)
     return dictionary
 
 
 def charmDictToStringDict(dictionary):
     for k, v in dictionary.items():
-        if isCharmInteger(v) or isinstance(v, int):
+        if isCryptoInteger(v) or isinstance(v, int):
             dictionary[k] = str(v)
     return dictionary
 

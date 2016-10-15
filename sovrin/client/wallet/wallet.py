@@ -33,7 +33,7 @@ from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, CRED_DEF, \
 from sovrin.common.identity import Identity
 from sovrin.common.types import Request
 
-from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.protocol.utils import strToCryptoInteger
 from sovrin.common.util import getEncodedAttrs, stringDictToCharmDict
 
 ENCODING = "utf-8"
@@ -80,8 +80,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         # Optional[Identifier]), Attribute]
         self._claimDefs = {}  # type: Dict[(str, str, str), ClaimDef]
         self._claimDefSks = {}  # type: Dict[(str, str, str), ClaimDefSk]
-        # TODO: Need to move to prover wallet
-        self._credentials = {}  # type: Dict[str, Credential]
+
         self._links = {}  # type: Dict[str, Link]
         self.knownIds = {}  # type: Dict[str, Identifier]
 
@@ -89,12 +88,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         #  repo containing attributes for different Provers. Key is a nonce and
         #  value is a map of attributes
         self.attributesFor = {}  # type: Dict[str, Dict]
-
-        # TODO: Move it to prover wallet
-        # Attributes this wallet has from others. Think of an Prover's
-        # attribute repo containing attributes from different Issuers. Key is a
-        # identifier and value is a map of attributes
-        self.attributesFrom = {}  # type: Dict[str, Dict]
 
         # TODO: Shouldnt proof builders be uniquely identified by claim def
         # and issuerId
@@ -205,55 +198,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
                         matchingLinkAndClaimReq.append((li, cpr))
         return matchingLinkAndClaimReq
 
-    def buildClaimProof(self, nonce, cpr: ClaimProofRequest):
-        # Assuming building proof from a single claim
-        attrNames = set(cpr.attributes.keys())
-        matchedAttrs = set()
-        issuerAttrs = {}
-        for iid, attributes in self.attributesFrom.items():
-            lookingFor = attrNames - matchedAttrs
-            commonAttrs = lookingFor.intersection(set(attributes.keys()))
-            issuerAttrs[iid] = commonAttrs
-            matchedAttrs.update(commonAttrs)
-            if len(matchedAttrs) == len(attrNames):
-                break
-
-        creds = {}
-        issuerPks = {}
-        encodedAttrs = {}
-        claimDefKeys = {}
-        revealedAttrs = []
-
-        # Use credential for each each issuer's attributes
-        for issuerId, attrs in issuerAttrs.items():
-            # Get issuer key for these `attrs`
-            # Then get credential for that issuer key
-            for uid, ipk in self._issuerPks.items():
-                if ipk.canBeUsedForAttrsFrom(issuerId, attrs):
-                    issuerPks[issuerId] = ipk
-                    creds[issuerId] = self.getCredentialByIssuerKey(
-                        seqNo=ipk.seqNo).toNamedTuple
-                    claimDef = self.getClaimDef(seqNo=ipk.claimDefSeqNo)
-                    claimDefKeys[issuerId] = list(claimDef.key)
-                    revealedAttrs.extend(list(attrs))
-                    encodedAttrs.update(getEncodedAttrs(issuerId, self.attributesFrom[issuerId]))
-
-        proof = ProofBuilder.prepareProofAsDict(issuerPks=issuerPks,
-                                                masterSecret=self.masterSecret,
-                                                creds=creds,
-                                                revealedAttrs=revealedAttrs,
-                                                nonce=nonce,
-                                                encodedAttrs=encodedAttrs)
-        return proof, encodedAttrs, revealedAttrs, claimDefKeys
-
-    def setProofBuilderAttributes(self, pb: ProofBuilder):
-        if pb.encodedAttrs is None:
-            pb.encodedAttrs = {}
-        for iid, pk in pb.issuerPks.items():
-            if iid in self.attributesFrom:
-                attributes = self.attributesFrom[iid]
-                pb.encodedAttrs.update(getEncodedAttrs(iid, attributes))
-
     def addAttribute(self, attrib: Attribute):
         """
         Used to create a new attribute on Sovrin
@@ -315,24 +259,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
     def getClaimDefSk(self, uid):
         return self._claimDefSks.get(uid)
 
-    def addCredential(self, alias, cred: Credential):
-        self._credentials[alias] = cred
-
-    def getCredential(self, name: str):
-        return self._credentials.get(name)
-
-    def getCredentialByIssuerKey(self, seqNo: int, required=False):
-        issuerPk = self.getIssuerPublicKey(seqNo=seqNo)
-        if not issuerPk:
-            raise RuntimeError("Cannot find issuer key with seqNo {} in wallet"
-                               .format(seqNo))
-        for cred in self._credentials.values():
-            if cred.issuerKeyId == seqNo:
-                return cred
-        if required:
-            raise RuntimeError("Credential not found in wallet for issuer key"
-                               " {}".format(issuerPk))
-
     def addLink(self, link: Link):
         self._links[link.key] = link
 
@@ -342,10 +268,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
             logger.debug("Wallet has links {}".format(self._links))
             raise LinkNotFound(l.name)
         return l
-
-    @property
-    def credNames(self):
-        return self._credentials.keys()
 
     def addLastKnownSeqs(self, identifier, seqNo):
         self.lastKnownSeqs[identifier] = seqNo
@@ -490,7 +412,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         isPk = self.getIssuerPublicKey(key=key)
         keys = data.get(DATA)
         for k in ('N', 'S', 'Z'):
-            keys[k] = strToCharmInteger(keys[k])
+            keys[k] = strToCryptoInteger(keys[k])
         keys['R'] = stringDictToCharmDict(keys['R'])
         isPk.initPubKey(data.get(F.seqNo.name), keys['N'], keys['R'],
                         keys['S'], keys['Z'])
@@ -643,10 +565,3 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
     def isIssuerKeyComplete(self, origin, reference):
         ipk = self.getIssuerPublicKey(key=(origin, reference))
         return ipk and ipk.seqNo
-
-    # TODO: Move to prover wallet
-    def getIssuedAttributes(self, issuerId, encoded=False):
-        attributes = self.attributesFrom.get(issuerId, {})
-        if encoded:
-            attributes = getEncodedAttrs(issuerId, attributes).get(issuerId)
-        return attributes

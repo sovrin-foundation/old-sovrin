@@ -1,6 +1,6 @@
 from typing import Dict
 
-from anoncreds.protocol.utils import strToCharmInteger
+from anoncreds.protocol.utils import strToCryptoInteger
 from anoncreds.protocol.types import Credential as CredType
 
 
@@ -10,9 +10,9 @@ from anoncreds.protocol.types import Credential as CredType
 class Credential:
     def __init__(self, issuerKeyId: int, A, e, v):
         self.issuerKeyId = issuerKeyId
-        self.A = strToCharmInteger(A) if isinstance(A, str) else A
-        self.e = strToCharmInteger(e) if isinstance(e, str) else e
-        self.v = strToCharmInteger(v) if isinstance(v, str) else v
+        self.A = strToCryptoInteger(A) if isinstance(A, str) else A
+        self.e = strToCryptoInteger(e) if isinstance(e, str) else e
+        self.v = strToCryptoInteger(v) if isinstance(v, str) else v
 
     @property
     def key(self):
@@ -20,7 +20,7 @@ class Credential:
 
     @classmethod
     def buildFromIssuerProvidedCred(cls, issuerKeyId, A, e, v, vprime):
-        vprime = strToCharmInteger(vprime) if isinstance(vprime, str) else vprime
+        vprime = strToCryptoInteger(vprime) if isinstance(vprime, str) else vprime
         cred = cls(issuerKeyId, A, e, v)
         cred.v += vprime
         return cred
