@@ -173,7 +173,13 @@ class Node(PlenumNode):
         s = self.graphStore  # type: IdentityGraph
 
         origin = request.identifier
-        originRole = s.getRole(origin)
+        try:
+            originRole = s.getRole(origin)
+        except Exception as ex:
+            raise UnauthorizedClientRequest(
+                request.identifier,
+                request.reqId,
+                "Nym {} not added to the ledger yet".format(origin))
 
         if typ == NYM:
             role = op.get(ROLE) or USER

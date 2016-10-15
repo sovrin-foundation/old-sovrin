@@ -400,7 +400,7 @@ class IdentityGraph(OrientDbGraphStore):
     def getRole(self, nym):
         nymV = self.getNym(nym)
         if not nymV:
-            raise ValueError("Nym does not exist")
+            raise ValueError("Nym {} does not exist".format(nym))
         else:
             return nymV.oRecordData.get(ROLE)
 
