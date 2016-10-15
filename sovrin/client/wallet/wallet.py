@@ -501,8 +501,8 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
                 return li
 
     def addIssuerSecretKey(self, issuerSk):
-        self._issuerSks[issuerSk.uid] = issuerSk
-        return issuerSk.uid
+        self._issuerSks[issuerSk.pubkey.uid] = issuerSk
+        return issuerSk.pubkey.uid
 
     def getIssuerSecretKey(self, uid):
         return self._issuerSks.get(uid)

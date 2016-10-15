@@ -522,7 +522,7 @@ class SovrinCli(PlenumCli):
             isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
             ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                                claimDefSeqNo=reference,
-                               secretKeyUid=isk.uid, origin=wallet.defaultId)
+                               secretKeyUid=isk.pubkey.uid, origin=wallet.defaultId)
 
             return ipk
         else:

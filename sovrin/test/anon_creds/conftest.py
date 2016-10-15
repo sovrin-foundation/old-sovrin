@@ -144,9 +144,10 @@ def issuerPublicKeysAdded(nodeSet, steward, addedSponsor, sponsor,
                           staticPrimes, claimDefinitionAdded,
                           issuerSecretKeyAdded):
     isk = sponsorWallet.getIssuerSecretKey(issuerSecretKeyAdded)
+    # TODO refactor IssuerPubKey to just take an IssuerKey as a constructor param
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                        claimDefSeqNo=claimDefinitionAdded,
-                       secretKeyUid=isk.uid, origin=sponsorWallet.defaultId)
+                       secretKeyUid=isk.pubkey.uid, origin=sponsorWallet.defaultId)
     sponsorWallet.addIssuerPublicKey(ipk)
     reqs = sponsorWallet.preparePending()
     sponsor.submitReqs(*reqs)

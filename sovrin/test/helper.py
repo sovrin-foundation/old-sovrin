@@ -530,7 +530,7 @@ def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
     agent.wallet.addIssuerSecretKey(isk)
     ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                        claimDefSeqNo=claimDef.seqNo,
-                       secretKeyUid=isk.uid, origin=agent.wallet.defaultId)
+                       secretKeyUid=isk.pubkey.uid, origin=agent.wallet.defaultId)
     agent.wallet.addIssuerPublicKey(ipk)
     reqs = agent.wallet.preparePending()
     agent.client.submitReqs(*reqs)

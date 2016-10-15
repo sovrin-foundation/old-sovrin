@@ -88,6 +88,8 @@ class ClaimDef(CredentialDefinition, HasSeqNo):
             self.attributes
 
 
+# TODO this pub key class should HAVE an IssuerKey, not BE and IssuerKey (also solves the late initialization)
+# TODO also, not sure why a secretKeyUid is needed. The point of a uid is an external reference, and we would never store a secret key externally.
 class IssuerPubKey(IssuerKey, HasSeqNo):
     def __init__(self, claimDefSeqNo: int,
                  origin, N=None, R=None, S=None, Z=None, secretKeyUid=None,
