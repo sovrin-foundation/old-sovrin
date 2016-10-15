@@ -1,6 +1,5 @@
 from plenum.cli.constants import CLIENT_GRAMS_CLIENT_COMMAND_REG_EX, relist, \
-    CLI_CMDS, getPipedRegEx, \
-    CLIENT_GRAMS_USE_KEYPAIR_REG_EX
+    CLI_CMDS, getPipedRegEx, CLIENT_GRAMS_USE_KEYPAIR_REG_EX
 
 CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX = getPipedRegEx(
     CLIENT_GRAMS_CLIENT_COMMAND_REG_EX +
@@ -76,7 +75,7 @@ GEN_CRED_REG_EX = \
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-    "\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+    "\s+ for \s+ credential \s+ (?P<pk_id>[a-zA-Z0-9\-]+)" \
     "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
     "\s*)"
 

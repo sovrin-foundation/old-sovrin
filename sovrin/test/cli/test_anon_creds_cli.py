@@ -233,11 +233,11 @@ def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
 
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
     pat = re.compile(
-        "Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
+        "Requesting credential for public key ([0-9]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
     m = pat.search(tylerCLI.lastCmdOutput)
     assert m
-    proofId, U = m.groups()
-    return proofId, U
+    publicKeyId, U = m.groups()
+    return publicKeyId, U
 
 
 @pytest.fixture(scope="module")
@@ -245,8 +245,8 @@ def byuCreatedCredential(nodesSetup, byuCLI, tylerCLI,
                          tylerStoresAttributesAsKnownToBYU, tylerPreparedU,
                          credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
-    proofId, U = tylerPreparedU
-    assert proofId
+    publicKeyId, U = tylerPreparedU
+    assert publicKeyId
     assert U
     proverId = tylerCLI.activeWallet.defaultAlias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
@@ -297,11 +297,11 @@ def revealedAtrr():
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
                credDefNameVersion, byuPubKey, byuCLI, tylerPreparedU):
-    proofId, U = tylerPreparedU
+    publicKeyId, U = tylerPreparedU
     assert len(tylerCLI.activeWallet.credNames) == 0
     checkCmdValid(tylerCLI, "store credential A={}, e={}, vprimeprime={} for "
                             "credential {} as {}".format(*byuCreatedCredential,
-                                                         proofId,
+                                                         publicKeyId,
                                                          storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"

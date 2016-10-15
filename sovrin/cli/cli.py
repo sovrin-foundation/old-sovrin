@@ -99,7 +99,8 @@ class SovrinCli(PlenumCli):
         self.verifier = Verifier(randomString(), MemoryCredDefStore(),
                                  MemoryIssuerKeyStore())
         _, port = self.nextAvailableClientAddr()
-        self.curContext = (None, None, {})  # Current Link, Current Claim Req, set attributes
+        self.curContext = (None, None, {})  # Current Link, Current Claim Req,
+        # set attributes
         self._agent = None
 
     @property
@@ -528,13 +529,14 @@ class SovrinCli(PlenumCli):
         # the claim definition and issuer key
         proofBuilder = self.newProofBuilder((credName, credVersion, issuerId))
         u = proofBuilder.U[issuerId]
-        self.setProofBuilderAttrs(proofBuilder, issuerId)
+        # self.setProofBuilderAttrs(proofBuilder, issuerId)
         tokens = []
         tokens.append((Token.BoldBlue, "Credential request for {} for "
                                        "{} {} is: ".
                        format(proverId, credName, credVersion)))
-        tokens.append((Token, "Credential id is "))
-        tokens.append((Token.BoldBlue, "{} ".format(proofBuilder.id)))
+        tokens.append((Token, "Requesting credential for public key "))
+        tokens.append((Token.BoldBlue, "{} ".
+                       format(proofBuilder.issuerPks[issuerId])))
         tokens.append((Token, "and U is "))
         tokens.append((Token.BoldBlue, "{}".format(u)))
         tokens.append((Token, "\n"))
@@ -555,10 +557,10 @@ class SovrinCli(PlenumCli):
         proofBuilder = ProofBuilder(pk, masterSecret, vprime=vprime)
         # TODO: claimName, claimVersion and issuerId can be replaced with a
         # sequence number
-        self.activeWallet.proofBuilders[proofBuilder.id] = (proofBuilder,
-                                                            claimName,
-                                                            claimVersion,
-                                                            issuerId)
+        # self.activeWallet.proofBuilders[proofBuilder.id] = (proofBuilder,
+        #                                                     claimName,
+        #                                                     claimVersion,
+        #                                                     issuerId)
         return proofBuilder
 
     def setProofBuilderAttrs(self, pb, issuerId):
@@ -588,32 +590,39 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('store_cred') == 'store credential':
             # TODO: Assuming single issuer credential only, make it accept
             # multi-issuer credential
-            cred = matchedVars.get('cred')
+            credStr = matchedVars.get('cred')
             alias = matchedVars.get('alias').strip()
-            proofId = matchedVars.get('prf_id').strip()
-            credential = {}
-            for val in cred.split(","):
+            issuerKeyId = int(matchedVars.get('pk_id').strip())
+            cred = {}
+            for val in credStr.split(","):
                 name, value = val.split('=', 1)
                 name, value = name.strip(), value.strip()
-                credential[name] = value
+                cred[name] = value
 
-            proofBuilder, credName, credVersion, issuerId = \
-                self.activeWallet.proofBuilders[proofId]
-            credential[ISSUER] = issuerId
-            credential[NAME] = credName
-            credential[VERSION] = credVersion
-            # TODO: refactor to use issuerId
-            credential[CRED_V] = str(next(iter(proofBuilder.vprime.values())) +
-                                  int(credential[V_PRIME_PRIME]))
-            credential[ENCODED_ATTRS] = {
-                k: str(v) for k, v in
-                next(iter(proofBuilder.encodedAttrs.values())).items()
-            }
+            issuerKey = self.activeWallet.getIssuerPublicKey(seqNo=issuerKeyId)
+            # claimDef = self.activeWallet.getClaimDef(seqNo=issuerKey.claimDefSeqNo)
+            # proofBuilder, credName, credVersion, issuerId = \
+            #     self.activeWallet.proofBuilders[proofId]
+            issuerId = issuerKey.origin
+            vprime = next(iter(self.activeWallet.getVPrimes(issuerId).values()))
+            credential = WalletCredential.buildFromIssuerProvidedCred(
+                issuerKey.seqNo, A=cred[CRED_A], e=cred[CRED_E], v=cred[V_PRIME_PRIME],
+                vprime=vprime)
+
+            # credential[ISSUER] = claimDef.origin
+            # credential[NAME] = claimDef.name
+            # credential[VERSION] = claimDef.version
+            # # TODO: refactor to use issuerId
+            # credential[CRED_V] = str(next(iter(proofBuilder.vprime.values())) +
+            #                       int(credential[V_PRIME_PRIME]))
+            # credential[ENCODED_ATTRS] = {
+            #     k: str(v) for k, v in
+            #     next(iter(proofBuilder.encodedAttrs.values())).items()
+            # }
             # TODO: What if alias is not given (we don't have issuer id and
             # cred name here) ???
             # TODO: is the below way of storing  cred in dict ok?
-            self.activeWallet.addCredential(WalletCredential(alias,
-                                                             credential))
+            self.activeWallet.addCredential(alias, credential)
             self.print("Credential stored", Token.BoldBlue)
             return True
 
@@ -764,47 +773,49 @@ class SovrinCli(PlenumCli):
             credAlias = matchedVars.get('cred_alias')
 
             credential = self.activeWallet.getCredential(credAlias)
-            data = credential.data
-            name = data.get(NAME)
-            version = data.get(VERSION)
-            issuer = data.get(ISSUER)
-            A = data.get(CRED_A)
-            e = data.get(CRED_E)
-            v = data.get(CRED_V)
-            cred = Credential(self.getCryptoInteger(A),
-                              self.getCryptoInteger(e),
-                              self.getCryptoInteger(v))
-            claimDef = self.activeWallet.getClaimDef((name, version, issuer))
-            issuerPubKey = self.activeWallet.getIssuerPublicKey(
-                (issuer, claimDef.seqNo))
+            issuerKeyId = credential.issuerKeyId
+            issuerPubKey = self.activeWallet.getIssuerPublicKey(seqNo=issuerKeyId)
+            claimDef = self.activeWallet.getClaimDef(
+                seqNo=issuerPubKey.claimDefSeqNo)
+            issuerId = issuerPubKey.origin
+
+            # A = credential.A
+            # e = credential.e
+            # v = credential.v
+            # cred = Credential(self.getCryptoInteger(A),
+            #                   self.getCryptoInteger(e),
+            #                   self.getCryptoInteger(v))
+            # claimDef = self.activeWallet.getClaimDef((name, version, issuer))
+            # issuerPubKey = self.activeWallet.getIssuerPublicKey(
+            #     (issuer, claimDef.seqNo))
             credDefPks = {
-                issuer: issuerPubKey
+                issuerId: issuerPubKey
             }
             masterSecret = self.getCryptoInteger(
                 self.activeWallet.masterSecret)
-            attributes = self.attributeRepo.getAttributes(issuer)
+            attributes = self.attributeRepo.getAttributes(issuerId)
             attribTypes = []
             for nm in attributes.keys():
                 attribTypes.append(AttribType(nm, encode=True))
             attribsDef = AttribDef(self.name, attribTypes)
             attribs = attribsDef.attribs(**attributes).encoded()
             encodedAttrs = {
-                issuer: next(iter(attribs.values()))
+                issuerId: next(iter(attribs.values()))
             }
             proof = ProofBuilder.prepareProofAsDict(issuerPks=credDefPks,
                                                     masterSecret=masterSecret,
-                                                    creds={issuer: cred},
+                                                    creds={issuerId: credential.toNamedTuple},
                                                     revealedAttrs=revealedAttrs,
                                                     nonce=nonce,
                                                     encodedAttrs=encodedAttrs)
             out = {}
             out[PROOF] = proof
-            out[NAME] = name
-            out[VERSION] = version
-            out[ISSUER] = issuer
+            out[NAME] = claimDef.name
+            out[VERSION] = claimDef.version
+            out[ISSUER] = issuerId
             out[NONCE] = str(nonce)
             out[ATTRS] = {
-                issuer: {k: str(v) for k,v in next(iter(attribs.values())).items()}
+                issuerId: {k: str(v) for k,v in next(iter(attribs.values())).items()}
             }
             out[REVEALED_ATTRS] = revealedAttrs
             self.print("Proof is: ", newline=False)
@@ -841,7 +852,7 @@ class SovrinCli(PlenumCli):
         pk = {
             issuer: issuerPubKey
         }
-        prf = ProofBuilder.prepareProofFromDict(proof)
+        prf = ProofBuilder.prepareProofFromDict(proof[PROOF])
         attrs = {
             issuer: {k: self.getCryptoInteger(v) for k, v in
                      next(iter(proof[ATTRS].values())).items()}

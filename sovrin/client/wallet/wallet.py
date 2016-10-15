@@ -321,8 +321,8 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
     def getClaimDefSk(self, uid):
         return self._claimDefSks.get(uid)
 
-    def addCredential(self, cred: Credential):
-        self._credentials[cred.key()] = cred
+    def addCredential(self, alias, cred: Credential):
+        self._credentials[alias] = cred
 
     def getCredential(self, name: str):
         return self._credentials.get(name)
@@ -598,11 +598,19 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
                     return pk
         return self._issuerPks.get(key)
 
-    def getIssuerPublicKeyForClaimDef(self, claimDefSeqNo) -> Optional[
-        IssuerPubKey]:
+    def getIssuerPublicKeyForClaimDef(self, seqNo=None, key=None) -> \
+            Optional[IssuerPubKey]:
+        if not seqNo:
+            claimDef = self.getClaimDef(key=key)
+            if not claimDef:
+                logger.info("Cannot get issuer key by claim def since claim "
+                            "def not fetched yet: {}".format(key))
+                return None
+            else:
+                seqNo = claimDef.seqNo
         # Assuming only one identifier per claimDefSeqNo
         for k, v in self._issuerPks.items():
-            if k[1] == claimDefSeqNo:
+            if seqNo and k[1] == seqNo:
                 return v
 
     def getAvailableClaimList(self):

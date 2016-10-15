@@ -11,7 +11,6 @@ from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.types import Credential
 from anoncreds.protocol.utils import strToCharmInteger
 from anoncreds.protocol.verifier import Verifier
 from plenum.common.error import fault
@@ -32,10 +31,13 @@ from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import AVAIL_CLAIM_LIST, CLAIM, REQUEST_CLAIM, \
     ACCEPT_INVITE, CLAIM_PROOF, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
+from sovrin.anon_creds.constant import CRED_A, V_PRIME_PRIME
+from sovrin.anon_creds.constant import CRED_E
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
 from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkAlreadyExists, \
@@ -254,6 +256,7 @@ class WalletedAgent(Agent):
         self.signAndSend(msg=self.getErrorResponse(reqBody, respMsg),
                          signingIdr=self.wallet.defaultId, toRaetStackName=to)
 
+    # TODO: Verification needs to be moved out of it, use `_isVerified` instead
     def verifyAndGetLink(self, msg):
         body, (frm, ha) = msg
         key = body.get(f.IDENTIFIER.nm)
@@ -513,26 +516,36 @@ class WalletedAgent(Agent):
 
     def _handleReqClaimResponse(self, msg):
         body, _ = msg
-        identifier = body.get(IDENTIFIER)
+        issuerId = body.get(IDENTIFIER)
         claim = body[DATA]
-        li = self._getLinkByTarget(getCryptonym(identifier))
+        li = self._getLinkByTarget(getCryptonym(issuerId))
         if li:
             self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
             self.notifyMsgListener('    Received claim "{}".\n'.format(
                 claim[NAME]))
-            name, version, idr = \
+            name, version, claimAuthor = \
                 claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
+            claimDefKey = (name, version, claimAuthor)
             attributes = claim['attributes']
-            self.wallet.addAttrFrom(idr, attributes)
-            data = body['data']
-            credential = Credential(*(strToCharmInteger(x) for x in
-                                      [data['A'], data['e'],
-                                       data['vprimeprime']]))
+            self.wallet.addAttrFrom(issuerId, attributes)
+            issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(key=claimDefKey)
+            if not issuerKey:
+                raise RuntimeError("Issuer key not available for claim def {}".
+                                   format(claimDefKey))
+            vprime = next(iter(self.wallet.getVPrimes(issuerId).values()))
+            credential = Credential.buildFromIssuerProvidedCred(
+                issuerKey.seqNo, A=claim[CRED_A], e=claim[CRED_E],
+                v=claim[V_PRIME_PRIME],
+                vprime=vprime)
+            self.wallet.addCredential(str(uuid.uuid4()), credential)
+            # credential = Credential(*(strToCharmInteger(x) for x in
+            #                           [claim[CRED_A], claim[CRED_E],
+            #                            claim[V_PRIME_PRIME]]))
 
-            self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
-                                              data[f.IDENTIFIER.nm]),
-                                             data[f.IDENTIFIER.nm],
-                                             credential)
+            # self.wallet.addCredentialToProofBuilder((data[NAME], data[VERSION],
+            #                                   data[f.IDENTIFIER.nm]),
+            #                                  data[f.IDENTIFIER.nm],
+            #                                  credential)
         else:
             self.notifyMsgListener("No matching link found")
 
