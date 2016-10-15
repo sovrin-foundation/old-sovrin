@@ -434,26 +434,32 @@ class SovrinCli(PlenumCli):
 
     def _addNym(self, nym, role, other_client_name=None):
         idy = Identity(nym, role=role)
+        requestMade = False
         try:
             self.activeWallet.addSponsoredIdentity(idy)
+            requestMade = True
         except Exception as e:
             if e.args[0] == 'identifier already added':
                 pass
             else:
                 raise e
-        reqs = self.activeWallet.preparePending()
-        req, = self.activeClient.submitReqs(*reqs)
-        printStr = "Adding nym {}".format(nym)
+        if requestMade:
+            reqs = self.activeWallet.preparePending()
+            req, = self.activeClient.submitReqs(*reqs)
+            printStr = "Adding nym {}".format(nym)
 
-        if other_client_name:
-            printStr = printStr + " for " + other_client_name
-        self.print(printStr)
+            if other_client_name:
+                printStr = printStr + " for " + other_client_name
+            self.print(printStr)
 
-        def out(reply, error, *args, **kwargs):
-            self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+            def out(reply, error, *args, **kwargs):
+                self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
-        self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                    req.reqId, self.activeClient, out)
+            self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                        req.reqId, self.activeClient, out)
+        else:
+            self._printRequestAlreadyMade(extra=" Request made to add {}".
+                                          format(nym))
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
@@ -1169,6 +1175,12 @@ class SovrinCli(PlenumCli):
 
     # TODO: Refactor following three methods
     # as most of the pattern looks similar
+
+    def _printRequestAlreadyMade(self, extra=""):
+        msg = "Request already made."
+        if extra:
+            msg += "Extra info: {}".format(extra)
+        self.print(msg)
 
     def _printMoreThanOneClaimFoundForRequest(self, claimName, linkAndClaimNames):
         self.print('More than one match for "{}"'.format(claimName))
