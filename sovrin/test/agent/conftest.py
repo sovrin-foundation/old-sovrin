@@ -1,3 +1,15 @@
+from sovrin.common.strict_types import strict_types
+
+strict_types.defaultShouldCheck = True
+
+# def pytest_configure(config):
+#     setattr(sys, '_called_from_test', True)
+#
+#
+# def pytest_unconfigure(config):
+#     delattr(sys, '_called_from_test')
+#
+#
 import json
 import os
 

@@ -1,3 +1,9 @@
+from sovrin.common import strict_types
+
+# typecheck during tests
+strict_types.defaultShouldCheck = True
+
+
 import pytest
 
 from ledger.compact_merkle_tree import CompactMerkleTree
@@ -8,7 +14,6 @@ from plenum.common.looper import Looper
 from plenum.common.plugin_helper import loadPlugins
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import VERKEY
-from plenum.test.conftest import getValueFromModule
 from plenum.test.plugin.helper import getPluginPath
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.plugin_helper import writeAnonCredPlugin
@@ -17,16 +22,15 @@ from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
 from sovrin.common.util import getConfig
 from sovrin.test.cli.helper import newCLI
-from sovrin.test.helper import TestNodeSet,\
-    genTestClient, createNym, addUser, TestNode, makePendingTxnsRequest, \
-    buildStewardClient
+from sovrin.test.helper import genTestClient, createNym, addUser, TestNode, \
+    makePendingTxnsRequest, buildStewardClient
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
     whitelist, logcapture, tconf, keySharedNodes, startedNodes, \
     tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, poolTxnNodeNames,\
     allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
-    poolTxnStewardData, poolTxnStewardNames
+    poolTxnStewardData, poolTxnStewardNames, getValueFromModule
 
 
 @pytest.fixture(scope="module", autouse=True)

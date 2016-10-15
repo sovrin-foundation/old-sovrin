@@ -40,6 +40,7 @@ from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.strict_types import strict_types, decClassMethods
 from sovrin.common.exceptions import LinkAlreadyExists, \
     LinkNotFound, NotConnectedToNetwork
 from sovrin.common.identity import Identity
@@ -64,6 +65,7 @@ EVENT_POST_ACCEPT_INVITE = "POST_ACCEPT_INVITE_EVENT"
 logger = getlogger()
 
 
+@decClassMethods(strict_types())
 class Agent(Motor, AgentNet):
     def __init__(self,
                  name: str,
@@ -542,11 +544,11 @@ class WalletedAgent(Agent):
         else:
             self.notifyMsgListener("No matching link found")
 
-    @staticmethod
-    def _isVerified(msg: Dict[str, str]):
+    def _isVerified(self, msg: Dict[str, str]):
         # v = DidVerifier()
         signature = msg.get(f.SIG.nm)
         identifier = msg.get(IDENTIFIER)
+
         msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
         # TODO This assumes the current key is the cryptonym. This is a BAD
         # ASSUMPTION!!! Sovrin needs to provide the current key.
@@ -569,7 +571,7 @@ class WalletedAgent(Agent):
                                               availableClaims):
         identity = Identity(identifier=li.verkey)
         req = self.wallet.requestIdentity(identity,
-                                        sender=self.wallet.defaultId)
+                                          sender=self.wallet.defaultId)
         self.client.submitReqs(req)
         self.notifyMsgListener("\nSynchronizing...")
 
