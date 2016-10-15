@@ -3,9 +3,13 @@ from typing import Dict
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.utils import generateMasterSecret, generateVPrime
+from plenum.common.log import getlogger
 from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.credential import Credential
 from sovrin.common.util import getEncodedAttrs
+
+
+logger = getlogger()
 
 
 class ProverWallet():
@@ -90,6 +94,9 @@ class ProverWallet():
                     encodedAttrs.update(getEncodedAttrs(issuerId,
                                                         self.attributesFrom[issuerId]))
 
+        logger.debug("issuerPks, masterSecret, creds, revealedAttrs, nonce, "
+                     "encodedAttrs".format(issuerPks, self.masterSecret, creds,
+                                           revealedAttrs, nonce, encodedAttrs))
         proof = ProofBuilder.prepareProofAsDict(issuerPks=issuerPks,
                                                 masterSecret=self.masterSecret,
                                                 creds=creds,

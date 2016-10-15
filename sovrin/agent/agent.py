@@ -350,7 +350,6 @@ class WalletedAgent(Agent):
         }
         return WalletedAgent.getCommonMsg(NEW_AVAILABLE_CLAIMS, data)
 
-
     @staticmethod
     def createClaimMsg(claim):
         return WalletedAgent.getCommonMsg(CLAIM, claim)
@@ -379,6 +378,10 @@ class WalletedAgent(Agent):
     def handleEndpointMessage(self, msg):
         body, frm = msg
         typ = body.get(TYPE)
+        if not typ:
+            logger.warn("type not specified in message: {}".format(body))
+            return
+
         if typ in self.lockedMsgs:
             try:
                 self._isVerified(body)
