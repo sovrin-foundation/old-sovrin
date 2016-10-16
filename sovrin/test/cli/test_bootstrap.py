@@ -6,7 +6,6 @@ from plenum.common.types import f
 
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
 from plenum.test.eventually import eventually
-from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.link import Link, constant
@@ -495,7 +494,7 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
     return aliceCli
 
 
-def testAliceAcceptFaberInvitation(aliceAcceptedFaberInvitation):
+def testAliceAcceptFaberInvitationFirstTime(aliceAcceptedFaberInvitation):
     pass
 
 

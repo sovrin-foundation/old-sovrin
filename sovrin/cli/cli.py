@@ -27,8 +27,8 @@ from plenum.common.txn import NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.types import f
 from plenum.common.util import randomString, getTimeBasedId
-from sovrin.agent.agent import WalletedAgent, EVENT_POST_ACCEPT_INVITE, \
-    EVENT_NOTIFY_MSG
+from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
+from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
     ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS

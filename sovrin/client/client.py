@@ -140,9 +140,8 @@ class Client(PlenumClient):
                                 try:
                                     self.graphStore.addAttribTxnToGraph(txn)
                                 except pyorient.PyOrientCommandException as ex:
-                                    fault(ex,
-                                        "An exception was raised while adding "
-                                        "attribute {}".format(ex))
+                                    fault(ex, "An exception was raised while "
+                                              "adding attribute")
 
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:

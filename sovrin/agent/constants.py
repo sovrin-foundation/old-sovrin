@@ -1,0 +1,10 @@
+ALREADY_ACCEPTED_FIELD = 'alreadyAccepted'
+CLAIMS_LIST_FIELD = 'availableClaimsList'
+CLAIMS_FIELD = 'claims'
+REQ_MSG = "REQ_MSG"
+PING = "ping"
+ERROR = "error"
+EVENT = "event"
+EVENT_NAME = "eventName"
+EVENT_NOTIFY_MSG = "NOTIFY"
+EVENT_POST_ACCEPT_INVITE = "POST_ACCEPT_INVITE_EVENT"

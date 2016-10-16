@@ -2,7 +2,9 @@ import os
 
 from plenum.common.log import getlogger
 
-from sovrin.agent.agent import WalletedAgent, runAgent, EVENT_NOTIFY_MSG
+from sovrin.agent.agent import runAgent
+from sovrin.agent.constants import EVENT_NOTIFY_MSG
+from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
