@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager
 
 import base58
 import libnacl.public
@@ -21,6 +22,12 @@ from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
     makeAttribRequest, makeGetNymRequest, addAttributeAndCheck
 
 logger = getlogger()
+
+whitelistArray = []
+
+
+def whitelist():
+    return whitelistArray
 
 
 def checkNacks(client, reqId, contains='', nodeCount=4):
@@ -115,21 +122,32 @@ def testCreateStewardWallet(stewardWallet):
     pass
 
 
+@contextmanager
+def whitelistextras(*msg):
+    global whitelistArray
+    ins = {m: (m in whitelistArray) for m in msg}
+    [whitelistArray.append(m) for m, _in in ins.items() if not _in]
+    yield
+    [whitelistArray.remove(m) for m, _in in ins.items() if not _in]
+
+
 def testNonStewardCannotCreateASponsor(nodeSet, client1, wallet1, looper):
-    seed = b'this is a secret sponsor seed...'
-    sponsorSigner = SimpleSigner(seed=seed)
 
-    sponsorNym = sponsorSigner.identifier
+    with whitelistextras("UnknownIdentifier"):
+        seed = b'this is a secret sponsor seed...'
+        sponsorSigner = SimpleSigner(seed=seed)
 
-    op = {
-        TARGET_NYM: sponsorNym,
-        TXN_TYPE: NYM,
-        ROLE: SPONSOR
-    }
+        sponsorNym = sponsorSigner.identifier
 
-    submitAndCheckNacks(looper=looper, client=client1, wallet=wallet1, op=op,
-                        identifier=wallet1.defaultId,
-                        contains="UnknownIdentifier")
+        op = {
+            TARGET_NYM: sponsorNym,
+            TXN_TYPE: NYM,
+            ROLE: SPONSOR
+        }
+
+        submitAndCheckNacks(looper=looper, client=client1, wallet=wallet1, op=op,
+                            identifier=wallet1.defaultId,
+                            contains="UnknownIdentifier")
 
 
 def testStewardCreatesASponsor(steward, addedSponsor):
@@ -144,19 +162,21 @@ def testStewardCreatesAnotherSponsor(nodeSet, steward, stewardWallet, looper,
 
 
 def testNonSponsorCannotCreateAUser(nodeSet, looper, nonSponsor):
-    client, wallet = nonSponsor
-    useed = b'this is a secret apricot seed...'
-    userSigner = SimpleSigner(seed=useed)
+    with whitelistextras("UnknownIdentifier"):
+        client, wallet = nonSponsor
+        useed = b'this is a secret apricot seed...'
+        userSigner = SimpleSigner(seed=useed)
 
-    userNym = userSigner.identifier
+        userNym = userSigner.identifier
 
-    op = {
-        TARGET_NYM: userNym,
-        TXN_TYPE: NYM
-    }
+        op = {
+            TARGET_NYM: userNym,
+            TXN_TYPE: NYM
+        }
 
-    submitAndCheckNacks(looper, client, wallet, op, identifier=wallet.defaultId,
-                        contains="UnknownIdentifier")
+        submitAndCheckNacks(looper, client, wallet, op,
+                            identifier=wallet.defaultId,
+                            contains="UnknownIdentifier")
 
 
 def testSponsorCreatesAUser(steward, userWalletA):
@@ -242,47 +262,50 @@ def testSponsorGetAttrsForUser(checkAddAttribute):
 
 def testNonSponsorCannotAddAttributeForUser(nodeSet, nonSponsor, userIdA,
                                             looper, attributeData):
-    client, wallet = nonSponsor
-    attrib = Attribute(name='test1 attribute',
-                       origin=wallet.defaultId,
-                       value=attributeData,
-                       dest=userIdA,
-                       ledgerStore=LedgerStore.RAW)
-    reqs = makeAttribRequest(client, wallet, attrib)
-    looper.run(eventually(checkNacks,
-                          client,
-                          reqs[0].reqId,
-                          "UnknownIdentifier", retryWait=1, timeout=15))
+    with whitelistextras("UnknownIdentifier"):
+        client, wallet = nonSponsor
+        attrib = Attribute(name='test1 attribute',
+                           origin=wallet.defaultId,
+                           value=attributeData,
+                           dest=userIdA,
+                           ledgerStore=LedgerStore.RAW)
+        reqs = makeAttribRequest(client, wallet, attrib)
+        looper.run(eventually(checkNacks,
+                              client,
+                              reqs[0].reqId,
+                              "UnknownIdentifier", retryWait=1, timeout=15))
 
 
 def testOnlyUsersSponsorCanAddAttribute(nodeSet, looper,
                                         steward, stewardWallet,
                                         attributeData, anotherSponsor, userIdA):
-    client, wallet = anotherSponsor
-    attrib = Attribute(name='test2 attribute',
-                       origin=wallet.defaultId,
-                       value=attributeData,
-                       dest=userIdA,
-                       ledgerStore=LedgerStore.RAW)
-    reqs = makeAttribRequest(client, wallet, attrib)
-    looper.run(eventually(checkNacks,
-                          client,
-                          reqs[0].reqId,
-                          retryWait=1, timeout=15))
+    with whitelistextras("UnauthorizedClientRequest"):
+        client, wallet = anotherSponsor
+        attrib = Attribute(name='test2 attribute',
+                           origin=wallet.defaultId,
+                           value=attributeData,
+                           dest=userIdA,
+                           ledgerStore=LedgerStore.RAW)
+        reqs = makeAttribRequest(client, wallet, attrib)
+        looper.run(eventually(checkNacks,
+                              client,
+                              reqs[0].reqId,
+                              retryWait=1, timeout=15))
 
 
 def testStewardCannotAddUsersAttribute(nodeSet, looper, steward,
                                        stewardWallet, userIdA, attributeData):
-    attrib = Attribute(name='test3 attribute',
-                       origin=stewardWallet.defaultId,
-                       value=attributeData,
-                       dest=userIdA,
-                       ledgerStore=LedgerStore.RAW)
-    reqs = makeAttribRequest(steward, stewardWallet, attrib)
-    looper.run(eventually(checkNacks,
-                          steward,
-                          reqs[0].reqId,
-                          retryWait=1, timeout=15))
+    with whitelistextras("UnauthorizedClientRequest"):
+        attrib = Attribute(name='test3 attribute',
+                           origin=stewardWallet.defaultId,
+                           value=attributeData,
+                           dest=userIdA,
+                           ledgerStore=LedgerStore.RAW)
+        reqs = makeAttribRequest(steward, stewardWallet, attrib)
+        looper.run(eventually(checkNacks,
+                              steward,
+                              reqs[0].reqId,
+                              retryWait=1, timeout=15))
 
 
 @pytest.mark.skipif(True, reason="Attribute encryption is done in client")

@@ -227,6 +227,7 @@ class Node(PlenumNode):
         nym = request.operation[TARGET_NYM]
         origin = request.identifier
         if nym != origin:
+            # TODO not sure this is correct; why does it matter?
             msg = "You can only receive transactions for yourself"
             self.transmitToClient(RequestNack(request.reqId, msg), frm)
         else:

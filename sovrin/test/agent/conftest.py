@@ -103,7 +103,8 @@ def agentBuilder(tdirWithPoolTxns):
 
 @pytest.fixture(scope="module")
 def aliceAgent(aliceWallet, agentBuilder):
-    return agentBuilder(aliceWallet)
+    agent = agentBuilder(aliceWallet)
+    return agent
 
 
 @pytest.fixture(scope="module")
@@ -152,7 +153,7 @@ def faberAdded(nodeSet,
                steward,
                stewardWallet,
                emptyLooper,
-            faberAgentPort,
+               faberAgentPort,
                faberAgent):
 
     attrib = createAgentAndAddEndpoint(emptyLooper,
@@ -335,18 +336,17 @@ def aliceAcmeInvitationLoaded(aliceAgent, acmeInvitation):
 
 @pytest.fixture(scope="module")
 def aliceAcmeInvitationLinkSynced(aliceAcmeInvitationLoaded,
-                              aliceAgentConnected,
-                              aliceAgent: WalletedAgent,
-                              emptyLooper,
-                            acmeAdded
-                              ):
+                                  aliceAgentConnected,
+                                  aliceAgent: WalletedAgent,
+                                  emptyLooper,
+                                  acmeAdded):
     agentInvitationLinkSynced(aliceAgent, aliceAcmeInvitationLoaded.name,
                               emptyLooper)
 
 
 @pytest.fixture(scope="module")
 def aliceAcceptedAcme(acmeIsRunning, acmeNonceForAlice, acmeAdded,
-                       aliceIsRunning, emptyLooper,
+                      aliceIsRunning, emptyLooper,
                       aliceAcmeInvitationLinkSynced):
     """
     Faber creates a Link object, generates a link invitation file.
