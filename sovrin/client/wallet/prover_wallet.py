@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple, Iterable, Optional
 
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.prover import Prover
@@ -94,6 +94,7 @@ class ProverWallet():
                     encodedAttrs.update(getEncodedAttrs(issuerId,
                                                         self.attributesFrom[issuerId]))
 
+        # REMOVE-LOG: Remove the next log
         logger.debug("issuerPks, masterSecret, creds, revealedAttrs, nonce, "
                      "encodedAttrs".format(issuerPks, self.masterSecret, creds,
                                            revealedAttrs, nonce, encodedAttrs))
@@ -104,3 +105,40 @@ class ProverWallet():
                                                 nonce=nonce,
                                                 encodedAttrs=encodedAttrs)
         return proof, encodedAttrs, revealedAttrs, claimDefKeys
+
+    def getUValueForIssuerKeys(self, seqNos: Optional[Iterable[int]]=None,
+                               keys: Optional[Iterable[Tuple[str, int]]]=None,
+                               claimDefs: Optional[Iterable[
+                                   Tuple[str, Tuple[str, str, str]]]]=None):
+        # 2 of the 3 args should be None
+        assert (seqNos, keys, claimDefs).count(None) == 2
+        getter = None
+        args = []
+        count = 0
+        if seqNos:
+            count = len(seqNos)
+            getter = self.getIssuerPublicKey
+            args = [{'seqNo': seqNo} for seqNo in seqNos]
+        elif keys:
+            count = len(keys)
+            getter = self.getIssuerPublicKey
+            args = [{'key': key} for key in keys]
+        else:
+            count = len(claimDefs)
+            getter = self.getIssuerPublicKeyForClaimDef
+            args = [{'issuerId': iid, 'claimDefKey': cdKey} for iid, cdKey in claimDefs]
+
+        # TODO: Question: What if we have more get more than one issuer key
+        # for any issuer
+        issuerKeys = {}
+        for arg in args:
+            ipk = getter(**arg)
+            if ipk:
+                issuerKeys[ipk.origin] = ipk
+
+        assert len(issuerKeys) == count, "Required {} keys but found {}".\
+            format(count, len(issuerKeys))
+        masterSecret = self.masterSecret
+        vprime = self.getVPrimes(*tuple(issuerKeys.keys()))
+        proofBuilder = ProofBuilder(issuerKeys, masterSecret, vprime=vprime)
+        return proofBuilder.U

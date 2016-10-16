@@ -30,9 +30,9 @@ from plenum.common.util import randomString, getTimeBasedId
 from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
-from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, CRED_V, \
-    ENCODED_ATTRS, CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
-from sovrin.anon_creds.issuer import AttribDef, AttribType, Credential
+from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, \
+    CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
+from sovrin.anon_creds.issuer import AttribDef, AttribType
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
@@ -531,37 +531,24 @@ class SovrinCli(PlenumCli):
 
     def _printCredReq(self, reply, err, credName,
                       credVersion, issuerId, proverId):
-        # TODO: Should check for an existing proof builder if that exists for
-        # the claim definition and issuer key
-        proofBuilder = self.newProofBuilder((credName, credVersion, issuerId))
-        u = proofBuilder.U[issuerId]
-        # self.setProofBuilderAttrs(proofBuilder, issuerId)
+        # Assuming the author of issuer key and claim def is same
+        claimDefKey = (credName, credVersion, issuerId)
+        U = self.activeWallet.getUValueForIssuerKeys(claimDefs=[(issuerId,
+                                                                 claimDefKey)])
+        u = U[issuerId]
+        ipk = self.activeWallet.getIssuerPublicKeyForClaimDef(
+            issuerId=issuerId, claimDefKey=claimDefKey)
         tokens = []
         tokens.append((Token.BoldBlue, "Credential request for {} for "
                                        "{} {} is: ".
                        format(proverId, credName, credVersion)))
         tokens.append((Token, "Requesting credential for public key "))
         tokens.append((Token.BoldBlue, "{} ".
-                       format(proofBuilder.issuerPks[issuerId])))
+                       format(ipk.seqNo)))
         tokens.append((Token, "and U is "))
         tokens.append((Token.BoldBlue, "{}".format(u)))
         tokens.append((Token, "\n"))
         self.printTokens(tokens, separator='')
-
-    def newProofBuilder(self, *claimDefKeys):
-        pk = {}
-        for claimDefKey in claimDefKeys:
-            claimName, claimVersion, issuerId = claimDefKey
-            # Assuming the claim def and issuer key come from the same entity
-            claimDef = self.activeWallet.getClaimDef(claimDefKey)
-            issuerPubKey = self.activeWallet.getIssuerPublicKey(
-                (issuerId, claimDef.seqNo))
-            pk[issuerId] = issuerPubKey
-
-        masterSecret = self.activeWallet.masterSecret
-        vprime = self.activeWallet.getVPrimes(*tuple(pk.keys()))
-        proofBuilder = ProofBuilder(pk, masterSecret, vprime=vprime)
-        return proofBuilder
 
     def setProofBuilderAttrs(self, pb, issuerId):
         attributes = self.attributeRepo.getAttributes(issuerId)
@@ -990,11 +977,10 @@ class SovrinCli(PlenumCli):
 
     # TODO: This should be moved to agent
     def sendReqClaim(self, reply, error, link, claimDefKey):
-        # TODO: Should check for an existing proof builder if that exists for
-        # the claim definition and issuer key
         name, version, origin = claimDefKey
-        proofBuilder = self.newProofBuilder(claimDefKey)
-        uValue = proofBuilder.U[origin]
+        U = self.activeWallet.getUValueForIssuerKeys(claimDefs=[(origin,
+                                                                 claimDefKey)])
+        uValue = U[origin]
         op = {
             NONCE: link.invitationNonce,
             TYPE: REQUEST_CLAIM,

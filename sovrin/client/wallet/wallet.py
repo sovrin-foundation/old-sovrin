@@ -92,8 +92,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet):
         # TODO: Shouldnt proof builders be uniquely identified by claim def
         # and issuerId
         # TODO: Create claim objects
-        # TODO: Do not persist proof builders
-        self.proofBuilders = {}
 
         self._issuerSks = {}
         self._issuerPks = {}

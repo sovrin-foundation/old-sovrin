@@ -538,6 +538,7 @@ class Walleted:
                 # TODO: Following line is temporary and need to be removed
                 # result = True
 
+                # REMOVE-LOG: Remove the next 2 logs
                 logger.debug("issuerPks, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
                              format(issuerPks, proof, nonce,
