@@ -9,6 +9,7 @@ from sovrin.common.txn import ENDPOINT
 from sovrin.test.agent.acme import AcmeAgent
 from sovrin.test.agent.faber import FaberAgent
 from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
+from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap
 from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
     faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
@@ -35,12 +36,14 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     _, stewardSeed = poolTxnStewardData
     be(philCLI)
     do('new keyring Steward', expect=['New keyring Steward created',
-                                   'Active keyring set to "Steward"'])
+                                      'Active keyring set to "Steward"'])
 
     mapper = {'seed': stewardSeed.decode()}
     do('new key with seed {seed}', expect=['Key created in keyring Steward'],
        mapper=mapper)
     do('connect test', within=3, expect=connectedToTest)
+
+    # Add nym and endpoint for Faber, Acme and Thrift
     for nym, ep in [('FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB', '127.0.0.1:5555'),
                     ('7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21', '127.0.0.1:6666'),
                     ('9jegUr9vAMqoqQQUEAiCBYNQDnUbTktQY9nNspxfasZW', '127.0.0.1:7777')]:
@@ -76,24 +79,27 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     acmeIkSeqNo = getSeqNoFromCliOutput(acmeCLI)
 
     # Start Faber Agent and Acme Agent
-    faberAgentCls = FaberAgent
-    faberPort = 5555
-    faberAgentCls.getPassedArgs = lambda _: (faberPort, int(faberCdSeqNo), \
-                               int(faberIkSeqNo))
-    faberAgent = runAgent(faberAgentCls, "Faber College",
-                    buildFaberWallet(), tdir,
-                          faberPort, False, True)
-    faberCLI.looper.add(faberAgent)
-    fMap = faberMap(faberPort)
-    acmeAgentCls = AcmeAgent
-    acmePort = 6666
-    acmeAgentCls.getPassedArgs = lambda _: (acmePort, int(acmeCdSeqNo), \
-                                  int(acmeIkSeqNo))
-    acmeAgent = runAgent(acmeAgentCls, "Acme Corp",
-                          buildAcmeWallet(), tdir,
-                         acmePort, False, True)
-    acmeCLI.looper.add(acmeAgent)
-    aMap = acmeMap(acmePort)
+    faberAgentPort = 5555
+    acmeAgentPort = 6666
+    fMap = faberMap(faberAgentPort)
+    aMap = acmeMap(acmeAgentPort)
+
+    agentParams = [
+        (FaberAgent, faberCLI, "Faber College", faberAgentPort,
+         faberCdSeqNo, faberIkSeqNo, buildFaberWallet),
+        (AcmeAgent, acmeCLI, "Acme Corp", acmeAgentPort,
+         acmeCdSeqNo, acmeIkSeqNo, buildAcmeWallet)
+     ]
+
+    for agentCls, agentCli, agentName, agentPort, agentCdSeqNo, agentIkSeqNo, \
+        buildAgentWalletFunc in \
+            agentParams:
+        agentCls.getPassedArgs = lambda _: (agentPort, int(agentCdSeqNo), \
+                                                 int(agentIkSeqNo))
+        agent = runAgent(agentCls, agentName,
+                              buildAgentWalletFunc(), tdir,
+                              agentPort, False, True)
+        agentCli.looper.add(agent)
 
     # Start Alice cli
     createAliceCli(be, do, aliceCLI, newKeyringOut, aliceMap)
