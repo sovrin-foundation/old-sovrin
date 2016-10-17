@@ -127,6 +127,7 @@ class SovrinCli(PlenumCli):
             'load_file',
             'show_link',
             'sync_link',
+            'ping_target'
             'show_claim',
             'show_claim_req',
             'req_claim',
@@ -169,6 +170,7 @@ class SovrinCli(PlenumCli):
         completers["conn"] = WordCompleter(["connect"])
         completers["env_name"] = WordCompleter(list(self.envs.keys()))
         completers["sync_link"] = WordCompleter(["sync"])
+        completers["ping_target"] = WordCompleter(["ping"])
         completers["show_claim"] = WordCompleter(["show", "claim"])
         completers["show_claim_req"] = WordCompleter(["show",
                                                       "claim", "request"])
@@ -209,6 +211,7 @@ class SovrinCli(PlenumCli):
                         self._showLink,
                         self._connectTo,
                         self._syncLink,
+                        self._pingTarget,
                         self._showClaim,
                         self._reqClaim,
                         self._showClaimReq,
@@ -1040,8 +1043,8 @@ class SovrinCli(PlenumCli):
         return source.lower() != target.lower()
 
     @staticmethod
-    def removeDoubleQuotes(name):
-        return name.replace('"', '')
+    def removeSpecialChars(name):
+        return name.replace('"', '').replace("'","")
 
     def _printSyncAndAcceptUsage(self, linkName):
         msgs = self._getSyncLinkUsage(linkName) + \
@@ -1074,20 +1077,29 @@ class SovrinCli(PlenumCli):
 
     def _acceptInvitationLink(self, matchedVars):
         if matchedVars.get('accept_link_invite') == 'accept invitation from':
-            linkName = SovrinCli.removeDoubleQuotes(matchedVars.get('link_name'))
+            linkName = SovrinCli.removeSpecialChars(matchedVars.get('link_name'))
             self._acceptLinkInvitation(linkName)
+            return True
+
+    def _pingTarget(self, matchedVars):
+        if matchedVars.get('ping') == 'ping':
+            linkName = SovrinCli.removeSpecialChars(
+                matchedVars.get('target_name'))
+            li = self._getOneLinkForFurtherProcessing(linkName)
+            if li:
+                self.agent._pingToEndpoint(li.name, li.remoteEndPoint)
             return True
 
     def _syncLink(self, matchedVars):
         if matchedVars.get('sync_link') == 'sync':
             # TODO: Shouldn't we remove single quotes too?
-            linkName = SovrinCli.removeDoubleQuotes(matchedVars.get('link_name'))
+            linkName = SovrinCli.removeSpecialChars(matchedVars.get('link_name'))
             self._syncLinkInvitation(linkName)
             return True
 
     def _getMatchingInvitationsDetail(self, linkName):
         linkInvitations = self._getInvitationMatchingLinks(
-            SovrinCli.removeDoubleQuotes(linkName))
+            SovrinCli.removeSpecialChars(linkName))
 
         exactlyMatchedLinks = linkInvitations["exactlyMatched"]
         likelyMatchedLinks = linkInvitations["likelyMatched"]
@@ -1240,7 +1252,7 @@ class SovrinCli(PlenumCli):
 
     def _reqClaim(self, matchedVars):
         if matchedVars.get('req_claim') == 'request claim':
-            claimName = SovrinCli.removeDoubleQuotes(
+            claimName = SovrinCli.removeSpecialChars(
                 matchedVars.get('claim_name'))
             matchingLink, ac = \
                 self._getOneLinkAndAvailableClaim(claimName, printMsgs=False)
@@ -1407,7 +1419,7 @@ class SovrinCli(PlenumCli):
 
     def _showClaimReq(self, matchedVars):
         if matchedVars.get('show_claim_req') == 'show claim request':
-            claimReqName = SovrinCli.removeDoubleQuotes(
+            claimReqName = SovrinCli.removeSpecialChars(
                 matchedVars.get('claim_req_name'))
             matchingLink, claimReq = \
                 self._getOneLinkAndClaimReq(claimReqName)
@@ -1426,7 +1438,7 @@ class SovrinCli(PlenumCli):
 
     def _showClaim(self, matchedVars):
         if matchedVars.get('show_claim') == 'show claim':
-            claimName = SovrinCli.removeDoubleQuotes(
+            claimName = SovrinCli.removeSpecialChars(
                 matchedVars.get('claim_name'))
             self._showReceivedOrAvailableClaim(claimName)
 

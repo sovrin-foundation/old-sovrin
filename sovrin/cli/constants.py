@@ -107,6 +107,9 @@ SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) ' \
 SYNC_LINK_REG_EX = '(\s*(?P<sync_link>sync) ' \
                    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
 
+PING_TARGET_REG_EX = '(\s*(?P<ping>ping) ' \
+                   '\s+ (?P<target_name>[A-Za-z0-9-" ]+) \s*)'
+
 ACCEPT_LINK_REG_EX = \
     '(\s*(?P<accept_link_invite>accept \s+ invitation \s+ from) ' \
     '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
@@ -157,4 +160,5 @@ SHOW_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REG_EX)
 REQUEST_CLAIM_FORMATTED_REG_EX = getPipedRegEx(REQUEST_CLAIM_REG_EX)
 SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
 SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)
-SEND_CLAIM__FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)
+PING_TARGET_FORMATTED_REG_EX = getPipedRegEx(PING_TARGET_REG_EX)
+SEND_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)

@@ -21,7 +21,7 @@ from plenum.common.types import f
 from plenum.common.util import getTimeBasedId, getCryptonym
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
-    EVENT_POST_ACCEPT_INVITE
+    EVENT_POST_ACCEPT_INVITE, PONG
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
     AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
@@ -57,6 +57,7 @@ class Walleted:
         if self.client:
             self.syncClient()
         self.loop = asyncio.get_event_loop()
+        self.rcvdMsgStore = {}  # type: Dict[reqId, [reqMsg]]
         self.msgHandlers = {
             ERROR: self._handleError,
             EVENT: self._eventHandler,
@@ -66,6 +67,7 @@ class Walleted:
             REQUEST_CLAIM: self._reqClaim,
             CLAIM_PROOF: self.verifyClaimProof,
 
+            PONG: self._handlePong,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
             CLAIM: self._handleReqClaimResponse,
             CLAIM_PROOF_STATUS: self.handleClaimProofStatus,
@@ -92,7 +94,7 @@ class Walleted:
     def lockedMsgs(self):
         # Msgs for which signature verification is required
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-               CLAIM, AVAIL_CLAIM_LIST, EVENT
+               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING
 
     def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
@@ -177,6 +179,8 @@ class Walleted:
         else:
             params = dict(destName=toRaetStackName)
 
+        # origReqId needs to be supplied when you want to respond to request
+        # so that on receiving end, response can be matched with request
         if origReqId:
             msg[f.REQ_ID.nm] = origReqId
         else:
@@ -186,6 +190,7 @@ class Walleted:
         signature = self.wallet.signMsg(msg, signingIdr)
         msg[f.SIG.nm] = signature
         self.sendMessage(msg, **params)
+        return msg[f.REQ_ID.nm]
 
     @staticmethod
     def getCommonMsg(typ, data):
@@ -239,11 +244,17 @@ class Walleted:
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
-        typ = body.get(TYPE)
-        if not typ:
-            logger.warn("type not specified in message: {}".format(body))
-            return
+        for reqFieldName in (TYPE, f.REQ_ID.nm):
+            reqFieldValue = body.get(reqFieldName)
+            if not reqFieldValue:
+                errorMsg = "{} not specified in message: {}".format(
+                    reqFieldName, body)
+                self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                          errorMsg, self.wallet.defaultId, frm)
+                logger.warn("{}".format(errorMsg))
+                return
 
+        typ = body.get(TYPE)
         if typ in self.lockedMsgs:
             try:
                 self._isVerified(body)
@@ -251,6 +262,15 @@ class Walleted:
                 self.sendSigVerifResponseMsg("\nSignature rejected.",
                                              frm, typ)
                 return
+        reqId = body.get(f.REQ_ID.nm)
+        logger.info("######## msg received with req Id: {}, msg: {}".format(reqId, msg))
+
+        oldResps = self.rcvdMsgStore.get(reqId)
+        if oldResps:
+            oldResps.append(msg)
+        else:
+            self.rcvdMsgStore[reqId] = [msg]
+
         self.sendSigVerifResponseMsg("\nSignature accepted.", frm, typ)
 
         handler = self.msgHandlers.get(typ)
@@ -280,19 +300,18 @@ class Walleted:
 
     def _handlePing(self, msg):
         body, (frm, ha) = msg
-        link = self.verifyAndGetLink(msg)
-        # TODO instead of asserting, have previous throw exception
-        assert link
-        self.notifyMsgListener("Ping received. Sending Pong.")
-        self.signAndSend({'msg': 'pong'}, link.localIdentifier, frm,
+        self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
+                                  "        Ping received. Sending Pong.",
+                                  self.wallet.defaultId,
+                                  frm, body.get(f.REQ_ID.nm))
+        self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
                          origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
         body, _ = msg
-        link = self.verifyAndGetLink(msg)
-        # TODO instead of asserting, have previous throw exception
-        assert link
-        self.notifyMsgListener("Pong received.")
+        isVerified = self._isVerified(body)
+        if isVerified:
+            self.notifyMsgListener("        Pong received.")
 
     def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
                                          postAllFetched):
@@ -693,14 +712,15 @@ class Walleted:
         self.wallet.addIssuerSecretKey(isk)
         ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                            claimDefSeqNo=claimDef.seqNo,
-                           secretKeyUid=isk.uid, origin=wallet.defaultId,
+                           secretKeyUid=isk.pubkey.uid, origin=wallet.defaultId,
                            seqNo=issuerKeySeqNo)
         key = (wallet.defaultId, credDefSeqNo)
         wallet._issuerPks[key] = ipk
 
-    def sendPing(self, linkName):
-        self.signAndSend({'msg': PING}, None, None, linkName)
-        self.notifyMsgListener("Ping sent.")
+    def sendPing(self, name):
+        reqId = self.signAndSend({TYPE: 'ping'}, None, None, name)
+        self.notifyMsgListener("        Ping sent.")
+        return reqId
 
     def connectTo(self, linkName):
         link = self.wallet.getLink(linkName, required=True)
@@ -772,8 +792,16 @@ class Walleted:
         def _(reply, err):
             if err:
                 raise RuntimeError(err)
-            self._updateLinkWithLatestInfo(link, reply)
-            additionalCallback(reply, err)
+            reqId = self._updateLinkWithLatestInfo(link, reply)
+            if reqId:
+                self.loop.call_later(.2,
+                                 self.executeWhenResponseRcvd,
+                                 self.loop,
+                                 reqId,
+                                 PONG,
+                                 additionalCallback, reply, err)
+            else:
+                additionalCallback(reply, err)
         return _
 
     def _updateLinkWithLatestInfo(self, link: Link, reply):
@@ -786,12 +814,16 @@ class Walleted:
         link.linkLastSynced = datetime.now()
         self.notifyMsgListener("    Link {} synced".format(link.name))
         if link.remoteEndPoint:
-            self._pingToEndpoint(link.remoteEndPoint)
+            reqId = self._pingToEndpoint(link.name, link.remoteEndPoint)
+            logger.info("######## ping req Id: {} for remote endpoint: {}".
+                        format(reqId, link.remoteEndPoint))
+            return reqId
 
-    def _pingToEndpoint(self, endPoint):
-        self.notifyMsgListener("    Pinging target endpoint: {}".format(endPoint))
-        self.notifyMsgListener("        [Not Yet Implemented]")
-        # TODO implement ping
+    def _pingToEndpoint(self, name, endpoint):
+        self.notifyMsgListener("    Pinging target endpoint: {}".
+                               format(endpoint))
+        reqId = self.sendPing(name=name)
+        return reqId
 
     def sync(self, linkName, doneCallback=None):
         if not self.client.isReady():
@@ -813,3 +845,19 @@ class Walleted:
                                  req.reqId,
                                  self.client,
                                  self._handleSyncResp(link, doneCallback))
+
+    def executeWhenResponseRcvd(self, loop, reqId, respType, clbk, *args):
+        found = False
+        if self.rcvdMsgStore.get(reqId):
+            for msg in self.rcvdMsgStore.get(reqId):
+                body, frm = msg
+                if body.get(TYPE) == respType:
+                    found = True
+                    break
+
+        if found:
+            clbk(*args)
+        else:
+            loop.call_later(.2, self.executeWhenResponseRcvd, loop,
+                            reqId, respType, clbk, *args)
+

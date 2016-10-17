@@ -5,6 +5,7 @@ import time
 from plenum.common.types import f
 
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
+from plenum.common.util import getTimeBasedId
 from plenum.test.eventually import eventually
 from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
@@ -498,6 +499,20 @@ def testAliceAcceptFaberInvitationFirstTime(aliceAcceptedFaberInvitation):
     pass
 
 
+def testPingFaber(be, do, aliceCli, faberMap,
+                  aliceAcceptedFaberInvitation):
+    be(aliceCli)
+    do('ping {inviter}',
+                                    within=3,
+                                    expect=[
+                                        "Ping sent.",
+                                        "Signature accepted.",
+                                        "Ping received. Sending Pong.",
+                                        "Pong received."],
+                                    mapper=faberMap)
+
+
+
 def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
                                         unsycedAlreadyAcceptedInviteAcceptedOut,
                                         aliceAcceptedFaberInvitation):
@@ -774,6 +789,7 @@ def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
                                 faberInviteSyncedWithoutEndpoint):
 
     msg = {
+        f.REQ_ID.nm: getTimeBasedId(),
         TYPE: ACCEPT_INVITE,
         IDENTIFIER: faberCli.activeWallet.defaultId,
         NONCE: "unknown"
@@ -795,6 +811,7 @@ def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
                       faberInviteSyncedWithoutEndpoint):
 
     msg = {
+        f.REQ_ID.nm: getTimeBasedId(),
         TYPE: ACCEPT_INVITE,
         IDENTIFIER: aliceCli.activeWallet.defaultId,
         NONCE: "unknown"
