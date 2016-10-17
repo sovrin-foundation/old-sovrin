@@ -12,7 +12,8 @@ from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
 from sovrin.test.cli.conftest import faberMap, acmeMap
 from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
     faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
-    acmeCli as createAcmeCli, syncInvite, acceptInvitation
+    acmeCli as createAcmeCli, syncInvite, acceptInvitation, \
+    aliceRequestedTranscriptClaim, jobApplicationClaimSent
 
 
 def getSeqNoFromCliOutput(cli):
@@ -26,7 +27,9 @@ def getSeqNoFromCliOutput(cli):
 def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
                connectedToTest, nymAddedOut, attrAddedOut, faberCLI,
                credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
-               acmeCLI, tdir, syncLinkOutWithEndpoint, syncedInviteAcceptedOutWithoutClaims):
+               acmeCLI, tdir, syncLinkOutWithEndpoint,
+               syncedInviteAcceptedOutWithoutClaims, transcriptClaimMap,
+               reqClaimOut):
 
     # Create steward and add nyms and endpoint atttributes of all agents
     _, stewardSeed = poolTxnStewardData
@@ -96,8 +99,35 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     createAliceCli(be, do, aliceCLI, newKeyringOut, aliceMap)
     be(aliceCLI)
     do('connect test', within=3, expect=connectedToTest)
+
+    # Accept faber
     do('load sample/faber-invitation.sovrin')
     syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, fMap)
     do('show link faber')
     acceptInvitation(be, do, aliceCLI, fMap,
                      syncedInviteAcceptedOutWithoutClaims)
+
+    # Request claim
+    do('show claim Transcript')
+    aliceRequestedTranscriptClaim(be, do, aliceCLI, transcriptClaimMap,
+                                  reqClaimOut,
+                                  None,  # Passing None since its not used
+                                  None  # Passing None since its not used
+                                )
+    do('show claim Transcript')
+
+    # Accept acme
+    do('load sample/acme-job-application.sovrin')
+    syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, aMap)
+    acceptInvitation(be, do, aliceCLI, aMap,
+                     syncedInviteAcceptedOutWithoutClaims)
+
+    # Send claim
+    do('show claim request Job-Application')
+    do('set first_name to Alice')
+    do('set last_name to Garcia')
+    do('set phone_number to 123-45-6789')
+    do('show claim request Job-Application')
+    do('send claim Job-Application to Acme')
+    jobApplicationClaimSent(be, do, aliceCLI, aMap, None, None, None)
+
