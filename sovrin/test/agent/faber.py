@@ -27,7 +27,7 @@ class FaberAgent(WalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        portParam, credDefSeqParam, issuerSeqNoParam = getAgentCmdLineParams()
+        portParam, credDefSeqParam, issuerSeqNoParam = self.getPassedArgs()
 
         super().__init__('Faber College', basedirpath, client, wallet,
                          portParam or port)
@@ -81,6 +81,10 @@ class FaberAgent(WalletedAgent):
                 "status": "graduated"
             }
         }
+
+    @staticmethod
+    def getPassedArgs():
+        return getAgentCmdLineParams()
 
     def getInternalIdByInvitedNonce(self, nonce):
         if nonce in self._invites:

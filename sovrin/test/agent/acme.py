@@ -27,7 +27,7 @@ class AcmeAgent(WalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        portParam, credDefSeqParam, issuerSeqNoParam = getAgentCmdLineParams()
+        portParam, credDefSeqParam, issuerSeqNoParam = self.getPassedArgs()
 
         super().__init__('Acme Corp', basedirpath, client, wallet,
                          portParam or port)
@@ -80,6 +80,10 @@ class AcmeAgent(WalletedAgent):
                 "salary_bracket": "between $50,000 to $70,000"
             },
         }
+
+    @staticmethod
+    def getPassedArgs():
+        return getAgentCmdLineParams()
 
     def getInternalIdByInvitedNonce(self, nonce):
         if nonce in self._invites:
