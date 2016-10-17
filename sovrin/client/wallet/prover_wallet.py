@@ -96,8 +96,12 @@ class ProverWallet():
 
         # REMOVE-LOG: Remove the next log
         logger.debug("issuerPks, masterSecret, creds, revealedAttrs, nonce, "
-                     "encodedAttrs".format(issuerPks, self.masterSecret, creds,
-                                           revealedAttrs, nonce, encodedAttrs))
+                     "encodedAttrs {} {} {} {} {} {}".format(issuerPks,
+                                                             self.masterSecret,
+                                                             creds,
+                                                             revealedAttrs,
+                                                             nonce,
+                                                             encodedAttrs))
         proof = ProofBuilder.prepareProofAsDict(issuerPks=issuerPks,
                                                 masterSecret=self.masterSecret,
                                                 creds=creds,

@@ -1295,7 +1295,7 @@ class SovrinCli(PlenumCli):
                     proof, encodedAttrs, verifiableAttrs, claimDefKeys = \
                         self.activeWallet.buildClaimProof(
                             nonce, claimPrfReq)
-
+                    self.logger.debug("Prepared proof {}".format(proof))
                     ctxLink, curClaimReq, selfAttestedAttrs = self.curContext
                     self.logger.debug("Current context {} {} {}".
                                       format(*self.curContext))
