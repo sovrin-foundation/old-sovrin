@@ -161,9 +161,10 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
                        client=client,
                        wallet=wallet,
                        port=port)
+    if bootstrap:
+        agent.bootstrap()
+
     if startRunning:
-        if bootstrap:
-            agent.bootstrap()
         with Looper(debug=True) as looper:
             looper.add(agent)
             logger.debug("Running {} now (port: {})".format(name, port))

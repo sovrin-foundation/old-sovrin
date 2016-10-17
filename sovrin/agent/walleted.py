@@ -693,7 +693,7 @@ class Walleted:
         self.wallet.addIssuerSecretKey(isk)
         ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
                            claimDefSeqNo=claimDef.seqNo,
-                           secretKeyUid=isk.uid, origin=wallet.defaultId,
+                           secretKeyUid=isk.pubkey.uid, origin=wallet.defaultId,
                            seqNo=issuerKeySeqNo)
         key = (wallet.defaultId, credDefSeqNo)
         wallet._issuerPks[key] = ipk
