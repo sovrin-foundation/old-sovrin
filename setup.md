@@ -2,6 +2,8 @@
 
 Sovrin Identity Network public/permissioned distributed ledger
 
+## Setup Instructions
+
 As of Oct 3, these setup instructions are validated at a beta level.
 We are aware of a few cases where you might hit roadblocks, depending
 on what type of development environment you have. In particular, we
