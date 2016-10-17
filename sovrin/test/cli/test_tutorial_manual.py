@@ -9,9 +9,10 @@ from sovrin.common.txn import ENDPOINT
 from sovrin.test.agent.acme import AcmeAgent
 from sovrin.test.agent.faber import FaberAgent
 from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
+from sovrin.test.cli.conftest import faberMap, acmeMap
 from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
     faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
-    acmeCli as createAcmeCli
+    acmeCli as createAcmeCli, syncInvite, acceptInvitation
 
 
 def getSeqNoFromCliOutput(cli):
@@ -25,7 +26,7 @@ def getSeqNoFromCliOutput(cli):
 def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
                connectedToTest, nymAddedOut, attrAddedOut, faberCLI,
                credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
-               acmeCLI, tdir):
+               acmeCLI, tdir, syncLinkOutWithEndpoint, syncedInviteAcceptedOutWithoutClaims):
 
     # Create steward and add nyms and endpoint atttributes of all agents
     _, stewardSeed = poolTxnStewardData
@@ -73,24 +74,30 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
 
     # Start Faber Agent and Acme Agent
     faberAgentCls = FaberAgent
-    faberPort = genHa()[1]
+    faberPort = 5555
     faberAgentCls.getPassedArgs = lambda _: (faberPort, int(faberCdSeqNo), \
                                int(faberIkSeqNo))
     faberAgent = runAgent(faberAgentCls, "Faber College",
                     buildFaberWallet(), tdir,
                           faberPort, False, True)
     faberCLI.looper.add(faberAgent)
-
+    fMap = faberMap(faberPort)
     acmeAgentCls = AcmeAgent
-    acmePort = genHa()[1]
+    acmePort = 6666
     acmeAgentCls.getPassedArgs = lambda _: (acmePort, int(acmeCdSeqNo), \
                                   int(acmeIkSeqNo))
     acmeAgent = runAgent(acmeAgentCls, "Acme Corp",
                           buildAcmeWallet(), tdir,
                          acmePort, False, True)
     acmeCLI.looper.add(acmeAgent)
+    aMap = acmeMap(acmePort)
 
     # Start Alice cli
     createAliceCli(be, do, aliceCLI, newKeyringOut, aliceMap)
     be(aliceCLI)
     do('connect test', within=3, expect=connectedToTest)
+    do('load sample/faber-invitation.sovrin')
+    syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, fMap)
+    do('show link faber')
+    acceptInvitation(be, do, aliceCLI, fMap,
+                     syncedInviteAcceptedOutWithoutClaims)
