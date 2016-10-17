@@ -12,6 +12,8 @@ to understand how to work with the code. Note that setup instructions are
 still changing hour-by-hour as we identify
 install preconditions.
 
+To learn more about the Sovrin Identity Network and the Sovrin Foundation, see [sovrin.org](https://www.sovrin.org).
+
 ----
    Copyright 2016 Sovrin Foundation
 
