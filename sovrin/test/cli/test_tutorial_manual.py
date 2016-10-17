@@ -2,15 +2,19 @@ import json
 
 import re
 
+import pytest
+
 from plenum.common.port_dispenser import genHa
 
 from sovrin.agent.agent import runAgent
+from sovrin.common.setup_util import Setup
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.agent.acme import AcmeAgent
 from sovrin.test.agent.faber import FaberAgent
 from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
 from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap
+from sovrin.test.cli.helper import newCLI
 from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
     faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
     acmeCli as createAcmeCli, syncInvite, acceptInvitation, \
@@ -23,6 +27,18 @@ def getSeqNoFromCliOutput(cli):
     assert m
     seqNo, = m.groups()
     return seqNo
+
+
+@pytest.fixture(scope="module")
+def newGuyCLI(looper, tdir, tconf):
+    Setup(tdir).setupAll()
+    return newCLI(looper, tdir, subDirectory='newguy', conf=tconf)
+
+
+def testGettingStartedTutorialAgainstSandbox(newGuyCLI, be, do):
+    be(newGuyCLI)
+    do('connect test', within=3, expect="Connected to test")
+    # TODO finish the entire set of steps
 
 
 def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
@@ -57,21 +73,24 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     createFaberCli(be, do, faberCLI)
     be(faberCLI)
     do('connect test', within=3, expect=connectedToTest)
-    do('send CRED_DEF name=Transcript version=1.2 type=CL keys=student_name,ssn,degree,year,status',
+    do('send CRED_DEF name=Transcript '
+       'version=1.2 type=CL '
+       'keys=student_name,ssn,degree,'
+       'year,status',
        within=3, expect=credDefAdded)
     faberCdSeqNo = getSeqNoFromCliOutput(faberCLI)
-    do(
-        'send ISSUER_KEY ref={seqNo}', within=3, expect=issuerKeyAdded,
-        mapper=dict(seqNo=faberCdSeqNo))
+    do('send ISSUER_KEY ref={seqNo}', within=3, expect=issuerKeyAdded,
+       mapper=dict(seqNo=faberCdSeqNo))
     faberIkSeqNo = getSeqNoFromCliOutput(faberCLI)
 
     # Start Acme cli and add cred def and issuer key
     createAcmeCli(be, do, acmeCLI)
     be(acmeCLI)
     do('connect test', within=3, expect=connectedToTest)
-    do(
-        'send CRED_DEF name=Job-Certificate version=0.2 type=CL keys=first_name,last_name,employee_status,experience,salary_bracket',
-        within=3, expect=credDefAdded)
+    do('send CRED_DEF name=Job-Certificate '
+       'version=0.2 type=CL keys=first_name,'
+       'last_name,employee_status,experience,'
+       'salary_bracket', within=3, expect=credDefAdded)
     acmeCdSeqNo = getSeqNoFromCliOutput(acmeCLI)
     do(
         'send ISSUER_KEY ref={seqNo}', within=3, expect=issuerKeyAdded,
@@ -92,13 +111,12 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
      ]
 
     for agentCls, agentCli, agentName, agentPort, agentCdSeqNo, agentIkSeqNo, \
-        buildAgentWalletFunc in \
-            agentParams:
-        agentCls.getPassedArgs = lambda _: (agentPort, int(agentCdSeqNo), \
-                                                 int(agentIkSeqNo))
-        agent = runAgent(agentCls, agentName,
-                              buildAgentWalletFunc(), tdir,
-                              agentPort, False, True)
+            buildAgentWalletFunc in agentParams:
+        agentCls.getPassedArgs = lambda _: (agentPort,
+                                            int(agentCdSeqNo),
+                                            int(agentIkSeqNo))
+        agent = runAgent(agentCls, agentName, buildAgentWalletFunc(), tdir,
+                         agentPort, False, True)
         agentCli.looper.add(agent)
 
     # Start Alice cli
@@ -118,9 +136,11 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     aliceRequestedTranscriptClaim(be, do, aliceCLI, transcriptClaimMap,
                                   reqClaimOut,
                                   None,  # Passing None since its not used
-                                  None  # Passing None since its not used
-                                )
+                                  None)  # Passing None since its not used
     do('show claim Transcript')
+
+    # TODO
+    # do('show claim Transcript verbose')
 
     # Accept acme
     do('load sample/acme-job-application.sovrin')
