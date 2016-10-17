@@ -405,7 +405,9 @@ class Walleted:
                 issuerKey.seqNo, A=claim[CRED_A], e=claim[CRED_E],
                 v=claim[V_PRIME_PRIME],
                 vprime=vprime)
-            self.wallet.addCredential(str(uuid.uuid4()), credential)
+            self.wallet.addCredential("{} {} {}".
+                                      format(li.name, name, version),
+                                      credential)
         else:
             self.notifyMsgListener("No matching link found")
 

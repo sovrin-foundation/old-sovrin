@@ -81,7 +81,10 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     faberCdSeqNo = getSeqNoFromCliOutput(faberCLI)
     do('send ISSUER_KEY ref={seqNo}', within=3, expect=issuerKeyAdded,
        mapper=dict(seqNo=faberCdSeqNo))
-    faberIkSeqNo = getSeqNoFromCliOutput(faberCLI)
+    faberIkSeqNo = int(getSeqNoFromCliOutput(faberCLI))
+
+    faberIssuerKey = faberCLI.activeWallet.getIssuerPublicKey(
+        seqNo=faberIkSeqNo)
 
     # Start Acme cli and add cred def and issuer key
     createAcmeCli(be, do, acmeCLI)
@@ -138,9 +141,14 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
                                   None,  # Passing None since its not used
                                   None)  # Passing None since its not used
     do('show claim Transcript')
-
     # TODO
     # do('show claim Transcript verbose')
+    cred = aliceCLI.activeWallet.getCredential(
+        'Faber College Transcript 1.2')
+    assert cred.issuerKeyId == faberIkSeqNo
+    faberIssuerKeyAtAlice = faberCLI.activeWallet.getIssuerPublicKey(
+        seqNo=cred.issuerKeyId)
+    assert faberIssuerKeyAtAlice == faberIssuerKey
 
     # Accept acme
     do('load sample/acme-job-application.sovrin')
