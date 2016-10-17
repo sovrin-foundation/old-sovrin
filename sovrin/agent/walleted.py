@@ -538,13 +538,12 @@ class Walleted:
                 # TODO: Following line is temporary and need to be removed
                 # result = True
 
-                # REMOVE-LOG: Remove the next 2 logs
+                # REMOVE-LOG: Remove the next log
                 logger.debug("issuerPks, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
                              format(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs))
-                logger.debug("result is {}".format(str(result)))
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
                     DATA:

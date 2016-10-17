@@ -128,6 +128,6 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     do('set last_name to Garcia')
     do('set phone_number to 123-45-6789')
     do('show claim request Job-Application')
-    do('send claim Job-Application to Acme')
+    # Passing some args as None since they are not used in the method
     jobApplicationClaimSent(be, do, aliceCLI, aMap, None, None, None)
 
