@@ -9,12 +9,12 @@ from ledger.util import F
 from plenum.common.error import fault
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
-    DATA, RAW, ENC, HASH, ORIGIN
+    DATA, RAW, ENC, HASH, ORIGIN, VERKEY
 from plenum.common.types import f
 from plenum.common.util import error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
-    STEWARD, ROLE, REFERENCE, TXN_TIME, ATTRIB, CRED_DEF, isValidRole, \
+    STEWARD, ROLE, REF, TXN_TIME, ATTRIB, CRED_DEF, isValidRole, \
     ATTR_NAMES, ISSUER_KEY
 import datetime
 import time
@@ -34,7 +34,7 @@ class Vertices:
         Nym: (NYM, TXN_ID, ROLE, F.seqNo.name),
         Attribute: (RAW, ENC, HASH),
         CredDef: (TYPE, ATTR_NAMES),
-        IssuerKey: (REFERENCE, DATA)
+        IssuerKey: (REF, DATA)
     }
 
     @classmethod
@@ -95,10 +95,12 @@ class IdentityGraph(OrientDbGraphStore):
     # Creates a vertex class which has a property called `nym` with a unique
     # index on it
     def createUniqueNymVertexClass(self, className, properties: Dict=None):
+        d = {NYM: "string",
+             VERKEY: "string"}
         if properties:
-            properties.update({NYM: "string"})
+            properties.update(d)
         else:
-            properties = {NYM: "string"}
+            properties = d
         self.createVertexClass(className, properties)
         self.store.createUniqueIndexOnClass(className, NYM)
 
@@ -147,7 +149,7 @@ class IdentityGraph(OrientDbGraphStore):
 
     def createIssuerKeyClass(self):
         self.createVertexClass(Vertices.IssuerKey, properties={
-            REFERENCE: "string",
+            REF: "string",
             DATA: "string", # JSON
         })
 
@@ -158,7 +160,7 @@ class IdentityGraph(OrientDbGraphStore):
 
     def createAliasOfClass(self):
         self.createUniqueTxnIdEdgeClass(Edges.AliasOf,
-                                        properties={REFERENCE: "string"})
+                                        properties={REF: "string"})
         # if not then `iN` need to be a USER
         self.addEdgeConstraint(Edges.AliasOf, iN=Vertices.Nym,
                                out=Vertices.Nym)
@@ -191,9 +193,10 @@ class IdentityGraph(OrientDbGraphStore):
     def getAddsNymEdge(self, nym):
         return self.getEntityByUniqueAttr(Edges.AddsNym, NYM, nym)
 
-    def addNym(self, txnId, nym, role, frm=None, reference=None, seqNo=None):
+    def addNym(self, txnId, nym, verkey, role, frm=None, reference=None, seqNo=None):
         kwargs = {
             NYM: nym,
+            VERKEY: verkey,
             TXN_ID: txnId,  # # Need to have txnId as a property for cases
             # where we dont know the sponsor of this nym or its a genesis nym
             ROLE: role,    # Need to have role as a property of the vertex it
@@ -214,17 +217,19 @@ class IdentityGraph(OrientDbGraphStore):
             toV = "(select from {} where {} = '{}')".format(Vertices.Nym,
                                                            NYM,
                                                            nym)
-            kwargs = {
-                NYM: nym,
-                ROLE: role,
-                TXN_ID: txnId
-            }
+            # DEPR   Why are we defining this twice?
+            # kwargs = {
+            #     NYM: nym,
+            #     VERKEY: verkey,
+            #     ROLE: role,
+            #     TXN_ID: txnId
+            # }
             self.createEdge(Edges.AddsNym, frmV, toV, **kwargs)
             if reference:
                 nymEdge = self.getEdgeByTxnId(Edges.AddsNym, txnId=reference)
                 referredNymRid = nymEdge.oRecordData['in'].get()
                 kwargs = {
-                    REFERENCE: reference,
+                    REF: reference,
                     TXN_ID: txnId
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, toV, **kwargs)
@@ -278,7 +283,7 @@ class IdentityGraph(OrientDbGraphStore):
     def addIssuerKey(self, frm, txnId, data, reference):
         kwargs = {
             DATA: json.dumps(data),
-            REFERENCE: reference
+            REF: reference
         }
         vertex = self.createVertex(Vertices.IssuerKey, **kwargs)
         frm = "(select from {} where {} = '{}')".format(Vertices.Nym, NYM,
@@ -342,7 +347,7 @@ class IdentityGraph(OrientDbGraphStore):
         needle = None
         if haystack:
             for rec in haystack:
-                if rec.oRecordData.get(REFERENCE) == str(ref):
+                if rec.oRecordData.get(REF) == str(ref):
                     needle = rec
                     break
             edgeData = self.client.command(
@@ -350,7 +355,7 @@ class IdentityGraph(OrientDbGraphStore):
                     .format(Edges.HasIssuerKey, needle._rid))[0].oRecordData
             return {
                 ORIGIN: frm,
-                REFERENCE: ref,
+                REF: ref,
                 F.seqNo.name: edgeData.get(F.seqNo.name),
                 DATA: json.loads(needle.oRecordData.get(DATA))
             }
@@ -395,7 +400,7 @@ class IdentityGraph(OrientDbGraphStore):
     def getRole(self, nym):
         nymV = self.getNym(nym)
         if not nymV:
-            raise ValueError("Nym does not exist")
+            raise ValueError("Nym {} does not exist".format(nym))
         else:
             return nymV.oRecordData.get(ROLE)
 
@@ -532,20 +537,21 @@ class IdentityGraph(OrientDbGraphStore):
         if not isValidRole(role):
             raise ValueError("Unknown role {} for nym, cannot add nym to graph"
                              .format(role))
-        else:
-            nym = txn[TARGET_NYM]
-            try:
-                txnId = txn[TXN_ID]
-                self.addNym(txnId, nym, role,
-                            frm=origin, reference=txn.get(REFERENCE),
-                            seqNo=txn.get(F.seqNo.name))
-                self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
-            except pyorient.PyOrientORecordDuplicatedException:
-                logger.debug("The nym {} was already added to graph".
-                             format(nym))
-            except pyorient.PyOrientCommandException as ex:
-                fault(ex, "An exception was raised while adding "
-                          "nym {}: {}".format(nym, ex))
+        nym = txn[TARGET_NYM]
+        # Not using `txn.get(VERKEY, '') as txn might have VERKEY but set as None`
+        verkey = txn.get(VERKEY) or ''
+        try:
+            txnId = txn[TXN_ID]
+            self.addNym(txnId, nym, verkey, role,
+                        frm=origin, reference=txn.get(REF),
+                        seqNo=txn.get(F.seqNo.name))
+            self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
+        except pyorient.PyOrientORecordDuplicatedException:
+            logger.debug("The nym {} was already added to graph".
+                         format(nym))
+        except pyorient.PyOrientCommandException as ex:
+            fault(ex, "An exception was raised while adding "
+                      "nym {}: {}".format(nym, ex))
 
     def addAttribTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
@@ -584,7 +590,7 @@ class IdentityGraph(OrientDbGraphStore):
                 frm=origin,
                 txnId=txnId,
                 data=data,
-                reference=txn.get(REFERENCE),
+                reference=txn.get(REF),
                 )
             self._updateTxnIdEdgeWithTxn(txnId, Edges.HasIssuerKey, txn)
         except Exception as ex:

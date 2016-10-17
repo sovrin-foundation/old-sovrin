@@ -1,6 +1,6 @@
 import pytest
 
-from plenum.client.signer import SimpleSigner
+from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TARGET_NYM
 from plenum.test.eventually import eventually
 from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
@@ -21,9 +21,6 @@ def attrib():
     return '{"name": "Tyler"}'
 
 
-# @pytest.fixture("module")
-# def sponsorCli(poolNodesCreated, looper, tdir):
-#     return newCLI(nodeRegsForCLI, looper, tdir)
 @pytest.yield_fixture(scope="module")
 def sponsorCli(CliBuilder):
     yield from CliBuilder("sponsor")

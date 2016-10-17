@@ -17,7 +17,7 @@ from sovrin.cli.constants import \
     ACCEPT_LINK_FORMATTED_REG_EX, SHOW_CLAIM_FORMATTED_REG_EX, \
     REQUEST_CLAIM_FORMATTED_REG_EX, SHOW_CLAIM_REQ_FORMATTED_REG_EX, \
     SET_ATTRIBUTE_FORMATTED_REG_EX, \
-    SEND_ISSUER_KEY_FORMATTED_REG_EX
+    SEND_ISSUER_KEY_FORMATTED_REG_EX, SEND_CLAIM__FORMATTED_REG_EX
 
 
 def getNewClientGrams():
@@ -54,7 +54,8 @@ def getNewClientGrams():
         SHOW_CLAIM_REQ_FORMATTED_REG_EX,
         SHOW_CLAIM_FORMATTED_REG_EX,
         REQUEST_CLAIM_FORMATTED_REG_EX,
-        SET_ATTRIBUTE_FORMATTED_REG_EX
+        SET_ATTRIBUTE_FORMATTED_REG_EX,
+        SEND_CLAIM__FORMATTED_REG_EX
     ]
 
 
@@ -66,11 +67,3 @@ Environment = NamedTuple("Environment", [
 NEXT_COMMANDS_TO_TRY_TEXT = "Try Next:"
 USAGE_TEXT = "Usage:"
 
-
-def ensureReqCompleted(loop, reqId, client, clbk=None, *args):
-    reply, err = client.replyIfConsensus(reqId)
-    if reply is None:
-        loop.call_later(.2, ensureReqCompleted, loop,
-                             reqId, client, clbk, *args)
-    elif clbk:
-        clbk(reply, err, *args)

@@ -2,8 +2,7 @@ import pytest
 from plenum.test.eventually import eventually
 from sovrin.cli.helper import NEXT_COMMANDS_TO_TRY_TEXT
 
-from sovrin.client.wallet.link import constant
-from sovrin.common.txn import USER, ENDPOINT
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import ensureConnectedToTestEnv, getLinkInvitation
 from sovrin.test.helper import addRawAttribute
 
@@ -19,7 +18,6 @@ def aliceConnected(aliceCLI, be, do, poolNodesCreated):
 
 
 def checkIfEndpointReceived(aCli, linkName, expStr):
-    assert expStr in aCli.lastCmdOutput
     assert NEXT_COMMANDS_TO_TRY_TEXT in aCli.lastCmdOutput
     assert 'show link "{}"'.format(linkName) in aCli.lastCmdOutput
     assert 'accept invitation from "{}"'.format(linkName) in aCli.lastCmdOutput
@@ -40,7 +38,8 @@ def testShowFile(aliceCLI, be, do, faberMap):
                         mapper=faberMap)
 
 
-def testLoadFileNotExists(aliceCLI, be, do, fileNotExists, faberMap):
+def testLoadFileNotExists(aliceCLI, be, do, fileNotExists, faberMap,
+                          aliceConnected):
     be(aliceCLI)
     do("load {invite-not-exists}", expect=fileNotExists, mapper=faberMap)
 
@@ -87,24 +86,27 @@ def testAliceConnect(aliceConnected):
 def testSyncLinkWhenEndpointNotAvailable(faberAdded,
                                          looper,
                                          aliceCLI,
-                                         stewardClientAndWallet):
+                                         aliceConnected):
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
+    ep = li.remoteEndPoint
+    li.remoteEndPoint = None
     aliceCLI.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,
                           "Endpoint not available",
                           retryWait=1,
                           timeout=10))
+    li.remoteEndPoint = ep
 
 
 def testSyncLinkWhenEndpointIsAvailable(looper,
                                         aliceCLI,
-                                        stewardClientAndWallet,
-                                        faberAdded):
-    client, wallet = stewardClientAndWallet
+                                        steward, stewardWallet,
+                                        faberAdded,
+                                        aliceConnected):
     li = getLinkInvitation("Faber", aliceCLI.activeWallet)
-    assert li.remoteEndPoint is constant.NOT_AVAILABLE
+    assert li.remoteEndPoint is None
     endpointValue = "0.0.0.0:0000"
-    addRawAttribute(looper, client, wallet, ENDPOINT, endpointValue,
+    addRawAttribute(looper, steward, stewardWallet, ENDPOINT, endpointValue,
                     dest=li.remoteIdentifier)
     aliceCLI.enterCmd("sync Faber")
     looper.run(eventually(checkIfEndpointReceived, aliceCLI, li.name,

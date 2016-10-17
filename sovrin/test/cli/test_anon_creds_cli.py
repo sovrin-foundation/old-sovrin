@@ -8,7 +8,7 @@ from plenum.common.txn import NAME, VERSION, ORIGIN
 from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
     checkClientConnected
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REFERENCE
+from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REF
 from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
     ensureNymAdded
 
@@ -200,17 +200,17 @@ def byuAddsCredDef(byuCLI, byuCreated, tylerCreated, byuPubKey,
 def byuAddsIssuerKey(byuCLI, byuAddsCredDef, credDefNameVersion):
     origin = byuAddsCredDef
     key = (*credDefNameVersion, origin)
-    credDef = byuCLI.activeWallet.getCredDef(key=key)
-    cmd = ("send ISSUER_KEY reference={}" .format(credDef.seqNo))
+    claimDef = byuCLI.activeWallet.getClaimDef(key=key)
+    cmd = ("send ISSUER_KEY ref={}" .format(claimDef.seqNo))
     checkCmdValid(byuCLI, cmd)
 
     def checkIsKAdded():
-        assert byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+        assert byuCLI.activeWallet.getIssuerPublicKey((origin, claimDef.seqNo))
         output = byuCLI.lastCmdOutput
         assert "issuer key is published" in output
 
     byuCLI.looper.run(eventually(checkIsKAdded, retryWait=1, timeout=15))
-    return byuCLI.activeWallet.getIssuerPublicKey((origin, credDef.seqNo))
+    return byuCLI.activeWallet.getIssuerPublicKey((origin, claimDef.seqNo))
 
 
 @pytest.fixture(scope="module")
@@ -232,14 +232,12 @@ def tylerPreparedU(nodesSetup, tylerCreated, tylerCLI, byuCLI,
         assert out in tylerCLI.lastCmdOutput
 
     tylerCLI.looper.run(eventually(chk, retryWait=1, timeout=15))
-    U = None
-    proofId = None
     pat = re.compile(
-        "Credential id is ([a-f0-9\-]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
+        "Requesting credential for public key ([0-9]+) and U is ([0-9]+\s+mod\s+[0-9]+)")
     m = pat.search(tylerCLI.lastCmdOutput)
-    if m:
-        proofId, U = m.groups()
-    return proofId, U
+    assert m
+    publicKeyId, U = m.groups()
+    return publicKeyId, U
 
 
 @pytest.fixture(scope="module")
@@ -247,7 +245,9 @@ def byuCreatedCredential(nodesSetup, byuCLI, tylerCLI,
                          tylerStoresAttributesAsKnownToBYU, tylerPreparedU,
                          credDefNameVersion):
     credDefName, credDefVersion = credDefNameVersion
-    proofId, U = tylerPreparedU
+    publicKeyId, U = tylerPreparedU
+    assert publicKeyId
+    assert U
     proverId = tylerCLI.activeWallet.defaultAlias
     checkCmdValid(byuCLI, "generate credential for {} for {} version {} with {}"
                   .format(proverId, credDefName, credDefVersion, U))
@@ -297,11 +297,11 @@ def revealedAtrr():
 @pytest.fixture(scope="module")
 def storedCred(tylerCLI, storedCredAlias, byuCreatedCredential,
                credDefNameVersion, byuPubKey, byuCLI, tylerPreparedU):
-    proofId, U = tylerPreparedU
+    publicKeyId, U = tylerPreparedU
     assert len(tylerCLI.activeWallet.credNames) == 0
     checkCmdValid(tylerCLI, "store credential A={}, e={}, vprimeprime={} for "
                             "credential {} as {}".format(*byuCreatedCredential,
-                                                         proofId,
+                                                         publicKeyId,
                                                          storedCredAlias))
     assert len(tylerCLI.activeWallet.credNames) == 1
     assert tylerCLI.lastCmdOutput == "Credential stored"
@@ -324,11 +324,12 @@ def preparedProof(tylerCLI, storedCred, verifNonce, storedCredAlias,
     checkCmdValid(tylerCLI, "prepare proof of {} using nonce {} for {}".
                   format(storedCredAlias, verifNonce, revealedAtrr))
     assert tylerCLI.lastCmdOutput.startswith("Proof is:")
-    pat = re.compile("Proof is: (.+)$")
+    pat = re.compile("Proof is: \n(.+)$")
     m = pat.search(tylerCLI.lastCmdOutput)
-    if m:
-        proof = m.groups()[0]
-        return proof
+    assert m
+    proof = m.groups()[0]
+    assert proof
+    return proof
 
 
 @pytest.fixture(scope="module")
@@ -417,6 +418,7 @@ def testPrepareProof(preparedProof):
 
 def testVerifyProof(preparedProof, bookStoreCLI, bookStoreConnected,
                     revealedAtrr):
+    assert preparedProof
     checkCmdValid(bookStoreCLI, "verify status is {} in proof {}"
                   .format(revealedAtrr, preparedProof))
 

@@ -25,7 +25,7 @@ from sovrin.common.txn import TXN_TYPE, \
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
-    ISSUER_KEY, GET_ISSUER_KEY, REFERENCE
+    ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.util import getConfig, dateTimeEncoding
 from sovrin.persistence.identity_graph import IdentityGraph
 from sovrin.persistence.secondary_storage import SecondaryStorage
@@ -36,6 +36,12 @@ logger = getlogger()
 
 class Node(PlenumNode):
     keygenScript = "init_sovrin_raet_keep"
+
+    authorizedAdders = {
+        STEWARD: (STEWARD,),
+        SPONSOR: (STEWARD,),
+        USER: (STEWARD, SPONSOR),
+    }
 
     def __init__(self,
                  name,
@@ -160,12 +166,6 @@ class Node(PlenumNode):
                                            "{} is already present".
                                            format(msg[TARGET_NYM]))
 
-    authorizedAdders = {
-        STEWARD: (STEWARD,),
-        SPONSOR: (STEWARD,),
-        USER: (STEWARD, SPONSOR),
-    }
-
     def checkRequestAuthorized(self, request: Request):
         op = request.operation
         typ = op[TXN_TYPE]
@@ -173,7 +173,13 @@ class Node(PlenumNode):
         s = self.graphStore  # type: IdentityGraph
 
         origin = request.identifier
-        originRole = s.getRole(origin)
+        try:
+            originRole = s.getRole(origin)
+        except Exception as ex:
+            raise UnauthorizedClientRequest(
+                request.identifier,
+                request.reqId,
+                "Nym {} not added to the ledger yet".format(origin))
 
         if typ == NYM:
             role = op.get(ROLE) or USER
@@ -207,9 +213,11 @@ class Node(PlenumNode):
         nym = request.operation[TARGET_NYM]
         txn = self.graphStore.getAddNymTxn(nym)
         txnId = self.genTxnId(request.identifier, request.reqId)
+        # TODO: We should have a single JSON encoder which does the
+        # encoding for us, like sorting by keys, handling datetime objects.
         result = {f.IDENTIFIER.nm: request.identifier,
                   f.REQ_ID.nm: request.reqId,
-                  DATA: json.dumps(txn) if txn else None,
+                  DATA: json.dumps(txn, sort_keys=True) if txn else None,
                   TXN_ID: txnId
                   }
         result.update(request.operation)
@@ -219,6 +227,7 @@ class Node(PlenumNode):
         nym = request.operation[TARGET_NYM]
         origin = request.identifier
         if nym != origin:
+            # TODO not sure this is correct; why does it matter?
             msg = "You can only receive transactions for yourself"
             self.transmitToClient(RequestNack(request.reqId, msg), frm)
         else:
@@ -243,10 +252,12 @@ class Node(PlenumNode):
                     request.identifier, request.reqId)
             }
             result.update(request.operation)
+            # TODO: We should have a single JSON encoder which does the
+            # encoding for us, like sorting by keys, handling datetime objects.
             result[DATA] = json.dumps({
                 LAST_TXN: lastTxn,
                 TXNS: txns
-            }, default=dateTimeEncoding)
+            }, default=dateTimeEncoding, sort_keys=True)
             result.update({
                 f.IDENTIFIER.nm: request.identifier,
                 f.REQ_ID.nm: request.reqId,
@@ -263,7 +274,7 @@ class Node(PlenumNode):
                 request.identifier, request.reqId)
         }
         result.update(request.operation)
-        result[DATA] = json.dumps(credDef)
+        result[DATA] = json.dumps(credDef, sort_keys=True)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,
@@ -281,7 +292,7 @@ class Node(PlenumNode):
         }
         if attrWithSeqNo:
             attr = {attrName: attrWithSeqNo[attrName][0]}
-            result[DATA] = json.dumps(attr)
+            result[DATA] = json.dumps(attr, sort_keys=True)
             result[F.seqNo.name] = attrWithSeqNo[attrName][1]
         result.update(request.operation)
         result.update({
@@ -293,16 +304,13 @@ class Node(PlenumNode):
     def processGetIssuerKeyReq(self, request: Request, frm: str):
         self.transmitToClient(RequestAck(request.reqId), frm)
         keys = self.graphStore.getIssuerKeys(request.operation[ORIGIN],
-                                            request.operation[REFERENCE])
-        # attrNames = request.operation[RAW]
-        # nym = request.operation[TARGET_NYM]
-        # attrs = self.graphStore.getRawAttrs(nym, attrNames)
+                                             request.operation[REF])
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)
         }
         result.update(request.operation)
-        result[DATA] = json.dumps(keys)
+        result[DATA] = json.dumps(keys, sort_keys=True)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,

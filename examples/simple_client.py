@@ -10,12 +10,10 @@ TODO: demonstrate client verification key bootstrapping
 import os
 import tempfile
 from collections import OrderedDict
-from tempfile import TemporaryDirectory
 
-from sovrin.client.client import Client
-from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
-
+from plenum.common.signer_simple import SimpleSigner
+from sovrin.client.client import Client
 from sovrin.common.txn import TXN_TYPE, NYM
 
 

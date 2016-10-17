@@ -1,6 +1,5 @@
 from plenum.cli.constants import CLIENT_GRAMS_CLIENT_COMMAND_REG_EX, relist, \
-    CLI_CMDS, getPipedRegEx, \
-    CLIENT_GRAMS_USE_KEYPAIR_REG_EX
+    CLI_CMDS, getPipedRegEx, CLIENT_GRAMS_USE_KEYPAIR_REG_EX
 
 CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX = getPipedRegEx(
     CLIENT_GRAMS_CLIENT_COMMAND_REG_EX +
@@ -40,7 +39,7 @@ SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)" \
                        "\s+(?P<keys_key>keys=)\s*(?P<keys>[a-zA-Z-_,\s]+)\s*)"
 
 SEND_ISSUER_KEY_REG_EX = "(\s*(?P<send_isr_key>send\s+ISSUER_KEY)" \
-                       "\s+(?P<ref_key>reference=)\s*(?P<reference>[0-9]+)\s*)"
+                       "\s+(?P<ref_key>ref=)\s*(?P<ref>[0-9]+)\s*)"
 
 REQ_CRED_REG_EX = \
     "(\s*(?P<req_cred>request\s+credential) " \
@@ -76,7 +75,7 @@ GEN_CRED_REG_EX = \
 STORE_CRED_REG_EX = \
     "(\s* (?P<store_cred>store \s+ credential)" \
     "\s+ (?P<cred>[A-Za-z0-9_,+=/ ]+)" \
-    "\s+ for \s+ credential \s+ (?P<prf_id>[a-zA-Z0-9\-]+)" \
+    "\s+ for \s+ credential \s+ (?P<pk_id>[a-zA-Z0-9\-]+)" \
     "\s+ as \s+ (?P<alias>[a-zA-Z0-9-\s]+)" \
     "\s*)"
 
@@ -129,6 +128,8 @@ SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
                     '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_./]+)' \
                     '\s*)'
 
+SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) \s+ (?P<claim_name>[A-Za-z0-9-" ]+) \s+ to (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -156,3 +157,4 @@ SHOW_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REG_EX)
 REQUEST_CLAIM_FORMATTED_REG_EX = getPipedRegEx(REQUEST_CLAIM_REG_EX)
 SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
 SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)
+SEND_CLAIM__FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)

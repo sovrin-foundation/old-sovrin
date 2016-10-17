@@ -1,9 +1,6 @@
 import json
 
 import os
-from collections import OrderedDict
-
-from ledger.util import F
 from plenum.common.util import updateFieldsWithSeqNo
 from plenum.persistence.client_req_rep_store_file import ClientReqRepStoreFile \
     as PClientReqRepStoreFile

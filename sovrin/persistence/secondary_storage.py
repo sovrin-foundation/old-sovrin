@@ -1,8 +1,5 @@
-import base64
-
 from ledger.util import F
 from plenum.common.txn import TXN_TYPE
-from plenum.common.types import Reply
 from plenum.persistence.secondary_storage import SecondaryStorage as PlenumSS
 from sovrin.common.txn import NYM
 

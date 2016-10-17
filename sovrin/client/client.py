@@ -2,8 +2,9 @@ import json
 import traceback
 import uuid
 from collections import deque
-from typing import Mapping, List, Dict, Union, Tuple, Optional, Callable
+from typing import Dict, Union, Tuple, Optional, Callable
 
+from base58 import b58decode, b58encode
 import pyorient
 
 from raet.raeting import AutoMode
@@ -14,12 +15,14 @@ from plenum.client.client import Client as PlenumClient
 from plenum.server.router import Router
 from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
-from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK
+from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK, REQNACK, \
+    TXN_ID, TARGET_NYM, NONCE
 from plenum.common.types import OP_FIELD_NAME, f, HA
 from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
+    GET_ATTR
 from sovrin.common.util import getConfig
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
@@ -96,8 +99,10 @@ class Client(PlenumClient):
         # excludeGetTxns = (msg.get(OP_FIELD_NAME) == REPLY and
         #                   msg[f.RESULT.nm].get(TXN_TYPE) == GET_TXNS)
         excludeReqAcks = msg.get(OP_FIELD_NAME) == REQACK
+        excludeReqNacks = msg.get(OP_FIELD_NAME) == REQNACK
         excludeReply = msg.get(OP_FIELD_NAME) == REPLY
-        excludeFromCli = excludeFromCli or excludeReqAcks or excludeReply
+        excludeFromCli = excludeFromCli or excludeReqAcks or excludeReqNacks \
+                         or excludeReply
         super().handleOneNodeMsg(wrappedMsg, excludeFromCli)
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
@@ -135,9 +140,8 @@ class Client(PlenumClient):
                                 try:
                                     self.graphStore.addAttribTxnToGraph(txn)
                                 except pyorient.PyOrientCommandException as ex:
-                                    fault(ex,
-                                        "An exception was raised while adding "
-                                        "attribute {}".format(ex))
+                                    fault(ex, "An exception was raised while "
+                                              "adding attribute")
 
             elif result[TXN_TYPE] == CRED_DEF:
                 if self.graphStore:
@@ -204,6 +208,30 @@ class Client(PlenumClient):
                     txn[NAME] = txn[DATA][NAME]
                     txn[VERSION] = txn[DATA][VERSION]
             return txns
+
+    # TODO: Just for now. Remove it later
+    def doAttrDisclose(self, origin, target, txnId, key):
+        box = libnacl.public.Box(b58decode(origin), b58decode(target))
+
+        data = json.dumps({TXN_ID: txnId, SKEY: key})
+        nonce, boxedMsg = box.encrypt(data.encode(), pack_nonce=False)
+
+        op = {
+            TARGET_NYM: target,
+            TXN_TYPE: DISCLO,
+            NONCE: b58encode(nonce),
+            DATA: b58encode(boxedMsg)
+        }
+        self.submit(op, identifier=origin)
+
+    def doGetAttributeTxn(self, identifier, attrName):
+        op = {
+            TARGET_NYM: identifier,
+            TXN_TYPE: GET_ATTR,
+            DATA: json.dumps({"name": attrName})
+        }
+        self.submit(op, identifier=identifier)
+
 
     @staticmethod
     def _getDecryptedData(encData, key):

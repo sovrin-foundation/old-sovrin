@@ -1,19 +1,20 @@
 import inspect
 import json
 import os
-
 import shutil
+import uuid
 from contextlib import ExitStack
-from typing import Dict
 from typing import Iterable, Union, Tuple
 
 import pyorient
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
+from anoncreds.test.conftest import staticPrimes
 from plenum.common.log import getlogger
-
-from plenum.client.signer import SimpleSigner
 from plenum.common.looper import Looper
-from plenum.common.txn import REQACK, DATA
+from plenum.common.signer_simple import SimpleSigner
+from plenum.common.txn import REQACK, NAME, VERSION, TYPE
 from plenum.common.types import HA, Identifier
 from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
@@ -27,13 +28,14 @@ from plenum.test.helper import checkNodesConnected, \
 from plenum.test.helper import genTestClient as genPlenumTestClient
 from plenum.test.helper import genTestClientProvider as \
     genPlenumTestClientProvider
+from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
+from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
-    TXN_ID, GET_NYM
+from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM, ATTR_NAMES
 from sovrin.common.util import getConfig
 from sovrin.server.node import Node
 
@@ -383,15 +385,17 @@ def genTestClientProvider(nodes: TestNodeSet = None,
 
 def clientFromSigner(signer, looper, nodeSet, tdir):
     wallet = Wallet(signer.identifier)
-    wallet.addSigner(signer)
+    wallet.addIdentifier(signer)
     s = genTestClient(nodeSet, tmpdir=tdir, identifier=signer.identifier)
     looper.add(s)
     looper.run(s.ensureConnectedToNodes())
     return s
 
 
-def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
+def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
+              verkey=None):
     idy = Identity(identifier=nym,
+                   verkey=verkey,
                    role=role)
     creatorWallet.addSponsoredIdentity(idy)
     reqs = creatorWallet.preparePending()
@@ -400,13 +404,14 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None):
     def check():
         assert creatorWallet._sponsored[nym].seqNo
 
-    looper.run(eventually(check, timeout=2))
+    looper.run(eventually(check, timeout=4))
 
 
 def addUser(looper, creatorClient, creatorWallet, name):
     wallet = Wallet(name)
-    wallet.addSigner()
-    createNym(looper, wallet.defaultId, creatorClient, creatorWallet)
+    idr, _ = wallet.addIdentifier()
+    verkey = wallet.getVerkey(idr)
+    createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
     return wallet
 
 
@@ -471,7 +476,7 @@ class TestGraphStorage:
 def _newWallet(name=None):
     signer = SimpleSigner()
     w = Wallet(name or signer.identifier)
-    w.addSigner(signer=signer)
+    w.addIdentifier(signer=signer)
     return w
 
 
@@ -500,3 +505,49 @@ def addRawAttribute(looper, client, wallet, name, value, dest=None,
                        dest=dest,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, client, wallet, attrib)
+
+
+def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
+    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
+    sid = agent.wallet.addClaimDefSk(str(csk))
+    claimDef = ClaimDef(seqNo=None,
+                       attrNames=claimDefToBeAdded[ATTR_NAMES],
+                       name=claimDefToBeAdded[NAME],
+                       version=claimDefToBeAdded[VERSION],
+                       origin=agent.wallet.defaultId,
+                       typ=claimDefToBeAdded[TYPE],
+                       secretKey=sid)
+    agent.wallet.addClaimDef(claimDef)
+    reqs = agent.wallet.preparePending()
+    agent.client.submitReqs(*reqs)
+
+    def chk():
+        assert claimDef.seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+
+    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
+    agent.wallet.addIssuerSecretKey(isk)
+    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+                       claimDefSeqNo=claimDef.seqNo,
+                       secretKeyUid=isk.pubkey.uid, origin=agent.wallet.defaultId)
+    agent.wallet.addIssuerPublicKey(ipk)
+    reqs = agent.wallet.preparePending()
+    agent.client.submitReqs(*reqs)
+
+    key = (agent.wallet.defaultId, claimDef.seqNo)
+
+    def chk():
+        assert agent.wallet.getIssuerPublicKey(key).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=10))
+    return claimDef.seqNo, ipk.seqNo
+
+
+def buildStewardClient(looper, tdir, stewardWallet):
+    s, _ = genTestClient(tmpdir=tdir, usePoolLedger=True)
+    s.registerObserver(stewardWallet.handleIncomingReply)
+    looper.add(s)
+    looper.run(s.ensureConnectedToNodes())
+    makePendingTxnsRequest(s, stewardWallet)
+    return s

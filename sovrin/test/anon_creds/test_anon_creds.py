@@ -4,7 +4,7 @@ import pytest
 from plenum.common.log import DISPLAY_LOG_LEVEL, setupLogging, \
     DemoHandler, getlogger
 from plenum.test.eventually import eventually
-from sovrin.client.wallet.cred_def import CredDef
+from sovrin.client.wallet.claim_def import ClaimDef
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.test.conftest import staticPrimes
@@ -45,10 +45,9 @@ from sovrin.client.wallet.wallet import Wallet
 # pressing issues.
 
 @pytest.mark.skipif(True, reason="Refactoring incomplete")
-def testAnonCredFlow(genned,
+def testAnonCredFlow(nodeSet,
                      looper,
                      tdir,
-                     nodeSet,
                      issuerWallet: Wallet,
                      proverWallet: Wallet,
                      verifierWallet,
@@ -86,9 +85,12 @@ def testAnonCredFlow(genned,
 
     attrNames = tuple(attributes.keys())
     # 3 Sovrin clients acting as Issuer, Signer and Verifier
-    issuerC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa())
-    proverC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa())
-    verifierC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa())
+    issuerC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa(),
+                               usePoolLedger=True)
+    proverC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa(),
+                               usePoolLedger=True)
+    verifierC, _ = genTestClient(nodeSet, tmpdir=tdir, peerHA=genHa(),
+                                 usePoolLedger=True)
 
     looper.add(issuerC)
     looper.add(proverC)
@@ -136,13 +138,13 @@ def testAnonCredFlow(genned,
     # Issuer publishes credential definition to Sovrin ledger
 
     csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    cskId = issuerWallet.addCredDefSk(str(csk))
-    credDef = CredDef(seqNo=None,
-                      attrNames=attrNames,
-                      name=name1,
-                      version=version1,
-                      origin=issuerWallet.defaultId,
-                      secretKey=cskId)
+    cskId = issuerWallet.addClaimDefSk(str(csk))
+    credDef = ClaimDef(seqNo=None,
+                       attrNames=attrNames,
+                       name=name1,
+                       version=version1,
+                       origin=issuerWallet.defaultId,
+                       secretKey=cskId)
     # credDef = issuer.addNewCredDef(attrNames, name1, version1,
     #                                p_prime="prime1", q_prime="prime1", ip=ip,
     #                                port=port)
@@ -151,18 +153,17 @@ def testAnonCredFlow(genned,
                    " for {}".format(version1, name1))
     print("Credential definition: ")
     pprint.pprint(credDef.get())  # Pretty-printing the big object.
-    pending = issuerWallet.addCredDef(credDef)
+    pending = issuerWallet.addClaimDef(credDef)
     reqs = issuerWallet.preparePending()
-    # op = {TXN_TYPE: CRED_DEF,
-    #       DATA: getCredDefTxnData(credDef)}
+
     logger.display("Issuer: Writing credential definition to "
                    "Sovrin Ledger...")
     issuerC.submitReqs(*reqs)
 
     def chk():
-        assert issuerWallet.getCredDef((name1,
-                                        version1,
-                                        issuerWallet.defaultId)).seqNo is not None
+        assert issuerWallet.getClaimDef((name1,
+                                         version1,
+                                         issuerWallet.defaultId)).seqNo is not None
 
     looper.run(eventually(chk, retryWait=.1, timeout=30))
 
@@ -213,7 +214,7 @@ def testAnonCredFlow(genned,
     proofBuilder.setParams(presentationToken,
                     revealedAttrs, nonce)
     prf = ProofBuilderModule.ProofBuilder.prepareProof(
-        credDefPks=proofBuilder.credDefPks,
+        credDefPks=proofBuilder.issuerPks,
         masterSecret=proofBuilder.masterSecret,
         creds=presentationToken,
         encodedAttrs=encodedAttributes,

@@ -1,7 +1,11 @@
-import datetime
 from typing import Dict
 
-from sovrin.common.util import getNonce
+from plenum.common.txn import NAME, NONCE
+from plenum.common.types import f
+from plenum.common.util import prettyDateDifference
+from sovrin.common.exceptions import InvalidLinkException, \
+    RemoteEndpointNotFound
+from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
 
 
 class constant:
@@ -28,15 +32,16 @@ class constant:
     LINK_NOT_SYNCHRONIZED = "<this link has not yet been synchronized>"
     UNKNOWN_WAITING_FOR_SYNC = "<unknown, waiting for sync>"
 
-    LINK_ITEM_PREFIX = '\n\t'
+    LINK_ITEM_PREFIX = '\n    '
 
     NOT_AVAILABLE = "Not Available"
 
 
 class Link:
     def __init__(self, name, localIdentifier, trustAnchor=None,
-                 remoteIdentifier=None, remoteEndPoint=None, nonce=None,
-                 claimRequests=None, invitationData: Dict=None):
+                 remoteIdentifier=None, remoteEndPoint=None, invitationNonce=None,
+                 claimProofRequests=None, invitationData: Dict=None,
+                 internalId=None):
         self.name = name
         self.localIdentifier = localIdentifier
         self.verkey = self.localIdentifier.split(":")[-1]
@@ -44,82 +49,33 @@ class Link:
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
-        self.nonce = nonce or getNonce()
+        self.invitationNonce = invitationNonce
         self.invitationData = invitationData
 
-        self.claimRequests = claimRequests or []
-        self.availableClaims = {}
-        self.receivedClaims = {}
+        # for optionally storing a reference to an identifier in another system
+        # for example, a college may already have a student ID for a particular
+        # person, and that student ID can be put in this field
+        self.internalId = internalId
+
+        self.claimProofRequests = claimProofRequests or []
+        self.verifiedClaimProofs = []
+        self.availableClaims = []      # type: List[tupe(name, version, origin)]
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
         self.linkLastSyncNo = None
 
-    def updateState(self, targetVerKey, linkStatus, linkLastSynced,
-                    linkLastSyncNo):
-        self.targetVerkey = targetVerKey
-        self.linkStatus = linkStatus
-        self.linkLastSynced = datetime.datetime.strptime(
-            linkLastSynced, "%Y-%m-%dT%H:%M:%S.%f") \
-            if linkLastSynced else None
-        self.linkLastSyncNo = linkLastSyncNo
+    def __repr__(self):
+        return self.key
 
-    def updateReceivedClaims(self, rcvdClaims):
-        for rc in rcvdClaims:
-            self.receivedClaims[rc.defKey.key] = rc
-
-    def updateAvailableClaims(self, availableClaims):
-        for ac in availableClaims:
-            self.availableClaims[ac.claimDefKey.key] = ac
+    @property
+    def key(self):
+        return self.name
 
     @property
     def isRemoteEndpointAvailable(self):
         return self.remoteEndPoint and self.remoteEndPoint != \
                                        constant.NOT_AVAILABLE
-
-    @staticmethod
-    def prettyDate(time=False):
-        """
-        Get a datetime object or a int() Epoch timestamp and return a
-        pretty string like 'an hour ago', 'Yesterday', '3 months ago',
-        'just now', etc
-        """
-        from datetime import datetime
-        now = datetime.now()
-        if time is None:
-            return constant.LINK_NOT_SYNCHRONIZED
-
-        if not isinstance(time, (int, datetime)):
-            raise RuntimeError("Cannot parse time")
-        if isinstance(time,int):
-            diff = now - datetime.fromtimestamp(time)
-        elif isinstance(time, datetime):
-            diff = now - time
-        else:
-            diff = now - now
-        second_diff = diff.seconds
-        day_diff = diff.days
-
-        if day_diff < 0:
-            return ''
-
-        if day_diff == 0:
-            if second_diff < 10:
-                return "just now"
-            if second_diff < 60:
-                return str(second_diff) + " seconds ago"
-            if second_diff < 120:
-                return "a minute ago"
-            if second_diff < 3600:
-                return str(int(second_diff / 60)) + " minutes ago"
-            if second_diff < 7200:
-                return "an hour ago"
-            if second_diff < 86400:
-                return str(int(second_diff / 3600)) + " hours ago"
-        if day_diff == 1:
-            return "Yesterday"
-        if day_diff < 7:
-            return str(day_diff) + " days ago"
 
     @property
     def isAccepted(self):
@@ -131,8 +87,11 @@ class Link:
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
         targetEndPoint = self.remoteEndPoint or \
                          constant.UNKNOWN_WAITING_FOR_SYNC
+        if isinstance(targetEndPoint, tuple):
+            targetEndPoint = "{}:{}".format(*targetEndPoint)
         linkStatus = 'not verified, target verkey unknown'
-        linkLastSynced = Link.prettyDate(self.linkLastSynced)
+        linkLastSynced = prettyDateDifference(self.linkLastSynced) or \
+                         constant.LINK_NOT_SYNCHRONIZED
 
         if linkLastSynced != constant.LINK_NOT_SYNCHRONIZED and \
                         targetEndPoint == constant.UNKNOWN_WAITING_FOR_SYNC:
@@ -146,15 +105,12 @@ class Link:
         # TODO: The verkey would be same as the local identifier until we
         # support key rotation
         verKey = constant.SIGNER_VER_KEY_SAME_AS_ID
-        # if self.signerVerKey:
-        #     verKey = self.signerVerKey
-
         fixedLinkHeading = "Link "
         if not self.isAccepted:
             fixedLinkHeading += "(not yet accepted)"
 
         # TODO: Refactor to use string interpolation
-
+        # try:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
@@ -166,24 +122,51 @@ class Link:
                           constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
             'Target Verification key: ' + targetVerKey + '\n' \
             'Target endpoint: ' + targetEndPoint + '\n' \
-            'Invitation nonce: ' + self.nonce + '\n' \
-            'Invitation status: ' + linkStatus + '\n' \
-            'Last synced: ' + linkLastSynced + '\n'
+            'Invitation nonce: ' + self.invitationNonce + '\n' \
+            'Invitation status: ' + linkStatus + '\n'
+        # except Exception as ex:
+        #     print(ex)
+        #     print(targetEndPoint, linkStatus, )
 
         optionalLinkItems = ""
-        if len(self.claimRequests) > 0:
+        if len(self.claimProofRequests) > 0:
             optionalLinkItems += "Claim Requests: {}". \
-                format(",".join([cr.name for cr in self.claimRequests]))
+                format(", ".join([cr.name for cr in self.claimProofRequests])) \
+                                 + '\n'
 
-        if len(self.availableClaims) > 0:
+        if self.availableClaims:
             optionalLinkItems += "Available claims: {}".\
-                format(",".join([ac.claimDefKey.name
-                                 for ac in self.availableClaims.values()]))
+                format(", ".join([name
+                                 for name, _, _ in self.availableClaims])) \
+                                 + '\n'
 
         if self.linkLastSyncNo:
-            optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo
+            optionalLinkItems += 'Last sync seq no: ' + self.linkLastSyncNo \
+                                 + '\n'
 
-        linkItems = fixedLinkItems + optionalLinkItems
+        fixedEndingLines = 'Last synced: ' + linkLastSynced
+
+        linkItems = fixedLinkItems + optionalLinkItems + fixedEndingLines
         indentedLinkItems = constant.LINK_ITEM_PREFIX.join(
             linkItems.splitlines())
         return fixedLinkHeading + indentedLinkItems
+
+    @staticmethod
+    def validate(invitationData):
+
+        def checkIfFieldPresent(msg, searchInName, fieldName):
+            if not msg.get(fieldName):
+                raise InvalidLinkException(
+                    "Field not found in {}: {}".format(searchInName, fieldName))
+
+        checkIfFieldPresent(invitationData, 'given input', 'sig')
+        checkIfFieldPresent(invitationData, 'given input', 'link-invitation')
+        linkInvitation = invitationData.get("link-invitation")
+        linkInvitationReqFields = [f.IDENTIFIER.nm, NAME, NONCE]
+        for fn in linkInvitationReqFields:
+            checkIfFieldPresent(linkInvitation, 'link-invitation', fn)
+
+    def getRemoteEndpoint(self, required=False):
+        if not self.remoteEndPoint and required:
+            raise RemoteEndpointNotFound
+        return self.remoteEndPoint

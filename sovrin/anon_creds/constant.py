@@ -18,3 +18,4 @@ VVECT = "vvect"
 A_PRIME = "Aprime"
 V_PRIME_PRIME = "vprimeprime"
 ENCODED_ATTRS = "encodedAttrs"
+ZERO_INDEX = '0'

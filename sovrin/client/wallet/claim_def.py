@@ -1,13 +1,13 @@
-import json
-from typing import Optional, Dict
+from typing import Optional
 
 from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.credential_definition import CredentialDefinition
 from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, TARGET_NYM, TYPE,\
     ORIGIN
 from plenum.common.types import Identifier
+from sovrin.anon_creds.constant import ZERO_INDEX
 from sovrin.common.txn import CRED_DEF, GET_CRED_DEF, ATTR_NAMES, ISSUER_KEY, \
-    GET_ISSUER_KEY, REFERENCE
+    GET_ISSUER_KEY, REF
 from sovrin.common.types import Request
 
 
@@ -21,14 +21,14 @@ class HasSeqNo:
         self.uid = value
 
 
-class CredDef(CredentialDefinition, HasSeqNo):
+class ClaimDef(CredentialDefinition, HasSeqNo):
     def __init__(self,
                  name: str,
                  version: str,
                  origin: Optional[Identifier] = None,
                  seqNo: Optional[int] = None,
                  attrNames=None,
-                 secretKey: Optional[str]=None,    # uid of the Cred Def secret key
+                 secretKey: Optional[str]=None,     # uid of the Cred Def secret key
                  typ: str=None,
                  ):
         super().__init__(uid=seqNo,
@@ -39,6 +39,7 @@ class CredDef(CredentialDefinition, HasSeqNo):
         self.origin = origin
         self.secretKey = secretKey
 
+    @property
     def key(self):
         return self.name, self.version, self.origin
 
@@ -72,7 +73,23 @@ class CredDef(CredentialDefinition, HasSeqNo):
         if not self.seqNo:
             return Request(identifier=requestAuthor, operation=self._opForGet())
 
+    @property
+    def attributes(self):
+        return \
+            'Attributes:' + '\n      ' + \
+            format("\n      ".join(
+            ['{}'.format(k)
+             for k in self.attrNames]))
 
+    def __str__(self):
+        return \
+            'Name: ' + self.name + '\n' + \
+            'Version: ' + self.version + '\n' + \
+            self.attributes
+
+
+# TODO this pub key class should HAVE an IssuerKey, not BE and IssuerKey (also solves the late initialization)
+# TODO also, not sure why a secretKeyUid is needed. The point of a uid is an external reference, and we would never store a secret key externally.
 class IssuerPubKey(IssuerKey, HasSeqNo):
     def __init__(self, claimDefSeqNo: int,
                  origin, N=None, R=None, S=None, Z=None, secretKeyUid=None,
@@ -101,7 +118,7 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
             R_str = {k: str(v) for k, v in self.R.items()}
             op = {
                 TXN_TYPE: ISSUER_KEY,
-                REFERENCE: self.claimDefSeqNo,
+                REF: self.claimDefSeqNo,
                 DATA: {
                     "N": str(self.N),
                     "R": R_str,
@@ -114,7 +131,7 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     def _opForGet(self):
         op = {
             TXN_TYPE: GET_ISSUER_KEY,
-            REFERENCE: self.claimDefSeqNo,
+            REF: self.claimDefSeqNo,
             ORIGIN: self.origin
         }
         return op
@@ -122,3 +139,14 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     def getRequest(self, requestAuthor: Identifier):
         if not self.seqNo:
             return Request(identifier=requestAuthor, operation=self._opForGet())
+
+    @property
+    def attributeNames(self):
+        R = getattr(self, "R", None)
+        if not R:
+            raise RuntimeError("Cannot get attribute names since key has not been fetched completely")
+        return [n for n in R.keys() if n != ZERO_INDEX]
+
+    def canBeUsedForAttrsFrom(self, issuerId, attrNames):
+        return issuerId == self.origin and \
+               set(attrNames).issubset(set(self.attributeNames))
