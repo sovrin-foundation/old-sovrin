@@ -162,7 +162,7 @@ def faberAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
     be(philCli)
     if not philCli._isConnectedToAnyEnv():
         do('connect test',          within=3,
-                                    expect=connectedToTest, mapper=faberMap)
+                                    expect=connectedToTest)
 
     do('send NYM dest={target} role=SPONSOR',
                                     within=3,
@@ -176,7 +176,7 @@ def acmeAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
     be(philCli)
     if not philCli._isConnectedToAnyEnv():
         do('connect test',          within=3,
-                                    expect=connectedToTest, mapper=acmeMap)
+                                    expect=connectedToTest)
 
     do('send NYM dest={target} role=SPONSOR',
                                     within=3,
@@ -190,7 +190,7 @@ def thriftAddedByPhil(be, do, poolNodesStarted, philCli, connectedToTest,
     be(philCli)
     if not philCli._isConnectedToAnyEnv():
         do('connect test',          within=3,
-                                    expect=connectedToTest, mapper=thriftMap)
+                                    expect=connectedToTest)
 
     do('send NYM dest={target} role=SPONSOR',
                                     within=3,
@@ -388,6 +388,7 @@ def testAcceptUnSyncedFaberInvite(be, do, aliceCli, faberInviteLoadedByAlice,
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
                       totalCredDefs=0, totalClaimsRcvd=0)
 
+
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
                                      faberInviteLoadedByAlice, poolNodesStarted,
@@ -479,8 +480,9 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
                                         "Identifier is not yet written to Sovrin"]
                                     )
 
+
 @pytest.fixture(scope="module")
-def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap, faberCli,
+def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap,
                                  faberAddedByPhil,
                                  syncedInviteAcceptedWithClaimsOut,
                                  faberLinkAdded, faberIsRunning,
@@ -498,12 +500,11 @@ def testAliceAcceptFaberInvitationFirstTime(aliceAcceptedFaberInvitation):
     pass
 
 
-def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
+def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberMap,
                                         unsycedAlreadyAcceptedInviteAcceptedOut,
                                         aliceAcceptedFaberInvitation):
 
-    li = aliceCli.activeWallet.getLinkInvitationByTarget(
-        faberCli.activeWallet.defaultId)
+    li = aliceCli.activeWallet.getLinkInvitationByTarget(faberMap['target'])
     li.linkStatus = None
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
@@ -637,13 +638,14 @@ def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
     do('show link {inviter}',       expect=showUnSyncedLinkWithClaimReqs,
                                     mapper=acmeMap)
 
+
 @pytest.fixture(scope="module")
 def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    unsycedAcceptedInviteWithoutClaimOut,
                                    aliceRequestedTranscriptClaim,
                                    acmeInviteLoadedByAlice, acmeAddedByPhil,
                                    acmeIsRunning, acmeMap, acmeLinkAdded,
-                                   acmeCli, acmeWithEndpointAdded):
+                                   acmeWithEndpointAdded):
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
                       totalCredDefs=1, totalClaimsRcvd=1)
     be(aliceCli)
@@ -657,6 +659,14 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
 
 def testAliceAcceptAcmeJobInvitation(aliceAcceptedAcmeJobInvitation):
     pass
+
+
+def testSetAttrWithoutContext(be, do, aliceCli):
+    be(aliceCli)
+    do("set first_name to Alice",   expect=[
+                                            "No context, "
+                                            "use below command to "
+                                            "set the context"])
 
 
 def testShowAcmeLinkAfterInviteAccept(be, do, aliceCli, acmeMap,
@@ -722,14 +732,6 @@ def testShowJobAppilcationClaimReq(be, do, aliceCli, acmeMap,
                                    transcriptClaimAttrValueMap)
 
 
-def testSetAttrWithoutContext(be, do, faberCli):
-    be(faberCli)
-    do("set first_name to Alice",   expect=[
-                                            "No context, "
-                                            "use below command to "
-                                            "set the context"])
-
-
 @pytest.fixture(scope="module")
 def aliceSelfAttestsAttributes(be, do, aliceCli, acmeMap,
                                                showJobAppClaimReqOut,
@@ -769,15 +771,14 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli,
                                     mapper=aliceSelfAttestsAttributes)
 
 
-def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
+def testInvalidSigErrorResponse(be, do, aliceCli, faberMap,
                                 faberIsRunning,
                                 faberInviteSyncedWithoutEndpoint):
 
     msg = {
         TYPE: ACCEPT_INVITE,
-        IDENTIFIER: faberCli.activeWallet.defaultId,
+        IDENTIFIER: faberMap['target'],
         NONCE: "unknown"
-
     }
     signature = aliceCli.activeWallet.signMsg(msg,
                                               aliceCli.activeWallet.defaultId)
@@ -791,7 +792,7 @@ def testInvalidSigErrorResponse(be, do, aliceCli, faberCli, faberMap,
                                                 format(msg)])
 
 
-def testLinkNotFoundErrorResponse(be, do, aliceCli, faberCli, faberMap,
+def testLinkNotFoundErrorResponse(be, do, aliceCli, faberMap,
                       faberInviteSyncedWithoutEndpoint):
 
     msg = {

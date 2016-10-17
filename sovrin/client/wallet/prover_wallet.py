@@ -112,9 +112,6 @@ class ProverWallet():
                                    Tuple[str, Tuple[str, str, str]]]]=None):
         # 2 of the 3 args should be None
         assert (seqNos, keys, claimDefs).count(None) == 2
-        getter = None
-        args = []
-        count = 0
         if seqNos:
             count = len(seqNos)
             getter = self.getIssuerPublicKey
@@ -126,7 +123,8 @@ class ProverWallet():
         else:
             count = len(claimDefs)
             getter = self.getIssuerPublicKeyForClaimDef
-            args = [{'issuerId': iid, 'claimDefKey': cdKey} for iid, cdKey in claimDefs]
+            args = [{'issuerId': iid, 'claimDefKey': cdKey} for iid, cdKey in
+                    claimDefs]
 
         # TODO: Question: What if we have more get more than one issuer key
         # for any issuer
