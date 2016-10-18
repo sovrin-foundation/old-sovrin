@@ -1,3 +1,4 @@
+from plenum.common.signer_did import DidSigner
 from sovrin.common.strict_types import strict_types
 
 strict_types.defaultShouldCheck = True
@@ -56,7 +57,7 @@ def emptyLooper():
 def walletBuilder():
     def _(name):
         wallet = Wallet(name)
-        wallet.addIdentifier(signer=SimpleSigner())
+        wallet.addIdentifier(signer=DidSigner())
         return wallet
     return _
 
@@ -318,12 +319,12 @@ def aliceFaberInvitationLoaded(aliceAgent, faberInvitation):
 
 @pytest.fixture(scope="module")
 def aliceFaberInvitationLinkSynced(aliceFaberInvitationLoaded,
-                              aliceAgentConnected,
-                              aliceAgent: WalletedAgent,
-                              emptyLooper,
-                              faberAdded
-                              ):
-    agentInvitationLinkSynced(aliceAgent, aliceFaberInvitationLoaded.name,
+                                   aliceAgentConnected,
+                                   aliceAgent: WalletedAgent,
+                                   emptyLooper,
+                                   faberAdded):
+    agentInvitationLinkSynced(aliceAgent,
+                              aliceFaberInvitationLoaded.name,
                               emptyLooper)
 
 
@@ -389,7 +390,7 @@ def checkAcceptInvitation(emptyLooper,
         assert link.remoteIdentifier == userAgent.wallet.defaultId
         assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
 
-        emptyLooper.run(eventually(chk))
+    emptyLooper.run(eventually(chk))
 
 
 def createAgentAndAddEndpoint(looper, agentNym, agentVerkey, agentPort, steward,
@@ -418,8 +419,8 @@ def getInvitationFile(fileName):
     return os.path.join(sampleDir, fileName)
 
 
-def agentInvitationLoaded(agent, invitaition):
-    link = agent.loadInvitationFile(invitaition)
+def agentInvitationLoaded(agent, invitation):
+    link = agent.loadInvitationFile(invitation)
     assert link
     return link
 
@@ -436,7 +437,7 @@ def agentInvitationLinkSynced(agent,
         done = True
 
     def checkDone():
-        assert done
+        assert done, 'never got reply for agent link sync'
 
     agent.sync(linkName, cb)
     looper.run(eventually(checkDone))

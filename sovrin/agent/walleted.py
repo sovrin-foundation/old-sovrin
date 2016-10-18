@@ -34,7 +34,7 @@ from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
-    NotConnectedToNetwork
+    NotConnectedToNetwork, LinkNotReady
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTR_NAMES, ENDPOINT
 from sovrin.common.util import verifySig, ensureReqCompleted, getEncodedAttrs, \
@@ -63,7 +63,7 @@ class Walleted:
             EVENT: self._eventHandler,
 
             PING: self._handlePing,
-            ACCEPT_INVITE: self._acceptInvite,
+            ACCEPT_INVITE: self._handleAcceptance,
             REQUEST_CLAIM: self._reqClaim,
             CLAIM_PROOF: self.verifyClaimProof,
 
@@ -168,14 +168,20 @@ class Walleted:
 
     def signAndSend(self, msg, signingIdr, toRaetStackName,
                     linkName=None, origReqId=None):
-
         if linkName:
             assert not signingIdr
             assert not toRaetStackName
             self.connectTo(linkName)
             link = self.wallet.getLink(linkName, required=True)
             ha = link.getRemoteEndpoint(required=True)
-            signingIdr = self.wallet._requiredIdr(link.localIdentifier)
+
+            # TODO ensure status is appropriate with code like the following
+            # if link.linkStatus != constant.LINK_STATUS_ACCEPTED:
+            #     raise LinkNotReady('link status is {}'.format(link.linkStatus))
+
+            if not link.localIdentifier:
+                raise LinkNotReady('local identifier not set up yet')
+            signingIdr = link.localIdentifier
             params = dict(ha=ha)
         else:
             params = dict(name=toRaetStackName)
@@ -609,7 +615,7 @@ class Walleted:
         }
         self.signAndSend(resp, signingIdr, frm, origReqId=origReqId)
 
-    def _acceptInvite(self, msg):
+    def _handleAcceptance(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         # TODO this is really kludgy code... needs refactoring
@@ -683,8 +689,8 @@ class Walleted:
             resp = self.createNewAvailableClaimsMsg(nac)
             self.signAndSend(resp, link.localIdentifier, frm)
 
-    def sendPing(self, name):
-        reqId = self.signAndSend({TYPE: 'ping'}, None, None, name)
+    def sendPing(self, linkName):
+        reqId = self.signAndSend({TYPE: 'ping'}, None, None, linkName)
         self.notifyMsgListener("    Ping sent.")
         return reqId
 
@@ -710,21 +716,20 @@ class Walleted:
 
         self.notifyMsgListener("1 link invitation found for {}.".
                                format(linkInvitationName))
-        # TODO: Assuming it is cryptographic identifier
-        alias = "cid-" + str(len(self.wallet.identifiers) + 1)
-        signer = SimpleSigner(alias=alias)
-        self.wallet.addIdentifier(signer=signer)
 
         self.notifyMsgListener("Creating Link for {}.".
                                format(linkInvitationName))
         self.notifyMsgListener("Generating Identifier and Signing key.")
         # TODO: Would we always have a trust anchor corresponding ot a link?
-        trustAnchor = linkInvitationName
-        li = Link(linkInvitationName,
-                  signer.alias + ":" + signer.identifier,
-                  trustAnchor, remoteIdentifier,
-                  remoteEndPoint, linkNonce,
-                  claimProofRequests, invitationData=invitationData)
+
+        li = Link(name=linkInvitationName,
+                  trustAnchor=linkInvitationName,
+                  remoteIdentifier=remoteIdentifier,
+                  remoteEndPoint=remoteEndPoint,
+                  invitationNonce=linkNonce,
+                  claimProofRequests=claimProofRequests,
+                  invitationData=invitationData)
+
         self.wallet.addLink(li)
         return li
 
@@ -745,11 +750,15 @@ class Walleted:
             return link
 
     def acceptInvitation(self, linkName):
+        # TODO should move to wallet in a method like accept(link)
         link = self.wallet.getLink(linkName, required=True)
-        idr = self.wallet._requiredIdr(link.localIdentifier)
+        if not link.localIdentifier:
+            signer = DidSigner()
+            self.wallet.addIdentifier(signer=signer)
+            link.localIdentifier = signer.identifier
         msg = {
             TYPE: ACCEPT_INVITE,
-            f.IDENTIFIER.nm: idr,
+            # TODO should not send this... because origin should be the sender
             NONCE: link.invitationNonce,
         }
         self.signAndSend(msg, None, None, linkName)
@@ -779,15 +788,16 @@ class Walleted:
 
         link.linkLastSynced = datetime.now()
         self.notifyMsgListener("    Link {} synced".format(link.name))
-        if link.remoteEndPoint:
-            reqId = self._pingToEndpoint(link.name, link.remoteEndPoint)
-            return reqId
+        # TODO need to move this to after acceptance, unless we want to support an anonymous ping
+        # if link.remoteEndPoint:
+        #     reqId = self._pingToEndpoint(link.name, link.remoteEndPoint)
+        #     return reqId
 
     def _pingToEndpoint(self, name, endpoint):
         self.notifyMsgListener("\nPinging target endpoint: {} "
                                "  [Not fully implemented]".
                                format(endpoint))
-        reqId = self.sendPing(name=name)
+        reqId = self.sendPing(linkName=name)
         return reqId
 
     def sync(self, linkName, doneCallback=None):

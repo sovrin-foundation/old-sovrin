@@ -28,5 +28,12 @@ class LinkAlreadyExists(RuntimeError):
     pass
 
 
+class LinkNotReady(RuntimeError):
+    """
+    Some operation is attempted on a link that is not ready for that operation
+    """
+    pass
+
+
 class NotConnectedToNetwork(RuntimeError):
     pass
