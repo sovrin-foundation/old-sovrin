@@ -10,11 +10,17 @@ echo -e "4. Anoncreds"
 echo -e "\nEnter comma separated numbers for repos you want to upload to pypi (for example: 1,2):"
 IFS=',' read repos
 
+read -p "Do you want to use setup.py file to be used: (Y/n) " usesetupfile
+
+
 if [ $repos -eq "0" ]; then
     repos="1,2,3,4"
 fi;
 
-read -p "Selected repos: $repos, continue: (Y/n)? " cont
+echo -e "Selected repos: $repos"
+echo -e "Use setup.py file: $usesetupfile"
+echo -e "\n"
+read -p "Continue: (Y/n)? " cont
 
 if [ $cont != "Y" ];then
     exit
@@ -48,8 +54,11 @@ do
     cdir=`pwd`
     echo -e "\n\nabout to start uploading $repoName to pypi... [cur dir: $cdir]"
 
-    mv setup.py setup-st.py
-    mv setup-dev.py setup.py
+    if [ "$usesetupfile" != "Y" ]; then
+        echo -e "Temporary changes to use dev setup file"
+        mv setup.py setup-st.py
+        mv setup-dev.py setup.py
+    fi;
 
     python setup.py register -r pypitest
     python setup.py sdist upload -r pypitest
@@ -57,8 +66,11 @@ do
     python setup.py register -r pypi
     python setup.py sdist upload -r pypi
 
-    mv setup.py setup-dev.py
-    mv setup-st.py setup.py
+    if [ "$usesetupfile" != "Y" ]; then
+        echo -e "Reverting back temporary changes to use dev setup file"
+        mv setup.py setup-dev.py
+        mv setup-st.py setup.py
+    fi;
 
     echo -e "finished uploading $repoName to pypi\n"
 done
