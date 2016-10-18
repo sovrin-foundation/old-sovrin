@@ -814,7 +814,8 @@ class Walleted:
             return reqId
 
     def _pingToEndpoint(self, name, endpoint):
-        self.notifyMsgListener("\nPinging target endpoint: {}".
+        self.notifyMsgListener("\nPinging target endpoint: {} "
+                               "  [Not fully implemented]".
                                format(endpoint))
         reqId = self.sendPing(name=name)
         return reqId
