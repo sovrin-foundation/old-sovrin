@@ -27,9 +27,9 @@ from sovrin.test.helper import genTestClient, createNym, addUser, TestNode, \
 
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
-    whitelist, logcapture, tconf, keySharedNodes, startedNodes, \
-    tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, poolTxnNodeNames,\
-    allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
+    whitelist, concerningLogLevels, logcapture, tconf, keySharedNodes, \
+    startedNodes, tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, \
+    poolTxnNodeNames,allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
     poolTxnStewardData, poolTxnStewardNames, getValueFromModule
 
 

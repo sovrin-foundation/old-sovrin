@@ -1,12 +1,20 @@
 import json
+import logging
 
 import re
+import uuid
 
 import pytest
+import sys
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from plenum.common.port_dispenser import genHa
+from plenum.common.util import adict
+from plenum.test import eventually
 
 from sovrin.agent.agent import runAgent
+from sovrin.client.wallet.issuer_wallet import IssuerWallet
 from sovrin.common.setup_util import Setup
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.agent.acme import AcmeAgent
@@ -15,10 +23,16 @@ from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
 from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap
 from sovrin.test.cli.helper import newCLI
+
+# noinspection PyUnresolvedReferences
 from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
     faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
     acmeCli as createAcmeCli, syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent
+
+concerningLogLevels = [logging.WARNING,
+                       logging.ERROR,
+                       logging.CRITICAL]
 
 
 def getSeqNoFromCliOutput(cli):
@@ -41,12 +55,35 @@ def testGettingStartedTutorialAgainstSandbox(newGuyCLI, be, do):
     # TODO finish the entire set of steps
 
 
-def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
+@pytest.fixture(scope="module")
+def forceSecrets(staticPrimes):
+
+    primes = {
+        'Faber College': adict(
+            p=293672994294601538460023894424280657882248991230397936278278721070227017571960229217003029542172804429372056725385213277754094188540395813914384157706891192254644330822344382798277953427101186508616955910010980515685469918970002852483572038959508885430544201790234678752166995847136179984303153769450295059547,
+            q=346129266351333939705152453226207841619953213173429444538411282110012597917194461301159547344552711191280095222396141806532237180979404522416636139654540172375588671099885266296364558380028106566373280517225387715617569246539059672383418036690030219091474419102674344117188434085686103371044898029209202469967),
+    }
+    csk = CredDefSecretKey(*staticPrimes.get("prime1"))
+
+    def _generateIssuerSecretKey_INSECURE(self, claimDef):
+        csk = CredDefSecretKey()
+        # TODO we shouldn't be storing claimdefsk, we are already storing IssuerSecretKey which holds the ClaimDefSK
+        sid = self.addClaimDefSk(str(csk))
+        # TODO why are we using a uuid here? The uid should be the seqNo of the pubkey in Sovrin
+        isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
+        return isk
+
+    IssuerWallet._generateIssuerSecretKey = _generateIssuerSecretKey_INSECURE
+
+
+def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philCLI,
                connectedToTest, nymAddedOut, attrAddedOut, faberCLI,
                credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
                acmeCLI, tdir, syncLinkOutWithEndpoint,
                syncedInviteAcceptedOutWithoutClaims, transcriptClaimMap,
                reqClaimOut):
+
+    eventually.slowFactor = 3
 
     # Create steward and add nyms and endpoint atttributes of all agents
     _, stewardSeed = poolTxnStewardData
@@ -143,13 +180,12 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     do('show claim Transcript')
     # TODO
     # do('show claim Transcript verbose')
-    cred = aliceCLI.activeWallet.getCredential(
-        'Faber College Transcript 1.2')
+    cred = aliceCLI.activeWallet.getCredential('Faber College Transcript 1.2')
     assert cred.issuerKeyId == faberIkSeqNo
     faberIssuerKeyAtAlice = faberCLI.activeWallet.getIssuerPublicKey(
         seqNo=cred.issuerKeyId)
-    assert faberIssuerKeyAtAlice == faberIssuerKey
 
+    assert faberIssuerKeyAtAlice == faberIssuerKey
     # Accept acme
     do('load sample/acme-job-application.sovrin')
     syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, aMap)

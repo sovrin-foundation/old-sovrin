@@ -11,7 +11,6 @@ from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
-from anoncreds.test.conftest import staticPrimes
 from sovrin.test.agent.helper import getAgentCmdLineParams, buildFaberWallet
 
 logger = getlogger()
@@ -116,14 +115,13 @@ class FaberAgent(WalletedAgent):
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
         credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
-        staticPrime = staticPrimes().get("prime1")
         attrNames = ["student_name", "ssn", "degree", "year", "status"]
-        super().addClaimDefs(name=name,
-                             version=version,
-                             attrNames=attrNames,
-                             staticPrime=staticPrime,
-                             credDefSeqNo=credDefSeqNo,
-                             issuerKeySeqNo=issuerKeySeqNo)
+        cd = self.wallet.createClaimDef(name=name,
+                                        version=version,
+                                        attrNames=attrNames,
+                                        typ='CL',
+                                        credDefSeqNo=credDefSeqNo)
+        self.wallet.createIssuerKey(claimDef=cd, seqNo=issuerKeySeqNo)
 
     def getAttributes(self, internalId):
         attrs = self._attributes.get(internalId)

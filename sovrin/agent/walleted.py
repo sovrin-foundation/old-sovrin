@@ -534,25 +534,22 @@ class Walleted:
                 result = Verifier.verifyProof(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
-                logger.info("claim {} verification result: {}".
-                            format(claimName, result))
-
-                # TODO: Following line is temporary and need to be removed
-                # result = True
+                if result:
+                    logger.info("proof {} verified".format(claimName))
+                else:
+                    logger.warning("proof {} failed verification".
+                                   format(claimName))
 
                 # REMOVE-LOG: Remove the next log
                 logger.debug("issuerPks, proof, nonce, encoded, revealed is "
                              "{} {} {} {} {}".
-                             format(issuerPks, proof, nonce,
-                                              encodedAttrs,
-                                              revealedAttrs))
+                             format(issuerPks, proof, nonce, encodedAttrs,
+                                    revealedAttrs))
+                status = 'verified' if result else 'failed verification'
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
-                    DATA:
-                        '    Your claim {} {} has been received '
-                        'and {}verified\n'.
-                            format(body[NAME], body[VERSION],
-                                   '' if result else 'is not yet '),
+                    DATA: '    Your claim {} {} was received and {}\n'.
+                          format(body[NAME], body[VERSION], status),
                 }
                 self.signAndSend(resp, link.localIdentifier, frm,
                                  origReqId=body.get(f.REQ_ID.nm))
@@ -561,8 +558,11 @@ class Walleted:
                     self._postClaimVerif(claimName, link, frm)
 
             for claimDefKey in claimDefKeys.values():
-                getCredDefIsrKeyAndExecuteCallback(self.wallet, self.client,
-                                                   print, self.loop, claimDefKey,
+                getCredDefIsrKeyAndExecuteCallback(self.wallet,
+                                                   self.client,
+                                                   print,
+                                                   self.loop,
+                                                   claimDefKey,
                                                    verify)
 
     def notifyResponseFromMsg(self, linkName, reqId=None):
@@ -669,35 +669,6 @@ class Walleted:
         if len(nac) > 0:
             resp = self.createNewAvailableClaimsMsg(nac)
             self.signAndSend(resp, link.localIdentifier, frm)
-
-    def addClaimDefs(self, name, version, attrNames,
-                             staticPrime, credDefSeqNo, issuerKeySeqNo):
-        csk = CredDefSecretKey(*staticPrime)
-        sid = self.wallet.addClaimDefSk(str(csk))
-        # Need to modify the claim definition. We do not support types yet
-        claimDef = {
-            NAME: name,
-            VERSION: version,
-            TYPE: "CL",
-            ATTR_NAMES: attrNames
-        }
-        wallet = self.wallet
-        claimDef = ClaimDef(seqNo=credDefSeqNo,
-                            attrNames=claimDef[ATTR_NAMES],
-                            name=claimDef[NAME],
-                            version=claimDef[VERSION],
-                            origin=wallet.defaultId,
-                            typ=claimDef[TYPE],
-                            secretKey=sid)
-        wallet._claimDefs[(name, version, wallet.defaultId)] = claimDef
-        isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
-        self.wallet.addIssuerSecretKey(isk)
-        ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                           claimDefSeqNo=claimDef.seqNo,
-                           secretKeyUid=isk.pubkey.uid, origin=wallet.defaultId,
-                           seqNo=issuerKeySeqNo)
-        key = (wallet.defaultId, credDefSeqNo)
-        wallet._issuerPks[key] = ipk
 
     def sendPing(self, linkName):
         self.signAndSend({'msg': PING}, None, None, linkName)

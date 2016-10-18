@@ -13,6 +13,7 @@ from pygments.token import Token
 
 import sovrin.anon_creds.cred_def as CredDefModule
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.globals import KEYS
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
 from anoncreds.protocol.utils import strToCryptoInteger
@@ -46,7 +47,7 @@ from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
-    LinkNotFound, NotConnectedToNetwork
+    LinkNotFound, NotConnectedToNetwork, ClaimDefNotFound
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
@@ -493,41 +494,39 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.reqId, self.activeClient, chk)
 
-    # @staticmethod
-    def _buildCredDef(self, matchedVars):
-        """
-        Helper function to build CredentialDefinition function from given values
-        """
-        name = matchedVars.get('name')
-        version = matchedVars.get('version')
-        keys = matchedVars.get('keys')
-        attrNames = [s.strip() for s in keys.split(",")]
-        # TODO: Directly using anoncreds lib, should use plugin
-        csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-        uid = self.activeWallet.addClaimDefSk(str(csk))
-        claimDef = ClaimDef(seqNo=None,
-                            attrNames=attrNames,
-                            name=name,
-                            version=version,
-                            origin=self.activeWallet.defaultId,
-                            typ=matchedVars.get(TYPE),
-                            secretKey=uid)
-        return claimDef
+    # DEPR: moved to issuer_wallet as createClaimDef
+    # def _buildCredDef(self, matchedVars):
+    #     """
+    #     Helper function to build CredentialDefinition function from given values
+    #     """
+    #     name = matchedVars.get('name')
+    #     version = matchedVars.get('version')
+    #     keys = matchedVars.get('keys')
+    #     attrNames = [s.strip() for s in keys.split(",")]
+    #     # TODO: Directly using anoncreds lib, should use plugin
+    #     claimDef = ClaimDef(seqNo=None,
+    #                         attrNames=attrNames,
+    #                         name=name,
+    #                         version=version,
+    #                         origin=self.activeWallet.defaultId,
+    #                         typ=matchedVars.get(TYPE))
+    #     return claimDef
 
-    def _buildIssuerKey(self, origin, reference):
-        wallet = self.activeWallet
-        claimDef = wallet.getClaimDef(seqNo=reference)
-        if claimDef:
-            csk = CredDefSecretKey.fromStr(wallet.getClaimDefSk(claimDef.secretKey))
-            isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
-            ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                               claimDefSeqNo=reference,
-                               secretKeyUid=isk.pubkey.uid, origin=wallet.defaultId)
-
-            return ipk
-        else:
-            self.print("Reference {} not found".format(reference),
-                       Token.BoldOrange)
+    # DEPR: moved to issuer_wallet
+    # def _buildIssuerKey(self, origin, reference):
+    #     wallet = self.activeWallet
+    #     claimDef = wallet.getClaimDef(seqNo=reference)
+    #     if claimDef:
+    #         csk = CredDefSecretKey.fromStr(wallet.getClaimDefSk(claimDef.secretKey))
+    #         isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
+    #         ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
+    #                            claimDefSeqNo=reference,
+    #                            secretKeyUid=isk.pubkey.uid, origin=wallet.defaultId)
+    #
+    #         return ipk
+    #     else:
+    #         self.print("Reference {} not found".format(reference),
+    #                    Token.BoldOrange)
 
     def _printCredReq(self, reply, err, credName,
                       credVersion, issuerId, proverId):
@@ -672,8 +671,12 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('send_cred_def') == 'send CRED_DEF':
             if not self.canMakeSovrinRequest:
                 return True
-            claimDef = self._buildCredDef(matchedVars)
-            self.activeWallet.addClaimDef(claimDef)
+            claimDef = self.activeWallet.createClaimDef(
+                name=matchedVars.get(NAME),
+                version=matchedVars.get(VERSION),
+                attrNames=[s.strip() for s in matchedVars.get(KEYS).split(",")],
+                typ=matchedVars.get(TYPE))
+
             reqs = self.activeWallet.preparePending()
             self.activeClient.submitReqs(*reqs)
 
@@ -695,24 +698,26 @@ class SovrinCli(PlenumCli):
             if not self.canMakeSovrinRequest:
                 return True
             reference = int(matchedVars.get(REF))
-            ipk = self._buildIssuerKey(self.activeWallet.defaultId,
-                                             reference)
-            if ipk:
-                self.activeWallet.addIssuerPublicKey(ipk)
-                reqs = self.activeWallet.preparePending()
-                self.activeClient.submitReqs(*reqs)
+            try:
+                ipk = self.activeWallet.createIssuerKey(reference)
+            except ClaimDefNotFound:
+                self.print("Reference {} not found".format(reference),
+                           Token.BoldOrange)
 
-                def published(reply, error, *args, **kwargs):
-                    self.print("The following issuer key is published to the"
-                               " Sovrin distributed ledger\n", Token.BoldBlue,
-                               newline=False)
-                    self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
-                    self.print("Sequence number is {}".format(reply[F.seqNo.name]),
-                               Token.BoldBlue)
+            reqs = self.activeWallet.preparePending()
+            self.activeClient.submitReqs(*reqs)
 
-                self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                            reqs[0].reqId, self.activeClient,
-                                            published)
+            def published(reply, error, *args, **kwargs):
+                self.print("The following issuer key is published to the"
+                           " Sovrin distributed ledger\n", Token.BoldBlue,
+                           newline=False)
+                self.print("{}".format(ipk.get(serFmt=SerFmt.base58)))
+                self.print("Sequence number is {}".format(reply[F.seqNo.name]),
+                           Token.BoldBlue)
+
+            self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                        reqs[0].reqId, self.activeClient,
+                                        published)
             return True
 
     # will get invoked when prover cli enters request credential command

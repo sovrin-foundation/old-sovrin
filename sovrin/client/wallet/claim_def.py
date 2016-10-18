@@ -28,7 +28,6 @@ class ClaimDef(CredentialDefinition, HasSeqNo):
                  origin: Optional[Identifier] = None,
                  seqNo: Optional[int] = None,
                  attrNames=None,
-                 secretKey: Optional[str]=None,     # uid of the Cred Def secret key
                  typ: str=None,
                  ):
         super().__init__(uid=seqNo,
@@ -37,7 +36,6 @@ class ClaimDef(CredentialDefinition, HasSeqNo):
                          version=version)
         self.typ = typ
         self.origin = origin
-        self.secretKey = secretKey
 
     @property
     def key(self):
@@ -99,8 +97,6 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
         else:
             self.uid = seqNo
         self.claimDefSeqNo = claimDefSeqNo
-        # TODO: Remove this
-        self.secretKeyUid = secretKeyUid
         self.origin = origin
 
     # TODO: Remove this late initialisation.

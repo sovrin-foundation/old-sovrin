@@ -12,7 +12,7 @@ from sovrin.common.util import getEncodedAttrs
 logger = getlogger()
 
 
-class ProverWallet():
+class ProverWallet:
     def __init__(self):
         self._masterSecret = None
         self._vprimes = {}
