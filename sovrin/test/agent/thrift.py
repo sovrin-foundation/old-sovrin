@@ -4,18 +4,18 @@ from plenum.common.log import getlogger
 
 from sovrin.agent.agent import runAgent
 from sovrin.agent.constants import EVENT_NOTIFY_MSG
-from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
-from sovrin.test.agent.helper import getAgentCmdLineParams, buildThriftWallet
+from sovrin.test.agent.helper import buildThriftWallet
+from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 logger = getlogger()
 
 
-class ThriftAgent(WalletedAgent):
+class ThriftAgent(TestWalletedAgent):
     def __init__(self,
                  basedirpath: str,
                  client: Client=None,
@@ -25,17 +25,12 @@ class ThriftAgent(WalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        portParam, credDefSeqParam, issuerSeqNoParam = getAgentCmdLineParams()
+        portParam, = self.getPassedArgs()
 
         super().__init__('Thrift Bank', basedirpath, client, wallet,
                          portParam or port)
 
-        self._seqNos = {
-
-        }
-        self._attributes = {
-
-        }
+        self._attributes = {}
 
         # maps invitation nonces to internal ids
         self._invites = {
@@ -73,7 +68,7 @@ class ThriftAgent(WalletedAgent):
 
 
 def runThrift(name=None, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=True):
+              startRunning=True, bootstrap=True):
 
     return runAgent(ThriftAgent, name or "Thrift Bank",
                     wallet or buildThriftWallet(), basedirpath,

@@ -4,11 +4,16 @@ from ledger.util import F
 from plenum.common.log import getlogger
 from sovrin.agent.agent import WalletedAgent
 from sovrin.common.util import ensureReqCompleted
+from sovrin.test.agent.helper import getAgentCmdLineParams
 
 logger = getlogger()
 
 
 class TestWalletedAgent(WalletedAgent):
+    @staticmethod
+    def getPassedArgs():
+        return getAgentCmdLineParams()
+
     def addCredDefAndIskIfNotFoundOnLedger(self, name, version, origin,
                                            attrNames, typ,
                                            credDefSecretKey=None, clbk=None):

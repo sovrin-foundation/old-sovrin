@@ -6,13 +6,12 @@ from plenum.common.txn import NAME, VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import runAgent
-from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
-from sovrin.test.agent.helper import getAgentCmdLineParams, buildFaberWallet
+from sovrin.test.agent.helper import buildFaberWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 logger = getlogger()
@@ -31,20 +30,12 @@ class FaberAgent(TestWalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        portParam, credDefSeqParam, issuerSeqNoParam = self.getPassedArgs()
+        portParam, = self.getPassedArgs()
 
         super().__init__('Faber College', basedirpath, client, wallet,
                          portParam or port)
 
-        credDefSeqNo = 10
-        issuerSeqNo = 11
-
         self.availableClaims = []
-
-        self._seqNos = {
-            ("Transcript", "1.2"): (credDefSeqParam or credDefSeqNo,
-                                    issuerSeqNoParam or issuerSeqNo)
-        }
 
         # maps invitation nonces to internal ids
         self._invites = {
@@ -85,10 +76,6 @@ class FaberAgent(TestWalletedAgent):
                 "status": "graduated"
             }
         }
-
-    @staticmethod
-    def getPassedArgs():
-        return getAgentCmdLineParams()
 
     def getInternalIdByInvitedNonce(self, nonce):
         if nonce in self._invites:
@@ -145,7 +132,6 @@ class FaberAgent(TestWalletedAgent):
 
     def bootstrap(self):
         self.addClaimDefsToWallet()
-        # self.initAvailableClaimList()
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,

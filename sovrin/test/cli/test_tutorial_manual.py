@@ -179,9 +179,7 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
     for agentCls, agentCli, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
         # TODO: Remove None as credDefSeqNo and issuerKeySeqNo
-        agentCls.getPassedArgs = lambda _: (agentPort,
-                                            None,
-                                            None)
+        agentCls.getPassedArgs = lambda _: (agentPort,)
         agent = runAgent(agentCls, agentName, buildAgentWalletFunc(), tdir,
                          agentPort, False, True)
         agentCli.looper.add(agent)
