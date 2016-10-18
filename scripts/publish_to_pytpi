@@ -39,13 +39,29 @@ do
 
     repoName=""
     if [ $repo -eq "1" ]; then
-        repoName="sovrin-priv"
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="sovrin-priv"
+        else
+            repoName="sovrin-pub"
+        fi;
     elif [ $repo -eq "2" ]; then
-        repoName="plenum-priv"
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="plenum-priv"
+        else
+            repoName="plenum-pub"
+        fi;
     elif [ $repo -eq 3 ]; then
-        repoName="ledger-priv"
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="ledger-priv"
+        else
+            repoName="ledger-pub"
+        fi;
     elif [ $repo -eq 4 ]; then
-        repoName="anoncreds-priv"
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="anoncreds-priv"
+        else
+            repoName="anoncreds-pub"
+        fi;
     else
         echo -e "Not supported this repo $repo"
         exit
