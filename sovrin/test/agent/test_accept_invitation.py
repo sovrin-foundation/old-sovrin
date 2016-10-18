@@ -1,5 +1,14 @@
+import logging
+
 import pytest
 from sovrin.test.agent.conftest import checkAcceptInvitation
+
+concerningLogLevels = [logging.WARNING,
+                       logging.ERROR,
+                       logging.CRITICAL]
+
+# TODO need to solve the root cause of this warning, which is agents presuming an identifier is already created on startup
+whitelist = ['discarding message.*GET_TXNS.*UnknownIdentifier']
 
 
 def testFaberCreateLink(faberLinkAdded):
