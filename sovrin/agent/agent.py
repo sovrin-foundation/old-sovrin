@@ -1,5 +1,6 @@
-from typing import Tuple
+from typing import Tuple, Callable
 
+import asyncio
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.log import getlogger
@@ -27,6 +28,7 @@ class Agent(Motor, AgentNet):
                  client: Client=None,
                  port: int=None):
         Motor.__init__(self)
+        self.loop = asyncio.get_event_loop()
         self._eventListeners = {}   # Dict[str, set(Callable)]
         self._name = name
 
@@ -105,13 +107,31 @@ class Agent(Motor, AgentNet):
     def handleEndpointMessage(self, msg):
         raise NotImplementedError
 
-    def sendMessage(self, msg, destName: str=None, destHa: Tuple=None):
+    def ensureConnectedToDest(self, destHa, clbk, *args):
+        if self.endpoint.isConnectedTo(ha=destHa):
+            if clbk:
+                clbk(*args)
+        else:
+            self.loop.call_later(.2, self.ensureConnectedToDest,
+                                        destHa, clbk, *args)
+
+    def sendMessage(self, msg, name: str=None, ha: Tuple=None):
         try:
-            remote = self.endpoint.getRemote(name=destName, ha=destHa)
+            remote = self.endpoint.getRemote(name=name, ha=ha)
         except RemoteNotFound as ex:
-            fault(ex, "Do not know {} {}".format(destName, destHa))
+            fault(ex, "Do not know {} {}".format(name, ha))
             return
-        self.endpoint.transmit(msg, remote.uid)
+
+        def _send(msg, remoteUid):
+            self.endpoint.transmit(msg, remoteUid)
+            logger.debug("Message sent: {}".format(msg))
+
+        if not self.endpoint.isConnectedTo(ha=remote.ha):
+            self.ensureConnectedToDest(remote.ha, _send, msg, remote.uid)
+        else:
+            _send(msg, remote.uid)
+
+
 
     def connectToHa(self, ha):
         self.endpoint.connectTo(ha)

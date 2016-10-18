@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 
-echo -e "\n1. Sovrin"
+echo -e "\n0. All below"
+echo -e "1. Sovrin"
 echo -e "2. Plenum"
 echo -e "3. Ledger"
 echo -e "4. Anoncreds"
@@ -9,7 +10,15 @@ echo -e "4. Anoncreds"
 echo -e "\nEnter comma separated numbers for repos you want to upload to pypi (for example: 1,2):"
 IFS=',' read repos
 
-echo -e "Selected repos: $repos"
+if [ $repos -eq "0" ]; then
+    repos="1,2,3,4"
+fi;
+
+read -p "Selected repos: $repos, continue: (Y/n)? " cont
+
+if [ $cont != "Y" ];then
+    exit
+fi;
 
 curDir=`pwd`
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
