@@ -1,5 +1,6 @@
 import os
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
@@ -12,11 +13,15 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
 from sovrin.test.agent.helper import getAgentCmdLineParams, buildFaberWallet
+from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 logger = getlogger()
 
 
-class FaberAgent(WalletedAgent):
+class FaberAgent(TestWalletedAgent):
+    credDefSecretKey = CredDefSecretKey(293672994294601538460023894424280657882248991230397936278278721070227017571960229217003029542172804429372056725385213277754094188540395813914384157706891192254644330822344382798277953427101186508616955910010980515685469918970002852483572038959508885430544201790234678752166995847136179984303153769450295059547,
+                                        346129266351333939705152453226207841619953213173429444538411282110012597917194461301159547344552711191280095222396141806532237180979404522416636139654540172375588671099885266296364558380028106566373280517225387715617569246539059672383418036690030219091474419102674344117188434085686103371044898029209202469967)
+
     def __init__(self,
                  basedirpath: str,
                  client: Client=None,
@@ -114,14 +119,14 @@ class FaberAgent(WalletedAgent):
 
     def addClaimDefsToWallet(self):
         name, version = "Transcript", "1.2"
-        credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
         attrNames = ["student_name", "ssn", "degree", "year", "status"]
-        cd = self.wallet.createClaimDef(name=name,
-                                        version=version,
-                                        attrNames=attrNames,
-                                        typ='CL',
-                                        credDefSeqNo=credDefSeqNo)
-        self.wallet.createIssuerKey(claimDef=cd, seqNo=issuerKeySeqNo)
+        self.addCredDefAndIskIfNotFoundOnLedger(name, version,
+                                                origin=self.wallet.defaultId,
+                                                attrNames=attrNames, typ='CL',
+                                                credDefSecretKey=
+                                                self.credDefSecretKey,
+                                                clbk=
+                                                self.initAvailableClaimList)
 
     def getAttributes(self, internalId):
         attrs = self._attributes.get(internalId)
@@ -139,7 +144,7 @@ class FaberAgent(WalletedAgent):
 
     def bootstrap(self):
         self.addClaimDefsToWallet()
-        self.initAvailableClaimList()
+        # self.initAvailableClaimList()
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,

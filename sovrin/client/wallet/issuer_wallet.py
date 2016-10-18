@@ -13,7 +13,6 @@ from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
 from sovrin.client.wallet.credential import Credential
 from sovrin.common.exceptions import ClaimDefNotFound
-from sovrin.common.util import getEncodedAttrs
 
 
 logger = getlogger()
@@ -26,13 +25,13 @@ class IssuerWallet:
         self._credentials = {}  # type: Dict[str, Credential]
         self._defaultClaimType = defaultClaimType
 
-        # Attributes this wallet has from others. Think of an Prover's
-        # attribute repo containing attributes from different Issuers. Key is a
-        # identifier and value is a map of attributes
-        self.attributesFrom = {}  # type: Dict[str, Dict]
+        # Attributes this wallet has for others. Think of an Issuer's attribute
+        #  repo containing attributes for different Provers. Key is a nonce and
+        #  value is a map of attributes
+        self.attributesFor = {}  # type: Dict[str, Dict]
 
-    def createClaimDef(self, name, version, attrNames, typ=None, credDefSeqNo=None, idr=None):
-
+    def createClaimDef(self, name, version, attrNames, typ=None,
+                       credDefSeqNo=None, idr=None):
         idr = idr or self.defaultId
         # TODO: Directly using anoncreds lib, should use plugin
         claimDef = ClaimDef(seqNo=credDefSeqNo,
@@ -44,13 +43,11 @@ class IssuerWallet:
         self.addClaimDef(claimDef)
         return claimDef
 
-    def _generateIssuerSecretKey(self, claimDef):
-        csk = CredDefSecretKey()
+    def _generateIssuerSecretKey(self, claimDef, csk=None):
+        csk = csk or CredDefSecretKey()
 
-        # TODO we shouldn't be storing claimdefsk, we are already storing IssuerSecretKey which holds the ClaimDefSK
-        sid = self.addClaimDefSk(str(csk))
-
-        # TODO why are we using a uuid here? The uid should be the seqNo of the pubkey in Sovrin
+        # TODO why are we using a uuid here? The uid should be the
+        # seqNo of the pubkey in Sovrin
         isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
         return isk
 
@@ -58,14 +55,16 @@ class IssuerWallet:
                         claimDefSeqNo=None,  # this or a claimDef must exist
                         claimDef=None,
                         seqNo=None,
-                        identifier=None):
+                        identifier=None,
+                        csk=None):
         idr = identifier or self.defaultId
         claimDef = claimDef or self.getClaimDef(seqNo=claimDefSeqNo)
-        # TODO this code assumes the claim def is local. It should retrieve it if not found
+        # TODO this code assumes the claim def is local. It should retrieve
+        # it if not found
         if not claimDef:
             raise ClaimDefNotFound(claimDefSeqNo)
 
-        isk = self._generateIssuerSecretKey(claimDef)
+        isk = self._generateIssuerSecretKey(claimDef, csk=csk)
         self.addIssuerSecretKey(isk)
 
         ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,

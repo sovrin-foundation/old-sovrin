@@ -189,8 +189,12 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
     # issuerPublicKey
     def _getKey(result, error):
         data = json.loads(result.get(DATA))
-        origin = data.get(ORIGIN)
-        seqNo = data.get(F.seqNo.name)
+        if data:
+            origin = data.get(ORIGIN)
+            seqNo = data.get(F.seqNo.name)
+        else:
+            origin = None
+            seqNo = None
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
                                    seqNo, clbk, pargs)
 

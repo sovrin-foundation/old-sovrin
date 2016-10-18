@@ -111,16 +111,10 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     def request(self):
         if not self.seqNo:
             assert self.origin is not None
-            R_str = {k: str(v) for k, v in self.R.items()}
             op = {
                 TXN_TYPE: ISSUER_KEY,
                 REF: self.claimDefSeqNo,
-                DATA: {
-                    "N": str(self.N),
-                    "R": R_str,
-                    "S": str(self.S),
-                    "Z": str(self.Z)
-                }
+                DATA: self.toKeys
             }
             return Request(identifier=self.origin, operation=op)
 

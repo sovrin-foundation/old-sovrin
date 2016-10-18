@@ -79,4 +79,6 @@ def testGetIssuerKey(claimDefinitionAdded, userWalletA, tdir,
     reply, status = curiousClient.getReply(req.reqId)
     assert status == "CONFIRMED"
     assert userWalletA.getIssuerPublicKey(key).seqNo
+    # TODO: Confirm that issuer key retrieved from ledger is same as the one
+    # added, modify the `issuerPublicKeysAdded` fixture to return the key as well
 

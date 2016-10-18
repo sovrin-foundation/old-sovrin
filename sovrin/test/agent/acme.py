@@ -1,5 +1,6 @@
 import os
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
@@ -12,11 +13,16 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
 from sovrin.test.agent.helper import getAgentCmdLineParams, buildAcmeWallet
+from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 logger = getlogger()
 
 
-class AcmeAgent(WalletedAgent):
+class AcmeAgent(TestWalletedAgent):
+    credDefSecretKey = CredDefSecretKey(
+            p=281510790031673293930276619603927743196841646256795847064219403348133278500884496133426719151371079182558480270299769814938220686172645009573713670952475703496783875912436235928500441867163946246219499572100554186255001186037971377948507437993345047481989113938038765221910989549806472045341069625389921020319,
+            q=350024478159288302454189301319318317490551219044369889911215183350615705419868722006578530322735670686148639754382100627201250616926263978453441645496880232733783587241897694734699668219445029433427409979471473248066452686224760324273968172651114901114731981044897755380965310877273130485988045688817305189839)
+
     def __init__(self,
                  basedirpath: str,
                  client: Client=None,
@@ -118,15 +124,13 @@ class AcmeAgent(WalletedAgent):
 
     def addClaimDefsToWallet(self):
         name, version = "Job-Certificate", "0.2"
-        credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
         attrNames = ["first_name", "last_name", "employee_status",
                      "experience", "salary_bracket"]
-        cd = self.wallet.createClaimDef(name=name,
-                                        version=version,
-                                        attrNames=attrNames,
-                                        typ='CL',
-                                        credDefSeqNo=credDefSeqNo)
-        self.wallet.createIssuerKey(claimDef=cd, seqNo=issuerKeySeqNo)
+        self.addCredDefAndIskIfNotFoundOnLedger(name, version,
+                                                origin=self.wallet.defaultId,
+                                                attrNames=attrNames, typ='CL',
+                                                credDefSecretKey=
+                                                self.credDefSecretKey)
 
     def getAttributes(self, internalId):
         attrs = self._attributes.get(internalId)

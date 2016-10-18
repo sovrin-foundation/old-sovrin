@@ -55,11 +55,6 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
         self._links = {}  # type: Dict[str, Link]
         self.knownIds = {}  # type: Dict[str, Identifier]
 
-        # Attributes this wallet has for others. Think of an Issuer's attribute
-        #  repo containing attributes for different Provers. Key is a nonce and
-        #  value is a map of attributes
-        self.attributesFor = {}  # type: Dict[str, Dict]
-
         # TODO: Shouldnt proof builders be uniquely identified by claim def
         # and issuerId
         # TODO: Create claim objects
@@ -313,21 +308,24 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
 
     def _getClaimDefReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
-        claimDef = self.getClaimDef((data.get(NAME), data.get(VERSION),
-                                     data.get(ORIGIN)))
-        if claimDef:
-            if not claimDef.seqNo:
-                claimDef.seqNo = data.get(F.seqNo.name)
-                claimDef.attrNames = data[ATTR_NAMES].split(",")
-                claimDef.typ = data[TYPE]
+        if data:
+            claimDef = self.getClaimDef((data.get(NAME), data.get(VERSION),
+                                         data.get(ORIGIN)))
+            if claimDef:
+                if not claimDef.seqNo:
+                    claimDef.seqNo = data.get(F.seqNo.name)
+                    claimDef.attrNames = data[ATTR_NAMES].split(",")
+                    claimDef.typ = data[TYPE]
+            else:
+                claimDef = ClaimDef(seqNo=data.get(F.seqNo.name),
+                                    attrNames=data.get(ATTR_NAMES).split(","),
+                                    name=data[NAME],
+                                    version=data[VERSION],
+                                    origin=data[ORIGIN],
+                                    typ=data[TYPE])
+                self._claimDefs[claimDef.key] = claimDef
         else:
-            claimDef = ClaimDef(seqNo=data.get(F.seqNo.name),
-                                attrNames=data.get(ATTR_NAMES).split(","),
-                                name=data[NAME],
-                                version=data[VERSION],
-                                origin=data[ORIGIN],
-                                typ=data[TYPE])
-            self._claimDefs[claimDef.key] = claimDef
+            logger.info("Requested claim def was not found on the ledger")
 
     def _nymReply(self, result, preparedReq):
         target = result[TARGET_NYM]
@@ -369,14 +367,17 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
 
     def _getIssuerKeyReply(self, result, preparedReq):
         data = json.loads(result.get(DATA))
-        key = data.get(ORIGIN), data.get(REF)
-        isPk = self.getIssuerPublicKey(key=key)
-        keys = data.get(DATA)
-        for k in ('N', 'S', 'Z'):
-            keys[k] = strToCryptoInteger(keys[k])
-        keys['R'] = stringDictToCharmDict(keys['R'])
-        isPk.initPubKey(data.get(F.seqNo.name), keys['N'], keys['R'],
-                        keys['S'], keys['Z'])
+        if data:
+            key = data.get(ORIGIN), data.get(REF)
+            isPk = self.getIssuerPublicKey(key=key)
+            keys = data.get(DATA)
+            for k in ('N', 'S', 'Z'):
+                keys[k] = strToCryptoInteger(keys[k])
+            keys['R'] = stringDictToCharmDict(keys['R'])
+            isPk.initPubKey(data.get(F.seqNo.name), keys['N'], keys['R'],
+                            keys['S'], keys['Z'])
+        else:
+            logger.info("Requested issuer key was not found on the ledger")
 
     def _getMatchingIssuerKey(self, data):
         for key, pk in self._issuerPks.items():
@@ -410,6 +411,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
                 allMatched.append(v)
         return allMatched
 
+    # TODO: sender by default should be `self.defaultId`
     def requestAttribute(self, attrib: Attribute, sender):
         """
         Used to get a raw attribute from Sovrin
@@ -421,6 +423,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
         if req:
             return self.prepReq(req, key=attrib.key())
 
+    # TODO: sender by default should be `self.defaultId`
     def requestIdentity(self, identity: Identity, sender):
         # Used to get a nym from Sovrin
         self.knownIds[identity.identifier] = identity
@@ -428,6 +431,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
         if req:
             return self.prepReq(req)
 
+    # TODO: sender by default should be `self.defaultId`
     def requestClaimDef(self, claimDefKey, sender):
         # Used to get a cred def from Sovrin
         name, version, origin = claimDefKey
@@ -437,6 +441,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
         if req:
             return self.prepReq(req)
 
+    # TODO: sender by default should be `self.defaultId`
     def requestIssuerKey(self, issuerKey, sender):
         # Used to get a issuer key from Sovrin
         origin, claimDefSeqNo = issuerKey
