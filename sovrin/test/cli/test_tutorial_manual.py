@@ -55,8 +55,10 @@ def testGettingStartedTutorialAgainstSandbox(newGuyCLI, be, do):
 
 
 @pytest.fixture(scope="module")
-def forceSecrets(staticPrimes):
-
+def dangerousPrimes():
+    """
+    Hard-coded 'random' values are risky. Be careful only to use them in tests.
+    """
     primes = {
         'Faber': adict(
             p=293672994294601538460023894424280657882248991230397936278278721070227017571960229217003029542172804429372056725385213277754094188540395813914384157706891192254644330822344382798277953427101186508616955910010980515685469918970002852483572038959508885430544201790234678752166995847136179984303153769450295059547,
@@ -89,17 +91,22 @@ def forceSecrets(staticPrimes):
             p=272350919439131518536668185723072482852926593554064019524369462343814526044511142103755498776619175126624938406364075917273451126568938668793961447374680502184029341737342100944414006903393754970664508203167093956633403100722241987837215822336410623517291152730072177767420285681479618823085013796383002848747,
             q=330425081558727167183816881221812849639549278034179184998296946366372434698517744313470524347706441922103884261563320081312205956446975847646990540428520632599603039481052004311129133768975937741073190081929985021145777509205395239068144377490406341441931166594773796692669520280184282602515003107867133236639),
     }
+    return primes
 
-    for k in primes.keys():
-        primes[k].used = False
 
-    csk = CredDefSecretKey(*staticPrimes.get("prime1"))
+@pytest.fixture(scope="module")
+def forceSecrets(dangerousPrimes):
+
+    dp = dangerousPrimes
+
+    for k in dp.keys():
+        dp[k].used = False
 
     def _generateIssuerSecretKey_INSECURE(self, claimDef):
-        if self.name not in primes:
+        if self.name not in dp:
             raise BlowUp("A test key pair for {} has not been created.".
                          format(self.name))
-        pair = primes[self.name]
+        pair = dp[self.name]
         if pair.used:
             raise BlowUp("A test key pair for {} has already been used.".
                          format(self.name))
