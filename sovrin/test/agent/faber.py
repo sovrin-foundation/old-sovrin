@@ -110,6 +110,7 @@ class FaberAgent(TestWalletedAgent):
 
     def initAvailableClaimList(self):
         acl = self.wallet.getAvailableClaimList()
+        logger.debug("Faber has {} claims: {}".format(len(acl), acl))
         for cd, ik in acl:
             self.availableClaims.append({
                 NAME: cd.name,

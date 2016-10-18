@@ -2,14 +2,8 @@ import uuid
 from typing import Dict, Tuple, Iterable, Optional
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.globals import VERSION, KEYS, NAME, ATTR_NAMES
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.utils import generateMasterSecret, generateVPrime
 from plenum.common.log import getlogger
-from plenum.common.txn import TYPE
-from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
 from sovrin.client.wallet.credential import Credential
 from sovrin.common.exceptions import ClaimDefNotFound

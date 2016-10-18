@@ -158,12 +158,11 @@ def charmDictToStringDict(dictionary):
 
 
 def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
-                                reference, clbk, pargs=None):
+                               reference, clbk, pargs=None):
 
     chk = partial(wallet.isIssuerKeyComplete, origin, reference)
     if not chk():
-        req = wallet.requestIssuerKey((origin, reference),
-                                                 wallet.defaultId)
+        req = wallet.requestIssuerKey((origin, reference), wallet.defaultId)
         client.submitReqs(req)
         if displayer:
             displayer("Getting Keys for the Claim Definition from Sovrin")

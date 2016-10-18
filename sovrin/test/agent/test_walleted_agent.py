@@ -1,9 +1,11 @@
 from functools import partial
 
 from ledger.util import F
+from plenum.common.log import getlogger
 from sovrin.agent.agent import WalletedAgent
-from sovrin.common.util import getCredDefIsrKeyAndExecuteCallback, \
-    ensureReqCompleted
+from sovrin.common.util import ensureReqCompleted
+
+logger = getlogger()
 
 
 class TestWalletedAgent(WalletedAgent):
@@ -14,8 +16,9 @@ class TestWalletedAgent(WalletedAgent):
 
         def postClaimDefWritten(reply, error, claimDef):
             claimDefSeqNo = reply.get(F.seqNo.name)
+            logger.debug("Claim def written on ledger: {}".format(claimDef.key))
             self.wallet.createIssuerKey(claimDefSeqNo=claimDefSeqNo,
-                                 claimDef=claimDef, csk=credDefSecretKey)
+                                        claimDef=claimDef, csk=credDefSecretKey)
             req, = self.wallet.preparePending()
             self.client.submitReqs(req)
             chk = partial(self.wallet.isIssuerKeyComplete,
@@ -23,7 +26,9 @@ class TestWalletedAgent(WalletedAgent):
 
             # TODO: Refactor ASAP
             def dummy(r, e):
+                logger.debug("Issuer key written on ledger")
                 if clbk:
+                    logger.debug("Calling the callback")
                     clbk()
 
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
@@ -31,20 +36,20 @@ class TestWalletedAgent(WalletedAgent):
                                  dummy, None, None,
                                  chk)
 
-        credDef = self.wallet.getClaimDef(key=claimDefKey)
+        claimDef = self.wallet.getClaimDef(key=claimDefKey)
         chk = partial(self.wallet.isClaimDefComplete, claimDefKey)
         if chk():
             # # Assuming if credential definition is present on ledger the
             # # issuer key would be
             issuerPubKey = self.wallet.getIssuerPublicKey(key=(
-                origin, credDef.seqNo))
+                origin, claimDef.seqNo))
             clbk()
         else:
             claimDef = self.wallet.createClaimDef(name=name, version=version,
-                                attrNames=attrNames, typ=typ)
+                                                  attrNames=attrNames, typ=typ)
             req, = self.wallet.preparePending()
             self.client.submitReqs(req)
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
                                  req.reqId, self.client,
-                                 postClaimDefWritten, (claimDef, ), None,
+                                 postClaimDefWritten, (claimDef,), None,
                                  chk)

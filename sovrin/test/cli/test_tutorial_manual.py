@@ -95,6 +95,7 @@ def dangerousPrimes():
     return primes
 
 
+# TODO: Remove this, dont need this anymore
 @pytest.fixture(scope="module")
 def forceSecrets(dangerousPrimes):
 
@@ -177,6 +178,7 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
 
     for agentCls, agentCli, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
+        # TODO: Remove None as credDefSeqNo and issuerKeySeqNo
         agentCls.getPassedArgs = lambda _: (agentPort,
                                             None,
                                             None)
