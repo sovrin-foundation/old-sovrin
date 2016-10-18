@@ -80,6 +80,7 @@ class IssuerWallet:
         self._claimDefSks[uid] = claimDefSk
         return uid
 
-    def getClaimDefSk(self, uid):
-        return self._claimDefSks.get(uid)
-
+    def getClaimDefSk(self, claimDefSeqNo) -> Optional[IssuerSecretKey]:
+        for isk in self._issuerSks.values():
+            if isk.cd.seqNo == claimDefSeqNo:
+                return isk.sk

@@ -110,6 +110,7 @@ def forceSecrets(dangerousPrimes):
         if pair.used:
             raise BlowUp("A test key pair for {} has already been used.".
                          format(self.name))
+        # pair = next(iter(primes.values()))
         csk = CredDefSecretKey(pair.p, pair.q)
         pair.used = True
 
@@ -228,7 +229,7 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
     # do('show claim Transcript verbose')
     cred = aliceCLI.activeWallet.getCredential('Faber College Transcript 1.2')
     assert cred.issuerKeyId == faberIkSeqNo
-    faberIssuerKeyAtAlice = faberCLI.activeWallet.getIssuerPublicKey(
+    faberIssuerKeyAtAlice = aliceCLI.activeWallet.getIssuerPublicKey(
         seqNo=cred.issuerKeyId)
 
     assert faberIssuerKeyAtAlice == faberIssuerKey

@@ -1527,8 +1527,7 @@ class SovrinCli(PlenumCli):
             attributes = self.attributeRepo.getAttributes(proverId).encoded()
             if attributes:
                 attributes = list(attributes.values())[0]
-            sk = CredDefSecretKey.fromStr(
-                self.activeWallet.getClaimDefSk(claimDef.secretKey))
+            sk = self.activeWallet.getClaimDefSk(claimDef.seqNo)
             cred = Issuer.generateCredential(uValue, attributes, pk, sk)
             # TODO: For real scenario, do we need to send this credential back
             # or it will be out of band?

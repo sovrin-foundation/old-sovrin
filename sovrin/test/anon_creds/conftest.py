@@ -94,7 +94,7 @@ def claimDefSecretKeyAdded(nodeSet, steward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir,
                           staticPrimes):
     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
-    return sponsorWallet.addClaimDefSk(str(csk))
+    return csk
 
 
 @pytest.fixture(scope="module")
@@ -108,8 +108,7 @@ def claimDefinitionAdded(nodeSet, steward, addedSponsor, sponsor,
                         name=data[NAME],
                         version=data[VERSION],
                         origin=sponsorWallet.defaultId,
-                        typ=data[TYPE],
-                        secretKey=claimDefSecretKeyAdded)
+                        typ=data[TYPE])
     pending = sponsorWallet.addClaimDef(claimDef)
     assert pending == old + 1
     reqs = sponsorWallet.preparePending()
@@ -129,7 +128,7 @@ def issuerSecretKeyAdded(nodeSet, steward, addedSponsor, sponsor,
                               sponsorWallet, looper, tdir,
                           staticPrimes, claimDefSecretKeyAdded,
                          claimDefinitionAdded):
-    csk = CredDefSecretKey.fromStr(sponsorWallet.getClaimDefSk(claimDefSecretKeyAdded))
+    csk = claimDefSecretKeyAdded
     cd = sponsorWallet.getClaimDef(seqNo=claimDefinitionAdded)
     # This uid would be updated with the sequence number of the transaction
     # which writes the public key on Sovrin

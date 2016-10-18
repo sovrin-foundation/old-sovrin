@@ -475,10 +475,11 @@ class Walleted:
                                                  claimDef.attrNames)
             encodedAttrs = next(iter(getEncodedAttrs(link.verkey,
                                                 attributes).values()))
-            sk = CredDefSecretKey.fromStr(
-                self.wallet.getClaimDefSk(claimDef.secretKey))
+            # sk = CredDefSecretKey.fromStr(
+            #     self.wallet.getClaimDefSk(claimDef.secretKey))
             pk = self.wallet.getIssuerPublicKeyForClaimDef(link.localIdentifier,
                                                            claimDef.seqNo)
+            sk = self.wallet.getClaimDefSk(claimDefSeqNo=claimDef.seqNo)
             cred = Issuer.generateCredential(uValue, encodedAttrs, pk, sk)
             claimDetails = {
                 NAME: claimDef.name,
