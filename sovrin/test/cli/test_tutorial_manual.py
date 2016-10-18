@@ -5,11 +5,10 @@ import re
 import uuid
 
 import pytest
-import sys
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from plenum.common.port_dispenser import genHa
+from plenum.common.exceptions import BlowUp
 from plenum.common.util import adict
 from plenum.test import eventually
 
@@ -69,11 +68,23 @@ def forceSecrets(staticPrimes):
             p=325893868236621235685694342853432128255662596084742701630702803797806397294325402126812757845898715987972301190236998259516672548030808077984482276443442275412976713276054747296981029661235027642854800917540051083248474400463038536670902017981223160527354520330405656489282463667701954783996896664500118936099,
             q=329899409150429298980613370321347023124241841562420222433597820015210005147824582997389773476164551065534815591959653484448297130127431301599544100359581695361882553029421713003518248069805870532619939187184623975486004399184422683818071105282880441021638024968277532668086638742939857932672778880586683619427),
     }
+
+    for k in primes.keys():
+        primes[k].used = False
+
     csk = CredDefSecretKey(*staticPrimes.get("prime1"))
 
     def _generateIssuerSecretKey_INSECURE(self, claimDef):
+        if self.name not in primes:
+            raise BlowUp("A test key pair for {} has not been created.".
+                         format(self.name))
         pair = primes[self.name]
+        if pair.used:
+            raise BlowUp("A test key pair for {} has already been used.".
+                         format(self.name))
         csk = CredDefSecretKey(pair.p, pair.q)
+        pair.used = True
+
         # TODO we shouldn't be storing claimdefsk, we are already storing IssuerSecretKey which holds the ClaimDefSK
         sid = self.addClaimDefSk(str(csk))
         # TODO why are we using a uuid here? The uid should be the seqNo of the pubkey in Sovrin
