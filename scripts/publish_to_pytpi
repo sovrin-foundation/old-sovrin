@@ -14,7 +14,7 @@ if [ $repos -eq "0" ]; then
     repos="1,2,3,4"
 fi;
 
-read -p "Selected repos: $repos, continue: (Y/n)?" cont
+read -p "Selected repos: $repos, continue: (Y/n)? " cont
 
 if [ $cont != "Y" ];then
     exit
