@@ -103,14 +103,14 @@ def forceSecrets(dangerousPrimes):
         dp[k].used = False
 
     def _generateIssuerSecretKey_INSECURE(self, claimDef):
-        if self.name not in dp:
-            raise BlowUp("A test key pair for {} has not been created.".
-                         format(self.name))
-        pair = dp[self.name]
-        if pair.used:
-            raise BlowUp("A test key pair for {} has already been used.".
-                         format(self.name))
-        # pair = next(iter(primes.values()))
+        # if self.name not in dp:
+        #     raise BlowUp("A test key pair for {} has not been created.".
+        #                  format(self.name))
+        # pair = dp[self.name]
+        # if pair.used:
+        #     raise BlowUp("A test key pair for {} has already been used.".
+        #                  format(self.name))
+        pair = next(iter(dp.values()))
         csk = CredDefSecretKey(pair.p, pair.q)
         pair.used = True
 
