@@ -797,3 +797,13 @@ def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
                                          thriftAddedByPhil)
 
     return thrift, thriftWallet
+
+
+@pytest.fixture(scope="module")
+def credDefAdded():
+    return ["credential definition is published"]
+
+
+@pytest.fixture(scope="module")
+def issuerKeyAdded():
+    return ["issuer key is published"]

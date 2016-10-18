@@ -1158,10 +1158,10 @@ class SovrinCli(PlenumCli):
             return True
 
     def _printNoClaimReqFoundMsg(self):
-        self.print("No matching claim request(s) found in current keyring")
+        self.print("No matching claim request(s) found in current keyring\n")
 
     def _printNoClaimFoundMsg(self):
-        self.print("No matching claim(s) found in any links in current keyring")
+        self.print("No matching claim(s) found in any links in current keyring\n")
 
     def _printMoreThanOneLinkFoundForRequest(self, requestedName, linkNames):
         self.print('More than one link matches "{}"'.format(requestedName))
@@ -1305,7 +1305,7 @@ class SovrinCli(PlenumCli):
                     proof, encodedAttrs, verifiableAttrs, claimDefKeys = \
                         self.activeWallet.buildClaimProof(
                             nonce, claimPrfReq)
-
+                    self.logger.debug("Prepared proof {}".format(proof))
                     ctxLink, curClaimReq, selfAttestedAttrs = self.curContext
                     self.logger.debug("Current context {} {} {}".
                                       format(*self.curContext))
