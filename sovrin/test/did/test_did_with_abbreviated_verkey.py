@@ -50,6 +50,9 @@ DID forms tests
         Test that a 32-byte identifier is assumed to be a cryptonym, and the first 16 bytes are the identifier, and the last 16 bytes are the abbreviated verkey, and it is stored that way
     Any other forms are rejected.
 """
+import pytest
+
+ni = pytest.mark.skip("Not yet implemented")
 
 
 def testNewIdentifierInWalletIsDid(abbrevIdr):
@@ -59,5 +62,11 @@ def testNewIdentifierInWalletIsDid(abbrevIdr):
 def testDefaultVerkeyIsAbbreviated(abbrevVerkey):
     assert len(abbrevVerkey) == 23
     assert abbrevVerkey[0] == '~'
+
+
+@ni
+def testRetrieveEmptyVerkey():
+    """{ type: GET_NYM, dest: <id1> }"""
+    raise NotImplementedError
 
 
