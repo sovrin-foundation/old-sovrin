@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+
+echo -e "\n0. All below"
+echo -e "1. Sovrin"
+echo -e "2. Plenum"
+echo -e "3. Ledger"
+echo -e "4. Anoncreds"
+
+echo -e "\nEnter comma separated numbers for repos you want to upload to pypi (for example: 1,2):"
+IFS=',' read repos
+
+read -p "Do you want to use setup.py file to be used: (Y/n) " usesetupfile
+
+
+if [ $repos -eq "0" ]; then
+    repos="1,2,3,4"
+fi;
+
+echo -e "Selected repos: $repos"
+echo -e "Use setup.py file: $usesetupfile"
+echo -e "\n"
+read -p "Continue: (Y/n)? " cont
+
+if [ $cont != "Y" ];then
+    exit
+fi;
+
+curDir=`pwd`
+scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo -e "Current script directory: $scriptDir"
+cd $scriptDir
+cd ../..
+allRepoParentDir=`pwd`
+
+for repo in $(echo $repos | sed "s/,/ /g")
+do
+    cd $allRepoParentDir
+
+    repoName=""
+    if [ $repo -eq "1" ]; then
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="sovrin-priv"
+        else
+            repoName="sovrin-pub"
+        fi;
+    elif [ $repo -eq "2" ]; then
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="plenum-priv"
+        else
+            repoName="plenum-pub"
+        fi;
+    elif [ $repo -eq 3 ]; then
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="ledger-priv"
+        else
+            repoName="ledger-pub"
+        fi;
+    elif [ $repo -eq 4 ]; then
+        if [ "$usesetupfile" != "Y" ]; then
+            repoName="anoncreds-priv"
+        else
+            repoName="anoncreds-pub"
+        fi;
+    else
+        echo -e "Not supported this repo $repo"
+        exit
+    fi
+    cd $repoName
+    cdir=`pwd`
+    echo -e "\n\nabout to start uploading $repoName to pypi... [cur dir: $cdir]"
+
+    if [ "$usesetupfile" != "Y" ]; then
+        echo -e "Temporary changes to use dev setup file"
+        mv setup.py setup-st.py
+        mv setup-dev.py setup.py
+    fi;
+
+    python setup.py register -r pypitest
+    python setup.py sdist upload -r pypitest
+
+    python setup.py register -r pypi
+    python setup.py sdist upload -r pypi
+
+    if [ "$usesetupfile" != "Y" ]; then
+        echo -e "Reverting back temporary changes to use dev setup file"
+        mv setup.py setup-dev.py
+        mv setup-st.py setup.py
+    fi;
+
+    echo -e "finished uploading $repoName to pypi\n"
+done
+
+cd $curDir
