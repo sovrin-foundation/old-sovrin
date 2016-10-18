@@ -168,6 +168,7 @@ class Walleted:
 
     def signAndSend(self, msg, signingIdr, toRaetStackName,
                     linkName=None, origReqId=None):
+
         if linkName:
             assert not signingIdr
             assert not toRaetStackName
@@ -175,10 +176,9 @@ class Walleted:
             link = self.wallet.getLink(linkName, required=True)
             ha = link.getRemoteEndpoint(required=True)
             signingIdr = self.wallet._requiredIdr(link.localIdentifier)
-            params = dict(destHa=ha)
+            params = dict(ha=ha)
         else:
-            params = dict(destName=toRaetStackName)
-
+            params = dict(name=toRaetStackName)
         # origReqId needs to be supplied when you want to respond to request
         # so that on receiving end, response can be matched with request
         if origReqId:
@@ -235,7 +235,7 @@ class Walleted:
         self.notifyEventListeners(EVENT_NOTIFY_MSG, msg=msg)
 
     def isSignatureVerifRespRequired(self, typ):
-        return typ in self.lockedMsgs and typ not in [EVENT]
+        return typ in self.lockedMsgs and typ not in [EVENT, PING, PONG]
 
     def sendSigVerifResponseMsg(self, respMsg, to, reqMsgTyp):
         if self.isSignatureVerifRespRequired(reqMsgTyp):
@@ -263,7 +263,6 @@ class Walleted:
                                              frm, typ)
                 return
         reqId = body.get(f.REQ_ID.nm)
-        logger.info("######## msg received with req Id: {}, msg: {}".format(reqId, msg))
 
         oldResps = self.rcvdMsgStore.get(reqId)
         if oldResps:
@@ -300,10 +299,6 @@ class Walleted:
 
     def _handlePing(self, msg):
         body, (frm, ha) = msg
-        self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                                  "        Ping received. Sending Pong.",
-                                  self.wallet.defaultId,
-                                  frm, body.get(f.REQ_ID.nm))
         self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
                          origReqId=body.get(f.REQ_ID.nm))
 
@@ -311,7 +306,7 @@ class Walleted:
         body, _ = msg
         isVerified = self._isVerified(body)
         if isVerified:
-            self.notifyMsgListener("        Pong received.")
+            self.notifyMsgListener("    Pong received.")
 
     def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
                                          postAllFetched):
@@ -719,7 +714,7 @@ class Walleted:
 
     def sendPing(self, name):
         reqId = self.signAndSend({TYPE: 'ping'}, None, None, name)
-        self.notifyMsgListener("        Ping sent.")
+        self.notifyMsgListener("    Ping sent.")
         return reqId
 
     def connectTo(self, linkName):
@@ -815,12 +810,10 @@ class Walleted:
         self.notifyMsgListener("    Link {} synced".format(link.name))
         if link.remoteEndPoint:
             reqId = self._pingToEndpoint(link.name, link.remoteEndPoint)
-            logger.info("######## ping req Id: {} for remote endpoint: {}".
-                        format(reqId, link.remoteEndPoint))
             return reqId
 
     def _pingToEndpoint(self, name, endpoint):
-        self.notifyMsgListener("    Pinging target endpoint: {}".
+        self.notifyMsgListener("\nPinging target endpoint: {}".
                                format(endpoint))
         reqId = self.sendPing(name=name)
         return reqId

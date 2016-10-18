@@ -304,19 +304,8 @@ class SovrinCli(PlenumCli):
         if not self.agent:
             return
 
-        self.agent.connectTo(link.name)
-
         endpoint = link.remoteEndPoint
-
-        # TODO: Refactor this
-        def _send():
-            self.agent.sendMessage(msg, destHa=endpoint)
-            self.logger.debug("Message sent: {}".format(msg))
-
-        if not self.agent.endpoint.isConnectedTo(ha=endpoint):
-            self.ensureAgentConnected(endpoint, _send)
-        else:
-            _send()
+        self.agent.sendMessage(msg, ha=endpoint)
 
     @property
     def walletClass(self):
@@ -942,7 +931,7 @@ class SovrinCli(PlenumCli):
 
     def _getTargetEndpoint(self, li, postSync):
         if self._isConnectedToAnyEnv():
-            self.print("    Synchronizing...")
+            self.print("\nSynchronizing...")
             doneCallback = partial(self._syncLinkPostEndPointRetrieval,
                                    postSync, li)
             try:
@@ -1046,6 +1035,11 @@ class SovrinCli(PlenumCli):
     def removeSpecialChars(name):
         return name.replace('"', '').replace("'","")
 
+
+    def _printSyncLinkUsage(self, linkName):
+        msgs = self._getSyncLinkUsage(linkName)
+        self.printSuggestion(msgs)
+
     def _printSyncAndAcceptUsage(self, linkName):
         msgs = self._getSyncLinkUsage(linkName) + \
                self._getAcceptLinkUsage(linkName)
@@ -1087,7 +1081,11 @@ class SovrinCli(PlenumCli):
                 matchedVars.get('target_name'))
             li = self._getOneLinkForFurtherProcessing(linkName)
             if li:
-                self.agent._pingToEndpoint(li.name, li.remoteEndPoint)
+                if li.isRemoteEndpointAvailable:
+                    self.agent._pingToEndpoint(li.name, li.remoteEndPoint)
+                else:
+                    self.print("Please sync first to get target endpoint")
+                    self._printSyncLinkUsage(li.name)
             return True
 
     def _syncLink(self, matchedVars):

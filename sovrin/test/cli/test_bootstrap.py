@@ -506,8 +506,6 @@ def testPingFaber(be, do, aliceCli, faberMap,
                                     within=3,
                                     expect=[
                                         "Ping sent.",
-                                        "Signature accepted.",
-                                        "Ping received. Sending Pong.",
                                         "Pong received."],
                                     mapper=faberMap)
 
