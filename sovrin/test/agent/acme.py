@@ -115,11 +115,12 @@ class AcmeAgent(TestWalletedAgent):
             return self.getJobCertAvailableClaimList()
 
     def getJobCertAvailableClaimList(self):
-        claimDefSeqNo, _ = self._seqNos.get(("Job-Certificate", "0.2"))
+        claimDef = self.wallet.getClaimDef(key=("Job-Certificate", "0.2",
+                                                     self.wallet.defaultId))
         return [{
             NAME: "Job-Certificate",
             VERSION: "0.2",
-            "claimDefSeqNo": claimDefSeqNo
+            "claimDefSeqNo": claimDef.seqNo
         }]
 
     def addClaimDefsToWallet(self):
