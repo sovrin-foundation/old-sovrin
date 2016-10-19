@@ -350,15 +350,16 @@ class IdentityGraph(OrientDbGraphStore):
                 if rec.oRecordData.get(REF) == str(ref):
                     needle = rec
                     break
-            edgeData = self.client.command(
-                "select expand(inE('{}')) from {}"
-                    .format(Edges.HasIssuerKey, needle._rid))[0].oRecordData
-            return {
-                ORIGIN: frm,
-                REF: ref,
-                F.seqNo.name: edgeData.get(F.seqNo.name),
-                DATA: json.loads(needle.oRecordData.get(DATA))
-            }
+            if needle:
+                edgeData = self.client.command(
+                    "select expand(inE('{}')) from {}"
+                        .format(Edges.HasIssuerKey, needle._rid))[0].oRecordData
+                return {
+                    ORIGIN: frm,
+                    REF: ref,
+                    F.seqNo.name: edgeData.get(F.seqNo.name),
+                    DATA: json.loads(needle.oRecordData.get(DATA))
+                }
         return None
 
     def getNym(self, nym, role=None):
