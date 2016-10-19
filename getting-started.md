@@ -44,7 +44,7 @@ For this guide, however, we’ll be using a command - line interface instead of 
 
 ## Install Sovrin
 
-If you use EC2 or Azure, you may want to create a VM to experiment with Sovrin(see[instructions](http: // bit.ly / 2 dtTm4n)). Otherwise, you can install sovrin on your workstation. Try opening a shell(command prompt) and typing either this:
+If you use EC2 or Azure, you may want to create a VM to experiment with Sovrin(see [instructions](http://bit.ly/2dtTm4n)). Otherwise, you can install sovrin on your workstation. Try opening a shell(command prompt) and typing either this:
 
 ```
 $ pip install sovrin
@@ -56,9 +56,9 @@ $ pip install sovrin
 $ docker run-it sovrinfoundation/sovrin
 ```
 
-If you get an error, check out the info about[prerequisites](http: // bit.ly / 2 d1o7we); there are a few dominoes you might have to line up.
+If you get an error, check out the info about[prerequisites](http://bit.ly/2d1o7we); there are a few dominoes you might have to line up.
 
-The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do.(Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the[Sovrin roadmap](http: // bit.ly / 2 cwrabV).)
+The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do.(Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the [Sovrin roadmap](http://bit.ly/2cwrabV).)
 
 ** Run the Sovrin CLI **
 
@@ -181,7 +181,7 @@ It is important to understand that this identifier for Alice is not, in and of i
 Verification key: < same as local identifier >
 ```
 
-Alice’s ** _verification key_ ** allows Sovrin and Faber College to trust, in cryptographic operations, that interactions with Alice are authentically bound to her as sender or receiver.It is an[ asymmetric public key](https:// en.wikipedia.org / wiki / Public - key_cryptography), in cryptographic terms, and the Sovrin CLI generated this value randomly when it loaded the invitation.
+Alice’s ** _verification key_ ** allows Sovrin and Faber College to trust, in cryptographic operations, that interactions with Alice are authentically bound to her as sender or receiver.It is an [ asymmetric public key](https://en.wikipedia.org/wiki/Public-key_cryptography), in cryptographic terms, and the Sovrin CLI generated this value randomly when it loaded the invitation.
 
 The Verification key has a subtle relationship with the Identifier value a couple lines above it in the CLI output. When an identifier is a ** _CID_ **, or a ** _cryptographic identifier_ **, then the identifier itself * is * the verification key, meaning that it can be used as direct input to cryptographic operations that prove an identity. (Notice that the identifier proposed for the pairwise Faber relationship in the invitation had cid-1 in its prefix.)
 Identifiers in Sovrin can also be ** _DIDs_ ** ( ** _distributed identifiers_ **). These are opaque, unique sequences of bits, like UUIDs or GUIDs.If an identifier is a DID, then its verification key is defined independently. We’re just
