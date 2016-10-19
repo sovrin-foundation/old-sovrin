@@ -56,7 +56,7 @@ $ pip install sovrin
 $ docker run-it sovrinfoundation/sovrin
 ```
 
-If you get an error, check out the info about[prerequisites](http://bit.ly/2d1o7we); there are a few dominoes you might have to line up.
+If you get an error, check out the info about [prerequisites](http://bit.ly/2d1o7we); there are a few dominoes you might have to line up.
 
 The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do.(Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the [Sovrin roadmap](http://bit.ly/2cwrabV).)
 
