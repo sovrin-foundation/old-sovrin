@@ -4,7 +4,7 @@
 
 ![image alt text](banner.png)
 
-__ * Note: This document describes behavior that is targeted for release in the Sovrin Foundation’s code drop on Oct 7. Until then, the tutorial is a preview.Published code already has tests that prove the basic features, but the end-to-end flow won’t be usable until our final QA pass finishes.* __
+__*Note: This document describes behavior that is targeted for release in the Sovrin Foundation’s code drop on Oct 7. Until then, the tutorial is a preview.Published code already has tests that prove the basic features, but the end-to-end flow won’t be usable until our final QA pass finishes.*__
 
 ## What Sovrin is, and Why it Matters
 
