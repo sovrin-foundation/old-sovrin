@@ -831,7 +831,7 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
 
     expectMsgs = [
         "Your claim {claim-req-to-match} "
-        "{claim-ver-req-to-show} has been "
+        "{claim-ver-req-to-show} was "
         "received and verified"
     ]
     if extraMsgs:
@@ -843,9 +843,9 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
         expectMsgs.append("Available claims: {new-available-claims}")
 
     do("send claim {claim-req-to-match} to {inviter}",
-                                    within=7,
-                                    expect=expectMsgs,
-                                    mapper=mapping)
+                                                           within=7,
+                                                           expect=expectMsgs,
+                                                           mapper=mapping)
 
 
 def testReqUnavailableClaim(be, do, aliceCli,
@@ -880,8 +880,8 @@ def testReqUnavailableClaim(be, do, aliceCli,
     time.sleep(3)
 
     do("request claim Job-Certificate",
-       within=7,
-       expect=["This claim is not yet available"])
+                                       within=7,
+                                       expect=["This claim is not yet available"])
 
     link.availableClaims = oldAvailableClaims
     aliceCli.activeWallet._claimDefs = oldCredDefs

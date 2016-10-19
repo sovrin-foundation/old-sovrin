@@ -158,12 +158,11 @@ def charmDictToStringDict(dictionary):
 
 
 def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
-                                reference, clbk, pargs=None):
+                               reference, clbk, pargs=None):
 
     chk = partial(wallet.isIssuerKeyComplete, origin, reference)
     if not chk():
-        req = wallet.requestIssuerKey((origin, reference),
-                                                 wallet.defaultId)
+        req = wallet.requestIssuerKey((origin, reference), wallet.defaultId)
         client.submitReqs(req)
         if displayer:
             displayer("Getting Keys for the Claim Definition from Sovrin")
@@ -184,12 +183,17 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
 def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
                                        loop, claimDefKey, clbk, pargs=None):
 
+    # TODO Fix the following
     # ATTENTION: This assumes that author of claimDef is same as the author of
     # issuerPublicKey
     def _getKey(result, error):
         data = json.loads(result.get(DATA))
-        origin = data.get(ORIGIN)
-        seqNo = data.get(F.seqNo.name)
+        if data:
+            origin = data.get(ORIGIN)
+            seqNo = data.get(F.seqNo.name)
+        else:
+            origin = None
+            seqNo = None
         getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
                                    seqNo, clbk, pargs)
 

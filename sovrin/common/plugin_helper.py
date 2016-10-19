@@ -65,5 +65,5 @@ def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):
         "\n"
 
     anonPluginContent += reload_module_code
-    with open(anonPluginFilePath, "a") as f:
+    with open(anonPluginFilePath, "w") as f:
         f.write(anonPluginContent)

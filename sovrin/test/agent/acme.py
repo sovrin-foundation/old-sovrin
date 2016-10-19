@@ -1,23 +1,27 @@
 import os
 
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import runAgent
-from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.util import getConfig
 
-from anoncreds.test.conftest import staticPrimes
-from sovrin.test.agent.helper import getAgentCmdLineParams, buildAcmeWallet
+from sovrin.test.agent.helper import buildAcmeWallet
+from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 logger = getlogger()
 
 
-class AcmeAgent(WalletedAgent):
+class AcmeAgent(TestWalletedAgent):
+    credDefSecretKey = CredDefSecretKey(
+            p=281510790031673293930276619603927743196841646256795847064219403348133278500884496133426719151371079182558480270299769814938220686172645009573713670952475703496783875912436235928500441867163946246219499572100554186255001186037971377948507437993345047481989113938038765221910989549806472045341069625389921020319,
+            q=350024478159288302454189301319318317490551219044369889911215183350615705419868722006578530322735670686148639754382100627201250616926263978453441645496880232733783587241897694734699668219445029433427409979471473248066452686224760324273968172651114901114731981044897755380965310877273130485988045688817305189839)
+
     def __init__(self,
                  basedirpath: str,
                  client: Client=None,
@@ -27,20 +31,12 @@ class AcmeAgent(WalletedAgent):
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
 
-        portParam, credDefSeqParam, issuerSeqNoParam = self.getPassedArgs()
+        portParam, = self.getPassedArgs()
 
         super().__init__('Acme Corp', basedirpath, client, wallet,
                          portParam or port)
 
-        credDefSeqNo = 12
-        issuerSeqNo = 13
-
         self.availableClaims = []
-
-        self._seqNos = {
-            ("Job-Certificate", "0.2"): (credDefSeqParam or credDefSeqNo,
-                                         issuerSeqNoParam or issuerSeqNo)
-        }
 
         # maps invitation nonces to internal ids
         self._invites = {
@@ -81,10 +77,6 @@ class AcmeAgent(WalletedAgent):
             },
         }
 
-    @staticmethod
-    def getPassedArgs():
-        return getAgentCmdLineParams()
-
     def getInternalIdByInvitedNonce(self, nonce):
         if nonce in self._invites:
             return self._invites[nonce]
@@ -110,25 +102,23 @@ class AcmeAgent(WalletedAgent):
             return self.getJobCertAvailableClaimList()
 
     def getJobCertAvailableClaimList(self):
-        claimDefSeqNo, _ = self._seqNos.get(("Job-Certificate", "0.2"))
+        claimDef = self.wallet.getClaimDef(key=("Job-Certificate", "0.2",
+                                                     self.wallet.defaultId))
         return [{
             NAME: "Job-Certificate",
             VERSION: "0.2",
-            "claimDefSeqNo": claimDefSeqNo
+            "claimDefSeqNo": claimDef.seqNo
         }]
 
     def addClaimDefsToWallet(self):
         name, version = "Job-Certificate", "0.2"
-        credDefSeqNo, issuerKeySeqNo = self._seqNos[(name, version)]
-        staticPrime = staticPrimes().get("prime1")
         attrNames = ["first_name", "last_name", "employee_status",
                      "experience", "salary_bracket"]
-        super().addClaimDefs(name=name,
-                                     version=version,
-                                     attrNames=attrNames,
-                                     staticPrime=staticPrime,
-                                     credDefSeqNo=credDefSeqNo,
-                                     issuerKeySeqNo=issuerKeySeqNo)
+        self.addCredDefAndIskIfNotFoundOnLedger(name, version,
+                                                origin=self.wallet.defaultId,
+                                                attrNames=attrNames, typ='CL',
+                                                credDefSecretKey=
+                                                self.credDefSecretKey)
 
     def getAttributes(self, internalId):
         attrs = self._attributes.get(internalId)
@@ -153,7 +143,7 @@ def runAcme(name=None, wallet=None, basedirpath=None, port=None,
 
     return runAgent(AcmeAgent, name or "Acme Corp",
                     wallet or buildAcmeWallet(), basedirpath,
-             port, startRunning, bootstrap)
+                    port, startRunning, bootstrap)
 
 if __name__ == "__main__":
     runAcme(port=6666)

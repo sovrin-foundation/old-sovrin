@@ -28,7 +28,6 @@ class ClaimDef(CredentialDefinition, HasSeqNo):
                  origin: Optional[Identifier] = None,
                  seqNo: Optional[int] = None,
                  attrNames=None,
-                 secretKey: Optional[str]=None,     # uid of the Cred Def secret key
                  typ: str=None,
                  ):
         super().__init__(uid=seqNo,
@@ -37,7 +36,6 @@ class ClaimDef(CredentialDefinition, HasSeqNo):
                          version=version)
         self.typ = typ
         self.origin = origin
-        self.secretKey = secretKey
 
     @property
     def key(self):
@@ -99,8 +97,6 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
         else:
             self.uid = seqNo
         self.claimDefSeqNo = claimDefSeqNo
-        # TODO: Remove this
-        self.secretKeyUid = secretKeyUid
         self.origin = origin
 
     # TODO: Remove this late initialisation.
@@ -115,16 +111,10 @@ class IssuerPubKey(IssuerKey, HasSeqNo):
     def request(self):
         if not self.seqNo:
             assert self.origin is not None
-            R_str = {k: str(v) for k, v in self.R.items()}
             op = {
                 TXN_TYPE: ISSUER_KEY,
                 REF: self.claimDefSeqNo,
-                DATA: {
-                    "N": str(self.N),
-                    "R": R_str,
-                    "S": str(self.S),
-                    "Z": str(self.Z)
-                }
+                DATA: self.toKeys
             }
             return Request(identifier=self.origin, operation=op)
 

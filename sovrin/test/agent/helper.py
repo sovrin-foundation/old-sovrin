@@ -30,24 +30,19 @@ def getAgentCmdLineParams():
 
         parser.add_argument('--port', required=False,
                             help='port where agent will listen')
-        parser.add_argument('--credDefSeq', required=False,
-                            help='cred def seq number')
-        parser.add_argument('--issuerSeq', required=False,
-                            help='issuer def seq number')
 
         args = parser.parse_args()
         port = int(args.port) if args.port else None
-        credDefSeq = int(args.credDefSeq) if args.credDefSeq else None
-        issuerSeq = int(args.issuerSeq) if args.issuerSeq else None
-        return port, credDefSeq, issuerSeq
+        return port,
     else:
-        return None, None, None
+        return None,
 
     
 def buildAgentWallet(name, seed):
     wallet = Wallet(name)
     wallet.addIdentifier(signer=SimpleSigner(seed=seed))
     return wallet
+
 
 def buildFaberWallet():
     return buildAgentWallet("FaberCollege", b'Faber000000000000000000000000000')

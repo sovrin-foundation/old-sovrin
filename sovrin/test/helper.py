@@ -515,8 +515,7 @@ def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
                        name=claimDefToBeAdded[NAME],
                        version=claimDefToBeAdded[VERSION],
                        origin=agent.wallet.defaultId,
-                       typ=claimDefToBeAdded[TYPE],
-                       secretKey=sid)
+                       typ=claimDefToBeAdded[TYPE])
     agent.wallet.addClaimDef(claimDef)
     reqs = agent.wallet.preparePending()
     agent.client.submitReqs(*reqs)
