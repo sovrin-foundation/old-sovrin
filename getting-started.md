@@ -25,7 +25,7 @@ Ready?
 
 ## Alice Gets a Transcript
 
-As a graduate of Faber College, Alice receives an alumni newsletter where she learns that her alma mater is offering digital transcripts. She logs in to the college alumni website and requests her transcript by clicking a *Get Transcript* button.(Other ways to initiate this request might include scanning a QR code, downloading a transcript package from a published URL, etc.)
+As a graduate of Faber College, Alice receives an alumni newsletter where she learns that her alma mater is offering digital transcripts. She logs in to the college alumni website and requests her transcript by clicking a *Get Transcript* button.  (Other ways to initiate this request might include scanning a QR code, downloading a transcript package from a published URL, etc.)
 
 Faber College has done some prep work to offer this service to Alice. It has the role of **trust anchor** on Sovrin. A trust anchor is a person or organization that Sovrin already knows about, that is able to help bootstrap others. (It is *not* the same as what cybersecurity experts call a "trusted third party"; think of it more like a facilitator). Becoming a trust anchor is beyond the scope of this guide; for now, we’ll just assume that Faber College has jumped through some hoops and has the status.
 
