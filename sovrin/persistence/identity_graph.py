@@ -231,9 +231,7 @@ class IdentityGraph(OrientDbGraphStore):
                 }
                 self.createEdge(Edges.AliasOf, referredNymRid, toV, **kwargs)
 
-    def addAttribute(self, frm, txnId, raw=None, enc=None,
-                     hash=None, to=None):
-
+    def addAttribute(self, frm, txnId, raw=None, enc=None, hash=None, to=None):
         # Only one of `raw`, `enc`, `hash` should be provided so 2 should be
         # `None`
         if (raw, enc, hash).count(None) != 2:

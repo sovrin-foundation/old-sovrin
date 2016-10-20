@@ -383,13 +383,11 @@ def checkAcceptInvitation(emptyLooper,
     def chk():
         link = a.wallet.getLinkByInternalId(internalId)
         assert link
-        # if not link:
-        #     raise RuntimeError("Link not found for internal ID {}".
-        #                        format(internalId))
-        assert link.remoteIdentifier == userAgent.wallet.defaultId
+        linkAtUser = userAgent.wallet.getLinkInvitationByTarget(link.localIdentifier)
+        assert link.remoteIdentifier == linkAtUser.verkey
         assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
 
-        emptyLooper.run(eventually(chk))
+    emptyLooper.run(eventually(chk))
 
 
 def createAgentAndAddEndpoint(looper, agentNym, agentVerkey, agentPort, steward,
