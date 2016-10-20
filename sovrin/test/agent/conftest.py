@@ -389,7 +389,7 @@ def checkAcceptInvitation(emptyLooper,
         assert link.remoteIdentifier == userAgent.wallet.defaultId
         assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
 
-        emptyLooper.run(eventually(chk))
+    emptyLooper.run(eventually(chk))
 
 
 def createAgentAndAddEndpoint(looper, agentNym, agentVerkey, agentPort, steward,
