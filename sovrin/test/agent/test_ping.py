@@ -3,7 +3,7 @@ from plenum.common.txn import TYPE, NONCE, IDENTIFIER
 
 from plenum.common.types import f
 from plenum.test.eventually import eventually
-from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
+from sovrin.agent.msg_constants import ACCEPT_INVITE, AVAIL_CLAIM_LIST
 
 from sovrin.test.agent.helper import ensureAgentsConnected
 

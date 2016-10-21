@@ -456,10 +456,11 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
         return self.preparePending()[0]
 
     # DEPR
-    # def getLinkByNonce(self, nonce) -> Optional[Link]:
-    #     for _, li in self._links.items():
-    #         if li.nonce == nonce:
-    #             return li
+    # Why shouldn't we fetch link by nonce
+    def getLinkByNonce(self, nonce) -> Optional[Link]:
+        for _, li in self._links.items():
+            if li.invitationNonce == nonce:
+                return li
 
     def getLinkByInternalId(self, internalId) -> Optional[Link]:
         for _, li in self._links.items():

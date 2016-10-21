@@ -131,8 +131,6 @@ class Agent(Motor, AgentNet):
         else:
             _send(msg, remote.uid)
 
-
-
     def connectToHa(self, ha):
         self.endpoint.connectTo(ha)
 

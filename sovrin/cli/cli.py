@@ -30,7 +30,7 @@ from plenum.common.types import f
 from plenum.common.util import randomString, getTimeBasedId
 from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
+from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, \
     CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttribDef, AttribType
@@ -1311,7 +1311,7 @@ class SovrinCli(PlenumCli):
                         self.activeWallet.buildClaimProof(
                             nonce, claimPrfReq)
                     self.logger.debug("Prepared proof {}".format(proof))
-                    ctxLink, curClaimReq, selfAttestedAttrs = self.curContext
+                    l, cr, selfAttestedAttrs = self.curContext
                     self.logger.debug("Current context {} {} {}".
                                       format(*self.curContext))
 

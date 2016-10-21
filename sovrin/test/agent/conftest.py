@@ -285,7 +285,6 @@ def acmeNonceForAlice():
 @pytest.fixture(scope="module")
 def aliceAcceptedFaber(faberIsRunning, faberNonceForAlice, faberAdded,
                        aliceIsRunning, emptyLooper,
-                       aliceFaberInvitationLoaded,
                        aliceFaberInvitationLinkSynced):
     """
     Faber creates a Link object, generates a link invitation file.
@@ -364,31 +363,33 @@ def aliceAcceptedAcme(acmeIsRunning, acmeNonceForAlice, acmeAdded,
 
 def checkAcceptInvitation(emptyLooper,
                           nonce,
-                          userAgent: WalletedAgent,
-                          agentIsRunning,
+                          inviteeAgent: WalletedAgent,
+                          inviterAgentAndWallet,
                           linkName):
     """
     Assumes link identified by linkName is already created
     """
     assert nonce
-    agent, awallet = agentIsRunning
-    a = agent  # type: WalletedAgent
+    inviterAgent, inviterWallet = inviterAgentAndWallet # type: WalletedAgent, Wallet
 
-    userAgent.connectTo(linkName)
-    ensureAgentsConnected(emptyLooper, userAgent, agent)
+    inviteeWallet = inviteeAgent.wallet
+    inviteeAgent.connectTo(linkName)
+    ensureAgentsConnected(emptyLooper, inviteeAgent, inviterAgent)
 
-    userAgent.acceptInvitation(linkName)
-
-    internalId = a.getInternalIdByInvitedNonce(nonce)
+    inviteeAgent.acceptInvitation(linkName)
+    inviteeAcceptanceId = inviteeWallet.getLink(linkName,
+                                                required=True).localIdentifier
+    internalId = inviterAgent.getInternalIdByInvitedNonce(nonce)
 
     def chk():
-        link = a.wallet.getLinkByInternalId(internalId)
+        link = inviterWallet.getLinkByInternalId(internalId)
         assert link
         # if not link:
         #     raise RuntimeError("Link not found for internal ID {}".
         #                        format(internalId))
-        assert link.remoteIdentifier == userAgent.wallet.defaultId
-        assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
+        # TODO: Get link from invitee wallet to check.
+        assert link.remoteIdentifier == inviteeAcceptanceId
+        assert link.remoteEndPoint[1] == inviteeAgent.endpoint.ha[1]
 
     emptyLooper.run(eventually(chk))
 
