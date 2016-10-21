@@ -8,24 +8,21 @@ import pytest
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from plenum.common.exceptions import BlowUp
 from plenum.common.util import adict
 from plenum.test import eventually
 
 from sovrin.agent.agent import runAgent
-from sovrin.client.wallet.issuer_wallet import IssuerWallet
 from sovrin.common.setup_util import Setup
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.agent.acme import AcmeAgent
 from sovrin.test.agent.faber import FaberAgent
 from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
-from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap
 from sovrin.test.cli.helper import newCLI
 
 # noinspection PyUnresolvedReferences
-from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
-    faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
+from sovrin.test.cli.test_tutorial import poolNodesStarted, \
+    faberCli as createFaberCli, aliceCli as createAliceCli, \
     acmeCli as createAcmeCli, syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent
 
@@ -134,11 +131,10 @@ def forceSecrets(dangerousPrimes):
 
 
 def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philCLI,
-               connectedToTest, nymAddedOut, attrAddedOut, faberCLI,
-               credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
-               acmeCLI, tdir, syncLinkOutWithEndpoint,
-               syncedInviteAcceptedOutWithoutClaims, transcriptClaimMap,
-               reqClaimOut):
+               connectedToTest, nymAddedOut, attrAddedOut, credDefAdded,
+               issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap, tdir,
+               syncLinkOutWithEndpoint, syncedInviteAcceptedOutWithoutClaims,
+               transcriptClaimMap, reqClaimOut):
 
     eventually.slowFactor = 3
 
@@ -170,22 +166,22 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
     aMap = acmeMap(acmeAgentPort)
 
     agentParams = [
-        (FaberAgent, faberCLI, "Faber College", faberAgentPort,
+        (FaberAgent, "Faber College", faberAgentPort,
          buildFaberWallet),
-        (AcmeAgent, acmeCLI, "Acme Corp", acmeAgentPort,
+        (AcmeAgent, "Acme Corp", acmeAgentPort,
          buildAcmeWallet)
      ]
 
-    for agentCls, agentCli, agentName, agentPort, buildAgentWalletFunc in \
+    for agentCls, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
         # TODO: Remove None as credDefSeqNo and issuerKeySeqNo
         agentCls.getPassedArgs = lambda _: (agentPort,)
         agent = runAgent(agentCls, agentName, buildAgentWalletFunc(), tdir,
                          agentPort, False, True)
-        agentCli.looper.add(agent)
+        philCLI.looper.add(agent)
 
     # Start Alice cli
-    createAliceCli(be, do, aliceCLI, newKeyringOut, aliceMap)
+    createAliceCli(None, be, do, aliceCLI, newKeyringOut, aliceMap)
     be(aliceCLI)
     do('connect test', within=3, expect=connectedToTest)
 
