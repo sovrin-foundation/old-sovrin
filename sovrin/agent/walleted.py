@@ -18,7 +18,7 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
     TARGET_NYM, ORIGIN, ATTRIBUTES
 from plenum.common.types import f
-from plenum.common.util import getTimeBasedId, getCryptonym
+from plenum.common.util import getTimeBasedId, getCryptonym, get_size
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
@@ -94,7 +94,7 @@ class Walleted:
     def lockedMsgs(self):
         # Msgs for which signature verification is required
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING
+               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING, PONG
 
     def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
@@ -303,10 +303,7 @@ class Walleted:
                          origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
-        body, _ = msg
-        isVerified = self._isVerified(body)
-        if isVerified:
-            self.notifyMsgListener("    Pong received.")
+        self.notifyMsgListener("    Pong received.")
 
     def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
                                          postAllFetched):
@@ -341,7 +338,7 @@ class Walleted:
                         claimNames = ", ".join(
                             [n for n, _, _ in newAvailableClaims])
                         self.notifyMsgListener(
-                            "    Available claims: {}\n".format(claimNames))
+                            "    Available Claim(s): {}\n".format(claimNames))
 
                 self._processNewAvailableClaimsData(
                     li, body[DATA][CLAIMS_LIST_FIELD], postAllFetched)
@@ -443,7 +440,7 @@ class Walleted:
 
     def _syncLinkPostAvailableClaimsRcvd(self, li, newAvailableClaims):
         if newAvailableClaims:
-            self.notifyMsgListener("    Available claims: {}".
+            self.notifyMsgListener("    Available Claim(s): {}".
                 format(",".join(
                 [n for n, _, _ in newAvailableClaims])))
         self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
@@ -544,20 +541,22 @@ class Walleted:
 
                 claimName = body[NAME]
 
+                # REMOVE-LOG: Remove the next log
+                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
+                             "{} {} {} {} {}".
+                             format(issuerPks, proof, nonce, encodedAttrs,
+                                    revealedAttrs))
+
                 result = Verifier.verifyProof(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
+
                 if result:
                     logger.info("proof {} verified".format(claimName))
                 else:
                     logger.warning("proof {} failed verification".
                                    format(claimName))
 
-                # REMOVE-LOG: Remove the next log
-                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
-                             "{} {} {} {} {}".
-                             format(issuerPks, proof, nonce, encodedAttrs,
-                                    revealedAttrs))
                 status = 'verified' if result else 'failed verification'
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
@@ -784,8 +783,7 @@ class Walleted:
             return reqId
 
     def _pingToEndpoint(self, name, endpoint):
-        self.notifyMsgListener("\nPinging target endpoint: {} "
-                               "  [Not fully implemented]".
+        self.notifyMsgListener("\nPinging target endpoint: {}".
                                format(endpoint))
         reqId = self.sendPing(name=name)
         return reqId

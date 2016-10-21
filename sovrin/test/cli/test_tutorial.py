@@ -1,24 +1,15 @@
-import uuid
-
 import pytest
 import time
 from plenum.common.types import f
 
-from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
+from plenum.common.txn import TYPE, NONCE, IDENTIFIER
 from plenum.common.util import getTimeBasedId
 from plenum.test.eventually import eventually
-from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.wallet.link import Link, constant
 from sovrin.common.exceptions import InvalidLinkException
-from sovrin.common.txn import ENDPOINT, ATTR_NAMES
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
-
-
-# FABER_ENDPOINT_PORT = 1212
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.types import AttribDef, AttribType
 
 
 def getSampleLinkInvitation():
@@ -239,6 +230,11 @@ def checkWalletStates(userCli,
         check()
 
 
+def setPromptAndKeyring(do, name, newKeyringOut, userMap):
+    do('prompt {}'.format(name),        expect=prompt_is(name))
+    do('new keyring {}'.format(name),   expect=newKeyringOut, mapper=userMap)
+
+
 @pytest.fixture(scope="module")
 def preRequisite(poolNodesStarted,
                  faberAddedByPhil, acmeAddedByPhil, thriftAddedByPhil,
@@ -250,10 +246,7 @@ def preRequisite(poolNodesStarted,
 @pytest.fixture(scope="module")
 def aliceCli(preRequisite, be, do, aliceCLI, newKeyringOut, aliceMap):
     be(aliceCLI)
-
-    do('prompt ALICE',              expect=prompt_is('ALICE'))
-
-    do('new keyring Alice',         expect=newKeyringOut, mapper=aliceMap)
+    setPromptAndKeyring(do, "Alice", newKeyringOut, aliceMap)
     return aliceCLI
 
 
@@ -817,7 +810,7 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
     mapping.update(agentMap)
     if newAvailableClaims:
         mapping['new-available-claims'] = newAvailableClaims
-        expectMsgs.append("Available claims: {new-available-claims}")
+        expectMsgs.append("Available Claim(s): {new-available-claims}")
 
     do("send claim {claim-req-to-match} to {inviter}",
                                                            within=7,

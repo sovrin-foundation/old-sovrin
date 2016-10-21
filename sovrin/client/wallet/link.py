@@ -130,12 +130,12 @@ class Link:
 
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
-            optionalLinkItems += "Claim Requests: {}". \
+            optionalLinkItems += "Claim Request(s): {}". \
                 format(", ".join([cr.name for cr in self.claimProofRequests])) \
                                  + '\n'
 
         if self.availableClaims:
-            optionalLinkItems += "Available claims: {}".\
+            optionalLinkItems += "Available Claim(s): {}".\
                 format(", ".join([name
                                  for name, _, _ in self.availableClaims])) \
                                  + '\n'

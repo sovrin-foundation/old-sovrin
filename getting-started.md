@@ -261,7 +261,7 @@ Attempting to sync...
 Synchronizing...
     Link Faber College synced
 
-Pinging target endpoint: ('127.0.0.1', 5555)   [Not fully implemented]
+Pinging target endpoint: ('127.0.0.1', 5555)
     Ping sent.
     Pong received.
 
@@ -270,7 +270,7 @@ Signature accepted.
 Response from Faber College (835.18 ms):
     Trust established.
     Identifier created in Sovrin.
-    Available claims: Transcript
+    Available Claim(s): Transcript
 
 Synchronizing...
     Confirmed identifier written to Sovrin.
@@ -299,7 +299,7 @@ Link
     Target endpoint: 127.0.0.1:5555
     Invitation nonce: b1134a647eb818069c089e7694f63e6d
     Invitation status: Accepted
-    Available claims: Transcript
+    Available Claim(s): Transcript
     Last synced: 14 seconds ago
 
 Try Next:
@@ -319,7 +319,7 @@ At this point Alice is connected to Faber College, and can interact in a secure 
 ALICE> ping Faber
 Expanding Faber to "Faber College"
 
-Pinging target endpoint: ('127.0.0.1', 5555)   [Not fully implemented]
+Pinging target endpoint: ('127.0.0.1', 5555)
     Ping sent.
     Pong received.
 ```
@@ -344,7 +344,7 @@ because (1) she connects to the current endpoint, (2) no replay - attack is poss
 
 ## Inspect the Claim
 
-Notice that when Alice last showed the Faber link, there was a new line: Available claim: Transcript. A **_claim_** is a piece of information about an identity - -a name, an age, a credit score… It is information claimed to be true. In this case, the claim is named "Transcript."
+Notice that when Alice last showed the Faber link, there was a new line: Available Claim(s): Transcript. A **_claim_** is a piece of information about an identity - -a name, an age, a credit score… It is information claimed to be true. In this case, the claim is named "Transcript."
 
 Claims are offered by an **_issuer_**. An issuer may be any identity owner known to Sovrin, and any issuer may issue a claim about any identity owner it can identify. The usefulness and reliability of a claim are tied to the reputation of the issuer, with respect to the claim at hand. For Alice to self-issue a claim that she likes chocolate ice cream may be perfectly reasonable, but for her to self-issue a claim that she graduated from Faber College should not impress anyone. The value of this transcript is that it is provably issued by Faber College. Alice wants to use that claim. She asks for more information:
 
@@ -472,7 +472,7 @@ Attempting to sync...
 Synchronizing...
     Link Acme Corp synced
 
-Pinging target endpoint: ('127.0.0.1', 6666)   [Not fully implemented]
+Pinging target endpoint: ('127.0.0.1', 6666)
     Ping sent.
     Pong received.
 
@@ -568,7 +568,7 @@ Response from Acme Corp (451.9 ms):
     Your claim Job-Application 0.2 has been received and is verified
 
 Response from Acme Corp (311.2 ms):
-    Available claims: Job-Certificate
+    Available Claim(s): Job-Certificate
 
 ```
 
@@ -590,8 +590,8 @@ Link
     Target endpoint: 127.0.0.1:6666
     Invitation nonce: 57fbf9dc8c8e6acde33de98c6d747b28c
     Invitation status: Accepted
-    Claim Requests: Job-Application
-    Available claims: Job-Certificate
+    Claim Request(s): Job-Application
+    Available Claim(s): Job-Certificate
     Last synced: a minute ago
 
 Try Next:
@@ -680,7 +680,7 @@ Attempting to sync...
 Synchronizing...
     Link Thrift Bank synced
 
-Pinging target endpoint: ('127.0.0.1', 7777)   [Not fully implemented]
+Pinging target endpoint: ('127.0.0.1', 7777)
     Ping sent.
     Pong received.
 

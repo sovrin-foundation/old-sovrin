@@ -102,28 +102,28 @@ LOAD_FILE_REG_EX = "(\s*(?P<load_file>load) " \
                    "\s+ (?P<file_path>[A-Za-z0-9+-.=/]+)\s*)"
 
 SHOW_LINK_REG_EX = '(\s*(?P<show_link>show \s+ link) ' \
-                   '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+                   '\s+ (?P<link_name>[A-Za-z0-9-." ]+) \s*)'
 
 SYNC_LINK_REG_EX = '(\s*(?P<sync_link>sync) ' \
-                   '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+                   '\s+ (?P<link_name>[A-Za-z0-9-." ]+) \s*)'
 
 PING_TARGET_REG_EX = '(\s*(?P<ping>ping) ' \
-                   '\s+ (?P<target_name>[A-Za-z0-9-" ]+) \s*)'
+                   '\s+ (?P<target_name>[A-Za-z0-9-." ]+) \s*)'
 
 ACCEPT_LINK_REG_EX = \
     '(\s*(?P<accept_link_invite>accept \s+ invitation \s+ from) ' \
-    '\s+ (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+    '\s+ (?P<link_name>[A-Za-z0-9-." ]+) \s*)'
 
 SHOW_CLAIM_REG_EX = '(\s*(?P<show_claim>show \s+ claim) ' \
-                    '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
+                    '\s+ (?P<claim_name>[A-Za-z0-9-." ]+) ' \
                     '\s*)'
 
 REQUEST_CLAIM_REG_EX = '(\s*(?P<req_claim>request \s+ claim) ' \
-                    '\s+ (?P<claim_name>[A-Za-z0-9-" ]+) ' \
+                    '\s+ (?P<claim_name>[A-Za-z0-9-." ]+) ' \
                     '\s*)'
 
 SHOW_CLAIM_REQ_REG_EX = '(\s*(?P<show_claim_req>show \s+ claim \s+ request) ' \
-                    '\s+ (?P<claim_req_name>[A-Za-z0-9-" ]+) ' \
+                    '\s+ (?P<claim_req_name>[A-Za-z0-9-." ]+) ' \
                     '\s*)'
 
 SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
@@ -131,7 +131,9 @@ SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
                     '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_./]+)' \
                     '\s*)'
 
-SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) \s+ (?P<claim_name>[A-Za-z0-9-" ]+) \s+ to (?P<link_name>[A-Za-z0-9-" ]+) \s*)'
+SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) ' \
+                    '\s+ (?P<claim_name>[A-Za-z0-9-." ]+) ' \
+                    '\s+ to (?P<link_name>[A-Za-z0-9-." ]+) \s*)'
 
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)

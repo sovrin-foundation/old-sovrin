@@ -1166,7 +1166,8 @@ class SovrinCli(PlenumCli):
         self.print("No matching claim request(s) found in current keyring\n")
 
     def _printNoClaimFoundMsg(self):
-        self.print("No matching claim(s) found in any links in current keyring\n")
+        self.print("No matching claim(s) found in "
+                   "any links in current keyring\n")
 
     def _printMoreThanOneLinkFoundForRequest(self, requestedName, linkNames):
         self.print('More than one link matches "{}"'.format(requestedName))
@@ -1280,8 +1281,7 @@ class SovrinCli(PlenumCli):
                                                    pargs=(matchingLink,
                                                           claimDefKey))
             else:
-                self.print("No matching claim(s) found "
-                           "in any links in current keyring")
+                self._printNoClaimFoundMsg()
             return True
 
     def _sendClaim(self, matchedVars):

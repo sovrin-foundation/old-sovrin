@@ -52,8 +52,9 @@ class Agent(Motor, AgentNet):
     def client(self, client):
         self._client = client
 
+    @property
     def name(self):
-        pass
+        return self._name
 
     async def prod(self, limit) -> int:
         c = 0
