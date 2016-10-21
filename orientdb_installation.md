@@ -19,9 +19,9 @@ sudo mkdir -p /opt/orientdb
 sudo tar xzvf /tmp/orientdb.tar.gz --strip-components=1 -C /opt/orientdb
 
 ```
-**NOTE:** We have used 'sovrin' as user name (assuming already created), if you want to replace it with other user name, modify steps accordingly and then execute
+**Note:** We have used 'sovrin' as user name (assuming already created), if you want to replace it with other user name, modify steps accordingly and then execute
 
-Setup installation directory path and user name
+Setup installation directory path and user name </br>
 **Note:** Replace **<actualusername>** in below command (with system username  you want to run orientdb as) and then execute it
 
 ```
