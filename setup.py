@@ -9,6 +9,7 @@ from pip.req import parse_requirements
 from shutil import copyfile
 
 import sample
+from sovrin.common.setup_util import Setup
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -38,10 +39,6 @@ exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
 BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
 CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
-POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions_sandbox")
-POOL_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "pool_transactions_local")
-IDENTITY_TXN_FILE = os.path.join(BASE_DIR, "transactions_sandbox")
-IDENTITY_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "transactions_local")
 
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR)
@@ -84,15 +81,4 @@ if not os.path.exists(CONFIG_FILE):
               "example\n"
         f.write(msg)
 
-DATA_DIR = os.path.dirname(data.__file__)
-copyfile(os.path.join(DATA_DIR, "pool_transactions_sandbox"), POOL_TXN_FILE)
-copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
-copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
-copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)
-SAMPLE_INVITATIONS_DIR = os.path.dirname(sample.__file__)
-INVITATION_DIR = os.path.join(BASE_DIR, "sample")
-os.makedirs(INVITATION_DIR, exist_ok=True)
-files = glob.iglob(os.path.join(SAMPLE_INVITATIONS_DIR, "*.sovrin"))
-for file in files:
-    if os.path.isfile(file):
-        shutil.copy2(file, INVITATION_DIR)
+Setup(BASE_DIR).setupAll()
