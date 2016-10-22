@@ -4,7 +4,7 @@ import json
 import uuid
 from abc import abstractmethod
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer import Issuer
@@ -417,7 +417,7 @@ class Walleted:
                 self.notifyMsgListener("    Identifier created in Sovrin.")
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
-                li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
+                # li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
                 self._processNewAvailableClaimsData(
                     li, body[DATA][CLAIMS_LIST_FIELD],
                     self._syncLinkPostAvailableClaimsRcvd)
@@ -806,9 +806,15 @@ class Walleted:
             link = self.loadInvitation(invitationData)
             return link
 
-    def acceptInvitation(self, linkName):
+    def acceptInvitation(self, link: Union[str, Link]):
+        if isinstance(link, str):
+            link = self.wallet.getLink(link, required=True)
+        elif isinstance(link, Link):
+            pass
+        else:
+            raise TypeError("Type of link must be either string or Link but "
+                            "provided {}".format(type(link)))
         # TODO should move to wallet in a method like accept(link)
-        link = self.wallet.getLink(linkName, required=True)
         if not link.localIdentifier:
             signer = DidSigner()
             self.wallet.addIdentifier(signer=signer)
@@ -820,8 +826,8 @@ class Walleted:
             VERKEY: self.wallet.getVerkey(link.localIdentifier)
         }
         logger.debug("{} accepting invitation from {} with id {}".
-                     format(self.name, linkName, link.localIdentifier))
-        self.signAndSend(msg, None, None, linkName)
+                     format(self.name, link.name, link.localIdentifier))
+        self.signAndSend(msg, None, None, link.name)
 
     def _handleSyncResp(self, link, additionalCallback):
         def _(reply, err):
@@ -870,8 +876,7 @@ class Walleted:
                            value=None,
                            dest=nym,
                            ledgerStore=LedgerStore.RAW)
-        req = self.wallet.requestAttribute(
-            attrib, sender=self.wallet.defaultId)
+        req = self.wallet.requestAttribute(attrib, sender=self.wallet.defaultId)
         self.client.submitReqs(req)
 
         if doneCallback:

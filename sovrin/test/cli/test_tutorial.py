@@ -505,12 +505,11 @@ def testPingFaber(be, do, aliceCli, faberMap,
                   aliceAcceptedFaberInvitation):
     be(aliceCli)
     do('ping {inviter}',
-                                    within=3,
-                                    expect=[
-                                        "Ping sent.",
-                                        "Pong received."],
-                                    mapper=faberMap)
-
+                            within=3,
+                            expect=[
+                                "Ping sent.",
+                                "Pong received."],
+                            mapper=faberMap)
 
 
 def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,

@@ -935,6 +935,10 @@ class SovrinCli(PlenumCli):
         self._printShowAndAcceptLinkUsage(link.name)
 
     def _getTargetEndpoint(self, li, postSync):
+        if not self.activeWallet.identifiers:
+            self.print("No key present in keyring for making request on Sovrin,"
+                       " so adding one")
+            self._newSigner(wallet=self.activeWallet)
         if self._isConnectedToAnyEnv():
             self.print("\nSynchronizing...")
             doneCallback = partial(self._syncLinkPostEndPointRetrieval,
@@ -965,10 +969,10 @@ class SovrinCli(PlenumCli):
         return li
 
     def _sendReqToTargetEndpoint(self, op, link: Link):
-        op[f.IDENTIFIER.nm] = link.verkey
+        op[f.IDENTIFIER.nm] = link.localIdentifier
         op[NONCE] = link.invitationNonce
         op[f.REQ_ID.nm] = getTimeBasedId()
-        signature = self.activeWallet.signMsg(op, link.verkey)
+        signature = self.activeWallet.signMsg(op, link.localIdentifier)
         op[f.SIG.nm] = signature
         self.sendToAgent(op, link)
 
@@ -986,17 +990,14 @@ class SovrinCli(PlenumCli):
             ORIGIN: origin,
             'U': str(uValue)
         }
-        signature = self.activeWallet.signMsg(op, link.verkey)
+        signature = self.activeWallet.signMsg(op, link.localIdentifier)
         op[f.SIG.nm] = signature
         self.print("Requesting claim {} from {}...".format(
             name, link.name))
         self._sendReqToTargetEndpoint(op, link)
 
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
-        op = {
-            TYPE: ACCEPT_INVITE
-        }
-        self._sendReqToTargetEndpoint(op, link)
+        self.agent.acceptInvitation(link)
 
     def _acceptLinkPostSync(self, link: Link):
         if link.isRemoteEndpointAvailable:
@@ -1328,7 +1329,8 @@ class SovrinCli(PlenumCli):
                         'selfAttestedAttrs': selfAttestedAttrs,
                         'claimDefKeys': claimDefKeys
                     }
-                    signature = self.activeWallet.signMsg(op, link.verkey)
+                    signature = self.activeWallet.signMsg(op,
+                                                          link.localIdentifier)
                     op[f.SIG.nm] = signature
                     self._sendReqToTargetEndpoint(op, link)
             return True

@@ -24,7 +24,7 @@ class TestWalletedAgent(WalletedAgent):
         link = None
         for _, li in self.wallet._links.items():
             if li.invitationNonce == nonce and li.remoteIdentifier == identifier:
-                link = li.targetVerkey
+                link = li
                 break
         if link:
             return link
