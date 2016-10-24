@@ -5,11 +5,12 @@ import os
 
 import data
 from setuptools import setup, find_packages, __version__
+from setuptools.command.install import install
+from setuptools.command.develop import develop
 from pip.req import parse_requirements
 from shutil import copyfile
 
 import sample
-from sovrin.common.setup_util import Setup
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -44,6 +45,23 @@ if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR)
 
 
+def post_install():
+    from sovrin.common.setup_util import Setup
+    Setup(BASE_DIR).setupAll()
+
+
+class PostInstall(install):
+    def run(self):
+        install.run(self)
+        post_install()
+
+
+class PostInstallDev(develop):
+    def run(self):
+        develop.run(self)
+        post_install()
+
+
 setup(
     name='sovrin',
     version=__version__,
@@ -69,7 +87,11 @@ setup(
     tests_require=['pytest==3.0.2'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
              'scripts/start_sovrin_node',
-             'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys']
+             'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys'],
+    cmdclass={
+        'install': PostInstall,
+        'develop': PostInstallDev
+    }
 )
 
 if not os.path.exists(CONFIG_FILE):
@@ -80,5 +102,3 @@ if not os.path.exists(CONFIG_FILE):
               "# Any entry you add here would override that from config " \
               "example\n"
         f.write(msg)
-
-Setup(BASE_DIR).setupAll()
