@@ -1,12 +1,11 @@
 import asyncio
 import collections
 import json
-import uuid
 from abc import abstractmethod
 from datetime import datetime
 from typing import Dict, Any
 
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+import time
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.proof_builder import ProofBuilder
@@ -18,7 +17,8 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
     TARGET_NYM, ORIGIN, ATTRIBUTES
 from plenum.common.types import f
-from plenum.common.util import getTimeBasedId, getCryptonym, get_size
+from plenum.common.util import getTimeBasedId, getCryptonym, get_size, \
+    isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
@@ -303,7 +303,13 @@ class Walleted:
                          origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
-        self.notifyMsgListener("    Pong received.")
+        body, (frm, ha) = msg
+        identifier = body.get(IDENTIFIER)
+        li = self._getLinkByTarget(getCryptonym(identifier))
+        if li:
+            self.notifyMsgListener("    Pong received.")
+        else:
+            self.notifyMsgListener("    Pong received from unknown endpoint")
 
     def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
                                          postAllFetched):
@@ -422,10 +428,10 @@ class Walleted:
         else:
             self.notifyMsgListener("No matching link found")
 
-    def _isVerified(self, msg: Dict[str, str]):
+    def _isVerified(self, msg: Dict[str, str], verifyWithIdr=None):
         # v = DidVerifier()
         signature = msg.get(f.SIG.nm)
-        identifier = msg.get(IDENTIFIER)
+        identifier = verifyWithIdr or msg.get(IDENTIFIER)
 
         msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
         # TODO This assumes the current key is the cryptonym. This is a BAD
@@ -580,7 +586,8 @@ class Walleted:
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:
             # TODO: This logic assumes that the req id is time based
-            timeTakenInMillis = (getTimeBasedId() - reqId)/1000
+            curTimeBasedId = getTimeBasedId()
+            timeTakenInMillis = convertTimeBasedReqIdToMillis(curTimeBasedId - reqId)
 
             if timeTakenInMillis >= 1000:
                 responseTime = ' ({} sec)'.format(round(timeTakenInMillis/1000, 2))
@@ -760,11 +767,10 @@ class Walleted:
             reqId = self._updateLinkWithLatestInfo(link, reply)
             if reqId:
                 self.loop.call_later(.2,
-                                 self.executeWhenResponseRcvd,
-                                 self.loop,
-                                 reqId,
-                                 PONG,
-                                 additionalCallback, reply, err)
+                                     self.executeWhenResponseRcvd,
+                                     time.time(), 4000,
+                                     self.loop, reqId, PONG, True,
+                                     additionalCallback, reply, err)
             else:
                 additionalCallback(reply, err)
         return _
@@ -809,18 +815,34 @@ class Walleted:
                                  self.client,
                                  self._handleSyncResp(link, doneCallback))
 
-    def executeWhenResponseRcvd(self, loop, reqId, respType, clbk, *args):
-        found = False
-        if self.rcvdMsgStore.get(reqId):
-            for msg in self.rcvdMsgStore.get(reqId):
-                body, frm = msg
-                if body.get(TYPE) == respType:
-                    found = True
-                    break
+    def executeWhenResponseRcvd(self, startTime, maxCheckForMillis,
+                                loop, reqId, respType,
+                                checkIfLinkExists, clbk, *args):
 
-        if found:
-            clbk(*args)
+        if isMaxCheckTimeExpired(startTime, maxCheckForMillis):
+           clbk(None, "No response received.")
         else:
-            loop.call_later(.2, self.executeWhenResponseRcvd, loop,
-                            reqId, respType, clbk, *args)
+            found = False
+            rcvdResponses = self.rcvdMsgStore.get(reqId)
+            if rcvdResponses:
+                for msg in rcvdResponses:
+                    body, frm = msg
+                    if body.get(TYPE) == respType:
+                        if checkIfLinkExists:
+                            identifier = body.get(IDENTIFIER)
+                            li = self._getLinkByTarget(getCryptonym(identifier))
+                            linkCheckOk = li is not None
+                        else:
+                            linkCheckOk = True
+
+                        if linkCheckOk:
+                            found = True
+                            break
+
+            if found:
+                clbk(*args)
+            else:
+                loop.call_later(.2, self.executeWhenResponseRcvd,
+                                startTime, maxCheckForMillis, loop,
+                                reqId, respType, checkIfLinkExists, clbk, *args)
 

@@ -926,7 +926,7 @@ class SovrinCli(PlenumCli):
     def _syncLinkPostEndPointRetrieval(self, postSync,
                                        link: Link, reply, err, **kwargs):
         if err:
-            self.print('Error occurred: {}'.format(err))
+            self.print('    {}'.format(err))
             return True
 
         postSync(link)
