@@ -52,7 +52,7 @@ from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
 from sovrin.common.util import getConfig, getEncodedAttrs, ensureReqCompleted, \
-    getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict
+    getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict, getNonceForProof
 from sovrin.server.node import Node
 
 """
@@ -1304,14 +1304,13 @@ class SovrinCli(PlenumCli):
                 else:
                     link = links[0]
                     claimPrfReq = reqs[0][1]
-                    nonce = int(link.invitationNonce, 16)
+                    nonce = getNonceForProof(link.invitationNonce)
                     self.logger.debug("Building proof using {} for {}".
                                       format(claimPrfReq, link))
-                    proof, encodedAttrs, verifiableAttrs, claimDefKeys = \
+                    proof, encodedAttrs, revealedAttrs, claimDefKeys = \
                         self.activeWallet.buildClaimProof(
                             nonce, claimPrfReq)
                     self.logger.debug("Prepared proof {}".format(proof))
-                    ctxLink, curClaimReq, selfAttestedAttrs = self.curContext
                     self.logger.debug("Current context {} {} {}".
                                       format(*self.curContext))
 
@@ -1324,8 +1323,7 @@ class SovrinCli(PlenumCli):
                         TYPE: CLAIM_PROOF,
                         'proof': proof,
                         'encodedAttrs': encodedAttrs,
-                        'verifiableAttrs': verifiableAttrs,
-                        'selfAttestedAttrs': selfAttestedAttrs,
+                        'revealedAttrs': revealedAttrs,
                         'claimDefKeys': claimDefKeys
                     }
                     signature = self.activeWallet.signMsg(op, link.verkey)

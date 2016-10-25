@@ -231,3 +231,7 @@ def ensureReqCompleted(loop, reqId, client, clbk=None, pargs=None, kwargs=None,
             clbk(reply, err, **kwargs)
         else:
             clbk(reply, err)
+
+
+def getNonceForProof(nonce):
+    return int(nonce, 16)

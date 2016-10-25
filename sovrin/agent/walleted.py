@@ -38,7 +38,7 @@ from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTR_NAMES, ENDPOINT
 from sovrin.common.util import verifySig, ensureReqCompleted, getEncodedAttrs, \
-    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback
+    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback, getNonceForProof
 
 logger = getlogger()
 
@@ -520,9 +520,10 @@ class Walleted:
             encodedAttrs = body['encodedAttrs']
             for iid, attrs in encodedAttrs.items():
                 encodedAttrs[iid] = stringDictToCharmDict(attrs)
-            revealedAttrs = body['verifiableAttrs']
-            nonce = int(body[NONCE], 16)
-            claimDefKeys = {iid: tuple(_) for iid, _ in body['claimDefKeys'].items()}
+            revealedAttrs = body['revealedAttrs']
+            nonce = getNonceForProof(body[NONCE])
+            claimDefKeys = {iid: tuple(_)
+                            for iid, _ in body['claimDefKeys'].items()}
 
             fetchedClaimDefs = 0
 
