@@ -54,7 +54,7 @@ pip install -U --no-cache-dir sovrin
 
 If you get an error, check out the info about [prerequisites](http://bit.ly/2d1o7we); there are a few dominoes you might have to line up.
 
-The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do. (Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the [Sovrin roadmap](http://bit.ly/2cwrabV).)
+The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do. (Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the [Sovrin roadmap](https://github.com/sovrin-foundation/sovrin/wiki/Roadmap).)
 
 **Run the Sovrin CLI**
 
@@ -78,7 +78,7 @@ We’re going to be playing the role of multiple **_identity owners_** (a person
 sovrin> prompt ALICE
 ALICE> 
 ```
-The status comm and gives general information about the state of theCLI. Alice tries it:
+The status command gives general information about the state of the CLI. Alice tries it:
 
 ```
 ALICE> status
@@ -92,7 +92,7 @@ Alice might also try the help command to explore what’s available.
 
 ## Evaluate the Invitation
 
-To make this guide more convenient, the sovrin CLI package installs a sample Faber College invitation to < CLI ROOT > / scripts / sample / faber - invitation.sovrin. We’re going to use this file as if we had downloaded it from Faber. (Remember, in normal usage, Alice’s Sovrin app would be doing a lot of these steps automatically.)
+To make this guide more convenient, the sovrin CLI package installs a sample Faber College invitation to <CLI ROOT>/scripts/sample/faber-invitation.sovrin. We’re going to use this file as if we had downloaded it from Faber. (Remember, in normal usage, Alice’s Sovrin app would be doing a lot of these steps automatically.)
 
 ```
 ALICE> show sample/faber-invitation.sovrin
