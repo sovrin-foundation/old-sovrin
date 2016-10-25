@@ -10,7 +10,7 @@ echo -e "4. Anoncreds"
 echo -e "\nEnter comma separated numbers for repos you want to upload to pypi (for example: 1,2):"
 IFS=',' read repos
 
-read -p "Do you want to use setup.py file to be used: (Y/n) " usesetupfile
+read -p "Do you want to use setup.py file: (Y/n) " usesetupfile
 
 
 if [ $repos -eq "0" ]; then
