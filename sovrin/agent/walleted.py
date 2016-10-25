@@ -244,6 +244,7 @@ class Walleted:
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
+        logger.debug("Message received (from -> {}): {}".format(frm, body))
         for reqFieldName in (TYPE, f.REQ_ID.nm):
             reqFieldValue = body.get(reqFieldName)
             if not reqFieldValue:

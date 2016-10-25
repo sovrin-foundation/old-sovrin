@@ -123,16 +123,14 @@ class Agent(Motor, AgentNet):
             fault(ex, "Do not know {} {}".format(name, ha))
             return
 
-        def _send(msg, remoteUid):
-            self.endpoint.transmit(msg, remoteUid)
-            logger.debug("Message sent: {}".format(msg))
+        def _send(msg, remote):
+            self.endpoint.transmit(msg, remote.uid)
+            logger.debug("Message sent (to -> {}): {}".format(remote.ha, msg))
 
         if not self.endpoint.isConnectedTo(ha=remote.ha):
-            self.ensureConnectedToDest(remote.ha, _send, msg, remote.uid)
+            self.ensureConnectedToDest(remote.ha, _send, msg, remote)
         else:
-            _send(msg, remote.uid)
-
-
+            _send(msg, remote)
 
     def connectToHa(self, ha):
         self.endpoint.connectTo(ha)

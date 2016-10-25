@@ -14,7 +14,7 @@ from ledger.util import F
 
 from anoncreds.protocol.types import AttribType, AttribDef
 from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
-from plenum.common.signing import serializeForSig
+from plenum.common.signing import serializeMsg
 from plenum.common.txn import KEYS, DATA, ORIGIN
 from plenum.common.types import f
 from plenum.common.util import isHex, error, getConfig as PlenumConfig, \
@@ -33,7 +33,7 @@ def getMsgWithoutSig(msg, sigFieldName=f.SIG.nm):
 def verifySig(identifier, signature, msg) -> bool:
     key = cryptonymToHex(identifier) if not isHex(
         identifier) else identifier
-    ser = serializeForSig(msg)
+    ser = serializeMsg(msg)
     b64sig = signature.encode('utf-8')
     sig = b58decode(b64sig)
     vr = Verifier(key)
