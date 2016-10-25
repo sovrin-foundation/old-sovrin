@@ -4,8 +4,6 @@
 
 ![image alt text](banner.png)
 
-__*Note: This document describes behavior that is targeted for release in the Sovrin Foundation’s code drop on Oct 7. Until then, the tutorial is a preview. Published code already has tests that prove the basic features, but the end-to-end flow won’t be usable until our final QA pass finishes.*__
-
 ## What Sovrin is, and Why it Matters
 
 Sovrin is a software ecosystem for private, secure, and powerful identity. It puts people — not the organizations that traditionally centralize identity — in charge of decisions about their own privacy and disclosure. This enables all kinds of rich innovation: link contracts, revocation, novel payment workflows, asset and document management features, creative forms of escrow, curated reputation, integrations with other cool technologies, and so on.
@@ -51,6 +49,7 @@ $ pip install sovrin
 
 ```
 $ docker run-it sovrinfoundation/sovrin
+pip install -U --no-cache-dir sovrin
 ```
 
 If you get an error, check out the info about [prerequisites](http://bit.ly/2d1o7we); there are a few dominoes you might have to line up.
@@ -313,7 +312,7 @@ Alice can see now that the target verification key and target endpoint are updat
 
 ## Test Secure Interaction
 
-At this point Alice is connected to Faber College, and can interact in a secure way. The Sovrin CLI supports a ping command to test secure pairwise interactions.(This command is not yet implemented.)
+At this point Alice is connected to Faber College, and can interact in a secure way. The Sovrin CLI supports a ping command to test secure pairwise interactions. (This command is partly implemented today, and partly still a stub.)
 
 ```
 ALICE> ping Faber
@@ -656,7 +655,7 @@ for anonymous credentials is at a late alpha stage on Sovrin right now.We’ll
 circle back and update this guide when we reach beta.
 
 
-Alice, now loads Thrift Bank's loan application link
+Alice now loads Thrift Bank's loan application link:
 ```
 ALICE@test> load sample/thrift-loan-application.sovrin
 1 link invitation found for Thrift Bank.
@@ -668,7 +667,7 @@ Try Next:
     accept invitation from "Thrift Bank"
 ```
 
-Alice, accepted the loan application link
+Alice accepts the loan application link:
 
 ```
 ALICE@test> accept invitation from thrift
@@ -697,7 +696,7 @@ Try Next:
     show claim request "<claim-request-name>"
 ```
 
-Alice checks to see what the claim "Loan-Application-Basic" request looks like
+Alice checks to see what the claim "Loan-Application-Basic" request looks like:
 ```
 ALICE@test> show claim request Loan-Application-Basic
 Found claim request "Loan-Application-Basic" in link "Thrift Bank"
@@ -720,8 +719,9 @@ Try Next:
     send claim Loan-Application-Basic to Thrift Bank
 ```
 
-Alice, before sharing her personal details, only sends "Loan-Application-Basic"
-claim to bank.
+Alice sends just the "Loan-Application-Basic"
+claim to the bank. This allows her to minimize the PII that she has to share
+when all she's trying to do right now is prove basic eligibility.
 
 ```
 ALICE@test> send claim Loan-Application-Basic to Thrift Bank
@@ -767,7 +767,7 @@ Try Next:
     send claim Loan-Application-KYC to Thrift Bank
 ```
 
-Alice, now sends "Loan-Application-KYC" claim to bank 
+Alice now sends "Loan-Application-KYC" claim to the bank: 
 ```
 ALICE@test> send claim Loan-Application-KYC to Thrift Bank
 
