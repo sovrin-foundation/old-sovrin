@@ -2,9 +2,40 @@
 
 Install JRE if you don't have it installed
 
+To install Java JRE, add the following Personal Package Archives (PPA):
+
 ```
-sudo apt-get install default-jre
+sudo add-apt-repository ppa:webupd8team/java
 ```
+
+Update the package database:
+
+```
+sudo apt-get update
+```
+
+Then install Oracle Java. Installing it using this particular package not only installs it, but also makes it the default Java JRE. When prompted, accept the license agreement:
+
+```
+sudo apt-get install oracle-java8-set-default
+```
+
+After installing it, verify that it's now the default Java JRE:
+
+```
+java -version
+```
+
+The expected output is as follows (the exact version may vary):
+
+```
+output
+java version "1.8.0_60"
+Java(TM) SE Runtime Environment (build 1.8.0_60-b27)
+Java HotSpot(TM) 64-Bit Server VM (build 25.60-b23, mixed mode)
+```
+
+
 ## OrientDB download and installation
 
 Download the latest community version of orientdb for Linux from here. http://orientdb.com/download/.
