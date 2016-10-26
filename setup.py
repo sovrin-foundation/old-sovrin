@@ -2,15 +2,12 @@ import glob
 import shutil
 import sys
 import os
-
-import data
 from setuptools import setup, find_packages, __version__
-from setuptools.command.install import install
-from setuptools.command.develop import develop
 from pip.req import parse_requirements
 from shutil import copyfile
-
+import data
 import sample
+
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -40,30 +37,16 @@ exec(compile(open(METADATA).read(), METADATA, 'exec'))
 
 BASE_DIR = os.path.join(os.path.expanduser("~"), ".sovrin")
 CONFIG_FILE = os.path.join(BASE_DIR, "sovrin_config.py")
+POOL_TXN_FILE = os.path.join(BASE_DIR, "pool_transactions_sandbox")
+POOL_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "pool_transactions_local")
+IDENTITY_TXN_FILE = os.path.join(BASE_DIR, "transactions_sandbox")
+IDENTITY_TXN_LOCAL_FILE = os.path.join(BASE_DIR, "transactions_local")
 
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR)
 
-
-def post_install():
-    from sovrin.common.setup_util import Setup
-    Setup(BASE_DIR).setupAll()
-
-
-class PostInstall(install):
-    def run(self):
-        install.run(self)
-        post_install()
-
-
-class PostInstallDev(develop):
-    def run(self):
-        develop.run(self)
-        post_install()
-
-
 setup(
-    name='sovrin',
+    name='sovrin-dev',
     version=__version__,
     description='Sovrin Identity',
     long_description='Sovrin Identity',
@@ -81,17 +64,13 @@ setup(
     data_files=[(
         (BASE_DIR, ['data/pool_transactions_sandbox', ])
     )],
-    install_requires=['base58', 'pyorient', 'plenum', 'ledger', 'semver',
-                      'anoncreds'],
+    install_requires=['base58', 'pyorient', 'plenum-dev', 'ledger-dev',
+                      'semver', 'anoncreds-dev'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest==3.0.2'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
              'scripts/start_sovrin_node',
-             'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys'],
-    cmdclass={
-        'install': PostInstall,
-        'develop': PostInstallDev
-    }
+             'scripts/generate_sovrin_pool_transactions', 'scripts/get_keys']
 )
 
 if not os.path.exists(CONFIG_FILE):
@@ -102,3 +81,16 @@ if not os.path.exists(CONFIG_FILE):
               "# Any entry you add here would override that from config " \
               "example\n"
         f.write(msg)
+
+DATA_DIR = os.path.dirname(data.__file__)
+copyfile(os.path.join(DATA_DIR, "pool_transactions_sandbox"), POOL_TXN_FILE)
+copyfile(os.path.join(DATA_DIR, "pool_transactions_local"), POOL_TXN_LOCAL_FILE)
+copyfile(os.path.join(DATA_DIR, "transactions_sandbox"), IDENTITY_TXN_FILE)
+copyfile(os.path.join(DATA_DIR, "transactions_local"), IDENTITY_TXN_LOCAL_FILE)
+SAMPLE_INVITATIONS_DIR = os.path.dirname(sample.__file__)
+INVITATION_DIR = os.path.join(BASE_DIR, "sample")
+os.makedirs(INVITATION_DIR)
+files = glob.iglob(os.path.join(SAMPLE_INVITATIONS_DIR, "*.sovrin"))
+for file in files:
+    if os.path.isfile(file):
+        shutil.copy2(file, INVITATION_DIR)
