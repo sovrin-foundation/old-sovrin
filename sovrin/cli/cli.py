@@ -7,6 +7,7 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
+from plenum.cli.constants import ENVS
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
@@ -37,7 +38,7 @@ from sovrin.anon_creds.issuer import AttribDef, AttribType
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
-from sovrin.cli.helper import getNewClientGrams, Environment, \
+from sovrin.cli.helper import getNewClientGrams, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
@@ -83,12 +84,7 @@ class SovrinCli(PlenumCli):
         self.sponsors = set()
         self.users = set()
         # Available environments
-        self.envs = {
-            "test": Environment("pool_transactions_sandbox",
-                                "transactions_sandbox"),
-            "live": Environment("pool_transactions_live",
-                                "transactions_live")
-        }
+        self.envs = ENVS
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
         super().__init__(*args, **kwargs)

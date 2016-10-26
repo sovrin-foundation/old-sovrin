@@ -1,0 +1,8 @@
+#! /usr/bin/env python3
+
+from plenum.common.script_helper import changeHA
+from sovrin.common.util import getConfig
+
+config = getConfig()
+
+changeHA(config.baseDir)
