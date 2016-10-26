@@ -643,7 +643,7 @@ Attributes:
     first_name: Alice
     last_name: Garcia
     employement_status: Permanent
-    experience: 5 years
+    experience: 3 years
     salary_bracket: between $50, 000 to $100, 000
 ```
 
