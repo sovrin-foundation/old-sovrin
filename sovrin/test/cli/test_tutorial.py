@@ -1,24 +1,15 @@
-import uuid
-
 import pytest
 import time
 from plenum.common.types import f
 
-from plenum.common.txn import TYPE, NONCE, IDENTIFIER, NAME, VERSION
+from plenum.common.txn import TYPE, NONCE, IDENTIFIER
 from plenum.common.util import getTimeBasedId
 from plenum.test.eventually import eventually
-from sovrin.agent.msg_types import ACCEPT_INVITE, AVAIL_CLAIM_LIST
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.client.wallet.link import Link, constant
 from sovrin.common.exceptions import InvalidLinkException
-from sovrin.common.txn import ENDPOINT, ATTR_NAMES
+from sovrin.common.txn import ENDPOINT
 from sovrin.test.cli.helper import getFileLines
-
-
-# FABER_ENDPOINT_PORT = 1212
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.types import AttribDef, AttribType
 
 
 def getSampleLinkInvitation():
@@ -52,19 +43,6 @@ def prompt_is(prompt):
     return x
 
 
-@pytest.yield_fixture(scope="module")
-def faberCLI(CliBuilder):
-    yield from CliBuilder("faber")
-
-
-@pytest.yield_fixture(scope="module")
-def acmeCLI(CliBuilder):
-    yield from CliBuilder("acme")
-
-
-@pytest.yield_fixture(scope="module")
-def thriftCLI(CliBuilder):
-    yield from CliBuilder("thrift")
 
 
 @pytest.fixture(scope="module")
@@ -116,23 +94,6 @@ def acmeCli(be, do, acmeCLI):
     idr = '7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21'
 
     do('new key with seed ' + seed, expect=['Key created in keyring Acme',
-                                            'Identifier for key is ' + idr,
-                                            'Current identifier set to ' + idr])
-    return acmeCLI
-
-
-@pytest.fixture(scope="module")
-def thriftCli(be, do, thriftCLI):
-    be(thriftCLI)
-
-    do('prompt Thrift',               expect=prompt_is('Thrift'))
-
-    do('new keyring Thrift',          expect=['New keyring Thrift created',
-                                              'Active keyring set to "Thrift"'])
-    seed = 'Thrift00000000000000000000000000'
-    idr = '9jegUr9vAMqoqQQUEAiCBYNQDnUbTktQY9nNspxfasZW'
-
-    do('new key with seed ' + seed, expect=['Key created in keyring Thrift',
                                             'Identifier for key is ' + idr,
                                             'Current identifier set to ' + idr])
     return acmeCLI
@@ -269,13 +230,23 @@ def checkWalletStates(userCli,
         check()
 
 
+def setPromptAndKeyring(do, name, newKeyringOut, userMap):
+    do('prompt {}'.format(name),        expect=prompt_is(name))
+    do('new keyring {}'.format(name),   expect=newKeyringOut, mapper=userMap)
+
+
 @pytest.fixture(scope="module")
-def aliceCli(be, do, aliceCLI, newKeyringOut, aliceMap):
+def preRequisite(poolNodesStarted,
+                 faberAddedByPhil, acmeAddedByPhil, thriftAddedByPhil,
+                 faberIsRunning, acmeIsRunning, thriftIsRunning
+                 ):
+    pass
+
+
+@pytest.fixture(scope="module")
+def aliceCli(preRequisite, be, do, aliceCLI, newKeyringOut, aliceMap):
     be(aliceCLI)
-
-    do('prompt ALICE',              expect=prompt_is('ALICE'))
-
-    do('new keyring Alice',         expect=newKeyringOut, mapper=aliceMap)
+    setPromptAndKeyring(do, "Alice", newKeyringOut, aliceMap)
     return aliceCLI
 
 
@@ -512,8 +483,7 @@ def testPingFaber(be, do, aliceCli, faberMap,
                                     mapper=faberMap)
 
 
-
-def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberCli, faberMap,
+def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberMap,
                                         unsycedAlreadyAcceptedInviteAcceptedOut,
                                         aliceAcceptedFaberInvitation):
 
@@ -840,7 +810,7 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
     mapping.update(agentMap)
     if newAvailableClaims:
         mapping['new-available-claims'] = newAvailableClaims
-        expectMsgs.append("Available claims: {new-available-claims}")
+        expectMsgs.append("Available Claim(s): {new-available-claims}")
 
     do("send claim {claim-req-to-match} to {inviter}",
                                                            within=7,

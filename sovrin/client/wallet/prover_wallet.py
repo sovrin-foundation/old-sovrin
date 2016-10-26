@@ -68,10 +68,11 @@ class ProverWallet:
         for iid, attributes in self.attributesFrom.items():
             lookingFor = attrNames - matchedAttrs
             commonAttrs = lookingFor.intersection(set(attributes.keys()))
-            issuerAttrs[iid] = commonAttrs
-            matchedAttrs.update(commonAttrs)
-            if len(matchedAttrs) == len(attrNames):
-                break
+            if commonAttrs:
+                issuerAttrs[iid] = commonAttrs
+                matchedAttrs.update(commonAttrs)
+                if len(matchedAttrs) == len(attrNames):
+                    break
 
         creds = {}
         issuerPks = {}
@@ -79,7 +80,7 @@ class ProverWallet:
         claimDefKeys = {}
         revealedAttrs = []
 
-        # Use credential for each each issuer's attributes
+        # Use credential for each issuer's attributes
         for issuerId, attrs in issuerAttrs.items():
             # Get issuer key for these `attrs`
             # Then get credential for that issuer key

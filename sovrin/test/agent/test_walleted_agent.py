@@ -46,8 +46,7 @@ class TestWalletedAgent(WalletedAgent):
         if chk():
             # # Assuming if credential definition is present on ledger the
             # # issuer key would be
-            issuerPubKey = self.wallet.getIssuerPublicKey(key=(
-                origin, claimDef.seqNo))
+            self.wallet.getIssuerPublicKey(key=(origin, claimDef.seqNo))
             clbk()
         else:
             claimDef = self.wallet.createClaimDef(name=name, version=version,

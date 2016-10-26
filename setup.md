@@ -48,7 +48,7 @@ sovrin
 ```
 python -m sovrin.test
 ```
-Note. The tests create Sovrin nodes (dont worry, all nodes are created in the same process) which require OrientDB to be running. You can install OrientDB from [here](https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-orientdb-on-ubuntu-14-04).
+Note. The tests create Sovrin nodes (dont worry, all nodes are created in the same process) which require OrientDB to be running. You can install OrientDB from [here](https://github.com/evernym/sovrin-priv/blob/master/orientdb_installation.md).
 
 
 ### Installing python 3.5 and libsodium:

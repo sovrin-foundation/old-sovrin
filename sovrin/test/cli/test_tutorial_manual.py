@@ -8,26 +8,29 @@ import pytest
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from plenum.common.exceptions import BlowUp
+from plenum.common.looper import Looper
 from plenum.common.util import adict
-from plenum.test import eventually
+from plenum.test.eventually import eventually
 
 from sovrin.agent.agent import runAgent
-from sovrin.client.wallet.issuer_wallet import IssuerWallet
 from sovrin.common.setup_util import Setup
 from sovrin.common.txn import ENDPOINT
 from sovrin.test.agent.acme import AcmeAgent
 from sovrin.test.agent.faber import FaberAgent
-from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet
+from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet, \
+    buildThriftWallet
 from sovrin.test.agent.thrift import ThriftAgent
-from sovrin.test.cli.conftest import faberMap, acmeMap
+from sovrin.test.cli.conftest import faberMap, acmeMap, \
+    jobCertificateClaimMap, reqClaimOut1, thriftMap
 from sovrin.test.cli.helper import newCLI
 
 # noinspection PyUnresolvedReferences
-from sovrin.test.cli.test_tutorial import poolNodesStarted, faberCLI, \
-    faberCli as createFaberCli, aliceCli as createAliceCli, acmeCLI, \
+from sovrin.test.cli.test_tutorial import poolNodesStarted, \
+    faberCli as createFaberCli, aliceCli as createAliceCli, \
     acmeCli as createAcmeCli, syncInvite, acceptInvitation, \
-    aliceRequestedTranscriptClaim, jobApplicationClaimSent
+    aliceRequestedTranscriptClaim, jobApplicationClaimSent, \
+    jobCertClaimRequested, bankBasicClaimSent, bankKYCClaimSent, \
+    setPromptAndKeyring
 
 concerningLogLevels = [logging.WARNING,
                        logging.ERROR,
@@ -134,11 +137,11 @@ def forceSecrets(dangerousPrimes):
 
 
 def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philCLI,
-               connectedToTest, nymAddedOut, attrAddedOut, faberCLI,
+               connectedToTest, nymAddedOut, attrAddedOut,
                credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
-               acmeCLI, tdir, syncLinkOutWithEndpoint,
+               tdir, syncLinkOutWithEndpoint, jobCertificateClaimMap,
                syncedInviteAcceptedOutWithoutClaims, transcriptClaimMap,
-               reqClaimOut):
+               reqClaimOut, reqClaimOut1, susanCLI, susanMap):
 
     eventually.slowFactor = 3
 
@@ -166,63 +169,156 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
     # Start Faber Agent and Acme Agent
     faberAgentPort = 5555
     acmeAgentPort = 6666
+    thriftAgentPort = 7777
     fMap = faberMap(faberAgentPort)
     aMap = acmeMap(acmeAgentPort)
+    tMap = thriftMap(thriftAgentPort)
 
     agentParams = [
-        (FaberAgent, faberCLI, "Faber College", faberAgentPort,
-         buildFaberWallet),
-        (AcmeAgent, acmeCLI, "Acme Corp", acmeAgentPort,
-         buildAcmeWallet)
+        (FaberAgent, "Faber College", faberAgentPort,
+            buildFaberWallet),
+        (AcmeAgent, "Acme Corp", acmeAgentPort,
+            buildAcmeWallet),
+        (ThriftAgent, "Thrift Bank", thriftAgentPort,
+            buildThriftWallet)
      ]
 
-    for agentCls, agentCli, agentName, agentPort, buildAgentWalletFunc in \
+    for agentCls, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
         # TODO: Remove None as credDefSeqNo and issuerKeySeqNo
         agentCls.getPassedArgs = lambda _: (agentPort,)
         agent = runAgent(agentCls, agentName, buildAgentWalletFunc(), tdir,
                          agentPort, False, True)
-        agentCli.looper.add(agent)
+        philCLI.looper.add(agent)
 
-    # Start Alice cli
-    createAliceCli(be, do, aliceCLI, newKeyringOut, aliceMap)
-    be(aliceCLI)
-    do('connect test', within=3, expect=connectedToTest)
+    for p in philCLI.looper.prodables:
+        if p.name == 'Faber College':
+            faberAgent = p
+        if p.name == 'Acme Corp':
+            acmeAgent = p
+        if p.name == 'Thrift Bank':
+            thriftAgent = p
 
-    # Accept faber
-    do('load sample/faber-invitation.sovrin')
-    syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, fMap)
-    do('show link faber')
-    acceptInvitation(be, do, aliceCLI, fMap,
-                     syncedInviteAcceptedOutWithoutClaims)
+    def checkTranscriptWritten():
+        faberId = faberAgent.wallet.defaultId
+        claimDef = faberAgent.wallet.getClaimDef(key=("Transcript",
+                                                      "1.2", faberId))
+        assert claimDef.seqNo is not None
+        issuerKey = faberAgent.wallet.getIssuerPublicKey(key=(faberId,
+                                                              claimDef.seqNo))
+        assert issuerKey.seqNo is not None
 
-    # Request claim
-    do('show claim Transcript')
-    aliceRequestedTranscriptClaim(be, do, aliceCLI, transcriptClaimMap,
-                                  reqClaimOut,
-                                  None,  # Passing None since its not used
-                                  None)  # Passing None since its not used
-    do('show claim Transcript')
-    # TODO
-    # do('show claim Transcript verbose')
-    cred = aliceCLI.activeWallet.getCredential('Faber College Transcript 1.2')
-    # assert cred.issuerKeyId == faberIkSeqNo
-    faberIssuerKeyAtAlice = aliceCLI.activeWallet.getIssuerPublicKey(
-        seqNo=cred.issuerKeyId)
+    def checkJobCertWritten():
+        acmeId = acmeAgent.wallet.defaultId
+        claimDef = acmeAgent.wallet.getClaimDef(key=("Job-Certificate",
+                                                     "0.2", acmeId))
+        assert claimDef.seqNo is not None
+        issuerKey = acmeAgent.wallet.getIssuerPublicKey(key=(acmeId,
+                                                             claimDef.seqNo))
+        assert issuerKey.seqNo is not None
 
-    # assert faberIssuerKeyAtAlice == faberIssuerKey
-    # Accept acme
-    do('load sample/acme-job-application.sovrin')
-    syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, aMap)
-    acceptInvitation(be, do, aliceCLI, aMap,
-                     syncedInviteAcceptedOutWithoutClaims)
+    philCLI.looper.run(eventually(checkTranscriptWritten, timeout=10))
+    philCLI.looper.run(eventually(checkJobCertWritten, timeout=10))
 
-    # Send claim
-    do('show claim request Job-Application')
-    do('set first_name to Alice')
-    do('set last_name to Garcia')
-    do('set phone_number to 123-45-6789')
-    do('show claim request Job-Application')
-    # Passing some args as None since they are not used in the method
-    jobApplicationClaimSent(be, do, aliceCLI, aMap, None, None, None)
+    # Defining inner method for closures
+    def executeGstFlow(name, userCLI, userMap, be, connectedToTest, do, fMap,
+                       aMap, jobCertificateClaimMap, newKeyringOut, reqClaimOut,
+                       reqClaimOut1, syncLinkOutWithEndpoint,
+                       syncedInviteAcceptedOutWithoutClaims, tMap,
+                       transcriptClaimMap):
+        # Start User cli
 
+        be(userCLI)
+        setPromptAndKeyring(do, name, newKeyringOut, userMap)
+        do('connect test', within=3, expect=connectedToTest)
+        # Accept faber
+        do('load sample/faber-invitation.sovrin')
+        syncInvite(be, do, userCLI, syncLinkOutWithEndpoint, fMap)
+        do('show link faber')
+        acceptInvitation(be, do, userCLI, fMap,
+                         syncedInviteAcceptedOutWithoutClaims)
+        # Request claim
+        do('show claim Transcript')
+        aliceRequestedTranscriptClaim(be, do, userCLI, transcriptClaimMap,
+                                      reqClaimOut,
+                                      None,  # Passing None since its not used
+                                      None)  # Passing None since its not used
+        faberId = fMap['target']
+        transKey = ('Transcript', '1.2', faberId)
+        faberIssuerKey = faberAgent.wallet.getIssuerPublicKeyForClaimDef(
+            faberId, claimDefKey=transKey)
+        userIssuerKeyForTrans = userCLI.activeWallet.\
+            getIssuerPublicKeyForClaimDef(faberId, claimDefKey=transKey)
+        assert faberIssuerKey == userIssuerKeyForTrans
+
+        do('show claim Transcript')
+        # TODO
+        # do('show claim Transcript verbose')
+        cred = userCLI.activeWallet.getCredential(
+            'Faber College Transcript 1.2')
+
+        # assert cred.issuerKeyId == faberIssuerKey.seqNo
+
+        # Accept acme
+        do('load sample/acme-job-application.sovrin')
+        syncInvite(be, do, userCLI, syncLinkOutWithEndpoint, aMap)
+        acceptInvitation(be, do, userCLI, aMap,
+                         syncedInviteAcceptedOutWithoutClaims)
+        # Send claim
+        do('show claim request Job-Application')
+        do('set first_name to Alice')
+        do('set last_name to Garcia')
+        do('set phone_number to 123-45-6789')
+        do('show claim request Job-Application')
+        # Passing some args as None since they are not used in the method
+        jobApplicationClaimSent(be, do, userCLI, aMap, None, None, None)
+        # Request new available claims Job-Certificate
+        jobCertClaimRequested(be, do, userCLI,
+                              jobCertificateClaimMap, reqClaimOut1, None, None)
+
+        acmeId = aMap['target']
+        certKey = ('Job-Certificate', '0.2', acmeId)
+        acmeIssuerKey = acmeAgent.wallet.getIssuerPublicKeyForClaimDef(
+            acmeId, claimDefKey=certKey)
+        userIssuerKeyForCert = userCLI.activeWallet. \
+            getIssuerPublicKeyForClaimDef(acmeId, claimDefKey=certKey)
+        assert acmeIssuerKey == userIssuerKeyForCert
+
+        do('show claim Job-Certificate')
+        # TODO
+        # do('show claim Transcript verbose')
+        cred = userCLI.activeWallet.getCredential(
+            'Acme Corp Job-Certificate 0.2')
+
+        assert cred.issuerKeyId == acmeIssuerKey.seqNo
+
+        # Accept thrift
+        do('load sample/thrift-loan-application.sovrin')
+        acceptInvitation(be, do, userCLI, tMap,
+                         syncedInviteAcceptedOutWithoutClaims)
+        # Send claims
+        bankBasicClaimSent(be, do, userCLI, tMap, None)
+        assert acmeIssuerKey == thriftAgent.wallet.\
+            getIssuerPublicKeyForClaimDef(acmeId, claimDefKey=certKey)
+        passed = False
+        try:
+            bankKYCClaimSent(be, do, userCLI, tMap, None)
+            passed = True
+        except:
+            assert faberIssuerKey == thriftAgent.wallet. \
+                getIssuerPublicKeyForClaimDef(faberId, claimDefKey=transKey)
+        assert passed
+
+    executeGstFlow("Alice", aliceCLI, aliceMap, be, connectedToTest, do, fMap,
+                   aMap, jobCertificateClaimMap, newKeyringOut, reqClaimOut,
+                   reqClaimOut1, syncLinkOutWithEndpoint,
+                   syncedInviteAcceptedOutWithoutClaims, tMap,
+                   transcriptClaimMap)
+
+    aliceCLI.looper.runFor(3)
+
+    executeGstFlow("Susan", susanCLI, susanMap, be, connectedToTest, do, fMap,
+                   aMap, jobCertificateClaimMap, newKeyringOut, reqClaimOut,
+                   reqClaimOut1, syncLinkOutWithEndpoint,
+                   syncedInviteAcceptedOutWithoutClaims, tMap,
+                   transcriptClaimMap)

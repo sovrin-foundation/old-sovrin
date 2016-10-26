@@ -56,6 +56,7 @@ from sovrin.test.helper import addUser
 
 ni = pytest.mark.skip("Not yet implemented")
 
+
 @ni
 def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
     assert wallet.getverkey(noKeyIdr) is None

@@ -82,6 +82,13 @@ def aliceMap():
 
 
 @pytest.fixture(scope="module")
+def susanMap():
+    return {
+        'keyring-name': 'Susan',
+    }
+
+
+@pytest.fixture(scope="module")
 def faberMap(faberAgentPort):
     endpoint = "127.0.0.1:{}".format(faberAgentPort)
     return {'inviter': 'Faber College',
@@ -256,7 +263,7 @@ def syncedInviteAcceptedOutWithoutClaims():
 @pytest.fixture(scope="module")
 def syncedInviteAcceptedWithClaimsOut(syncedInviteAcceptedOutWithoutClaims):
     return syncedInviteAcceptedOutWithoutClaims + [
-        "Available claims: {claims}",
+        "Available Claim(s): {claims}",
     ]
 
 
@@ -579,12 +586,12 @@ def showJobCertClaimOut(nextCommandsToTryUsageLine):
 
 @pytest.fixture(scope="module")
 def showLinkWithClaimReqOut():
-    return ["Claim Requests: {claim-requests}"]
+    return ["Claim Request(s): {claim-requests}"]
 
 
 @pytest.fixture(scope="module")
 def showLinkWithAvailableClaimsOut():
-    return ["Available claims: {claims}"]
+    return ["Available Claim(s): {claims}"]
 
 
 @pytest.fixture(scope="module")
@@ -652,6 +659,11 @@ def poolCLI_baby(CliBuilder):
 @pytest.yield_fixture(scope="module")
 def aliceCLI(CliBuilder):
     yield from CliBuilder("alice")
+
+
+@pytest.yield_fixture(scope="module")
+def susanCLI(CliBuilder):
+    yield from CliBuilder("susan")
 
 
 @pytest.yield_fixture(scope="module")
