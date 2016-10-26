@@ -46,7 +46,7 @@ if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR)
 
 setup(
-    name='sovrin-dev',
+    name='sovrin',
     version=__version__,
     description='Sovrin Identity',
     long_description='Sovrin Identity',
@@ -64,8 +64,8 @@ setup(
     data_files=[(
         (BASE_DIR, ['data/pool_transactions_sandbox', ])
     )],
-    install_requires=['base58', 'pyorient', 'plenum-dev', 'ledger-dev',
-                      'semver', 'anoncreds-dev'],
+    install_requires=['base58', 'pyorient', 'plenum', 'ledger',
+                      'semver', 'anoncreds'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest==3.0.2'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
