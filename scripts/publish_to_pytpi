@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+BACK="$(tput cub1)"
+
 echo -e "\nWhich repos:"
 echo -e "  0. All following repos"
 echo -e "  1. Sovrin"
@@ -7,6 +9,13 @@ echo -e "  2. Plenum"
 echo -e "  3. Ledger"
 echo -e "  4. Anoncreds"
 read -ep $'Enter your choice (For example: 0 OR 1,2,3 etc): ' repos
+
+if [ "$repos" == "" ]; then
+    echo -e "\nInvalid choice, please re-run script with correct choice for repos"
+    exit
+fi;
+
+
 if [ "$repos" == "0" ]; then
     repos="1,2,3,4"
 fi;
@@ -15,16 +24,25 @@ echo -e "\nUpload to:"
 echo -e "  0. Both (pypi and pypitest)"
 echo -e "  1. Only pypi"
 echo -e "  2. Only pypitest"
-read -ep $'Enter your choice: ' -i '0' dest
+dest="0"
+read -p "Enter your choice: $dest$BACK" destinput
+dest="${destinput:-$dest}"
 
-read -ep $'\nDo you want to use setup.py file (Y/n): ' -i 'n' usesetupfile
+usesetupfile="n"
+echo ""
+read -p "Do you want to use setup.py file (Y/n): $usesetupfile$BACK" setupinput
+usesetupfile="${setupinput:-$usesetupfile}"
+
 
 echo -e "\nVerify:"
 echo -e "  Selected repos: $repos"
-echo -e "  Use setup.py file: $usesetupfile"
 echo -e "  Upload to choice: $dest"
+echo -e "  Use setup.py file: $usesetupfile"
 
-read -ep $'\nContinue (Y/n)? ' -i 'Y' cont
+echo ""
+cont="n"
+read -p "Continue (Y/n)? $cont$BACK" continput
+cont="${continput:-$cont}"
 
 if [ $cont != "Y" ];then
     exit
