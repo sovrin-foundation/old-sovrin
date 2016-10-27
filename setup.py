@@ -9,6 +9,7 @@ from setuptools.command.install import install
 from setuptools.command.develop import develop
 from pip.req import parse_requirements
 from shutil import copyfile
+import subprocess
 
 import sample
 
@@ -46,8 +47,7 @@ if not os.path.exists(BASE_DIR):
 
 
 def post_install():
-    from sovrin.common.setup_util import Setup
-    Setup(BASE_DIR).setupAll()
+    subprocess.run(['python post-setup.py'], shell=True)
 
 
 class PostInstall(install):

@@ -770,7 +770,7 @@ class Walleted:
             if reqId:
                 self.loop.call_later(.2,
                                      self.executeWhenResponseRcvd,
-                                     time.time(), 4000,
+                                     time.time(), 8000,
                                      self.loop, reqId, PONG, True,
                                      additionalCallback, reply, err)
             else:
@@ -822,7 +822,9 @@ class Walleted:
                                 checkIfLinkExists, clbk, *args):
 
         if isMaxCheckTimeExpired(startTime, maxCheckForMillis):
-           clbk(None, "No response received.")
+           clbk(None, "No response received within specified time ({} mills). "
+                      "Retry the command and see if that works.\n".
+                format(maxCheckForMillis))
         else:
             found = False
             rcvdResponses = self.rcvdMsgStore.get(reqId)

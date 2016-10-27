@@ -1,30 +1,53 @@
 #!/usr/bin/env bash
 
+BACK="$(tput cub1)"
 
-echo -e "\n0. All below"
-echo -e "1. Sovrin"
-echo -e "2. Plenum"
-echo -e "3. Ledger"
-echo -e "4. Anoncreds"
+echo -e "\nWhich repos:"
+echo -e "  0. All following repos"
+echo -e "  1. Sovrin"
+echo -e "  2. Plenum"
+echo -e "  3. Ledger"
+echo -e "  4. Anoncreds"
+read -ep $'Enter your choice (For example: 0 OR 1,2,3 etc): ' repos
 
-echo -e "\nEnter comma separated numbers for repos you want to upload to pypi (for example: 1,2):"
-IFS=',' read repos
+if [ "$repos" == "" ]; then
+    echo -e "\nInvalid choice, please re-run script with correct choice for repos"
+    exit
+fi;
 
-read -p "Do you want to use setup.py file: (Y/n) " usesetupfile
 
-
-if [ $repos -eq "0" ]; then
+if [ "$repos" == "0" ]; then
     repos="1,2,3,4"
 fi;
 
-echo -e "Selected repos: $repos"
-echo -e "Use setup.py file: $usesetupfile"
-echo -e "\n"
-read -p "Continue: (Y/n)? " cont
+echo -e "\nUpload to:"
+echo -e "  0. Both (pypi and pypitest)"
+echo -e "  1. Only pypi"
+echo -e "  2. Only pypitest"
+dest="0"
+read -p "Enter your choice: $dest$BACK" destinput
+dest="${destinput:-$dest}"
+
+usesetupfile="n"
+echo ""
+read -p "Do you want to use setup.py file (Y/n): $usesetupfile$BACK" setupinput
+usesetupfile="${setupinput:-$usesetupfile}"
+
+
+echo -e "\nVerify:"
+echo -e "  Selected repos: $repos"
+echo -e "  Upload to choice: $dest"
+echo -e "  Use setup.py file: $usesetupfile"
+
+echo ""
+cont="n"
+read -p "Continue (Y/n)? $cont$BACK" continput
+cont="${continput:-$cont}"
 
 if [ $cont != "Y" ];then
     exit
 fi;
+
 
 curDir=`pwd`
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -33,57 +56,53 @@ cd $scriptDir
 cd ../..
 allRepoParentDir=`pwd`
 
-for repo in $(echo $repos | sed "s/,/ /g")
+suffix="-priv"
+if [ "$usesetupfile" == "Y" ]; then
+    suffix = "-pub"
+fi;
+
+export IFS=","
+for repo in $repos
 do
     cd $allRepoParentDir
 
     repoName=""
     if [ $repo -eq "1" ]; then
-        if [ "$usesetupfile" != "Y" ]; then
-            repoName="sovrin-priv"
-        else
-            repoName="sovrin-pub"
-        fi;
+        repoName="sovrin$suffix"
     elif [ $repo -eq "2" ]; then
-        if [ "$usesetupfile" != "Y" ]; then
-            repoName="plenum-priv"
-        else
-            repoName="plenum-pub"
-        fi;
+        repoName="plenum$suffix"
     elif [ $repo -eq 3 ]; then
-        if [ "$usesetupfile" != "Y" ]; then
-            repoName="ledger-priv"
-        else
-            repoName="ledger-pub"
-        fi;
+        repoName="ledger$suffix"
     elif [ $repo -eq 4 ]; then
-        if [ "$usesetupfile" != "Y" ]; then
-            repoName="anoncreds-priv"
-        else
-            repoName="anoncreds-pub"
-        fi;
+        repoName="anoncreds$suffix"
     else
         echo -e "Not supported this repo $repo"
         exit
     fi
     cd $repoName
     cdir=`pwd`
-    echo -e "\n\nabout to start uploading $repoName to pypi... [cur dir: $cdir]"
+    echo -e "\n\nabout to start uploading $repoName... [cur dir: $cdir]"
 
     if [ "$usesetupfile" != "Y" ]; then
-        echo -e "Temporary changes to use dev setup file"
+        echo -e "Temporary changes to use setup-dev.py file"
         mv setup.py setup-st.py
         mv setup-dev.py setup.py
     fi;
 
-    python setup.py register -r pypitest
-    python setup.py sdist upload -r pypitest
+    if [[ "$dest" == "0" || "$dest" == "2" ]]; then
+        echo -e "About to upload to pypitest..."
+        python setup.py register -r pypitest
+        python setup.py sdist upload -r pypitest
+    fi;
 
-    python setup.py register -r pypi
-    python setup.py sdist upload -r pypi
+    if [[ "$dest" == "0" || "$dest" == "1" ]]; then
+        echo -e "About to upload to pypi..."
+        python setup.py register -r pypi
+        python setup.py sdist upload -r pypi
+    fi;
 
     if [ "$usesetupfile" != "Y" ]; then
-        echo -e "Reverting back temporary changes to use dev setup file"
+        echo -e "Reverting back temporary changes to use setup-dev.py file"
         mv setup.py setup-dev.py
         mv setup-st.py setup.py
     fi;
