@@ -1,8 +1,21 @@
 #! /usr/bin/env python3
-
+from plenum.common.looper import Looper
 from plenum.common.script_helper import changeHA
+from plenum.common.util import getMaxFailures
+from plenum.test.eventually import eventually
+from plenum.test.helper import checkSufficientRepliesRecvd
 from sovrin.common.util import getConfig
 
-config = getConfig()
+# Below is an example script command line parameters to be passed to test it.
+# --env test --name Node1 --nodeverkey Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv --stewardseed 000000000000000000000000Steward1 --nodestacknewha 127.0.0.1:9665
 
-changeHA(config.baseDir)
+# TODO: With some latest changes, this is not tested, so need to test
+
+config = getConfig()
+client, req = changeHA(config.baseDir)
+
+looper = Looper()
+f = getMaxFailures(len(client.nodeReg))
+looper.run(eventually(checkSufficientRepliesRecvd, client.inBox, req.reqId
+                      , f, retryWait=1, timeout=8))
+looper.runFor(10)
