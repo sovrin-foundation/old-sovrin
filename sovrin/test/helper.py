@@ -256,7 +256,7 @@ class TempStorage:
              Node.reportSuspiciousNode, Node.reportSuspiciousClient,
              Node.processRequest, Node.processPropagate, Node.propagate,
              Node.forward, Node.send, Node.processInstanceChange,
-             Node.checkPerformance])
+             Node.checkPerformance, Node.getReplyFor])
 class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)

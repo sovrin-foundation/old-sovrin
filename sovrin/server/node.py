@@ -27,7 +27,7 @@ from sovrin.common.txn import TXN_TYPE, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
     ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.util import getConfig, dateTimeEncoding
-from sovrin.persistence.identity_graph import IdentityGraph
+from sovrin.persistence import identity_graph
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
 
@@ -74,7 +74,7 @@ class Node(PlenumNode):
         return SecondaryStorage(self.graphStore, self.primaryStorage)
 
     def getGraphStorage(self, name):
-        return IdentityGraph(self._getOrientDbStore(name,
+        return identity_graph.IdentityGraph(self._getOrientDbStore(name,
                                                     pyorient.DB_TYPE_GRAPH))
 
     def getPrimaryStorage(self):
@@ -170,7 +170,7 @@ class Node(PlenumNode):
         op = request.operation
         typ = op[TXN_TYPE]
 
-        s = self.graphStore  # type: IdentityGraph
+        s = self.graphStore  # type: identity_graph.IdentityGraph
 
         origin = request.identifier
         try:
@@ -347,22 +347,27 @@ class Node(PlenumNode):
 
     def storeTxnInLedger(self, result):
         if result[TXN_TYPE] == ATTRIB:
-            # Creating copy of result so that `RAW`, `ENC` or `HASH` can be
-            # replaced by their hashes. We do not insert actual attribute data
-            # in the ledger but only the hash of it.
-            result = deepcopy(result)
-            if RAW in result:
-                result[RAW] = sha256(result[RAW].encode()).hexdigest()
-            elif ENC in result:
-                result[ENC] = sha256(result[ENC].encode()).hexdigest()
-            elif HASH in result:
-                result[HASH] = result[HASH]
-            else:
-                error("Transaction missing required field")
+            result = self.hashAttribTxn(result)
             merkleInfo = self.addToLedger(result)
         else:
             merkleInfo = self.addToLedger(result)
         result.update(merkleInfo)
+        return result
+
+    @staticmethod
+    def hashAttribTxn(result):
+        # Creating copy of result so that `RAW`, `ENC` or `HASH` can be
+        # replaced by their hashes. We do not insert actual attribute data
+        # in the ledger but only the hash of it.
+        result = deepcopy(result)
+        if RAW in result:
+            result[RAW] = sha256(result[RAW].encode()).hexdigest()
+        elif ENC in result:
+            result[ENC] = sha256(result[ENC].encode()).hexdigest()
+        elif HASH in result:
+            result[HASH] = result[HASH]
+        else:
+            error("Transaction missing required field")
         return result
 
     def storeTxnInGraph(self, result):
@@ -403,7 +408,12 @@ class Node(PlenumNode):
         result = self.secondaryStorage.getReply(request.identifier,
                                                 request.reqId,
                                                 type=request.operation[TXN_TYPE])
-        return Reply(result) if result else None
+        if result:
+            if request.operation[TXN_TYPE] == ATTRIB:
+                result = self.hashAttribTxn(result)
+            return Reply(result)
+        else:
+            return None
 
     def doCustomAction(self, ppTime: float, req: Request) -> None:
         """

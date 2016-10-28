@@ -1,10 +1,11 @@
 import json
 from itertools import chain
-
-import pyorient
+import datetime
+import time
 from functools import reduce
 from typing import Dict, Optional
 
+import pyorient
 from ledger.util import F
 from plenum.common.error import fault
 from plenum.common.log import getlogger
@@ -13,11 +14,12 @@ from plenum.common.txn import TXN_TYPE, TYPE, IP, PORT, KEYS, NAME, VERSION, \
 from plenum.common.types import f
 from plenum.common.util import error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
+from plenum.server.node import Node
+
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
     STEWARD, ROLE, REF, TXN_TIME, ATTRIB, CRED_DEF, isValidRole, \
     ATTR_NAMES, ISSUER_KEY
-import datetime
-import time
+
 
 logger = getlogger()
 
@@ -63,7 +65,7 @@ txnEdges = {
 
 
 txnEdgeProps = [F.seqNo.name, TXN_TIME, f.REQ_ID.nm, f.IDENTIFIER.nm,
-                TARGET_NYM, NAME, VERSION]
+                TARGET_NYM, NAME, VERSION, TXN_ID]
 
 
 def getEdgeByTxnType(txnType: str): return txnEdges.get(txnType)
@@ -123,7 +125,7 @@ class IdentityGraph(OrientDbGraphStore):
             TXN_ID: "string",
             TXN_TIME: "datetime",
             TXN_TYPE: "string",
-            f.REQ_ID.nm: "integer",
+            f.REQ_ID.nm: "long",
             f.IDENTIFIER.nm: "string",
             F.seqNo.name: "string",
         }
@@ -193,7 +195,8 @@ class IdentityGraph(OrientDbGraphStore):
     def getAddsNymEdge(self, nym):
         return self.getEntityByUniqueAttr(Edges.AddsNym, NYM, nym)
 
-    def addNym(self, txnId, nym, verkey, role, frm=None, reference=None, seqNo=None):
+    def addNym(self, txnId, nym, verkey, role, frm=None, reference=None,
+               seqNo=None):
         kwargs = {
             NYM: nym,
             VERKEY: verkey,
@@ -212,18 +215,12 @@ class IdentityGraph(OrientDbGraphStore):
             logger.debug("frm not available while adding nym")
         else:
             frmV = "(select from {} where {} = '{}')".format(Vertices.Nym,
-                                                            NYM,
-                                                            frm)
+                                                             NYM,
+                                                             frm)
             toV = "(select from {} where {} = '{}')".format(Vertices.Nym,
-                                                           NYM,
-                                                           nym)
-            # DEPR   Why are we defining this twice?
-            # kwargs = {
-            #     NYM: nym,
-            #     VERKEY: verkey,
-            #     ROLE: role,
-            #     TXN_ID: txnId
-            # }
+                                                            NYM,
+                                                            nym)
+
             self.createEdge(Edges.AddsNym, frmV, toV, **kwargs)
             if reference:
                 nymEdge = self.getEdgeByTxnId(Edges.AddsNym, txnId=reference)
@@ -318,15 +315,15 @@ class IdentityGraph(OrientDbGraphStore):
         # TODO: Can this query be made similar to get attribute?
         cmd = "select outV('{}')[{}='{}'], expand(inV('{}')) from {} where " \
               "name = '{}' and version = '{}'".format(Vertices.Nym, NYM, frm,
-                                                 Vertices.CredDef,
-                                                 Edges.AddsCredDef, name,
-                                                 version)
+                                                      Vertices.CredDef,
+                                                      Edges.AddsCredDef, name,
+                                                      version)
         credDefs = self.client.command(cmd)
         if credDefs:
             credDef = credDefs[0].oRecordData
             edgeData = self.client.command(
-                "select expand(inE('{}')) from {}"
-                    .format(Edges.AddsCredDef, credDefs[0]._rid))[0].oRecordData
+                "select expand(inE('{}')) from {}".format(
+                    Edges.AddsCredDef, credDefs[0]._rid))[0].oRecordData
             return {
                 NAME: name,
                 VERSION: version,
@@ -339,10 +336,8 @@ class IdentityGraph(OrientDbGraphStore):
 
     def getIssuerKeys(self, frm, ref):
         cmd = "select expand(outE('{}').inV('{}')) from {} where " \
-              "{} = '{}'".format(Edges.HasIssuerKey,
-                                                      Vertices.IssuerKey,
-                                                      Vertices.Nym, NYM,
-                                                      frm)
+              "{} = '{}'".format(Edges.HasIssuerKey, Vertices.IssuerKey,
+                                 Vertices.Nym, NYM, frm)
         haystack = self.client.command(cmd)
         needle = None
         if haystack:
@@ -352,8 +347,8 @@ class IdentityGraph(OrientDbGraphStore):
                     break
             if needle:
                 edgeData = self.client.command(
-                    "select expand(inE('{}')) from {}"
-                        .format(Edges.HasIssuerKey, needle._rid))[0].oRecordData
+                    "select expand(inE('{}')) from {}".format(
+                        Edges.HasIssuerKey, needle._rid))[0].oRecordData
                 return {
                     ORIGIN: frm,
                     REF: ref,
@@ -407,8 +402,8 @@ class IdentityGraph(OrientDbGraphStore):
 
     def getSponsorFor(self, nym):
         sponsor = self.client.command("select expand (out) from {} where "
-                                   "{} = '{}'".format(Edges.AddsNym,
-                                                      NYM, nym))
+                                      "{} = '{}'".format(Edges.AddsNym,
+                                                         NYM, nym))
         return None if not sponsor else sponsor[0].oRecordData.get(NYM)
 
     def countStewards(self):
@@ -429,12 +424,13 @@ class IdentityGraph(OrientDbGraphStore):
                     ROLE: nymV.oRecordData.get(ROLE)
                 }
         else:
+            edgeData = nymEdge.oRecordData
             result = {
-                TXN_ID: nymEdge.oRecordData.get(TXN_ID),
-                ROLE: nymEdge.oRecordData.get(ROLE) or USER
+                TXN_ID: edgeData.get(TXN_ID),
+                ROLE: edgeData.get(ROLE) or USER
             }
-            frm, to = self.store.getByRecordIds(nymEdge.oRecordData['out'].get(),
-                                          nymEdge.oRecordData['in'].get())
+            frm, to = self.store.getByRecordIds(edgeData['out'].get(),
+                                                edgeData['in'].get())
             result[f.IDENTIFIER.nm] = frm.oRecordData.get(NYM)
             result[TARGET_NYM] = to.oRecordData.get(NYM)
             return result
@@ -453,9 +449,9 @@ class IdentityGraph(OrientDbGraphStore):
         vertexProps = ", ".join("in.{} as __v_{}".format(name, name) for name in
                                 chain.from_iterable(
                                     Vertices._Properties.values()))
-        cmd = "select {}, {} from {} where {} = '{}' and {} = {}". \
-            format(edgeProps, vertexProps, edgeClass, f.IDENTIFIER.nm,
-                   identifier, f.REQ_ID.nm, reqId)
+        txnId = Node.genTxnId(identifier, reqId)
+        cmd = "select {}, {} from {} where {} = '{}'". \
+            format(edgeProps, vertexProps, edgeClass, f.TXN_ID.nm, txnId)
 
         result = self.client.command(cmd)
         return None if not result \
@@ -645,11 +641,13 @@ class IdentityGraph(OrientDbGraphStore):
                 else:
                     # TODO The right thing to do is check the time of the PRE-PREPARE.
                     # https://github.com/evernym/sovrin-priv/pull/20#discussion_r80387554
-                    if MIN_TXN_TIME < txnTimeStamp < time.time():
+                    now = time.time()
+                    if MIN_TXN_TIME < txnTimeStamp < now:
                         result[TXN_TIME] = txnTimeStamp
                     else:
                         logger.warn("TXN_TIME {} is not in the range ({}, {}), "
-                                    "reject it".format(txnTimeStamp, MIN_TXN_TIME, time.time()))
+                                    "reject it".format(txnTimeStamp,
+                                                       MIN_TXN_TIME, now))
 
         if TARGET_NYM in oRecordData:
             result[TARGET_NYM] = oRecordData[TARGET_NYM]
