@@ -67,7 +67,7 @@ setup(
     version=__version__,
     description='Sovrin Identity',
     long_description='Sovrin Identity',
-    url='https://github.com/evernym/sovrin-priv',
+    url='https://github.com/sovrin-foundation/sovrin',
     author=__author__,
     author_email='dev@evernym.us',
     license=__license__,

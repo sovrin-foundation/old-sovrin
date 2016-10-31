@@ -1,3 +1,4 @@
+from typing import Dict
 from typing import Tuple, Callable
 
 import asyncio
@@ -8,12 +9,14 @@ from plenum.common.looper import Looper
 from plenum.common.motor import Motor
 from plenum.common.port_dispenser import genHa
 from plenum.common.startable import Status
+from plenum.common.types import Identifier
 from plenum.common.util import randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.caching import Caching
 from sovrin.agent.walleted import Walleted
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.identity import Identity
 from sovrin.common.strict_types import strict_types, decClassMethods
 from sovrin.common.util import getConfig
 
