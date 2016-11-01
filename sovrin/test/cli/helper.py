@@ -1,7 +1,6 @@
 import json
 
 import os
-from plenum.test.cli.test_cli_client_port import initDirWithGenesisTxns
 from plenum.test.eventually import eventually
 from sovrin.client.wallet.link import Link
 
@@ -9,7 +8,7 @@ from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.test.helper import TestNode, TestClient
 
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \
-    assertAllNodesCreated, checkAllNodesStarted
+    assertAllNodesCreated, checkAllNodesStarted, initDirWithGenesisTxns
 from plenum.test.testable import Spyable
 from plenum.common.txn import TARGET_NYM, ROLE
 from sovrin.cli.cli import SovrinCli
@@ -37,7 +36,8 @@ def sendNym(cli, nym, role):
 
 
 def checkGetNym(cli, nym):
-    printeds = ["Getting nym {}".format(nym), "Transaction id for NYM {} is ".format(nym)]
+    printeds = ["Getting nym {}".format(nym), "Transaction id for NYM {} is "
+        .format(nym)]
     checks = [x in cli.lastCmdOutput for x in printeds]
     assert all(checks)
     # TODO: These give NameError, don't know why

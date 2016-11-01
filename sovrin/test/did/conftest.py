@@ -1,5 +1,6 @@
 import pytest
 
+from plenum.common.signer_simple import SimpleSigner
 from sovrin.client.wallet.wallet import Wallet
 
 pf = pytest.fixture(scope='module')
@@ -23,4 +24,4 @@ def abbrevVerkey(wallet, abbrevIdr):
 
 @pf
 def noKeyIdr(wallet):
-    return wallet.addIdentifier(vertype='none').identifier
+    return wallet.addIdentifier(signer=SimpleSigner())[0]

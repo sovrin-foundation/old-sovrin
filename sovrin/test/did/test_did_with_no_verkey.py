@@ -52,31 +52,51 @@ DID forms tests
 """
 
 import pytest
+from plenum.test.eventually import eventually
+from sovrin.common.identity import Identity
+from sovrin.test.did.conftest import pf
 from sovrin.test.helper import addUser
 
 ni = pytest.mark.skip("Not yet implemented")
 
-
-@ni
-def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
-    assert wallet.getverkey(noKeyIdr) is None
-
-
-def testAddDidWithoutAVerkey(addedSponsor, looper, sponsor, sponsorWallet):
+@pf
+def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet):
     """{ type: NYM, dest: <id1> }"""
-    addUser(looper, sponsor, sponsorWallet, 'userA')
+    return addUser(looper, sponsor, sponsorWallet, 'userA')
 
 
-@ni
-def testRetrieveEmptyVerkey():
+def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
+    # TODO, Question: Why would `getVerkey` return `None` for a CID, it should
+    # be the CID itself.
+    assert wallet.getVerkey(noKeyIdr) == noKeyIdr
+
+
+def testAddDidWithoutAVerkey(didAddedWithoutVerkey):
+    pass
+
+
+def testRetrieveEmptyVerkey(didAddedWithoutVerkey, looper, sponsor,
+                            sponsorWallet):
     """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
+    addedNym = didAddedWithoutVerkey.defaultId
+    identity = Identity(identifier=addedNym)
+    req = sponsorWallet.requestIdentity(identity, sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
+
+    def chk():
+        assert sponsorWallet.getIdentity(addedNym).verkey == addedNym
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
-@ni
-def testChangeEmptyVerkeyToNewVerkey():
+def testChangeEmptyVerkeyToNewVerkey(didAddedWithoutVerkey, looper, sponsor,
+                            sponsorWallet):
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    raise NotImplementedError
+    addedNym = didAddedWithoutVerkey.defaultId
+    idy = sponsorWallet.getIdentity(addedNym).verkey == addedNym
+    sponsorWallet.updateSponsoredIdentity(idy)
+    reqs = sponsorWallet.preparePending()
+    sponsor.submitReqs(*reqs)
 
 
 @ni

@@ -84,8 +84,7 @@ class Attribute(AttributeKey, GeneratesRequest):
     def ledgerRequest(self):
         if self.ledgerStore.isWriting and not self.seqNo:
             assert self.origin is not None
-            return Request(identifier=self.origin,
-                           operation=self._op())
+            return Request(identifier=self.origin, operation=self._op())
 
     def _opForGet(self):
         op = {

@@ -138,12 +138,12 @@ class Link:
 
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
-            optionalLinkItems += "Claim Requests: {}". \
+            optionalLinkItems += "Claim Request(s): {}". \
                 format(", ".join([cr.name for cr in self.claimProofRequests])) \
                                  + '\n'
 
         if self.availableClaims:
-            optionalLinkItems += "Available claims: {}".\
+            optionalLinkItems += "Available Claim(s): {}".\
                 format(", ".join([name
                                  for name, _, _ in self.availableClaims])) \
                                  + '\n'
@@ -177,4 +177,9 @@ class Link:
     def getRemoteEndpoint(self, required=False):
         if not self.remoteEndPoint and required:
             raise RemoteEndpointNotFound
+        # if isinstance(self.remoteEndPoint, tuple):
+        #     return self.remoteEndPoint
+        # else:
+        #     ip, port = self.remoteEndPoint.split(":")
+        #     return ip, int(port)
         return self.remoteEndPoint

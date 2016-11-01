@@ -1,14 +1,12 @@
 import asyncio
 import collections
 import json
-import uuid
 from abc import abstractmethod
 from datetime import datetime
 from typing import Dict, Any, Union
 
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+import time
 from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.utils import strToCryptoInteger
 from anoncreds.protocol.verifier import Verifier
@@ -16,12 +14,12 @@ from base58 import b58decode
 
 from plenum.common.log import getlogger
 from plenum.common.signer_did import DidSigner
-from plenum.common.signer_simple import SimpleSigner
-from plenum.common.signing import serializeForSig
+from plenum.common.signing import serializeMsg
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
     TARGET_NYM, ORIGIN, ATTRIBUTES, VERKEY
 from plenum.common.types import f
-from plenum.common.util import getTimeBasedId, getCryptonym
+from plenum.common.util import getTimeBasedId, getCryptonym, \
+    isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
@@ -30,10 +28,8 @@ from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
     AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS, \
     REF_REQUEST_ID
 from sovrin.anon_creds.constant import CRED_A, CRED_E, V_PRIME_PRIME
-from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
@@ -42,7 +38,7 @@ from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTR_NAMES, ENDPOINT
 from sovrin.common.util import verifySig, ensureReqCompleted, getEncodedAttrs, \
-    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback
+    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback, getNonceForProof
 
 from plenum.common.verifier import DidVerifier
 
@@ -100,7 +96,7 @@ class Walleted:
     def lockedMsgs(self):
         # Msgs for which signature verification is required
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING
+               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING, PONG
 
     def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
@@ -261,6 +257,7 @@ class Walleted:
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
+        logger.debug("Message received (from -> {}): {}".format(frm, body))
         for reqFieldName in (TYPE, f.REQ_ID.nm):
             reqFieldValue = body.get(reqFieldName)
             if not reqFieldValue:
@@ -332,10 +329,13 @@ class Walleted:
                          origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
-        body, _ = msg
-        isVerified = self.verifySignature(body)
-        if isVerified:
+        body, (frm, ha) = msg
+        identifier = body.get(IDENTIFIER)
+        li = self._getLinkByTarget(getCryptonym(identifier))
+        if li:
             self.notifyMsgListener("    Pong received.")
+        else:
+            self.notifyMsgListener("    Pong received from unknown endpoint")
 
     def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
                                          postAllFetched):
@@ -370,7 +370,7 @@ class Walleted:
                         claimNames = ", ".join(
                             [n for n, _, _ in newAvailableClaims])
                         self.notifyMsgListener(
-                            "    Available claims: {}\n".format(claimNames))
+                            "    Available Claim(s): {}\n".format(claimNames))
 
                 self._processNewAvailableClaimsData(
                     li, body[DATA][CLAIMS_LIST_FIELD], postAllFetched)
@@ -475,10 +475,10 @@ class Walleted:
         msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
         # TODO This assumes the current key is the cryptonym. This is a BAD
         # ASSUMPTION!!! Sovrin needs to provide the current key.
-        ser = serializeForSig(msgWithoutSig)
+        ser = serializeMsg(msgWithoutSig)
         signature = b58decode(signature.encode())
         typ = msg.get(TYPE)
-        # TODO: Maybe keeping ACCEPT_INVITE is a better option than keeping
+        # TODO: Maybe keeping ACCEPT_INVITE open is a better option than keeping
         # an if condition here?
         if typ == ACCEPT_INVITE:
             verkey = msg.get(VERKEY)
@@ -504,7 +504,7 @@ class Walleted:
 
     def _syncLinkPostAvailableClaimsRcvd(self, li, newAvailableClaims):
         if newAvailableClaims:
-            self.notifyMsgListener("    Available claims: {}".
+            self.notifyMsgListener("    Available Claim(s): {}".
                 format(",".join(
                 [n for n, _, _ in newAvailableClaims])))
         self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
@@ -578,7 +578,7 @@ class Walleted:
             encodedAttrs = body['encodedAttrs']
             for iid, attrs in encodedAttrs.items():
                 encodedAttrs[iid] = stringDictToCharmDict(attrs)
-            revealedAttrs = body['verifiableAttrs']
+            revealedAttrs = body['revealedAttrs']
             nonce = int(body[NONCE], 16)
             claimDefKeys = {iid: tuple(_) for iid, _ in
                             body['claimDefKeys'].items()}
@@ -606,20 +606,22 @@ class Walleted:
 
                 claimName = body[NAME]
 
+                # REMOVE-LOG: Remove the next log
+                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
+                             "{} {} {} {} {}".
+                             format(issuerPks, proof, nonce, encodedAttrs,
+                                    revealedAttrs))
+
                 result = Verifier.verifyProof(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
+
                 if result:
                     logger.info("proof {} verified".format(claimName))
                 else:
                     logger.warning("proof {} failed verification".
                                    format(claimName))
 
-                # REMOVE-LOG: Remove the next log
-                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
-                             "{} {} {} {} {}".
-                             format(issuerPks, proof, nonce, encodedAttrs,
-                                    revealedAttrs))
                 status = 'verified' if result else 'failed verification'
                 resp = {
                     TYPE: CLAIM_PROOF_STATUS,
@@ -643,7 +645,8 @@ class Walleted:
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:
             # TODO: This logic assumes that the req id is time based
-            timeTakenInMillis = (getTimeBasedId() - reqId)/1000
+            curTimeBasedId = getTimeBasedId()
+            timeTakenInMillis = convertTimeBasedReqIdToMillis(curTimeBasedId - reqId)
 
             if timeTakenInMillis >= 1000:
                 responseTime = ' ({} sec)'.format(round(timeTakenInMillis/1000, 2))
@@ -836,11 +839,10 @@ class Walleted:
             reqId = self._updateLinkWithLatestInfo(link, reply)
             if reqId:
                 self.loop.call_later(.2,
-                                 self.executeWhenResponseRcvd,
-                                 self.loop,
-                                 reqId,
-                                 PONG,
-                                 additionalCallback, reply, err)
+                                     self.executeWhenResponseRcvd,
+                                     time.time(), 8000,
+                                     self.loop, reqId, PONG, True,
+                                     additionalCallback, reply, err)
             else:
                 additionalCallback(reply, err)
         return _
@@ -861,8 +863,7 @@ class Walleted:
         #     return reqId
 
     def _pingToEndpoint(self, name, endpoint):
-        self.notifyMsgListener("\nPinging target endpoint: {} "
-                               "  [Not fully implemented]".
+        self.notifyMsgListener("\nPinging target endpoint: {}".
                                format(endpoint))
         reqId = self.sendPing(linkName=name)
         return reqId
@@ -887,18 +888,36 @@ class Walleted:
                                  self.client,
                                  self._handleSyncResp(link, doneCallback))
 
-    def executeWhenResponseRcvd(self, loop, reqId, respType, clbk, *args):
-        found = False
-        if self.rcvdMsgStore.get(reqId):
-            for msg in self.rcvdMsgStore.get(reqId):
-                body, frm = msg
-                if body.get(TYPE) == respType:
-                    found = True
-                    break
+    def executeWhenResponseRcvd(self, startTime, maxCheckForMillis,
+                                loop, reqId, respType,
+                                checkIfLinkExists, clbk, *args):
 
-        if found:
-            clbk(*args)
+        if isMaxCheckTimeExpired(startTime, maxCheckForMillis):
+           clbk(None, "No response received within specified time ({} mills). "
+                      "Retry the command and see if that works.\n".
+                format(maxCheckForMillis))
         else:
-            loop.call_later(.2, self.executeWhenResponseRcvd, loop,
-                            reqId, respType, clbk, *args)
+            found = False
+            rcvdResponses = self.rcvdMsgStore.get(reqId)
+            if rcvdResponses:
+                for msg in rcvdResponses:
+                    body, frm = msg
+                    if body.get(TYPE) == respType:
+                        if checkIfLinkExists:
+                            identifier = body.get(IDENTIFIER)
+                            li = self._getLinkByTarget(getCryptonym(identifier))
+                            linkCheckOk = li is not None
+                        else:
+                            linkCheckOk = True
+
+                        if linkCheckOk:
+                            found = True
+                            break
+
+            if found:
+                clbk(*args)
+            else:
+                loop.call_later(.2, self.executeWhenResponseRcvd,
+                                startTime, maxCheckForMillis, loop,
+                                reqId, respType, checkIfLinkExists, clbk, *args)
 

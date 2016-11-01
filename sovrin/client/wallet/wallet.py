@@ -12,7 +12,7 @@ from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, TYPE, NYM, ROLE, ORIGIN
+    IDENTIFIER, NAME, VERSION, TYPE, NYM, ROLE, ORIGIN, VERKEY
 from plenum.common.types import Identifier, f
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
@@ -346,6 +346,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
                 idy.role = data.get(ROLE)
                 idy.sponsor = data.get(f.IDENTIFIER.nm)
                 idy.last_synced = datetime.datetime.utcnow()
+                idy.verkey = data.get(VERKEY) or nym
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
         else:
@@ -532,3 +533,8 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
     def isIssuerKeyComplete(self, origin, reference):
         ipk = self.getIssuerPublicKey(key=(origin, reference))
         return ipk and ipk.seqNo
+
+    def getIdentity(self, idr):
+        # TODO, Question: Should it consider self owned identities too or
+        # should it just have identities that are retrieved from the DL
+        return self.knownIds.get(idr)

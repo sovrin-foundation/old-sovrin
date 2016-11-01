@@ -27,4 +27,6 @@ class Sponsoring:
             self.pendRequest(req, idy.identifier)
         return len(self._pending)
 
+    def updateSponsoredIdentity(self):
+        raise NotImplementedError
 
