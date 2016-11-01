@@ -346,7 +346,7 @@ class Wallet(PWallet, Sponsoring, ProverWallet, IssuerWallet):
                 idy.role = data.get(ROLE)
                 idy.sponsor = data.get(f.IDENTIFIER.nm)
                 idy.last_synced = datetime.datetime.utcnow()
-                idy.verkey = data.get(VERKEY) or nym
+                idy.verkey = data.get(VERKEY)
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
         else:

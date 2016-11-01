@@ -225,6 +225,7 @@ def nymsAddedInQuickSuccession(nodeSet, addedSponsor, looper,
     assert(count == len(nodeSet))
 
 
+@pytest.mark.skipif(True, reason="NYM transaction now used to update too")
 def testAddNymsInQuickSuccession(nymsAddedInQuickSuccession):
     pass
 

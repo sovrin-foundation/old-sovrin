@@ -7,6 +7,7 @@ from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
+from plenum.common.signer_did import DidSigner
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
@@ -407,10 +408,12 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
     looper.run(eventually(check, timeout=4))
 
 
-def addUser(looper, creatorClient, creatorWallet, name):
+def addUser(looper, creatorClient, creatorWallet, name, useDid=True,
+            addVerkey=True):
     wallet = Wallet(name)
-    idr, _ = wallet.addIdentifier()
-    verkey = wallet.getVerkey(idr)
+    signer = DidSigner() if useDid else SimpleSigner()
+    idr, _ = wallet.addIdentifier(signer=signer)
+    verkey = wallet.getVerkey(idr) if addVerkey else None
     createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
     return wallet
 

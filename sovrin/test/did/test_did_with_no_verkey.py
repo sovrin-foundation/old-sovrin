@@ -59,16 +59,37 @@ from sovrin.test.helper import addUser
 
 ni = pytest.mark.skip("Not yet implemented")
 
+
 @pf
 def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet):
     """{ type: NYM, dest: <id1> }"""
-    return addUser(looper, sponsor, sponsorWallet, 'userA')
+    return addUser(looper, sponsor, sponsorWallet, 'userA', addVerkey=False)
+
+
+@pf
+def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
+                            sponsorWallet):
+    """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
+    wallet = didAddedWithoutVerkey
+    addedId = wallet.defaultId
+    idy = Identity(identifier=addedId,
+                   verkey=wallet.getVerkey(addedId))
+    sponsorWallet.updateSponsoredIdentity(idy)
+    # TODO: What if the request fails, there must be some rollback mechanism
+    assert sponsorWallet.getSponsoredIdentity(addedId).seqNo is None
+    reqs = sponsorWallet.preparePending()
+    sponsor.submitReqs(*reqs)
+
+    def chk():
+        assert sponsorWallet.getSponsoredIdentity(addedId).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+    return wallet
 
 
 def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
-    # TODO, Question: Why would `getVerkey` return `None` for a CID, it should
-    # be the CID itself.
-    assert wallet.getVerkey(noKeyIdr) == noKeyIdr
+    # TODO, Question: Why would `getVerkey` return `None` for a DID?.
+    assert wallet.getVerkey(noKeyIdr)
 
 
 def testAddDidWithoutAVerkey(didAddedWithoutVerkey):
@@ -78,31 +99,36 @@ def testAddDidWithoutAVerkey(didAddedWithoutVerkey):
 def testRetrieveEmptyVerkey(didAddedWithoutVerkey, looper, sponsor,
                             sponsorWallet):
     """{ type: GET_NYM, dest: <id1> }"""
-    addedNym = didAddedWithoutVerkey.defaultId
-    identity = Identity(identifier=addedNym)
+    addedId = didAddedWithoutVerkey.defaultId
+    identity = Identity(identifier=addedId)
     req = sponsorWallet.requestIdentity(identity, sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
 
     def chk():
-        assert sponsorWallet.getIdentity(addedNym).verkey == addedNym
+        assert sponsorWallet.getIdentity(addedId).verkey is None
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
-def testChangeEmptyVerkeyToNewVerkey(didAddedWithoutVerkey, looper, sponsor,
+def testChangeEmptyVerkeyToNewVerkey(didUpdatedWithVerkey):
+    pass
+
+
+def testRetrieveChangedVerkey(didUpdatedWithVerkey, looper, sponsor,
                             sponsorWallet):
-    """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    addedNym = didAddedWithoutVerkey.defaultId
-    idy = sponsorWallet.getIdentity(addedNym).verkey == addedNym
-    sponsorWallet.updateSponsoredIdentity(idy)
-    reqs = sponsorWallet.preparePending()
-    sponsor.submitReqs(*reqs)
-
-
-@ni
-def testRetrieveChangedVerkey():
     """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
+    wallet = didUpdatedWithVerkey
+    addedId = wallet.defaultId
+    identity = Identity(identifier=addedId)
+    req = sponsorWallet.requestIdentity(identity,
+                                        sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
+
+    def chk():
+        assert sponsorWallet.getIdentity(addedId).verkey == wallet.getVerkey(
+            wallet.defaultId)
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
 @ni

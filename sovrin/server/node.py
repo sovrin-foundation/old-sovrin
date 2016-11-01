@@ -149,7 +149,7 @@ class Node(PlenumNode):
                                                'JSON'.format(msg[RAW]))
 
             if not (not msg.get(TARGET_NYM) or
-                        self.graphStore.hasNym(msg[TARGET_NYM])):
+                    self.graphStore.hasNym(msg[TARGET_NYM])):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} should be added before adding '
                                            'attribute for it'.
@@ -157,14 +157,20 @@ class Node(PlenumNode):
 
         if msg[TXN_TYPE] == NYM:
             role = msg.get(ROLE) or USER
+            nym = msg.get(TARGET_NYM)
+            if not nym:
+                raise InvalidClientRequest(identifier, reqId,
+                                           "{} needs to be present".
+                                           format(TARGET_NYM))
             if not isValidRole(role):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} not a valid role".
                                            format(role))
-            if self.graphStore.hasNym(msg[TARGET_NYM]):
+            # Only
+            if not self.canNymRequestBeProcessed(identifier, msg):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} is already present".
-                                           format(msg[TARGET_NYM]))
+                                           format(nym))
 
     def checkRequestAuthorized(self, request: Request):
         op = request.operation
@@ -204,6 +210,13 @@ class Node(PlenumNode):
             pass
         else:
             return super().checkRequestAuthorized(request)
+
+    def canNymRequestBeProcessed(self, identifier, msg):
+        nym = msg.get(TARGET_NYM)
+        if self.graphStore.hasNym(nym) and \
+                self.graphStore.getSponsorFor(nym) != identifier:
+            return False
+        return True
 
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStore)
@@ -348,9 +361,7 @@ class Node(PlenumNode):
     def storeTxnInLedger(self, result):
         if result[TXN_TYPE] == ATTRIB:
             result = self.hashAttribTxn(result)
-            merkleInfo = self.addToLedger(result)
-        else:
-            merkleInfo = self.addToLedger(result)
+        merkleInfo = self.addToLedger(result)
         result.update(merkleInfo)
         return result
 
@@ -422,8 +433,8 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        if req.operation[TXN_TYPE] == NYM and \
-                self.graphStore.hasNym(req.operation[TARGET_NYM]):
+        if req.operation[TXN_TYPE] == NYM and not \
+                self.canNymRequestBeProcessed(req.identifier, req.operation):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
             if req.key in self.requestSender:
                 self.transmitToClient(RequestNack(req.reqId, reason),

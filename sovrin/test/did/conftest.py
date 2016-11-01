@@ -24,4 +24,4 @@ def abbrevVerkey(wallet, abbrevIdr):
 
 @pf
 def noKeyIdr(wallet):
-    return wallet.addIdentifier(signer=SimpleSigner())[0]
+    return wallet.addIdentifier()[0]

@@ -33,7 +33,7 @@ class Vertices:
     IssuerKey = "IssuerKey"
 
     _Properties = {
-        Nym: (NYM, TXN_ID, ROLE, F.seqNo.name),
+        Nym: (NYM, VERKEY, TXN_ID, ROLE, F.seqNo.name),
         Attribute: (RAW, ENC, HASH),
         CredDef: (TYPE, ATTR_NAMES),
         IssuerKey: (REF, DATA)
@@ -288,6 +288,13 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.HasIssuerKey, frm, vertex._rid, **kwargs)
 
+    def updateNym(self, txnId, nym, verkey, seqNo):
+        self.updateEntityWithUniqueId(Vertices.Nym, NYM, nym, **{
+            TXN_ID: txnId,
+            VERKEY: verkey,
+            F.seqNo.name: seqNo
+        })
+
     def getRawAttrs(self, frm, *attrNames):
         cmd = 'select expand(outE("{}").inV("{}")) from {} where {}="{}"'.\
             format(Edges.HasAttribute, Vertices.Attribute, Vertices.Nym,
@@ -419,7 +426,8 @@ class IdentityGraph(OrientDbGraphStore):
                 return {
                     TXN_ID: nymV.oRecordData.get(TXN_ID),
                     TARGET_NYM: nym,
-                    ROLE: nymV.oRecordData.get(ROLE)
+                    ROLE: nymV.oRecordData.get(ROLE),
+                    VERKEY: nymV.oRecordData.get(VERKEY)
                 }
         else:
             edgeData = nymEdge.oRecordData
@@ -431,6 +439,7 @@ class IdentityGraph(OrientDbGraphStore):
                                                 edgeData['in'].get())
             result[f.IDENTIFIER.nm] = frm.oRecordData.get(NYM)
             result[TARGET_NYM] = to.oRecordData.get(NYM)
+            result[VERKEY] = to.oRecordData.get(VERKEY)
             return result
 
     def getAddAttributeTxnIds(self, nym):
@@ -537,10 +546,22 @@ class IdentityGraph(OrientDbGraphStore):
         verkey = txn.get(VERKEY) or ''
         try:
             txnId = txn[TXN_ID]
-            self.addNym(txnId, nym, verkey, role,
-                        frm=origin, reference=txn.get(REF),
-                        seqNo=txn.get(F.seqNo.name))
-            self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
+            seqNo = txn.get(F.seqNo.name)
+            # Since NYM vertex has a unique index on the identifier,
+            # (CID or DID) a unique constraint violattion would occur if the
+            # nym exists. Instead of catching an exception, a call to hasNym or
+            #  getNym could be done but since NYM update txns would be less
+            # common then NYM adding transactions so avoidinhg the cost of
+            # extra db query
+            try:
+                self.addNym(txnId, nym, verkey, role,
+                            frm=origin, reference=txn.get(REF),
+                            seqNo=seqNo)
+            except pyorient.PyOrientORecordDuplicatedException:
+                self.updateNym(txnId, nym, verkey, seqNo)
+            else:
+                # Only update edge in case of new NYM transaction
+                self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)
         except pyorient.PyOrientORecordDuplicatedException:
             logger.debug("The nym {} was already added to graph".
                          format(nym))
