@@ -52,9 +52,11 @@ DID forms tests
 """
 
 import pytest
+from plenum.common.verifier import DidVerifier
 from plenum.test.eventually import eventually
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
+from sovrin.test.did.helper import signMsg, verifyMsg
 from sovrin.test.helper import addUser
 
 ni = pytest.mark.skip("Not yet implemented")
@@ -87,6 +89,23 @@ def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
     return wallet
 
 
+@pf
+def verkeyFetched(didUpdatedWithVerkey, looper, sponsor, sponsorWallet):
+    """{ type: GET_NYM, dest: <id1> }"""
+    wallet = didUpdatedWithVerkey
+    addedId = wallet.defaultId
+    identity = Identity(identifier=addedId)
+    req = sponsorWallet.requestIdentity(identity,
+                                        sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
+
+    def chk():
+        assert sponsorWallet.getIdentity(addedId).verkey == wallet.getVerkey(
+            wallet.defaultId)
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+
+
 def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
     # TODO, Question: Why would `getVerkey` return `None` for a DID?.
     assert wallet.getVerkey(noKeyIdr)
@@ -114,23 +133,14 @@ def testChangeEmptyVerkeyToNewVerkey(didUpdatedWithVerkey):
     pass
 
 
-def testRetrieveChangedVerkey(didUpdatedWithVerkey, looper, sponsor,
-                            sponsorWallet):
-    """{ type: GET_NYM, dest: <id1> }"""
+def testRetrieveChangedVerkey(verkeyFetched):
+    pass
+
+
+def testVerifySigWithChangedVerkey(didUpdatedWithVerkey, verkeyFetched,
+                                   sponsorWallet):
     wallet = didUpdatedWithVerkey
     addedId = wallet.defaultId
-    identity = Identity(identifier=addedId)
-    req = sponsorWallet.requestIdentity(identity,
-                                        sender=sponsorWallet.defaultId)
-    sponsor.submitReqs(req)
-
-    def chk():
-        assert sponsorWallet.getIdentity(addedId).verkey == wallet.getVerkey(
-            wallet.defaultId)
-
-    looper.run(eventually(chk, retryWait=1, timeout=5))
-
-
-@ni
-def testVerifySigWithChangedVerkey():
-    raise NotImplementedError
+    sig = signMsg(wallet, addedId)
+    verkey = sponsorWallet.getIdentity(addedId).verkey
+    assert verifyMsg(DidVerifier(verkey, addedId), sig)
