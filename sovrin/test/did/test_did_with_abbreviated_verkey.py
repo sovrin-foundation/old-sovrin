@@ -11,10 +11,52 @@ Abbreviated verkey tests
         { type: GET_NYM, dest: <id3> }
     Verify a signature from this identifier with the new verkey
 """
+from plenum.common.signer_did import DidSigner
+from plenum.test.eventually import eventually
+from sovrin.common.identity import Identity
+from sovrin.test.did.conftest import pf
+from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
+    updateWalletIdrWithFullKeySigner, updateSovrinIdrWithFullKey, \
+    fetchFullVerkeyFromSovrin
+from sovrin.test.helper import createNym
 
-import pytest
 
-ni = pytest.mark.skip("Not yet implemented")
+@pf
+def didAddedWithAbbrvVerkey(addedSponsor, looper, sponsor, sponsorWallet,
+                          wallet, abbrevIdr):
+    """{ type: NYM, dest: <id1> }"""
+    createNym(looper, abbrevIdr, sponsor, sponsorWallet,
+              verkey=wallet.getVerkey(abbrevIdr))
+    return wallet
+
+
+@pf
+def newAbbrvKey(wallet, abbrevIdr):
+    newSigner = DidSigner(identifier=abbrevIdr)
+    wallet.updateSigner(abbrevIdr, newSigner)
+    assert newSigner.verkey == wallet.getVerkey(abbrevIdr)
+    return newSigner.verkey
+
+
+@pf
+def newFullKey(wallet, abbrevIdr):
+    return updateWalletIdrWithFullKeySigner(wallet, abbrevIdr)
+
+
+@pf
+def didUpdatedWithFullVerkey(didAddedWithAbbrvVerkey, looper, sponsor,
+                            sponsorWallet, abbrevIdr, newFullKey, wallet):
+    """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
+    updateSovrinIdrWithFullKey(looper, sponsorWallet, sponsor, wallet,
+                               abbrevIdr, newFullKey)
+
+
+@pf
+def newVerkeyFetched(didAddedWithAbbrvVerkey, looper, sponsor, sponsorWallet,
+                     abbrevIdr, wallet):
+    """{ type: GET_NYM, dest: <id1> }"""
+    fetchFullVerkeyFromSovrin(looper, sponsorWallet, sponsor, wallet,
+                              abbrevIdr)
 
 
 def testNewIdentifierInWalletIsDid(abbrevIdr):
@@ -26,9 +68,35 @@ def testDefaultVerkeyIsAbbreviated(abbrevVerkey):
     assert abbrevVerkey[0] == '~'
 
 
-@ni
-def testRetrieveEmptyVerkey():
+def testAddDidWithVerkey(didAddedWithAbbrvVerkey):
+    pass
+
+
+def testRetrieveAbbrvVerkey(didAddedWithAbbrvVerkey, looper, sponsor,
+                            sponsorWallet, wallet, abbrevIdr):
     """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
+    identity = Identity(identifier=abbrevIdr)
+    req = sponsorWallet.requestIdentity(identity,
+                                        sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
+
+    def chk():
+        retrievedVerkey = sponsorWallet.getIdentity(abbrevIdr).verkey
+        assert retrievedVerkey == wallet.getVerkey(abbrevIdr)
+        assert len(retrievedVerkey) == 23
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+    chkVerifyForRetrievedIdentity(wallet, sponsorWallet, abbrevIdr)
 
 
+def testChangeVerkeyToNewVerkey(didUpdatedWithFullVerkey):
+    pass
+
+
+def testRetrieveChangedVerkey(didUpdatedWithFullVerkey, newVerkeyFetched):
+    pass
+
+
+def testVerifySigWithChangedVerkey(didUpdatedWithFullVerkey, newVerkeyFetched,
+                                   sponsorWallet, abbrevIdr, wallet):
+    chkVerifyForRetrievedIdentity(wallet, sponsorWallet, abbrevIdr)

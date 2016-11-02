@@ -30,7 +30,8 @@ DID forms tests
 from plenum.test.eventually import eventually
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
-from sovrin.test.did.helper import chkVerifyForRetrievedIdentity
+from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
+    updateSovrinIdrWithFullKey
 from sovrin.test.helper import addUser, createNym
 
 
@@ -45,19 +46,8 @@ def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet,
 def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
                             sponsorWallet, noKeyIdr, wallet):
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    idy = Identity(identifier=noKeyIdr,
-                   verkey=wallet.getVerkey(noKeyIdr))
-    sponsorWallet.updateSponsoredIdentity(idy)
-    # TODO: What if the request fails, there must be some rollback mechanism
-    assert sponsorWallet.getSponsoredIdentity(noKeyIdr).seqNo is None
-    reqs = sponsorWallet.preparePending()
-    sponsor.submitReqs(*reqs)
-
-    def chk():
-        assert sponsorWallet.getSponsoredIdentity(noKeyIdr).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=5))
-    return wallet
+    updateSovrinIdrWithFullKey(looper, sponsorWallet, sponsor, wallet,
+                               noKeyIdr, wallet.getVerkey(noKeyIdr))
 
 
 @pf
@@ -102,7 +92,7 @@ def testChangeEmptyVerkeyToNewVerkey(didUpdatedWithVerkey):
     pass
 
 
-def testRetrieveChangedVerkey(verkeyFetched):
+def testRetrieveChangedVerkey(didUpdatedWithVerkey, verkeyFetched):
     pass
 
 

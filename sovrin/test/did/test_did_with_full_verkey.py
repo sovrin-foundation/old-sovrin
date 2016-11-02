@@ -15,7 +15,9 @@ from plenum.common.signer_did import DidSigner
 from plenum.test.eventually import eventually
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
-from sovrin.test.did.helper import chkVerifyForRetrievedIdentity
+from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
+    updateWalletIdrWithFullKeySigner, updateSovrinIdrWithFullKey, \
+    fetchFullVerkeyFromSovrin
 from sovrin.test.helper import createNym
 
 
@@ -30,45 +32,23 @@ def didAddedWithFullVerkey(addedSponsor, looper, sponsor, sponsorWallet,
 
 @pf
 def newFullKey(wallet, fullKeyIdr):
-    newSigner = DidSigner(identifier=fullKeyIdr)
-    wallet.updateSigner(fullKeyIdr, newSigner)
-    assert newSigner.verkey == wallet.getVerkey(fullKeyIdr)
-    return newSigner.verkey
+    return updateWalletIdrWithFullKeySigner(wallet, fullKeyIdr)
 
 
 @pf
 def didUpdatedWithFullVerkey(didAddedWithFullVerkey, looper, sponsor,
                             sponsorWallet, fullKeyIdr, newFullKey, wallet):
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    idy = Identity(identifier=fullKeyIdr,
-                   verkey=newFullKey)
-    sponsorWallet.updateSponsoredIdentity(idy)
-    # TODO: What if the request fails, there must be some rollback mechanism
-    assert sponsorWallet.getSponsoredIdentity(fullKeyIdr).seqNo is None
-    reqs = sponsorWallet.preparePending()
-    sponsor.submitReqs(*reqs)
-
-    def chk():
-        assert sponsorWallet.getSponsoredIdentity(fullKeyIdr).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=5))
-    return wallet
+    updateSovrinIdrWithFullKey(looper, sponsorWallet, sponsor, wallet,
+                               fullKeyIdr, newFullKey)
 
 
 @pf
 def newVerkeyFetched(didAddedWithFullVerkey, looper, sponsor, sponsorWallet,
                      fullKeyIdr, wallet):
     """{ type: GET_NYM, dest: <id1> }"""
-    identity = Identity(identifier=fullKeyIdr)
-    req = sponsorWallet.requestIdentity(identity,
-                                        sender=sponsorWallet.defaultId)
-    sponsor.submitReqs(req)
-
-    def chk():
-        assert sponsorWallet.getIdentity(fullKeyIdr).verkey == wallet.getVerkey(
-            fullKeyIdr)
-
-    looper.run(eventually(chk, retryWait=1, timeout=5))
+    fetchFullVerkeyFromSovrin(looper, sponsorWallet, sponsor, wallet,
+                              fullKeyIdr)
 
 
 def testAddDidWithVerkey(didAddedWithFullVerkey):
@@ -84,8 +64,9 @@ def testRetrieveFullVerkey(didAddedWithFullVerkey, looper, sponsor,
     sponsor.submitReqs(req)
 
     def chk():
-        assert sponsorWallet.getIdentity(fullKeyIdr).verkey == wallet.getVerkey(
-            fullKeyIdr)
+        retrievedVerkey = sponsorWallet.getIdentity(fullKeyIdr).verkey
+        assert retrievedVerkey == wallet.getVerkey(fullKeyIdr)
+        assert len(retrievedVerkey) == 44
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
     chkVerifyForRetrievedIdentity(wallet, sponsorWallet, fullKeyIdr)
@@ -95,7 +76,7 @@ def testChangeVerkeyToNewVerkey(didUpdatedWithFullVerkey):
     pass
 
 
-def testRetrieveChangedVerkey(newVerkeyFetched):
+def testRetrieveChangedVerkey(didUpdatedWithFullVerkey, newVerkeyFetched):
     pass
 
 
