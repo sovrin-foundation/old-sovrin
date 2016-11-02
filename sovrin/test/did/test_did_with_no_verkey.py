@@ -10,30 +10,6 @@ Empty verkey tests
         { type: GET_NYM, dest: <id1> }
     Verify a signature from this identifier with the new verkey
 
-Full verkey tests
-    Add a nym (16 byte, base58) with a full verkey (32 byte, base58) (Form 1)
-        { type: NYM, dest: <id2>, verkey: <32byte key> }
-    Retrieve the verkey.
-        { type: GET_NYM, dest: <id2> }
-    Verify a signature from this identifier
-    Change a verkey for a nym with a full verkey.
-        { type: NYM, dest: <id2>, verkey: <32byte ED25519 key> }
-    Retrieve new verkey
-        { type: GET_NYM, dest: <id2> }
-    Verify a signature from this identifier with the new verkey
-
-Abbreviated verkey tests
-    Add a nym (16 byte, base58) with an abbreviated verkey (‘~’ with 16 bytes, base58) (Form 3)
-        { type: NYM, dest: <id3>, verkey: ~<16byte abbreviated key> }
-    Retrieve the verkey.
-        { type: GET_NYM, dest: <id3> }
-    Verify a signature from this identifier
-    Change a verkey for a nym with a full verkey.
-        { type: NYM, dest: <id3>, verkey: <32byte ED25519 key> }
-    Retrieve new verkey
-        { type: GET_NYM, dest: <id3> }
-    Verify a signature from this identifier with the new verkey
-
 DID Objects tests
     Store a DID object
     Retrieve a DID object
@@ -57,51 +33,52 @@ from plenum.test.eventually import eventually
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
 from sovrin.test.did.helper import signMsg, verifyMsg
-from sovrin.test.helper import addUser
+from sovrin.test.helper import addUser, createNym
 
 ni = pytest.mark.skip("Not yet implemented")
 
 
 @pf
-def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet):
+def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet,
+                          wallet, noKeyIdr):
     """{ type: NYM, dest: <id1> }"""
-    return addUser(looper, sponsor, sponsorWallet, 'userA', addVerkey=False)
-
+    # return addUser(looper, sponsor, sponsorWallet, 'userA', addVerkey=False)
+    createNym(looper, noKeyIdr, sponsor, sponsorWallet)
+    return wallet
 
 @pf
 def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
-                            sponsorWallet):
+                            sponsorWallet, noKeyIdr):
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
     wallet = didAddedWithoutVerkey
-    addedId = wallet.defaultId
-    idy = Identity(identifier=addedId,
-                   verkey=wallet.getVerkey(addedId))
+    idy = Identity(identifier=noKeyIdr,
+                   verkey=wallet.getVerkey(noKeyIdr))
     sponsorWallet.updateSponsoredIdentity(idy)
     # TODO: What if the request fails, there must be some rollback mechanism
-    assert sponsorWallet.getSponsoredIdentity(addedId).seqNo is None
+    assert sponsorWallet.getSponsoredIdentity(noKeyIdr).seqNo is None
     reqs = sponsorWallet.preparePending()
     sponsor.submitReqs(*reqs)
 
     def chk():
-        assert sponsorWallet.getSponsoredIdentity(addedId).seqNo is not None
+        assert sponsorWallet.getSponsoredIdentity(noKeyIdr).seqNo is not None
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
     return wallet
 
 
 @pf
-def verkeyFetched(didUpdatedWithVerkey, looper, sponsor, sponsorWallet):
+def verkeyFetched(didUpdatedWithVerkey, looper, sponsor, sponsorWallet,
+                  noKeyIdr):
     """{ type: GET_NYM, dest: <id1> }"""
     wallet = didUpdatedWithVerkey
-    addedId = wallet.defaultId
-    identity = Identity(identifier=addedId)
+    identity = Identity(identifier=noKeyIdr)
     req = sponsorWallet.requestIdentity(identity,
                                         sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
 
     def chk():
-        assert sponsorWallet.getIdentity(addedId).verkey == wallet.getVerkey(
-            wallet.defaultId)
+        assert sponsorWallet.getIdentity(noKeyIdr).verkey == wallet.getVerkey(
+            noKeyIdr)
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
@@ -116,15 +93,14 @@ def testAddDidWithoutAVerkey(didAddedWithoutVerkey):
 
 
 def testRetrieveEmptyVerkey(didAddedWithoutVerkey, looper, sponsor,
-                            sponsorWallet):
+                            sponsorWallet, noKeyIdr):
     """{ type: GET_NYM, dest: <id1> }"""
-    addedId = didAddedWithoutVerkey.defaultId
-    identity = Identity(identifier=addedId)
+    identity = Identity(identifier=noKeyIdr)
     req = sponsorWallet.requestIdentity(identity, sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
 
     def chk():
-        assert sponsorWallet.getIdentity(addedId).verkey is None
+        assert sponsorWallet.getIdentity(noKeyIdr).verkey is None
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
@@ -138,9 +114,8 @@ def testRetrieveChangedVerkey(verkeyFetched):
 
 
 def testVerifySigWithChangedVerkey(didUpdatedWithVerkey, verkeyFetched,
-                                   sponsorWallet):
+                                   sponsorWallet, noKeyIdr):
     wallet = didUpdatedWithVerkey
-    addedId = wallet.defaultId
-    sig = signMsg(wallet, addedId)
-    verkey = sponsorWallet.getIdentity(addedId).verkey
-    assert verifyMsg(DidVerifier(verkey, addedId), sig)
+    sig = signMsg(wallet, noKeyIdr)
+    verkey = sponsorWallet.getIdentity(noKeyIdr).verkey
+    assert verifyMsg(DidVerifier(verkey, noKeyIdr), sig)
