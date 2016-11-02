@@ -27,30 +27,24 @@ DID forms tests
     Any other forms are rejected.
 """
 
-import pytest
-from plenum.common.verifier import DidVerifier
 from plenum.test.eventually import eventually
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
-from sovrin.test.did.helper import signMsg, verifyMsg
+from sovrin.test.did.helper import chkVerifyForRetrievedIdentity
 from sovrin.test.helper import addUser, createNym
-
-ni = pytest.mark.skip("Not yet implemented")
 
 
 @pf
 def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet,
                           wallet, noKeyIdr):
     """{ type: NYM, dest: <id1> }"""
-    # return addUser(looper, sponsor, sponsorWallet, 'userA', addVerkey=False)
     createNym(looper, noKeyIdr, sponsor, sponsorWallet)
     return wallet
 
 @pf
 def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
-                            sponsorWallet, noKeyIdr):
+                            sponsorWallet, noKeyIdr, wallet):
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    wallet = didAddedWithoutVerkey
     idy = Identity(identifier=noKeyIdr,
                    verkey=wallet.getVerkey(noKeyIdr))
     sponsorWallet.updateSponsoredIdentity(idy)
@@ -68,9 +62,8 @@ def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
 
 @pf
 def verkeyFetched(didUpdatedWithVerkey, looper, sponsor, sponsorWallet,
-                  noKeyIdr):
+                  noKeyIdr, wallet):
     """{ type: GET_NYM, dest: <id1> }"""
-    wallet = didUpdatedWithVerkey
     identity = Identity(identifier=noKeyIdr)
     req = sponsorWallet.requestIdentity(identity,
                                         sender=sponsorWallet.defaultId)
@@ -114,8 +107,5 @@ def testRetrieveChangedVerkey(verkeyFetched):
 
 
 def testVerifySigWithChangedVerkey(didUpdatedWithVerkey, verkeyFetched,
-                                   sponsorWallet, noKeyIdr):
-    wallet = didUpdatedWithVerkey
-    sig = signMsg(wallet, noKeyIdr)
-    verkey = sponsorWallet.getIdentity(noKeyIdr).verkey
-    assert verifyMsg(DidVerifier(verkey, noKeyIdr), sig)
+                                   sponsorWallet, noKeyIdr, wallet):
+    chkVerifyForRetrievedIdentity(wallet, sponsorWallet, noKeyIdr)
