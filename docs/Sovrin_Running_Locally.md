@@ -23,59 +23,24 @@ In your home folder, create a Sovrin folder. In here we are going to put the scr
 
 So first, we need to create our nodes.
 
-### 1. Create Node script
-Create a script called ```createNode.sh``` containing the following:
-```
-nodeNr=$1
-s1=`echo $(head -c64 /dev/urandom | hexdump '-e"%x"' | head -c64)`
-
-init_sovrin_raet_keep --name Node${nodeNr} --seed $s1
-```
-
-This script is used to create and register a node and takes in a parameter containing the Node Number (the Nodes we create are named: Node1, Node2, Node3, and Node4).
-It generates a random 32character seed (we actually generate a very long string and take the first 32 characters from it as I had issues sometimes with the generated string not being long enough!)
-
-It then initialises the RAET store with the seed for the node.
-NOTE - the init_sovrin_raet_keep script 
-
-### 2. Generate initial transactions script
-Next, create another script - ```genTransactions.sh``` containing:
-```
-nrNodes=$1
-nodeNr=$2
-
-generate_sovrin_pool_transactions --nodes ${nrNodes} --clients 5 --nodeNum ${nodeNr}
-```
-
-This script generates the initial transactions for the ledger and creates the Steward nodes.
-Note - The generate_sovrin_pool_transactions script assumes the node name prefix is 'Node' (hence why we created Node1, Node2, etc above)
-
-### 3. Setup environment script
-
-Create one more script ```setupEnvironment.sh``` containing:
+Create a script ```setupEnvironment.sh``` containing:
 
 ```
 # Remove .sovrin folder 
 rm -rf ~/.sovrin
 
-# Create nodes
-./createNode.sh 1
-./createNode.sh 2
-./createNode.sh 3
-./createNode.sh 4
-
-# Generate initial transactions
-./genTransactions.sh 4 1
-./genTransactions.sh 4 2
-./genTransactions.sh 4 3
-./genTransactions.sh 4 4
+# Create nodes and generate initial transactions
+generate_sovrin_pool_transactions --nodes 4 --clients 5 --nodeNum 1
+generate_sovrin_pool_transactions --nodes 4 --clients 5 --nodeNum 2
+generate_sovrin_pool_transactions --nodes 4 --clients 5 --nodeNum 3
+generate_sovrin_pool_transactions --nodes 4 --clients 5 --nodeNum 4
 
 echo Environment setup complete
 ```
 
 This first clears out the ~/.sovrin folder (if it exists), creates 4 nodes and then generates all the necessary initial transactions and Stewards.
 
-Now, make all the scripts executable (chmod 744 [script name]).
+Make the script executable (chmod 744 setupEnvironment.sh).
 
 At this point you are ready to build your environment.
 
@@ -107,17 +72,15 @@ So, first we start the Sovrin CLI using the command ```sovrin```
 
 Then run the following commands:
 ```
-new keyring Steward
 new key with seed 000000000000000000000000Steward1
 connect test
 send NYM dest=FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB role=SPONSOR
 send ATTRIB dest=FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB raw={"endpoint": "127.0.0.1:5555"}
 ```
 
-This firsts creates a new keyring here (don't think it matters yet as at the current time keyrings/sessions are not supported by the Sovrin CLI).
-The we add the Stewards key into the Keyring (this enables us to assume the Steward role) - Note this key is hardcoded into the test scripts at the moment so is pre-generated
+We first add the Stewards key into the Keyring (this enables us to assume the Steward role) - Note this key is hardcoded into the test scripts at the moment so is pre-generated
 We then connect to the test Sovrin cluster (which is the one we are running locally)
-Then we refisters Fabers identifier and set its role as a Sponsor (a verifying identity)
+Then we registers Fabers identifier and set its role as a Sponsor (A Sponsor is a privilege which if possessed by an identifier allows that identifier to on-board other identifiers)
 Finally we then register an attribute containing the endpoint for the Faber identifier.
 
 At this point we can start the Faber agent.
@@ -157,7 +120,7 @@ python ~/.virtualenvs/sovrin/lib/python3.5/site-packages/sovrin/test/agent/thrif
 
 # Resetting the Sovrin environment
 
-If you wish to reset your Sovrin environment and recreate it again, you can remove your ```~/.sovrin``` folder however you also need to clear out some tables from the OrientDB database too.
+If you wish to reset your Sovrin environment and recreate it again, you can remove your ```~/.sovrin``` folder **however** you also need to clear out some tables from the OrientDB database too.
 
 So, create a new file in your Sovrin folder called resetDB.sql containiing:
 ```
