@@ -1000,6 +1000,8 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Remote endpoint not found, "
                        "can not connect to {}\n".format(link.name))
+            self.logger.debug("{} has remote endpoint {}".
+                              format(link, link.remoteEndPoint))
 
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)

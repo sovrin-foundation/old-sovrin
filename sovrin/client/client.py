@@ -255,15 +255,15 @@ class Client(PlenumClient):
 
     def start(self, loop):
         super().start(loop)
-        if self.hasAnonCreds and \
-                        self.status is not Status.going():
+        if self.hasAnonCreds and self.status not in Status.going():
             self.peerStack.start()
 
     async def prod(self, limit) -> int:
-        s = await self.nodestack.service(limit)
-        if self.isGoing():
-            await self.nodestack.serviceLifecycle()
-        self.nodestack.flushOutBoxes()
+        # s = await self.nodestack.service(limit)
+        # if self.isGoing():
+        #     await self.nodestack.serviceLifecycle()
+        # self.nodestack.flushOutBoxes()
+        s = await super().prod(limit)
         if self.hasAnonCreds:
             return s + await self.peerStack.service(limit)
         else:
