@@ -7,7 +7,7 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
-from plenum.cli.constants import ENVS
+from plenum.common.constants import ENVS
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
