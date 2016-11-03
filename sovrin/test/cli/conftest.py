@@ -197,7 +197,7 @@ def commonAcceptInvitationMsgs():
 
 @pytest.fixture(scope="module")
 def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
-                                       canNotSyncMsg, connectUsage):
+                                   canNotSyncMsg, connectUsage):
     return commonAcceptInvitationMsgs + \
             ["Invitation acceptance aborted."] + \
             canNotSyncMsg + connectUsage

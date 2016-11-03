@@ -435,7 +435,7 @@ class Node(PlenumNode):
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation
         txnId = self.genTxnId(req.identifier, req.reqId)
-        result = {TXN_ID: txnId, TXN_TIME: ppTime}
+        result = {TXN_ID: txnId, TXN_TIME: int(ppTime)}
         result.update(operation)
         result.update({
             f.IDENTIFIER.nm: req.identifier,
