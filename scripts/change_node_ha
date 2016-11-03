@@ -9,20 +9,21 @@ from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
 from sovrin.common.util import getConfig
 
-# TODO: With some latest changes, this is not tested, so need to test
+# Below is an example script command line parameters to be passed to test it.
+# --nodeName Node1 --nodeSeed Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv --stewardName steward1 --stewardSeed 000000000000000000000000Steward1 --newNodeHA 127.0.0.1:9665
 
 
 def parseArgs():
     parser = argparse.ArgumentParser(
         description="Change Ip and/or Port of existing node")
 
-    parser.add_argument('nodeName', help='The Node name')
-    parser.add_argument('nodeSeed', type=getBinary,
+    parser.add_argument('--nodeName', help='The Node name')
+    parser.add_argument('--nodeSeed', type=getBinary,
                         help="node's ver key")
-    parser.add_argument('newNodeHA', type=getHA,
+    parser.add_argument('--newNodeHA', type=getHA,
                         help="Node stack's new HA, format=> ip:port")
-    parser.add_argument('stewardName', help="Node Stewards's name")
-    parser.add_argument('stewardSeed', type=getBinary,
+    parser.add_argument('--stewardName', help="Node Stewards's name")
+    parser.add_argument('--stewardSeed', type=getBinary,
                         help="Node Stewards's seed")
     parser.add_argument('--newClientHA', type=getHA,
                         help="client stack's new HA, format=> ip:port")
