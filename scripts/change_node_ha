@@ -7,7 +7,8 @@ from plenum.common.types import HA
 from plenum.common.util import getMaxFailures
 from plenum.test.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
+
 
 # Below is an example script command line parameters to be passed to test it.
 # --nodeName Node1 --nodeSeed Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv --stewardName steward1 --stewardSeed 000000000000000000000000Steward1 --newNodeHA 127.0.0.1:9665

@@ -10,7 +10,7 @@ from plenum.common.raet import initRemoteKeep
 from ioflo.aid.consoling import Console
 from plenum.common.log import setupLogging, TRACE_LOG_LEVEL, \
     getRAETLogLevelFromConfig
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 config = getConfig()
 keepDir = config.baseDir

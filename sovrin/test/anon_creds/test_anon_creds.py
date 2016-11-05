@@ -3,6 +3,7 @@ import pytest
 
 from plenum.common.log import DISPLAY_LOG_LEVEL, setupLogging, \
     DemoHandler, getlogger
+from plenum.common.port_dispenser import genHa
 from plenum.test.eventually import eventually
 from sovrin.client.wallet.claim_def import ClaimDef
 
@@ -32,7 +33,6 @@ import sovrin.anon_creds.proof_builder as ProofBuilderModule
 import sovrin.anon_creds.verifier as VerifierModule
 
 from plenum.common.txn import DATA, TXN_TYPE
-from plenum.test.helper import genHa
 from sovrin.common.txn import CRED_DEF
 from sovrin.common.util import getCredDefTxnData
 from sovrin.test.helper import submitAndCheck, makePendingTxnsRequest

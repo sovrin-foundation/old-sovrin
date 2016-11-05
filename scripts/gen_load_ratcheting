@@ -11,8 +11,7 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, USER, NEW_NODE, DATA, ALIAS, CLIENT_IP, CLIENT_PORT
 from plenum.common.types import HA, CLIENT_STACK_SUFFIX
 from sovrin.client.client import Client
-from sovrin.common.util import getConfig
-
+from sovrin.common.config_util import getConfig
 
 # general configs
 secondsInOneCycle = 86400

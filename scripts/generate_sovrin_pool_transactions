@@ -4,7 +4,7 @@ import os
 from sovrin.common.txn import getTxnOrderedFields
 
 from plenum.common.test_network_setup import TestNetworkSetup
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 config = getConfig()
 keepDir = config.baseDir

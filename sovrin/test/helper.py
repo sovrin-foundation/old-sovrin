@@ -7,6 +7,9 @@ from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
+from plenum.test.test_node import checkNodesAreReady, TestNodeCore
+from plenum.test.test_node import checkNodesConnected
+from plenum.test.test_stack import StackedTester, TestStack
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
@@ -21,13 +24,10 @@ from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
-from plenum.test.helper import checkNodesConnected, \
-    checkNodesAreReady, checkSufficientRepliesRecvd, \
-    checkLastClientReqForNode, \
-    buildCompletedTxnFromReply, TestStack, TestNodeCore, StackedTester
-from plenum.test.helper import genTestClient as genPlenumTestClient
-from plenum.test.helper import genTestClientProvider as \
-    genPlenumTestClientProvider
+from plenum.test.helper import checkSufficientRepliesRecvd, \
+    checkLastClientReqForNode, buildCompletedTxnFromReply
+from plenum.test.test_client import genTestClient as genPlenumTestClient, \
+    genTestClientProvider as genPlenumTestClientProvider
 from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
@@ -35,8 +35,9 @@ from sovrin.client.wallet.attribute import LedgerStore, Attribute
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM, ATTR_NAMES
-from sovrin.common.util import getConfig
+from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM, \
+    ATTR_NAMES
+from sovrin.common.config_util import getConfig
 from sovrin.server.node import Node
 
 logger = getlogger()

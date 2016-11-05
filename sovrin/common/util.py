@@ -1,25 +1,20 @@
 import datetime
-import random
-from base58 import b58decode
-
-import importlib
-import importlib.util
 import json
-import os
+import random
 from functools import partial
 from typing import Tuple, Union
 
 import libnacl.secret
-from ledger.util import F
-
-from anoncreds.protocol.types import AttribType, AttribDef
-from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
+from base58 import b58decode
 from plenum.common.signing import serializeMsg
 from plenum.common.txn import KEYS, DATA, ORIGIN
 from plenum.common.types import f
-from plenum.common.util import isHex, error, getConfig as PlenumConfig, \
-    cryptonymToHex
+from plenum.common.util import isHex, error, cryptonymToHex
 from raet.nacling import Verifier
+
+from anoncreds.protocol.types import AttribType, AttribDef
+from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
+from ledger.util import F
 
 
 def getMsgWithoutSig(msg, sigFieldName=f.SIG.nm):
@@ -75,34 +70,6 @@ def getSymmetricallyDecryptedVal(val, secretKey: Union[str, bytes]) -> str:
         secretKey = secretKey.encode()
     box = libnacl.secret.SecretBox(secretKey)
     return box.decrypt(val).decode()
-
-
-def getInstalledConfig(installDir, configFile):
-    configPath = os.path.join(installDir, configFile)
-    if os.path.exists(configPath):
-        spec = importlib.util.spec_from_file_location(configFile, configPath)
-        config = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(config)
-        return config
-    else:
-        raise FileNotFoundError("No file found at location {}".
-                                format(configPath))
-
-
-def getConfig(homeDir=None):
-    plenumConfig = PlenumConfig(homeDir)
-    sovrinConfig = importlib.import_module("sovrin.config")
-    refConfig = plenumConfig
-    refConfig.__dict__.update(sovrinConfig.__dict__)
-    try:
-        homeDir = os.path.expanduser(homeDir or "~")
-        configDir = os.path.join(homeDir, ".sovrin")
-        config = getInstalledConfig(configDir, "sovrin_config.py")
-        refConfig.__dict__.update(config.__dict__)
-    except FileNotFoundError:
-        pass
-    refConfig.baseDir = os.path.expanduser(refConfig.baseDir)
-    return refConfig
 
 
 def dateTimeEncoding(obj):

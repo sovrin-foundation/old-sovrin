@@ -9,7 +9,7 @@ from sovrin.agent.agent import runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 from sovrin.test.agent.helper import buildFaberWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent

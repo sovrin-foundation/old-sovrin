@@ -26,7 +26,8 @@ from sovrin.common.txn import TXN_TYPE, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
     ISSUER_KEY, GET_ISSUER_KEY, REF
-from sovrin.common.util import getConfig, dateTimeEncoding
+from sovrin.common.util import dateTimeEncoding
+from sovrin.common.config_util import getConfig
 from sovrin.persistence import identity_graph
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
