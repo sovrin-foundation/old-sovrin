@@ -18,7 +18,7 @@ from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
 from sovrin.common.strict_types import strict_types, decClassMethods
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 logger = getlogger()
 

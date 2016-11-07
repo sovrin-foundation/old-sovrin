@@ -27,7 +27,8 @@ logger.disabled = True
 # NOTE: Loading of plugin should happen as early as possible
 # So put all other required imports after loadPlugins function call below
 from plenum.common.plugin_helper import loadPlugins
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
+
 config = getConfig()
 baseDir = config.baseDir
 if not os.path.exists(baseDir):

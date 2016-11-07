@@ -2,15 +2,16 @@ import uuid
 
 import pytest
 import sovrin.anon_creds.cred_def as CredDefModule
+from plenum.common.port_dispenser import genHa
+
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
 from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
-from plenum.test.helper import genHa
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 from sovrin.test.helper import createNym, _newWallet
 
 # noinspection PyUnresolvedReferences

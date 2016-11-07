@@ -52,8 +52,9 @@ from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
-from sovrin.common.util import getConfig, getEncodedAttrs, ensureReqCompleted, \
+from sovrin.common.util import getEncodedAttrs, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict, getNonceForProof
+from sovrin.common.config_util import getConfig
 from sovrin.server.node import Node
 
 """
