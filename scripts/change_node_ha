@@ -11,7 +11,7 @@ from sovrin.common.config_util import getConfig
 
 
 # Below is an example script command line parameters to be passed to test it.
-# --nodeName Node1 --nodeSeed Gw6pDLhcBcoQesN72qfotTgFa7cbuqZpkX3Xo6pLhPhv --stewardName steward1 --stewardSeed 000000000000000000000000Steward1 --newNodeHA 127.0.0.1:9665
+# --nodeName Node1 --nodeSeed 000000000000000000000000000Node1 --stewardName steward1 --stewardSeed 000000000000000000000000Steward1 --newNodeHA 127.0.0.1:9665
 
 
 def parseArgs():

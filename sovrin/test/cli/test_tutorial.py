@@ -974,6 +974,12 @@ def testAliceLoadedThriftLoanApplication(thriftInviteLoadedByAlice):
     pass
 
 
+def testPingThriftBeforeSync(be, do, aliceCli, thriftMap,
+                             thriftInviteLoadedByAlice):
+    be(aliceCli)
+    do('ping {inviter}',            expect=['Ping sent.'], mapper=thriftMap)
+
+
 @pytest.fixture(scope="module")
 def aliceAcceptedThriftLoanApplication(be, do, aliceCli, thriftMap,
                                        connectedToTest,

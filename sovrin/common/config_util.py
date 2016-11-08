@@ -1,4 +1,4 @@
-import importlib
+import importlib.util
 import os
 
 from plenum.common.config_util import getConfig as PlenumConfig
