@@ -35,7 +35,7 @@ logger = getlogger()
 
 class Client(PlenumClient):
     def __init__(self,
-                 name: str,
+                 name: str=None,
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
@@ -55,7 +55,7 @@ class Client(PlenumClient):
         self.hasAnonCreds = bool(peerHA)
         if self.hasAnonCreds:
             self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)
-            stackargs = dict(name=name,
+            stackargs = dict(name=self.name,
                              ha=peerHA,
                              main=True,
                              auto=AutoMode.always)
