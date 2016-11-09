@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict
 
 from plenum.common.txn import ClientBootStrategy
@@ -63,7 +64,7 @@ ReqReplyStore = "file"
 
 RAETLogLevel = "concise"
 RAETLogLevelCli = "mute"
-RAETLogFilePath = None
+RAETLogFilePath = os.path.join(os.path.expanduser(baseDir), "raet.log")
 RAETLogFilePathCli = None
 RAETMessageTimeout = 30
 
