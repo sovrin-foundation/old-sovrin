@@ -40,13 +40,15 @@ class Client(PlenumClient):
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
                  basedirpath: str=None,
-                 config=None):
+                 config=None,
+                 sighex: str=None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
                          ha,
                          basedirpath,
-                         config)
+                         config,
+                         sighex)
         self.graphStore = self.getGraphStore()
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
