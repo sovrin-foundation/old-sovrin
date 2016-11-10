@@ -130,7 +130,11 @@ class Agent(Motor, AgentNet):
             self.endpoint.transmit(msg, remote.uid)
             logger.debug("Message sent (to -> {}): {}".format(remote.ha, msg))
 
-        if not self.endpoint.isConnectedTo(ha=remote.ha):
+        # TODO: if we call following isConnectedTo method by ha,
+        # there was a case it found more than one remote, so for now,
+        # I have changed it to call by remote name (which I am not sure
+        # fixes the issue), need to come back to this.
+        if not self.endpoint.isConnectedTo(name=remote.name):
             self.ensureConnectedToDest(remote.ha, _send, msg, remote)
         else:
             _send(msg, remote)

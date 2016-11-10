@@ -235,10 +235,9 @@ def setPromptAndKeyring(do, name, newKeyringOut, userMap):
 
 @pytest.fixture(scope="module")
 def preRequisite(poolNodesStarted,
-                 faberAddedByPhil, acmeAddedByPhil, thriftAddedByPhil,
-                 faberIsRunning, acmeIsRunning, thriftIsRunning
-                 ):
-    print("############################# 1111111111111111111111")
+                 faberIsRunning, acmeIsRunning, thriftIsRunning,
+                 faberWithEndpointAdded, acmeWithEndpointAdded,
+                 thriftWithEndpointAdded):
     pass
 
 
@@ -391,10 +390,6 @@ def testShowSyncedFaberInvite(be, do, aliceCli, faberMap, linkNotYetSynced,
                                     mapper=faberMap)
 
 
-def testEndpointAddedForFaber(faberWithEndpointAdded):
-    pass
-
-
 def syncInvite(be, do, userCli, expectedMsgs, mapping):
     be(userCli)
 
@@ -406,7 +401,6 @@ def syncInvite(be, do, userCli, expectedMsgs, mapping):
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI, preRequisite,
                                   faberInviteSyncedWithoutEndpoint,
-                                  faberWithEndpointAdded,
                                   syncLinkOutWithEndpoint,
                                   ):
     syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, faberMap)
@@ -417,9 +411,9 @@ def testSyncFaberInvite(faberInviteSyncedWithEndpoint):
     pass
 
 
-def testShowSyncedFaberInviteWithEndpoint(be, do, aliceCLI,
+def testShowSyncedFaberInviteWithEndpoint(be, do, aliceCLI, faberMap,
                                           faberInviteSyncedWithEndpoint,
-                                     showSyncedLinkWithEndpointOut, faberMap):
+                                          showSyncedLinkWithEndpointOut):
     be(aliceCLI)
     do('show link {inviter}',       expect=showSyncedLinkWithEndpointOut,
                                     mapper=faberMap)
@@ -453,7 +447,7 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap,
                                  preRequisite,
                                  syncedInviteAcceptedWithClaimsOut,
-                                 faberLinkAdded,
+                                 # faberLinkAdded,
                                  faberInviteSyncedWithEndpoint):
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
                       totalCredDefs=0, totalClaimsRcvd=0)
@@ -623,8 +617,7 @@ def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    preRequisite,
                                    aliceRequestedTranscriptClaim,
                                    acmeInviteLoadedByAlice,
-                                   acmeMap, acmeLinkAdded,
-                                   acmeWithEndpointAdded):
+                                   acmeMap):
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
                       totalCredDefs=1, totalClaimsRcvd=1)
     be(aliceCli)
@@ -750,46 +743,46 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli,
                                     mapper=aliceSelfAttestsAttributes)
 
 
-def testInvalidSigErrorResponse(be, do, aliceCli, faberMap,
-                                preRequisite,
-                                faberInviteSyncedWithoutEndpoint):
-
-    msg = {
-        f.REQ_ID.nm: getTimeBasedId(),
-        TYPE: ACCEPT_INVITE,
-        IDENTIFIER: faberMap['target'],
-        NONCE: "unknown"
-    }
-    signature = aliceCli.activeWallet.signMsg(msg,
-                                              aliceCli.activeWallet.defaultId)
-    msg[f.SIG.nm] = signature
-    link = aliceCli.activeWallet.getLink(faberMap['inviter'], required=True)
-    aliceCli.sendToAgent(msg, link)
-
-    be(aliceCli)
-    do(None,                        within=3,
-                                    expect=["Signature rejected.".
-                                                format(msg)])
-
-
-def testLinkNotFoundErrorResponse(be, do, aliceCli, faberMap,
-                      faberInviteSyncedWithoutEndpoint):
-
-    msg = {
-        f.REQ_ID.nm: getTimeBasedId(),
-        TYPE: ACCEPT_INVITE,
-        IDENTIFIER: aliceCli.activeWallet.defaultId,
-        NONCE: "unknown"
-    }
-    signature = aliceCli.activeWallet.signMsg(msg,
-                                              aliceCli.activeWallet.defaultId)
-    msg[f.SIG.nm] = signature
-    link = aliceCli.activeWallet.getLink(faberMap['inviter'], required=True)
-    aliceCli.sendToAgent(msg, link)
-
-    be(aliceCli)
-    do(None, within=3,
-             expect=["Nonce not found".format(msg)])
+# def testInvalidSigErrorResponse(be, do, aliceCli, faberMap,
+#                                 preRequisite,
+#                                 faberInviteSyncedWithoutEndpoint):
+#
+#     msg = {
+#         f.REQ_ID.nm: getTimeBasedId(),
+#         TYPE: ACCEPT_INVITE,
+#         IDENTIFIER: faberMap['target'],
+#         NONCE: "unknown"
+#     }
+#     signature = aliceCli.activeWallet.signMsg(msg,
+#                                               aliceCli.activeWallet.defaultId)
+#     msg[f.SIG.nm] = signature
+#     link = aliceCli.activeWallet.getLink(faberMap['inviter'], required=True)
+#     aliceCli.sendToAgent(msg, link)
+#
+#     be(aliceCli)
+#     do(None,                        within=3,
+#                                     expect=["Signature rejected.".
+#                                                 format(msg)])
+#
+#
+# def testLinkNotFoundErrorResponse(be, do, aliceCli, faberMap,
+#                       faberInviteSyncedWithoutEndpoint):
+#
+#     msg = {
+#         f.REQ_ID.nm: getTimeBasedId(),
+#         TYPE: ACCEPT_INVITE,
+#         IDENTIFIER: aliceCli.activeWallet.defaultId,
+#         NONCE: "unknown"
+#     }
+#     signature = aliceCli.activeWallet.signMsg(msg,
+#                                               aliceCli.activeWallet.defaultId)
+#     msg[f.SIG.nm] = signature
+#     link = aliceCli.activeWallet.getLink(faberMap['inviter'], required=True)
+#     aliceCli.sendToAgent(msg, link)
+#
+#     be(aliceCli)
+#     do(None, within=3,
+#              expect=["Nonce not found".format(msg)])
 
 
 def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
@@ -814,45 +807,45 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
                                                            mapper=mapping)
 
 
-def testReqUnavailableClaim(be, do, aliceCli,
-                            acmeMap,
-                            reqClaimOut1,
-                            acmeIsRunning,
-                            aliceAcceptedAcmeJobInvitation):
-
-    acme, _ = acmeIsRunning
-    be(aliceCli)
-
-    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
-                      totalCredDefs=1, totalClaimsRcvd=1)
-
-    link = aliceCli.activeWallet._links[acmeMap.get('inviter')]
-    oldAvailableClaims = []
-    oldCredDefs = {}
-    for ac in link.availableClaims:
-        oldAvailableClaims.append(ac)
-
-    for cd in aliceCli.activeWallet._claimDefs.values():
-        oldCredDefs[cd.key] = cd
-
-    newAvailableClaims = acme.getJobCertAvailableClaimList()
-
-    def dummyPostCredDef(li, nac):
-        pass
-
-    aliceCli.agent._processNewAvailableClaimsData(
-        link, newAvailableClaims, dummyPostCredDef)
-
-    time.sleep(3)
-
-    do("request claim Job-Certificate",
-                                       within=7,
-                                       expect=["This claim is not yet available"])
-
-    link.availableClaims = oldAvailableClaims
-    aliceCli.activeWallet._claimDefs = oldCredDefs
-    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
-                      totalCredDefs=1, totalClaimsRcvd=1)
+# def testReqUnavailableClaim(be, do, aliceCli,
+#                             acmeMap,
+#                             reqClaimOut1,
+#                             acmeIsRunning,
+#                             aliceAcceptedAcmeJobInvitation):
+#
+#     acme, _ = acmeIsRunning
+#     be(aliceCli)
+#
+#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
+#                       totalCredDefs=1, totalClaimsRcvd=1)
+#
+#     link = aliceCli.activeWallet._links[acmeMap.get('inviter')]
+#     oldAvailableClaims = []
+#     oldCredDefs = {}
+#     for ac in link.availableClaims:
+#         oldAvailableClaims.append(ac)
+#
+#     for cd in aliceCli.activeWallet._claimDefs.values():
+#         oldCredDefs[cd.key] = cd
+#
+#     newAvailableClaims = acme.getJobCertAvailableClaimList()
+#
+#     def dummyPostCredDef(li, nac):
+#         pass
+#
+#     aliceCli.agent._processNewAvailableClaimsData(
+#         link, newAvailableClaims, dummyPostCredDef)
+#
+#     time.sleep(3)
+#
+#     do("request claim Job-Certificate",
+#                                        within=7,
+#                                        expect=["This claim is not yet available"])
+#
+#     link.availableClaims = oldAvailableClaims
+#     aliceCli.activeWallet._claimDefs = oldCredDefs
+#     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
+#                       totalCredDefs=1, totalClaimsRcvd=1)
 
 
 @pytest.fixture(scope="module")
@@ -908,8 +901,8 @@ def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
 
 
 @pytest.fixture(scope="module")
-def jobCertClaimRequested(be, do, aliceCli,
-                        jobCertificateClaimMap, reqClaimOut1, acmeIsRunning,
+def jobCertClaimRequested(be, do, aliceCli, preRequisite,
+                        jobCertificateClaimMap, reqClaimOut1,
                         jobApplicationClaimSent):
 
     def removeClaimDef():
@@ -953,8 +946,7 @@ def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
 @pytest.fixture(scope="module")
 def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap,
                               jobCertClaimRequested,
-                              preRequisite,
-                              thriftWithEndpointAdded):
+                              preRequisite):
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
                       totalCredDefs=2, totalClaimsRcvd=2, within=2)
