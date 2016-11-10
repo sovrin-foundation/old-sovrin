@@ -35,7 +35,7 @@ logger = getlogger()
 
 class Client(PlenumClient):
     def __init__(self,
-                 name: str=None,
+                 name: str,
                  nodeReg: Dict[str, HA]=None,
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
