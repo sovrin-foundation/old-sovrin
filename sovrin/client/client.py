@@ -55,7 +55,7 @@ class Client(PlenumClient):
         self.hasAnonCreds = bool(peerHA)
         if self.hasAnonCreds:
             self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)
-            stackargs = dict(name=self.name,
+            stackargs = dict(name=self.stackName,
                              ha=peerHA,
                              main=True,
                              auto=AutoMode.always)
