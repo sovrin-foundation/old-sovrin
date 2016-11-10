@@ -43,8 +43,6 @@ def prompt_is(prompt):
     return x
 
 
-
-
 @pytest.fixture(scope="module")
 def poolNodesStarted(be, do, poolCLI):
     be(poolCLI)
@@ -240,6 +238,7 @@ def preRequisite(poolNodesStarted,
                  faberAddedByPhil, acmeAddedByPhil, thriftAddedByPhil,
                  faberIsRunning, acmeIsRunning, thriftIsRunning
                  ):
+    print("############################# 1111111111111111111111")
     pass
 
 
@@ -342,12 +341,10 @@ def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do, aliceCli,
                                     mapper=faberMap)
 
 
-def testAcceptUnSyncedFaberInvite(be, do, aliceCli, faberInviteLoadedByAlice,
+def testAcceptUnSyncedFaberInvite(be, do, aliceCli, preRequisite,
+                                  faberInviteLoadedByAlice,
                                   acceptUnSyncedWithoutEndpointWhenConnected,
-                                  faberMap, connectedToTest,
-                                  faberAddedByPhil,
-                                  faberIsRunning,
-                                  poolNodesStarted):
+                                  faberMap, connectedToTest):
     be(aliceCli)
     connectIfNotAlreadyConnected(do, connectedToTest, aliceCli, faberMap)
 
@@ -363,10 +360,9 @@ def testAcceptUnSyncedFaberInvite(be, do, aliceCli, faberInviteLoadedByAlice,
 
 @pytest.fixture(scope="module")
 def faberInviteSyncedWithoutEndpoint(be, do, aliceCli, faberMap,
-                                     faberInviteLoadedByAlice, poolNodesStarted,
+                                     preRequisite,
+                                     faberInviteLoadedByAlice,
                                      connectedToTest,
-                                     faberAddedByPhil,
-                                     faberIsRunning,
                                      linkNotYetSynced,
                                      syncLinkOutWithoutEndpoint):
     be(aliceCli)
@@ -408,11 +404,11 @@ def syncInvite(be, do, userCli, expectedMsgs, mapping):
 
 
 @pytest.fixture(scope="module")
-def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI,
+def faberInviteSyncedWithEndpoint(be, do, faberMap, aliceCLI, preRequisite,
                                   faberInviteSyncedWithoutEndpoint,
                                   faberWithEndpointAdded,
                                   syncLinkOutWithEndpoint,
-                                  poolNodesStarted):
+                                  ):
     syncInvite(be, do, aliceCLI, syncLinkOutWithEndpoint, faberMap)
     return aliceCLI
 
@@ -455,9 +451,9 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
 
 @pytest.fixture(scope="module")
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap,
-                                 faberAddedByPhil,
+                                 preRequisite,
                                  syncedInviteAcceptedWithClaimsOut,
-                                 faberLinkAdded, faberIsRunning,
+                                 faberLinkAdded,
                                  faberInviteSyncedWithEndpoint):
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
                       totalCredDefs=0, totalClaimsRcvd=0)
@@ -543,8 +539,7 @@ def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
 
 @pytest.fixture(scope="module")
 def aliceRequestedTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
-                                       reqClaimOut,
-                                       faberIsRunning,
+                                       reqClaimOut, preRequisite,
                                        aliceAcceptedFaberInvitation):
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
@@ -562,7 +557,7 @@ def testAliceReqClaim(aliceRequestedTranscriptClaim):
 
 
 def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
-                    transcriptClaimMap, reqClaimOut1, faberIsRunning,
+                    transcriptClaimMap, reqClaimOut1, preRequisite,
                                                   aliceAcceptedFaberInvitation):
     be(aliceCli)
     inviter = transcriptClaimMap["inviter"]
@@ -625,9 +620,10 @@ def testShowAcmeLink(be, do, aliceCli, acmeInviteLoadedByAlice,
 @pytest.fixture(scope="module")
 def aliceAcceptedAcmeJobInvitation(aliceCli, be, do,
                                    unsycedAcceptedInviteWithoutClaimOut,
+                                   preRequisite,
                                    aliceRequestedTranscriptClaim,
-                                   acmeInviteLoadedByAlice, acmeAddedByPhil,
-                                   acmeIsRunning, acmeMap, acmeLinkAdded,
+                                   acmeInviteLoadedByAlice,
+                                   acmeMap, acmeLinkAdded,
                                    acmeWithEndpointAdded):
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
                       totalCredDefs=1, totalClaimsRcvd=1)
@@ -755,7 +751,7 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli,
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberMap,
-                                faberIsRunning,
+                                preRequisite,
                                 faberInviteSyncedWithoutEndpoint):
 
     msg = {
@@ -957,7 +953,7 @@ def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
 @pytest.fixture(scope="module")
 def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap,
                               jobCertClaimRequested,
-                              thriftAddedByPhil,
+                              preRequisite,
                               thriftWithEndpointAdded):
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
@@ -983,7 +979,7 @@ def testPingThriftBeforeSync(be, do, aliceCli, thriftMap,
 @pytest.fixture(scope="module")
 def aliceAcceptedThriftLoanApplication(be, do, aliceCli, thriftMap,
                                        connectedToTest,
-                                       thriftIsRunning,
+                                       preRequisite,
                                        thriftInviteLoadedByAlice,
                                        syncedInviteAcceptedOutWithoutClaims):
     checkWalletStates(aliceCli, totalLinks=3, totalAvailableClaims=2,
