@@ -40,20 +40,22 @@ class Client(PlenumClient):
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
                  basedirpath: str=None,
-                 config=None):
+                 config=None,
+                 sighex: str=None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
                          ha,
                          basedirpath,
-                         config)
+                         config,
+                         sighex)
         self.graphStore = self.getGraphStore()
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
         self.hasAnonCreds = bool(peerHA)
         if self.hasAnonCreds:
             self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)
-            stackargs = dict(name=name,
+            stackargs = dict(name=self.stackName,
                              ha=peerHA,
                              main=True,
                              auto=AutoMode.always)
