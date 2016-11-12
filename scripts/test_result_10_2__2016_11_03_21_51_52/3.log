@@ -1,0 +1,260 @@
+2016-11-03 21:51:52,835 | INFO     | log.py               (128) | setupLogging | Choosing RAET log level 1
+2016-11-03 21:51:55,446 | DEBUG    | testable.py          (126) | decorator | in SpyableTestClient added spy on __init__
+2016-11-03 21:51:55,446 | WARNING  | testable.py          (134) | decorator | method <function Client.handleOneNodeMsg at 0x7f38fef1eea0> not found, so no spy added
+2016-11-03 21:51:55,463 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on __init__
+2016-11-03 21:51:55,464 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterReqLatencyTooHigh
+2016-11-03 21:51:55,464 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterThroughputTooLow
+2016-11-03 21:51:55,464 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on sendThroughput
+2016-11-03 21:51:55,466 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on __init__
+2016-11-03 21:51:55,467 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on catchupCompleted
+2016-11-03 21:51:55,467 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on processConsistencyProofReq
+2016-11-03 21:51:55,467 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on startCatchUpProcess
+2016-11-03 21:51:55,470 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on __init__
+2016-11-03 21:51:55,470 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on addToPrePrepares
+2016-11-03 21:51:55,470 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canProcessPrePrepare
+2016-11-03 21:51:55,470 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canSendPrepare
+2016-11-03 21:51:55,470 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doOrder
+2016-11-03 21:51:55,471 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrePrepare
+2016-11-03 21:51:55,471 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrepare
+2016-11-03 21:51:55,471 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on isValidPrepare
+2016-11-03 21:51:55,471 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on orderPendingCommit
+2016-11-03 21:51:55,483 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processCommit
+2016-11-03 21:51:55,483 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrePrepare
+2016-11-03 21:51:55,483 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrepare
+2016-11-03 21:51:55,487 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on __init__
+2016-11-03 21:51:55,487 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on checkPerformance
+2016-11-03 21:51:55,487 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on decidePrimaries
+2016-11-03 21:51:55,487 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on discard
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on eatTestMsg
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on forward
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleInvalidClientMsg
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleOneNodeMsg
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToClientInBox
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToNodeInBox
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processInstanceChange
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processOrdered
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processPropagate
+2016-11-03 21:51:55,488 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processRequest
+2016-11-03 21:51:55,489 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on propagate
+2016-11-03 21:51:55,489 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousClient
+2016-11-03 21:51:55,489 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousNode
+2016-11-03 21:51:55,489 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on send
+2016-11-03 21:51:55,489 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on sendInstanceChange
+2016-11-03 21:51:55,489 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on startViewChange
+Loading module /home/lovesh/.virtualenvs/sovrin-dev/lib/python3.5/site-packages/anoncreds_dev-0.1.8-py3.5.egg/config/config-crypto-example1.py
+Module loaded.
+2016-11-03 21:51:56,094 | DEBUG    | gen_load_ratcheting  (280) | main | Results file: /home/lovesh/dev/evernym/sovrin-priv/scripts/perf_results_1_2_1478190116.csv
+2016-11-03 21:51:56,094 | INFO     | gen_load_ratcheting  (136) | _spawnClient | Seed for client Client4 is b'0000000000000000000000000Client4', its len is 32
+2016-11-03 21:51:56,096 | DEBUG    | client.py            (76) | __init__ | Client Client4 ignoring given ha HA(host='0.0.0.0', port=5864) and using HA(host='127.0.0.1', port=5874)
+2016-11-03 21:51:56,096 | DEBUG    | ledger.py            (164) | start | Starting ledger...
+2016-11-03 21:51:56,096 | DEBUG    | ledger.py            (69) | recoverTree | Recovering tree from transaction log
+2016-11-03 21:51:56,176 | INFO     | client.py            (121) | __init__ | Client Client4 initialized with the following node registry:
+2016-11-03 21:51:56,176 | INFO     | client.py            (128) | __init__ |     Node1C listens at 35.161.137.38  on port 9702
+2016-11-03 21:51:56,176 | INFO     | client.py            (128) | __init__ |     Node2C listens at 35.161.111.17  on port 9704
+2016-11-03 21:51:56,176 | INFO     | client.py            (128) | __init__ |     Node3C listens at 35.161.122.249 on port 9706
+2016-11-03 21:51:56,176 | INFO     | client.py            (128) | __init__ |     Node4C listens at 35.160.153.163 on port 9708
+2016-11-03 21:51:56,176 | INFO     | client.py            (128) | __init__ |     Node5C listens at 54.147.219.106 on port 9710
+2016-11-03 21:51:56,176 | INFO     | client.py            (128) | __init__ |     Node6C listens at 52.199.48.127  on port 9712
+2016-11-03 21:51:56,177 | INFO     | client.py            (128) | __init__ |     Node7C listens at 54.169.186.146 on port 9714
+2016-11-03 21:51:56,177 | DEBUG    | plugin_helper.py     (25) | loadPlugins | Plugin loading started to load plugins from basedir: /home/lovesh/.sovrin
+2016-11-03 21:51:56,746 | DEBUG    | plugin_helper.py     (68) | loadPlugins | Total plugins loaded from basedir /home/lovesh/.sovrin are : 1
+2016-11-03 21:51:56,746 | DEBUG    | client.py            (148) | __init__ | total plugins loaded in client: 1
+2016-11-03 21:51:56,746 | DEBUG    | selector_events.py   (53) | __init__ | Using selector: EpollSelector
+2016-11-03 21:51:56,747 | DEBUG    | looper.py            (121) | __init__ | Setting handler for SIGINT
+2016-11-03 21:51:56,747 | DEBUG    | motor.py             (34) | set_status | Client4 changing status from stopped to starting
+2016-11-03 21:51:56,747 | INFO     | stacked.py           (75) | start | stack Client4 starting at ('0.0.0.0', 5874) in always mode
+2016-11-03 21:51:56,747 | INFO     | stacked.py           (851) | start | Client4 listening for other nodes at 0.0.0.0:5874
+2016-11-03 21:51:56,748 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node4C
+2016-11-03 21:51:56,749 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,749 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node3C
+2016-11-03 21:51:56,750 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,750 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node7C
+2016-11-03 21:51:56,751 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,751 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node6C
+2016-11-03 21:51:56,751 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,752 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node5C
+2016-11-03 21:51:56,752 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,752 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node2C
+2016-11-03 21:51:56,753 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,753 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client4 retrying to connect with Node1C
+2016-11-03 21:51:56,754 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client4 disconnected node is joined
+2016-11-03 21:51:56,754 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Client4 nodereg is odict_items([('Node1C', HA(host='35.161.137.38', port=9702)), ('Node2C', HA(host='35.161.111.17', port=9704)), ('Node3C', HA(host='35.161.122.249', port=9706)), ('Node4C', HA(host='35.160.153.163', port=9708)), ('Node5C', HA(host='54.147.219.106', port=9710)), ('Node6C', HA(host='52.199.48.127', port=9712)), ('Node7C', HA(host='54.169.186.146', port=9714))])
+2016-11-03 21:51:56,754 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Client4 nodestack is ['Node4C', 'Node3C', 'Node7C', 'Node6C', 'Node5C', 'Node2C', 'Node1C']
+2016-11-03 21:51:56,754 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 4 ('35.160.153.163', 9708)
+2016-11-03 21:51:56,754 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 3 ('35.161.122.249', 9706)
+2016-11-03 21:51:56,754 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 2 ('54.169.186.146', 9714)
+2016-11-03 21:51:56,755 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 7 ('52.199.48.127', 9712)
+2016-11-03 21:51:56,755 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 5 ('54.147.219.106', 9710)
+2016-11-03 21:51:56,755 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 6 ('35.161.111.17', 9704)
+2016-11-03 21:51:56,755 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 8 ('35.161.137.38', 9702)
+2016-11-03 21:51:56,755 | DEBUG    | stacked.py           (490) | maintainConnections | Client4 next check for retries in 6.00 seconds
+2016-11-03 21:51:56,757 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 21:51:56,917 | DEBUG    | stacked.py           (294) | conns | Client4's connection changed from set() to {'Node7C'}
+2016-11-03 21:51:56,917 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node7C
+2016-11-03 21:51:56,917 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node7C
+2016-11-03 21:51:57,023 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node7C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:57,023 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node7C
+2016-11-03 21:51:57,023 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:57,024 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:57,133 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 1 / 7 nodes
+2016-11-03 21:51:57,232 | DEBUG    | stacked.py           (294) | conns | Client4's connection changed from {'Node7C'} to {'Node7C', 'Node6C'}
+2016-11-03 21:51:57,232 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node6C
+2016-11-03 21:51:57,232 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node6C
+2016-11-03 21:51:57,286 | DEBUG    | stacked.py           (294) | conns | Client4's connection changed from {'Node7C', 'Node6C'} to {'Node6C', 'Node7C', 'Node4C'}
+2016-11-03 21:51:57,287 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node4C
+2016-11-03 21:51:57,287 | DEBUG    | motor.py             (34) | set_status | Client4 changing status from starting to started_hungry
+2016-11-03 21:51:57,287 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node4C
+2016-11-03 21:51:57,325 | DEBUG    | stacked.py           (294) | conns | Client4's connection changed from {'Node6C', 'Node7C', 'Node4C'} to {'Node3C', 'Node4C', 'Node2C', 'Node7C', 'Node6C', 'Node1C'}
+2016-11-03 21:51:57,325 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node1C
+2016-11-03 21:51:57,325 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node2C
+2016-11-03 21:51:57,325 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node3C
+2016-11-03 21:51:57,325 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node3C
+2016-11-03 21:51:57,325 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node2C
+2016-11-03 21:51:57,325 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node1C
+2016-11-03 21:51:57,431 | DEBUG    | stacked.py           (294) | conns | Client4's connection changed from {'Node3C', 'Node4C', 'Node2C', 'Node7C', 'Node6C', 'Node1C'} to {'Node3C', 'Node5C', 'Node4C', 'Node7C', 'Node6C', 'Node1C', 'Node2C'}
+2016-11-03 21:51:57,431 | INFO     | stacked.py           (320) | _connsChanged | Client4 now connected to Node5C
+2016-11-03 21:51:57,434 | DEBUG    | motor.py             (34) | set_status | Client4 changing status from started_hungry to started
+2016-11-03 21:51:57,434 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node5C
+2016-11-03 21:51:57,497 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node6C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:57,498 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node6C
+2016-11-03 21:51:57,498 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:57,498 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:57,510 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 7 / 7 nodes
+2016-11-03 21:51:57,510 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkIfConnectedToAll) succeeded with 6.75 seconds to spare
+2016-11-03 21:51:57,511 | TRACE    | signing.py           (86) | serializeMsg | serialized msg {'signature': None, 'operation': {'type': 'ATTRIB', 'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} into identifier:Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP|operation:raw:13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784|type:ATTRIB|reqId:1478190117511307
+2016-11-03 21:51:57,512 | DEBUG    | client.py            (228) | submitReqs | Client4 pending request since in mode 1 and connected to {'Node3C', 'Node5C', 'Node4C', 'Node7C', 'Node6C', 'Node1C', 'Node2C'} nodes
+2016-11-03 21:51:57,512 | DEBUG    | client.py            (416) | pendReqsTillConnection | Enqueuing request since not enough connections with nodes: Request: {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'}
+2016-11-03 21:51:57,512 | DEBUG    | gen_load_ratcheting  (123) | _submit | Client Client4 sending request Request: {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'}
+Staler 'Client4'. Stale transaction '3' packet '1' from '('35.160.153.163', 9708)' in 1 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.160.153.163', 9708) in 1 at 1.3470276329971966
+Staler 'Client4'. Stale transaction '3' packet '1' from '('35.161.137.38', 9702)' in 1 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.161.137.38', 9702) in 1 at 1.362759069997992
+Staler 'Client4'. Stale transaction '3' packet '1' from '('35.161.111.17', 9704)' in 1 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.161.111.17', 9704) in 1 at 1.4066481400004704
+Staler 'Client4'. Stale transaction '3' packet '1' from '('35.161.122.249', 9706)' in 1 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.161.122.249', 9706) in 1 at 1.4066481400004704
+2016-11-03 21:51:57,611 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node4C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:57,612 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node4C
+2016-11-03 21:51:57,612 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:57,612 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:57,656 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node3C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:57,656 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node3C
+2016-11-03 21:51:57,656 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:57,656 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:57,656 | DEBUG    | ledger_manager.py    (304) | processLedgerStatus | Client4 found out from {'Node3C', 'Node7C', 'Node4C', 'Node6C'} that its ledger of type 0 is latest
+2016-11-03 21:51:57,656 | DEBUG    | ledger_manager.py    (691) | catchupCompleted | Client4 completed catching up ledger 0
+2016-11-03 21:51:57,656 | DEBUG    | client.py            (422) | flushMsgsPendingConnection | Flushing pending message queue of size 1
+2016-11-03 21:51:57,656 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node2C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:57,657 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node2C
+2016-11-03 21:51:57,657 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:57,657 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:57,657 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node7C
+2016-11-03 21:51:57,657 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node3C
+2016-11-03 21:51:57,657 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node4C
+2016-11-03 21:51:57,658 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node5C
+2016-11-03 21:51:57,658 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node2C
+2016-11-03 21:51:57,658 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node6C
+2016-11-03 21:51:57,658 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '5PVuifSirJJYzdMyYHoHyZ4DRokETnJy8zSytSEkSUjKMJohCALnYtD2yx8cupAHfrfNnvp6ZHoMQZ8GbtiaE13T', 'operation': {'type': 'ATTRIB', 'raw': '{"743xegYzpqOSIFHmvriL_933320": "313949205995_l3iHMosNucyLT5gCFQbUVKp86SBAEJnPR0X92YhIxfeqZdkOja"}'}, 'reqId': 1478190117511307, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node1C
+Staler 'Client4'. Stale transaction '3' packet '1' from '('54.147.219.106', 9710)' in 1 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('54.147.219.106', 9710) in 1 at 1.515903845000139
+2016-11-03 21:51:57,711 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node1C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:57,711 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node1C
+2016-11-03 21:51:57,711 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:57,712 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:57,775 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node7C: {'op': 'REQACK', 'reqId': 1478190117511307}
+Staler 'Client4'. Stale transaction '4' packet '1' from '('35.161.122.249', 9706)' in 2 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.161.122.249', 9706) in 2 at 1.6853676550017553
+Staler 'Client4'. Stale transaction '4' packet '1' from '('35.161.137.38', 9702)' in 2 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.161.137.38', 9702) in 2 at 1.7161697420015116
+Staler 'Client4'. Stale transaction '4' packet '1' from '('35.160.153.163', 9708)' in 2 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.160.153.163', 9708) in 2 at 1.7586549960033153
+Staler 'Client4'. Stale transaction '4' packet '1' from '('35.161.111.17', 9704)' in 2 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('35.161.111.17', 9704) in 2 at 1.78013510099845
+2016-11-03 21:51:58,023 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node5C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 21:51:58,023 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client4 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node5C
+2016-11-03 21:51:58,024 | DEBUG    | ledger_manager.py    (846) | clientstack | Client4 trying to get clientstack
+2016-11-03 21:51:58,024 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client4 comparing its ledger 0 of size 7 with 7
+2016-11-03 21:51:58,079 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node6C: {'op': 'REQACK', 'reqId': 1478190117511307}
+Staler 'Client4'. Stale transaction '4' packet '1' from '('54.147.219.106', 9710)' in 2 nacking...
+Staler 'Client4'. Do Nack of stale correspondent ('54.147.219.106', 9710) in 2 at 2.056908022001153
+2016-11-03 21:51:58,245 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node4C: {'op': 'REQACK', 'reqId': 1478190117511307}
+2016-11-03 21:51:58,248 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node3C: {'op': 'REQACK', 'reqId': 1478190117511307}
+2016-11-03 21:51:58,267 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node1C: {'op': 'REQACK', 'reqId': 1478190117511307}
+2016-11-03 21:51:58,267 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node2C: {'op': 'REQACK', 'reqId': 1478190117511307}
+2016-11-03 21:51:58,434 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node5C: {'op': 'REQACK', 'reqId': 1478190117511307}
+2016-11-03 21:52:00,125 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node7C: {'op': 'REPLY', 'result': {'seqNo': 2166, 'reqId': 1478190117511307, 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403', 'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'txnTime': 1478190126816, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'}}
+2016-11-03 21:52:00,154 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node2C: {'op': 'REPLY', 'result': {'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403', 'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'txnTime': 1478190126816, 'seqNo': 2166, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'reqId': 1478190117511307}}
+hasConsensus took 1.8596649169921875e-05 sec
+2016-11-03 21:52:00,303 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node6C: {'op': 'REPLY', 'result': {'txnTime': 1478190126816, 'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'reqId': 1478190117511307, 'seqNo': 2166, 'type': 'ATTRIB', 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403'}}
+2016-11-03 21:52:00,325 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node4C: {'op': 'REPLY', 'result': {'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'reqId': 1478190117511307, 'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403', 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'type': 'ATTRIB', 'seqNo': 2166, 'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnTime': 1478190126816}}
+2016-11-03 21:52:00,327 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node5C: {'op': 'REPLY', 'result': {'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403', 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'seqNo': 2166, 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'txnTime': 1478190126816, 'type': 'ATTRIB', 'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'reqId': 1478190117511307}}
+2016-11-03 21:52:00,331 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node3C: {'op': 'REPLY', 'result': {'seqNo': 2166, 'reqId': 1478190117511307, 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403', 'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'type': 'ATTRIB', 'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'txnTime': 1478190126816}}
+2016-11-03 21:52:00,345 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node1C: {'op': 'REPLY', 'result': {'raw': '13eaed6389e9c1e3a8561c0ebd37789c48c68d52648002b9315cb36c76abf784', 'seqNo': 2166, 'rootHash': 'uYheVi4/tA7fPHDyVbOCol6FTz+gsW9v0XnfF60MN6A=', 'type': 'ATTRIB', 'txnId': 'f548eaa274ac20b5600004f763d39d08f0067df2e4485b0ab5bd85caf9ed4403', 'txnTime': 1478190126816, 'auditPath': ['EaccHYXF1YtXTZrfa04RAUoZffwxI4vW8Mu5wYFIPlM=', 'QbLK3T7KhXxt3qR+SIjEo6gTNipAfEdyHQJKmjQcPA0=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'reqId': 1478190117511307}}
+hasConsensus took 3.933906555175781e-05 sec
+2016-11-03 21:52:00,539 | DEBUG    | gen_load_ratcheting  (206) | checkReplyAndLogStat | COUNTER ResultRow(signerName='Client4', signerId='Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', reqId=1478190117511307, transactionType='ATTRIB', sentAt=1478190117.5121622, quorumAt=1478190120.5394087, latency=3.0272464752197266, ackNodes='Node3C,Node5C,Node4C,Node7C,Node6C,Node1C,Node2C', nackNodes='', replyNodes='Node3C,Node7C,Node5C,Node4C,Node2C,Node6C,Node1C')
+2016-11-03 21:52:00,539 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkReplyAndLogStat) succeeded with 4.47 seconds to spare
+2016-11-03 21:52:00,541 | DEBUG    | gen_load_ratcheting  (269) | printCurrentTestResults | 
+        ================================
+        Test time: 3.030230760574341
+        Average latency: 3.0272464752197266
+        Throughput: 0.3300078703611546
+        Error rate: 0.0
+        Succeeded: 1
+        Failed: 0
+        Query Time: 0
+        ================================
+        
+2016-11-03 21:52:00,541 | TRACE    | signing.py           (86) | serializeMsg | serialized msg {'signature': None, 'operation': {'type': 'ATTRIB', 'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} into identifier:Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP|operation:raw:0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5|type:ATTRIB|reqId:1478190120541576
+2016-11-03 21:52:00,542 | DEBUG    | gen_load_ratcheting  (123) | _submit | Client Client4 sending request Request: {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'}
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node7C
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node3C
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node4C
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node5C
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node2C
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node6C
+2016-11-03 21:52:00,553 | TRACE    | stacked.py           (775) | flushOutBoxes | Client4 sending msg {'signature': '3mQtn34boGTzB1isheo3MZV6UgiHqj9ELJrjsJTNgTyWkksaeY5g1tGjGzwzXtN5PHtTSf1xvLgoe7uYwZN99aLw', 'operation': {'type': 'ATTRIB', 'raw': '{"0lVRmN65xyPtBh9OF3v4_111384": "364050862677_wtuHsMNGPgprqnEX8iaIZBzRVCxQUjD509eyOk3Lob12fTlvFJ"}'}, 'reqId': 1478190120541576, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'} to Node1C
+2016-11-03 21:52:00,742 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node7C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:00,855 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node6C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:00,995 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node2C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:01,009 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node5C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:01,012 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node1C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:01,026 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node4C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:01,040 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node3C: {'op': 'REQACK', 'reqId': 1478190120541576}
+2016-11-03 21:52:02,749 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Client4 nodereg is odict_items([('Node1C', HA(host='35.161.137.38', port=9702)), ('Node2C', HA(host='35.161.111.17', port=9704)), ('Node3C', HA(host='35.161.122.249', port=9706)), ('Node4C', HA(host='35.160.153.163', port=9708)), ('Node5C', HA(host='54.147.219.106', port=9710)), ('Node6C', HA(host='52.199.48.127', port=9712)), ('Node7C', HA(host='54.169.186.146', port=9714))])
+2016-11-03 21:52:02,749 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Client4 nodestack is ['Node4C', 'Node3C', 'Node7C', 'Node6C', 'Node5C', 'Node2C', 'Node1C']
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 4 ('35.160.153.163', 9708)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 3 ('35.161.122.249', 9706)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 2 ('54.169.186.146', 9714)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 7 ('52.199.48.127', 9712)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 5 ('54.147.219.106', 9710)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 6 ('35.161.111.17', 9704)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client4 matched remote is 8 ('35.161.137.38', 9702)
+2016-11-03 21:52:02,750 | DEBUG    | stacked.py           (490) | maintainConnections | Client4 next check for retries in 6.00 seconds
+2016-11-03 21:52:03,071 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node7C: {'op': 'REPLY', 'result': {'seqNo': 2176, 'reqId': 1478190120541576, 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425', 'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'txnTime': 1478190129794, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP'}}
+2016-11-03 21:52:03,123 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node6C: {'op': 'REPLY', 'result': {'txnTime': 1478190129794, 'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'reqId': 1478190120541576, 'seqNo': 2176, 'type': 'ATTRIB', 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425'}}
+2016-11-03 21:52:03,140 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node3C: {'op': 'REPLY', 'result': {'seqNo': 2176, 'reqId': 1478190120541576, 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425', 'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'type': 'ATTRIB', 'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'txnTime': 1478190129794}}
+2016-11-03 21:52:03,146 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node5C: {'op': 'REPLY', 'result': {'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425', 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'seqNo': 2176, 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'txnTime': 1478190129794, 'type': 'ATTRIB', 'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'reqId': 1478190120541576}}
+2016-11-03 21:52:03,182 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node2C: {'op': 'REPLY', 'result': {'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425', 'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'txnTime': 1478190129794, 'seqNo': 2176, 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'reqId': 1478190120541576}}
+2016-11-03 21:52:03,254 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node4C: {'op': 'REPLY', 'result': {'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'reqId': 1478190120541576, 'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425', 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'type': 'ATTRIB', 'seqNo': 2176, 'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnTime': 1478190129794}}
+2016-11-03 21:52:03,255 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client4 got msg from node Node1C: {'op': 'REPLY', 'result': {'raw': '0d4d47a6f3ce987b38c08568cfc7618ed48402fcd382d1da324cef6defcb16a5', 'seqNo': 2176, 'rootHash': 'soB5p2aHQ2OiKWIGF0NoDbi2UfGr5/YN5FwZ171YNhs=', 'type': 'ATTRIB', 'txnId': '2d8cca2233003acd3e0772b7221b75f4e8dea207208058c92283df27c7c2e425', 'txnTime': 1478190129794, 'auditPath': ['AkXwLtDfeFJb9SdNf1xskuh1pif9C/yXvZIfglzOnns=', '6aXgRY44oEc2HZgDipa4Xj2OFgz4RaqAEqmi6OtMD6g=', 'V257YRkh1lWbmiRxghguqGflwW7tCUOarGqXhUiZ8+E=', 'Lc7r4qrYPop4Q7GZT4NJR9L7F9AOTssszCEcCNs1614=', 'wJMBCbk0661vQgz9+WVuEceN5So6nGe9AMHwpfbDNRI=', 'iNCQhQnZCPXuTb/ONaJduWEj5Y25rEgWjOh0rzErJ/c=', 'EzD/MJuNp7DH1S1ar84nTLEf675Ef1TNCwdv/5P5/8E=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', 'reqId': 1478190120541576}}
+hasConsensus took 3.647804260253906e-05 sec
+2016-11-03 21:52:03,313 | DEBUG    | gen_load_ratcheting  (206) | checkReplyAndLogStat | COUNTER ResultRow(signerName='Client4', signerId='Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP', reqId=1478190120541576, transactionType='ATTRIB', sentAt=1478190120.5420337, quorumAt=1478190123.3134599, latency=2.771426200866699, ackNodes='Node3C,Node5C,Node4C,Node2C,Node7C,Node6C,Node1C', nackNodes='', replyNodes='Node3C,Node7C,Node5C,Node6C,Node2C,Node4C,Node1C')
+2016-11-03 21:52:03,313 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkReplyAndLogStat) succeeded with 4.73 seconds to spare
+2016-11-03 21:52:03,313 | DEBUG    | gen_load_ratcheting  (269) | printCurrentTestResults | 
+        ================================
+        Test time: 5.802890062332153
+        Average latency: 2.899336338043213
+        Throughput: 0.34465584881272243
+        Error rate: 0.0
+        Succeeded: 2
+        Failed: 0
+        Query Time: 0
+        ================================
+        
+2016-11-03 21:52:03,313 | DEBUG    | gen_load_ratcheting  (326) | main | Sent 1 ATTRIB requests
+2016-11-03 21:52:03,314 | INFO     | looper.py            (253) | shutdown | Looper shutting down now...
+2016-11-03 21:52:03,315 | DEBUG    | motor.py             (34) | set_status | Client4 changing status from started to stopping
+2016-11-03 21:52:03,315 | INFO     | stacked.py           (82) | stop | stack Client4 stopped
+2016-11-03 21:52:03,315 | DEBUG    | motor.py             (34) | set_status | Client4 changing status from stopping to stopped
+2016-11-03 21:52:03,315 | INFO     | looper.py            (260) | shutdown | Looper shut down in 0.002 seconds.
+2016-11-03 21:52:03,347 | DEBUG    | base_events.py       (410) | close | Close <_UnixSelectorEventLoop running=False closed=False debug=True>

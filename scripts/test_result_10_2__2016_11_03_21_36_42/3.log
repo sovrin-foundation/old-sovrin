@@ -1,0 +1,286 @@
+2016-11-03 21:36:43,261 | INFO     | log.py               (128) | setupLogging | Choosing RAET log level 1
+2016-11-03 21:36:45,643 | DEBUG    | testable.py          (126) | decorator | in SpyableTestClient added spy on __init__
+2016-11-03 21:36:45,643 | WARNING  | testable.py          (134) | decorator | method <function Client.handleOneNodeMsg at 0x7f3b76bd0ea0> not found, so no spy added
+2016-11-03 21:36:45,664 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on __init__
+2016-11-03 21:36:45,664 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterReqLatencyTooHigh
+2016-11-03 21:36:45,664 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterThroughputTooLow
+2016-11-03 21:36:45,664 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on sendThroughput
+2016-11-03 21:36:45,667 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on __init__
+2016-11-03 21:36:45,675 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on catchupCompleted
+2016-11-03 21:36:45,675 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on processConsistencyProofReq
+2016-11-03 21:36:45,675 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on startCatchUpProcess
+2016-11-03 21:36:45,678 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on __init__
+2016-11-03 21:36:45,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on addToPrePrepares
+2016-11-03 21:36:45,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canProcessPrePrepare
+2016-11-03 21:36:45,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canSendPrepare
+2016-11-03 21:36:45,691 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doOrder
+2016-11-03 21:36:45,691 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrePrepare
+2016-11-03 21:36:45,691 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrepare
+2016-11-03 21:36:45,691 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on isValidPrepare
+2016-11-03 21:36:45,692 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on orderPendingCommit
+2016-11-03 21:36:45,692 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processCommit
+2016-11-03 21:36:45,692 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrePrepare
+2016-11-03 21:36:45,692 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrepare
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on __init__
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on checkPerformance
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on decidePrimaries
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on discard
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on eatTestMsg
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on forward
+2016-11-03 21:36:45,696 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleInvalidClientMsg
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleOneNodeMsg
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToClientInBox
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToNodeInBox
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processInstanceChange
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processOrdered
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processPropagate
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processRequest
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on propagate
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousClient
+2016-11-03 21:36:45,697 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousNode
+2016-11-03 21:36:45,698 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on send
+2016-11-03 21:36:45,698 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on sendInstanceChange
+2016-11-03 21:36:45,698 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on startViewChange
+Loading module /home/lovesh/.virtualenvs/sovrin-dev/lib/python3.5/site-packages/anoncreds_dev-0.1.8-py3.5.egg/config/config-crypto-example1.py
+Module loaded.
+2016-11-03 21:36:46,242 | DEBUG    | gen_load_ratcheting  (280) | main | Results file: /home/lovesh/dev/evernym/sovrin-priv/scripts/perf_results_1_2_1478189206.csv
+2016-11-03 21:36:46,242 | INFO     | gen_load_ratcheting  (136) | _spawnClient | Seed for client Claaaa4 is b'0000000000000000000000000Claaaa4', its len is 32
+2016-11-03 21:36:46,253 | DEBUG    | ledger.py            (164) | start | Starting ledger...
+2016-11-03 21:36:46,253 | DEBUG    | ledger.py            (69) | recoverTree | Recovering tree from transaction log
+2016-11-03 21:36:46,280 | INFO     | client.py            (121) | __init__ | Client Claaaa4 initialized with the following node registry:
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     EvernymV1C      listens at 52.33.22.91    on port 9722
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     EvernymV2C      listens at 52.38.24.189   on port 9724
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     WSECUC          listens at 13.93.218.255  on port 9726
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     BIGC            listens at 52.160.103.164 on port 9728
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     RespectNetworkC listens at 54.173.9.185   on port 9730
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     FCUC            listens at 69.144.146.171 on port 9734
+2016-11-03 21:36:46,280 | INFO     | client.py            (128) | __init__ |     BYUC            listens at 54.193.6.155   on port 9745
+2016-11-03 21:36:46,280 | DEBUG    | plugin_helper.py     (25) | loadPlugins | Plugin loading started to load plugins from basedir: /home/lovesh/.sovrin
+2016-11-03 21:36:47,145 | DEBUG    | plugin_helper.py     (68) | loadPlugins | Total plugins loaded from basedir /home/lovesh/.sovrin are : 1
+2016-11-03 21:36:47,145 | DEBUG    | client.py            (148) | __init__ | total plugins loaded in client: 1
+2016-11-03 21:36:47,145 | DEBUG    | selector_events.py   (53) | __init__ | Using selector: EpollSelector
+2016-11-03 21:36:47,146 | DEBUG    | looper.py            (121) | __init__ | Setting handler for SIGINT
+2016-11-03 21:36:47,146 | DEBUG    | motor.py             (34) | set_status | Claaaa4 changing status from stopped to starting
+2016-11-03 21:36:47,146 | INFO     | stacked.py           (75) | start | stack Claaaa4 starting at ('0.0.0.0', 5782) in always mode
+2016-11-03 21:36:47,146 | INFO     | stacked.py           (851) | start | Claaaa4 listening for other nodes at 0.0.0.0:5782
+2016-11-03 21:36:47,146 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Claaaa4 nodereg is odict_items([('EvernymV1C', HA(host='52.33.22.91', port=9722)), ('EvernymV2C', HA(host='52.38.24.189', port=9724)), ('WSECUC', HA(host='13.93.218.255', port=9726)), ('BIGC', HA(host='52.160.103.164', port=9728)), ('RespectNetworkC', HA(host='54.173.9.185', port=9730)), ('FCUC', HA(host='69.144.146.171', port=9734)), ('BYUC', HA(host='54.193.6.155', port=9745))])
+2016-11-03 21:36:47,146 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Claaaa4 nodestack is []
+2016-11-03 21:36:47,146 | DEBUG    | stacked.py           (504) | connectToMissing | Claaaa4 found the following missing connections: WSECUC, EvernymV2C, BYUC, BIGC, EvernymV1C, FCUC, RespectNetworkC
+2016-11-03 21:36:47,276 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for WSECUC at 13.93.218.255:9726
+2016-11-03 21:36:47,294 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for EvernymV2C at 52.38.24.189:9724
+2016-11-03 21:36:47,346 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for BYUC at 54.193.6.155:9745
+2016-11-03 21:36:47,476 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for BIGC at 52.160.103.164:9728
+2016-11-03 21:36:47,529 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for EvernymV1C at 52.33.22.91:9722
+2016-11-03 21:36:47,784 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for FCUC at 69.144.146.171:9734
+2016-11-03 21:36:47,804 | INFO     | stacked.py           (456) | connect | Claaaa4 looking for RespectNetworkC at 54.173.9.185:9730
+2016-11-03 21:36:47,805 | DEBUG    | stacked.py           (490) | maintainConnections | Claaaa4 next check for retries in 6.00 seconds
+2016-11-03 21:36:47,811 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 21:36:48,189 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('54.193.6.155', 9745)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('54.193.6.155', 9745) in 1 at 1.9203478709969204
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('54.173.9.185', 9730)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('54.173.9.185', 9730) in 1 at 1.9784605120003107
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('52.33.22.91', 9722)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.33.22.91', 9722) in 1 at 1.9784605120003107
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('52.38.24.189', 9724)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.38.24.189', 9724) in 1 at 2.0074782239971682
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('52.33.22.91', 9722)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.33.22.91', 9722) in 1 at 2.1869388979976065
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('52.38.24.189', 9724)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.38.24.189', 9724) in 1 at 2.2062282240003697
+2016-11-03 21:36:48,565 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 21:36:48,817 | DEBUG    | stacked.py           (294) | conns | Claaaa4's connection changed from set() to {'BYUC'}
+2016-11-03 21:36:48,818 | INFO     | stacked.py           (320) | _connsChanged | Claaaa4 now connected to BYUC
+2016-11-03 21:36:48,818 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'O+RcXjejV+qOWuxtS2jn+6QGSrZm7B52Cy87P2UBOik=')]) to BYUC
+2016-11-03 21:36:48,842 | DEBUG    | stacked.py           (294) | conns | Claaaa4's connection changed from {'BYUC'} to {'BYUC', 'RespectNetworkC'}
+2016-11-03 21:36:48,842 | INFO     | stacked.py           (320) | _connsChanged | Claaaa4 now connected to RespectNetworkC
+2016-11-03 21:36:48,843 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'O+RcXjejV+qOWuxtS2jn+6QGSrZm7B52Cy87P2UBOik=')]) to RespectNetworkC
+2016-11-03 21:36:48,929 | DEBUG    | stacked.py           (294) | conns | Claaaa4's connection changed from {'BYUC', 'RespectNetworkC'} to {'BYUC', 'RespectNetworkC', 'EvernymV2C'}
+2016-11-03 21:36:48,929 | INFO     | stacked.py           (320) | _connsChanged | Claaaa4 now connected to EvernymV2C
+2016-11-03 21:36:48,929 | DEBUG    | motor.py             (34) | set_status | Claaaa4 changing status from starting to started_hungry
+2016-11-03 21:36:48,929 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'O+RcXjejV+qOWuxtS2jn+6QGSrZm7B52Cy87P2UBOik=')]) to EvernymV2C
+2016-11-03 21:36:48,953 | DEBUG    | stacked.py           (294) | conns | Claaaa4's connection changed from {'BYUC', 'RespectNetworkC', 'EvernymV2C'} to {'BYUC', 'EvernymV1C', 'RespectNetworkC', 'EvernymV2C'}
+2016-11-03 21:36:48,954 | INFO     | stacked.py           (320) | _connsChanged | Claaaa4 now connected to EvernymV1C
+2016-11-03 21:36:48,954 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'O+RcXjejV+qOWuxtS2jn+6QGSrZm7B52Cy87P2UBOik=')]) to EvernymV1C
+2016-11-03 21:36:48,955 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 4 / 7 nodes
+Staler 'Claaaa4'. Stale transaction '3' packet '1' from '('54.193.6.155', 9745)' in 2 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '435'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('54.193.6.155', 9745) in 2 at 2.711086506002175
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('69.144.146.171', 9734)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('69.144.146.171', 9734) in 1 at 2.7336835530004464
+Staler 'Claaaa4'. Stale transaction '3' packet '1' from '('54.173.9.185', 9730)' in 2 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '474'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('54.173.9.185', 9730) in 2 at 2.755410714999016
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('69.144.146.171', 9734)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('69.144.146.171', 9734) in 1 at 2.8286242059984943
+Staler 'Claaaa4'. Stale transaction '3' packet '1' from '('52.38.24.189', 9724)' in 2 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '483'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.38.24.189', 9724) in 2 at 2.8733700759985368
+Staler 'Claaaa4'. Stale transaction '3' packet '1' from '('52.33.22.91', 9722)' in 2 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '467'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.33.22.91', 9722) in 2 at 2.892266358001507
+2016-11-03 21:36:49,265 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node RespectNetworkC: {'op': 'CONSISTENCY_PROOF', 'ledgerType': 0, 'seqNoStart': 7, 'seqNoEnd': 8, 'oldMerkleRoot': 'Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', 'newMerkleRoot': '15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', 'hashes': ['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']}
+2016-11-03 21:36:49,265 | DEBUG    | ledger_manager.py    (310) | processConsistencyProof | Claaaa4 received consistency proof: CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']) from RespectNetworkC
+2016-11-03 21:36:49,265 | DEBUG    | ledger_manager.py    (591) | canStartCatchUpProcess | Claaaa4 cannot start catchup since received only 1 consistency proofs but need at least 3
+2016-11-03 21:36:49,265 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node BYUC: {'op': 'CONSISTENCY_PROOF', 'ledgerType': 0, 'seqNoStart': 7, 'seqNoEnd': 8, 'oldMerkleRoot': 'Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', 'newMerkleRoot': '15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', 'hashes': ['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']}
+2016-11-03 21:36:49,265 | DEBUG    | ledger_manager.py    (310) | processConsistencyProof | Claaaa4 received consistency proof: CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']) from BYUC
+2016-11-03 21:36:49,265 | DEBUG    | has_action_queue.py  (30) | _schedule | Claaaa4 scheduling action functools.partial(<bound method LedgerManager.checkIfCPsNeeded of Claaaa4>, 0) with id 1 to run in 30 seconds
+2016-11-03 21:36:49,265 | DEBUG    | ledger_manager.py    (591) | canStartCatchUpProcess | Claaaa4 cannot start catchup since received only 2 consistency proofs but need at least 3
+2016-11-03 21:36:49,331 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 4 / 7 nodes
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('54.193.6.155', 9745)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '435'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('54.193.6.155', 9745) in 3 at 3.0562826599998516
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('54.173.9.185', 9730)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '474'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('54.173.9.185', 9730) in 3 at 3.0562826599998516
+2016-11-03 21:36:49,465 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node EvernymV1C: {'op': 'CONSISTENCY_PROOF', 'ledgerType': 0, 'seqNoStart': 7, 'seqNoEnd': 8, 'oldMerkleRoot': 'Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', 'newMerkleRoot': '15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', 'hashes': ['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']}
+2016-11-03 21:36:49,465 | DEBUG    | ledger_manager.py    (310) | processConsistencyProof | Claaaa4 received consistency proof: CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']) from EvernymV1C
+2016-11-03 21:36:49,465 | DEBUG    | ledger_manager.py    (576) | canStartCatchUpProcess | Claaaa4 deciding on the basis of CPs {'BYUC': CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']), 'EvernymV1C': CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']), 'RespectNetworkC': CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY='])} and f 1
+2016-11-03 21:36:49,466 | DEBUG    | ledger_manager.py    (656) | startCatchUpProcess | Claaaa4 started catching up with consistency proof CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=('Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY='))
+2016-11-03 21:36:49,466 | DEBUG    | has_action_queue.py  (30) | _schedule | Claaaa4 scheduling action functools.partial(<bound method LedgerManager.checkIfTxnsNeeded of Claaaa4>, 0) with id 2 to run in 5.1 seconds
+2016-11-03 21:36:49,466 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'CATCHUP_REQ'), ('ledgerType', 0), ('seqNoStart', 8), ('seqNoEnd', 8)]) to BYUC
+2016-11-03 21:36:49,510 | DEBUG    | stacked.py           (294) | conns | Claaaa4's connection changed from {'BYUC', 'EvernymV1C', 'RespectNetworkC', 'EvernymV2C'} to {'BYUC', 'EvernymV1C', 'FCUC', 'RespectNetworkC', 'EvernymV2C'}
+2016-11-03 21:36:49,510 | INFO     | stacked.py           (320) | _connsChanged | Claaaa4 now connected to FCUC
+2016-11-03 21:36:49,510 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'O+RcXjejV+qOWuxtS2jn+6QGSrZm7B52Cy87P2UBOik=')]) to FCUC
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('52.33.22.91', 9722)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '467'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.33.22.91', 9722) in 3 at 3.3279395470017334
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('52.38.24.189', 9724)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '483'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.38.24.189', 9724) in 3 at 3.3513067179956124
+2016-11-03 21:36:49,641 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node EvernymV2C: {'op': 'CONSISTENCY_PROOF', 'ledgerType': 0, 'seqNoStart': 7, 'seqNoEnd': 8, 'oldMerkleRoot': 'Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', 'newMerkleRoot': '15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', 'hashes': ['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']}
+2016-11-03 21:36:49,641 | DEBUG    | ledger_manager.py    (310) | processConsistencyProof | Claaaa4 received consistency proof: CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']) from EvernymV2C
+2016-11-03 21:36:49,642 | DEBUG    | ledger_manager.py    (344) | canProcessConsistencyProof | Claaaa4 cannot process consistency proof since in state 2 and canSync is True
+2016-11-03 21:36:49,708 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+Staler 'Claaaa4'. Stale transaction '3' packet '1' from '('69.144.146.171', 9734)' in 2 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '336'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('69.144.146.171', 9734) in 2 at 3.4416243599989684
+2016-11-03 21:36:49,733 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node BYUC: {'op': 'CATCHUP_REP', 'ledgerType': 0, 'txns': {'8': {'reqId': 1478156921805694, 'identifier': 'CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt', 'type': 'CHANGE_HA', 'txnTime': 1478157003369.697, 'data': {'node_ip': '40.121.149.41', 'alias': 'WSECU', 'client_port': 9726, 'client_ip': '40.121.149.41', 'node_port': 9725}, 'txnId': 'bfa9e020f5963c12132024d5a2067c2bd6f53b5244cf247e9e50872c9249704b', 'dest': 'AZsp46qSPGjHuNYajiMUb5XcMWCRDuk2xdEv7P5MepSN'}}, 'consProof': []}
+2016-11-03 21:36:49,733 | DEBUG    | ledger_manager.py    (384) | processCatchupRep | Claaaa4 received catchup reply from BYUC: CATCHUP_REP(ledgerType=0, txns={'8': {'reqId': 1478156921805694, 'identifier': 'CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt', 'type': 'CHANGE_HA', 'txnTime': 1478157003369.697, 'data': {'node_ip': '40.121.149.41', 'alias': 'WSECU', 'client_port': 9726, 'client_ip': '40.121.149.41', 'node_port': 9725}, 'txnId': 'bfa9e020f5963c12132024d5a2067c2bd6f53b5244cf247e9e50872c9249704b', 'dest': 'AZsp46qSPGjHuNYajiMUb5XcMWCRDuk2xdEv7P5MepSN'}}, consProof=[])
+2016-11-03 21:36:49,734 | DEBUG    | ledger_manager.py    (390) | processCatchupRep | Claaaa4 found 1 transactions in the catchup from BYUC
+2016-11-03 21:36:49,734 | DEBUG    | ledger_manager.py    (399) | processCatchupRep | Claaaa4 merging all received catchups
+2016-11-03 21:36:49,734 | DEBUG    | ledger_manager.py    (405) | processCatchupRep | Claaaa4 merged catchups, there are 1 of them now, from 8 to 8
+2016-11-03 21:36:49,734 | DEBUG    | ledger_manager.py    (496) | hasValidCatchupReplies | Claaaa4 verifying proof for 8, 8, b'\xc8v\xe37\xc5\xb5\xf0S\x827m\x9d\xe9\xbf\x8b\xc9\xc4\xd7\xaf)\x0b\xb5\xfa\x06\x90\xb1Ed\xb8\xb9ya', b'\xd7\x99p\xfar\xf5\xd9\x9e\xb8\xd2\x05\xe3\x81\x9f\x8c\xdd2;\xfd\xab(\xf6\xbcU\tNW\xc0jDMV', []
+2016-11-03 21:36:49,734 | INFO     | ledger_manager.py    (505) | hasValidCatchupReplies | Claaaa4 could not verify catchup reply CATCHUP_REP(ledgerType=0, txns={'8': {'reqId': 1478156921805694, 'identifier': 'CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt', 'type': 'CHANGE_HA', 'txnTime': 1478157003369.697, 'data': {'node_ip': '40.121.149.41', 'alias': 'WSECU', 'client_port': 9726, 'client_ip': '40.121.149.41', 'node_port': 9725}, 'txnId': 'bfa9e020f5963c12132024d5a2067c2bd6f53b5244cf247e9e50872c9249704b', 'dest': 'AZsp46qSPGjHuNYajiMUb5XcMWCRDuk2xdEv7P5MepSN'}}, consProof=[]) since Inconsistency: different root hashes for the same tree size
+2016-11-03 21:36:49,734 | DEBUG    | ledger_manager.py    (413) | processCatchupRep | Claaaa4 processed 0 catchup replies with sequence numbers []
+2016-11-03 21:36:49,865 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node FCUC: {'op': 'CONSISTENCY_PROOF', 'ledgerType': 0, 'seqNoStart': 7, 'seqNoEnd': 8, 'oldMerkleRoot': 'Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', 'newMerkleRoot': '15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', 'hashes': ['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']}
+2016-11-03 21:36:49,865 | DEBUG    | ledger_manager.py    (310) | processConsistencyProof | Claaaa4 received consistency proof: CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']) from FCUC
+2016-11-03 21:36:49,865 | DEBUG    | ledger_manager.py    (344) | canProcessConsistencyProof | Claaaa4 cannot process consistency proof since in state 2 and canSync is True
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('69.144.146.171', 9734)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '336'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('69.144.146.171', 9734) in 3 at 3.7744598959980067
+2016-11-03 21:36:50,085 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:50,461 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:50,839 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+Staler 'Claaaa4'. Stale transaction '1' packet 'None' from '('52.160.103.164', 9728)' in 1 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '0'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.160.103.164', 9728) in 1 at 4.721736601997691
+2016-11-03 21:36:51,216 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:51,592 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:51,969 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:52,346 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:52,723 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:53,099 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:53,153 | TRACE    | stacked.py           (534) | handleDisconnectedRemote | Claaaa4 join already in process, so waiting to check for reconnects
+2016-11-03 21:36:53,154 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Claaaa4 allow already in process, so waiting to check for reconnects
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Claaaa4 nodereg is odict_items([('EvernymV1C', HA(host='52.33.22.91', port=9722)), ('EvernymV2C', HA(host='52.38.24.189', port=9724)), ('WSECUC', HA(host='13.93.218.255', port=9726)), ('BIGC', HA(host='52.160.103.164', port=9728)), ('RespectNetworkC', HA(host='54.173.9.185', port=9730)), ('FCUC', HA(host='69.144.146.171', port=9734)), ('BYUC', HA(host='54.193.6.155', port=9745))])
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Claaaa4 nodestack is ['estate_858874d2a1df11e6ac2c6807152028e4', 'EvernymV2C', 'BYUC', 'BIGC', 'EvernymV1C', 'FCUC', 'RespectNetworkC']
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (651) | reconcileNodeReg | Claaaa4 unmatched remote is 2 ('13.93.218.255', 9726)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (655) | reconcileNodeReg | Claaaa4 forgiving name mismatch for WSECUC with same ha ('13.93.218.255', 9726) using another name estate_858874d2a1df11e6ac2c6807152028e4
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 3 ('52.38.24.189', 9724)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 4 ('54.193.6.155', 9745)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 5 ('52.160.103.164', 9728)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 6 ('52.33.22.91', 9722)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 7 ('69.144.146.171', 9734)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 8 ('54.173.9.185', 9730)
+2016-11-03 21:36:53,154 | DEBUG    | stacked.py           (490) | maintainConnections | Claaaa4 next check for retries in 6.00 seconds
+2016-11-03 21:36:53,477 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:53,853 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 5 / 7 nodes
+2016-11-03 21:36:54,011 | DEBUG    | stacked.py           (294) | conns | Claaaa4's connection changed from {'BYUC', 'EvernymV1C', 'FCUC', 'RespectNetworkC', 'EvernymV2C'} to {'EvernymV2C', 'EvernymV1C', 'RespectNetworkC', 'BYUC', 'BIGC', 'FCUC'}
+2016-11-03 21:36:54,011 | INFO     | stacked.py           (320) | _connsChanged | Claaaa4 now connected to BIGC
+2016-11-03 21:36:54,012 | TRACE    | stacked.py           (775) | flushOutBoxes | Claaaa4 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'O+RcXjejV+qOWuxtS2jn+6QGSrZm7B52Cy87P2UBOik=')]) to BIGC
+2016-11-03 21:36:54,229 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 6 / 7 nodes
+2016-11-03 21:36:54,229 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkIfConnectedToAll) succeeded with 1.08 seconds to spare
+2016-11-03 21:36:54,231 | TRACE    | signing.py           (86) | serializeMsg | serialized msg {'operation': {'raw': '8c1be7a4bbb60eef614512b58ef3c20b24e69efd7d741646b0daaeba027120b0', 'type': 'ATTRIB'}, 'signature': None, 'reqId': 1478189214230916, 'identifier': 'FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu'} into identifier:FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu|operation:raw:8c1be7a4bbb60eef614512b58ef3c20b24e69efd7d741646b0daaeba027120b0|type:ATTRIB|reqId:1478189214230916
+2016-11-03 21:36:54,232 | DEBUG    | client.py            (228) | submitReqs | Claaaa4 pending request since in mode 1 and connected to {'EvernymV2C', 'EvernymV1C', 'RespectNetworkC', 'BYUC', 'BIGC', 'FCUC'} nodes
+2016-11-03 21:36:54,232 | DEBUG    | client.py            (416) | pendReqsTillConnection | Enqueuing request since not enough connections with nodes: Request: {'signature': '5c9UDjiJ9HeWjkBiP5gWx4Zk3pTLgPUQTaY3eMZSPvr3FZYy8GL7RY3jeNJ3KkCEtd3rUWtZim7xbfh5ahaod2FT', 'reqId': 1478189214230916, 'operation': {'raw': '{"UnHBKvDqfQGNepXL0omS_27436": "337616349483_YFlaNAQkx4vqgtBZTmOw2781H9iKr5n3juDSIRezsWLoCXJcMb"}', 'type': 'ATTRIB'}, 'identifier': 'FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu'}
+2016-11-03 21:36:54,232 | DEBUG    | gen_load_ratcheting  (123) | _submit | Client Claaaa4 sending request Request: {'signature': '5c9UDjiJ9HeWjkBiP5gWx4Zk3pTLgPUQTaY3eMZSPvr3FZYy8GL7RY3jeNJ3KkCEtd3rUWtZim7xbfh5ahaod2FT', 'reqId': 1478189214230916, 'operation': {'raw': '{"UnHBKvDqfQGNepXL0omS_27436": "337616349483_YFlaNAQkx4vqgtBZTmOw2781H9iKr5n3juDSIRezsWLoCXJcMb"}', 'type': 'ATTRIB'}, 'identifier': 'FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu'}
+2016-11-03 21:36:54,571 | DEBUG    | has_action_queue.py  (60) | _serviceActions | Claaaa4 running action functools.partial(<bound method LedgerManager.checkIfTxnsNeeded of Claaaa4>, 0) with id 2
+Staler 'Claaaa4'. Stale transaction '3' packet '1' from '('52.160.103.164', 9728)' in 2 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '476'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.160.103.164', 9728) in 2 at 9.209870904000127
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('52.160.103.164', 9728)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '476'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.160.103.164', 9728) in 3 at 11.262178327000584
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('52.160.103.164', 9728)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '476'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.160.103.164', 9728) in 3 at 11.262178327000584
+2016-11-03 21:36:59,161 | TRACE    | stacked.py           (534) | handleDisconnectedRemote | Claaaa4 join already in process, so waiting to check for reconnects
+2016-11-03 21:36:59,161 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Claaaa4 nodereg is odict_items([('EvernymV1C', HA(host='52.33.22.91', port=9722)), ('EvernymV2C', HA(host='52.38.24.189', port=9724)), ('WSECUC', HA(host='13.93.218.255', port=9726)), ('BIGC', HA(host='52.160.103.164', port=9728)), ('RespectNetworkC', HA(host='54.173.9.185', port=9730)), ('FCUC', HA(host='69.144.146.171', port=9734)), ('BYUC', HA(host='54.193.6.155', port=9745))])
+2016-11-03 21:36:59,161 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Claaaa4 nodestack is ['estate_858874d2a1df11e6ac2c6807152028e4', 'EvernymV2C', 'BYUC', 'BIGC', 'EvernymV1C', 'FCUC', 'RespectNetworkC']
+2016-11-03 21:36:59,163 | DEBUG    | stacked.py           (651) | reconcileNodeReg | Claaaa4 unmatched remote is 2 ('13.93.218.255', 9726)
+2016-11-03 21:36:59,163 | DEBUG    | stacked.py           (655) | reconcileNodeReg | Claaaa4 forgiving name mismatch for WSECUC with same ha ('13.93.218.255', 9726) using another name estate_858874d2a1df11e6ac2c6807152028e4
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 3 ('52.38.24.189', 9724)
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 4 ('54.193.6.155', 9745)
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 5 ('52.160.103.164', 9728)
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 6 ('52.33.22.91', 9722)
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 7 ('69.144.146.171', 9734)
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Claaaa4 matched remote is 8 ('54.173.9.185', 9730)
+2016-11-03 21:36:59,164 | DEBUG    | stacked.py           (490) | maintainConnections | Claaaa4 next check for retries in 6.00 seconds
+2016-11-03 21:36:59,278 | DEBUG    | gen_load_ratcheting  (206) | checkReplyAndLogStat | COUNTER ResultRow(signerName='Claaaa4', signerId='FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu', reqId=1478189214230916, transactionType='ATTRIB', sentAt=1478189214.2321522, quorumAt='', latency=5.045932292938232, ackNodes='', nackNodes='', replyNodes='')
+2016-11-03 21:36:59,278 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkReplyAndLogStat) succeeded with 2.45 seconds to spare
+2016-11-03 21:36:59,278 | DEBUG    | gen_load_ratcheting  (269) | printCurrentTestResults | 
+        ================================
+        Test time: 5.048569440841675
+        Average latency: 5.045932292938232
+        Throughput: 0.0
+        Error rate: 0.19807591273485275
+        Succeeded: 0
+        Failed: 1
+        Query Time: 0
+        ================================
+        
+2016-11-03 21:36:59,279 | TRACE    | signing.py           (86) | serializeMsg | serialized msg {'operation': {'raw': '354b00da76794d9333c9c0a9e42fe7dd6be6d803eaa0168775a1d88fe504c954', 'type': 'ATTRIB'}, 'signature': None, 'reqId': 1478189219279267, 'identifier': 'FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu'} into identifier:FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu|operation:raw:354b00da76794d9333c9c0a9e42fe7dd6be6d803eaa0168775a1d88fe504c954|type:ATTRIB|reqId:1478189219279267
+2016-11-03 21:36:59,279 | DEBUG    | client.py            (228) | submitReqs | Claaaa4 pending request since in mode 1 and connected to {'EvernymV2C', 'EvernymV1C', 'RespectNetworkC', 'BYUC', 'BIGC', 'FCUC'} nodes
+2016-11-03 21:36:59,279 | DEBUG    | client.py            (416) | pendReqsTillConnection | Enqueuing request since not enough connections with nodes: Request: {'signature': '2G4xqWqKjC7P3psPCTVJ8NeY2ybWrzq4aEZYHgiLJ3cMRy9QztktMvnUyoiRESMVtnMtbTSwH5zt6Koyt9riHBVP', 'reqId': 1478189219279267, 'operation': {'raw': '{"BDt7zybvWESsZAfFe2du_706319": "528272300629_fGn0S1mazXc68hF4TNRVPw3EMtCgdjBZxU5oQOylH7YJ2IWApq"}', 'type': 'ATTRIB'}, 'identifier': 'FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu'}
+2016-11-03 21:36:59,280 | DEBUG    | gen_load_ratcheting  (123) | _submit | Client Claaaa4 sending request Request: {'signature': '2G4xqWqKjC7P3psPCTVJ8NeY2ybWrzq4aEZYHgiLJ3cMRy9QztktMvnUyoiRESMVtnMtbTSwH5zt6Koyt9riHBVP', 'reqId': 1478189219279267, 'operation': {'raw': '{"BDt7zybvWESsZAfFe2du_706319": "528272300629_fGn0S1mazXc68hF4TNRVPw3EMtCgdjBZxU5oQOylH7YJ2IWApq"}', 'type': 'ATTRIB'}, 'identifier': 'FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu'}
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('52.160.103.164', 9728)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '476'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.160.103.164', 9728) in 3 at 14.040021840999543
+Staler 'Claaaa4'. Stale transaction '4' packet '1' from '('52.160.103.164', 9728)' in 3 nacking...
+Staler 'Claaaa4'. Unknown correspondent estate id '476'
+Staler 'Claaaa4'. Do Nack of stale correspondent ('52.160.103.164', 9728) in 3 at 14.040021840999543
+2016-11-03 21:37:00,378 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Claaaa4 got msg from node BIGC: {'op': 'CONSISTENCY_PROOF', 'ledgerType': 0, 'seqNoStart': 7, 'seqNoEnd': 8, 'oldMerkleRoot': 'Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', 'newMerkleRoot': '15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', 'hashes': ['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']}
+2016-11-03 21:37:00,378 | DEBUG    | ledger_manager.py    (310) | processConsistencyProof | Claaaa4 received consistency proof: CONSISTENCY_PROOF(ledgerType=0, seqNoStart=7, seqNoEnd=8, oldMerkleRoot='Ym2M5MCcYtL9Nhl+JinisTVwK4iCDbU+mcKedj+pYLY=', newMerkleRoot='15lw+nL12Z640gXjgZ+M3TI7/aso9rxVCU5XwGpETVY=', hashes=['Kk5CspFcrPDCFrch/iflg1tXS3Htv3H7o6vUYeY9m0U=', 'gpkiCCgaoZdRd6QBalKTGMK4WsVMHGDirI8tH3DCGG8=', 'qNa3BH7CvBHjSAJJ+BXqzy1Bd3aDInGyB9IeS5fpCdI=', 'tXipkaSw3qcSHcCk8LEqSxd0UWgELv40mIs8OZgCImY=']) from BIGC
+2016-11-03 21:37:00,379 | DEBUG    | ledger_manager.py    (344) | canProcessConsistencyProof | Claaaa4 cannot process consistency proof since in state 2 and canSync is True
+Stalent 'Claaaa4'. Stale transaction '0' packet '0' from '('52.160.103.164', 9728)' in 1 nacking ...
+Stalent 'Claaaa4'. Unknown initiator estate id '476'
+Stalent 'Claaaa4'. Do Nack of ('52.160.103.164', 9728) in 1 at 15.234955783002079
+2016-11-03 21:37:04,319 | DEBUG    | gen_load_ratcheting  (206) | checkReplyAndLogStat | COUNTER ResultRow(signerName='Claaaa4', signerId='FWiiw7CEZeA6jhooKD7vT23EdJQUC2oikJkunPsi2MVu', reqId=1478189219279267, transactionType='ATTRIB', sentAt=1478189219.2796974, quorumAt='', latency=5.039315462112427, ackNodes='', nackNodes='', replyNodes='')
+2016-11-03 21:37:04,319 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkReplyAndLogStat) succeeded with 2.46 seconds to spare
+2016-11-03 21:37:04,319 | DEBUG    | gen_load_ratcheting  (269) | printCurrentTestResults | 
+        ================================
+        Test time: 10.089277744293213
+        Average latency: 5.04262387752533
+        Throughput: 0.0
+        Error rate: 0.19823024508679601
+        Succeeded: 0
+        Failed: 2
+        Query Time: 0
+        ================================
+        
+2016-11-03 21:37:04,319 | DEBUG    | gen_load_ratcheting  (326) | main | Sent 1 ATTRIB requests
+2016-11-03 21:37:04,320 | INFO     | looper.py            (253) | shutdown | Looper shutting down now...
+2016-11-03 21:37:04,327 | DEBUG    | motor.py             (34) | set_status | Claaaa4 changing status from started_hungry to stopping
+2016-11-03 21:37:04,327 | INFO     | stacked.py           (82) | stop | stack Claaaa4 stopped
+2016-11-03 21:37:04,328 | DEBUG    | motor.py             (34) | set_status | Claaaa4 changing status from stopping to stopped
+2016-11-03 21:37:04,328 | INFO     | looper.py            (260) | shutdown | Looper shut down in 0.008 seconds.
+2016-11-03 21:37:04,374 | DEBUG    | base_events.py       (410) | close | Close <_UnixSelectorEventLoop running=False closed=False debug=True>

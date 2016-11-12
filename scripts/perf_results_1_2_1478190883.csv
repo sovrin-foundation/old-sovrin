@@ -1,0 +1,3 @@
+signerName,signerId,reqId,transactionType,sentAt,quorumAt,latency,ackNodes,nackNodes,replyNodes
+Client4,Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP,1478190884647648,ATTRIB,1478190884.64828,1478190888.442087,3.793807029724121,"Node4C,Node5C,Node1C,Node7C,Node3C,Node6C,Node2C",,"Node3C,Node6C,Node2C,Node4C,Node1C,Node5C,Node7C"
+Client4,Br9aFUaJZ7AtoUhC1gumGYa7fyzFrhdqUZbFoZs2yjkP,1478190888443484,ATTRIB,1478190888.4439807,1478190891.246461,2.8024802207946777,"Node4C,Node5C,Node1C,Node7C,Node3C,Node6C,Node2C",,"Node3C,Node6C,Node2C,Node4C,Node5C,Node7C,Node1C"

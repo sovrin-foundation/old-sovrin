@@ -1,0 +1,1326 @@
+2016-11-03 22:03:53,174 | INFO     | log.py               (128) | setupLogging | Choosing RAET log level 4
+2016-11-03 22:03:55,604 | DEBUG    | testable.py          (126) | decorator | in SpyableTestClient added spy on __init__
+2016-11-03 22:03:55,604 | WARNING  | testable.py          (134) | decorator | method <function Client.handleOneNodeMsg at 0x7f6253004ea0> not found, so no spy added
+2016-11-03 22:03:55,633 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on __init__
+2016-11-03 22:03:55,633 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterReqLatencyTooHigh
+2016-11-03 22:03:55,633 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterThroughputTooLow
+2016-11-03 22:03:55,633 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on sendThroughput
+2016-11-03 22:03:55,636 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on __init__
+2016-11-03 22:03:55,636 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on catchupCompleted
+2016-11-03 22:03:55,636 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on processConsistencyProofReq
+2016-11-03 22:03:55,636 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on startCatchUpProcess
+2016-11-03 22:03:55,662 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on __init__
+2016-11-03 22:03:55,662 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on addToPrePrepares
+2016-11-03 22:03:55,663 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canProcessPrePrepare
+2016-11-03 22:03:55,667 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canSendPrepare
+2016-11-03 22:03:55,667 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doOrder
+2016-11-03 22:03:55,667 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrePrepare
+2016-11-03 22:03:55,670 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrepare
+2016-11-03 22:03:55,671 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on isValidPrepare
+2016-11-03 22:03:55,671 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on orderPendingCommit
+2016-11-03 22:03:55,671 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processCommit
+2016-11-03 22:03:55,672 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrePrepare
+2016-11-03 22:03:55,672 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrepare
+2016-11-03 22:03:55,678 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on __init__
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on checkPerformance
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on decidePrimaries
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on discard
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on eatTestMsg
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on forward
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleInvalidClientMsg
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleOneNodeMsg
+2016-11-03 22:03:55,679 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToClientInBox
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToNodeInBox
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processInstanceChange
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processOrdered
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processPropagate
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processRequest
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on propagate
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousClient
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousNode
+2016-11-03 22:03:55,680 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on send
+2016-11-03 22:03:55,681 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on sendInstanceChange
+2016-11-03 22:03:55,681 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on startViewChange
+Loading module /home/lovesh/.virtualenvs/sovrin-dev/lib/python3.5/site-packages/anoncreds_dev-0.1.8-py3.5.egg/config/config-crypto-example1.py
+Module loaded.
+2016-11-03 22:03:56,304 | DEBUG    | gen_load_ratcheting  (280) | main | Results file: /home/lovesh/dev/evernym/sovrin-priv/scripts/perf_results_1_2_1478190836.csv
+2016-11-03 22:03:56,304 | INFO     | gen_load_ratcheting  (136) | _spawnClient | Seed for client Client2 is b'0000000000000000000000000Client2', its len is 32
+2016-11-03 22:03:56,305 | DEBUG    | client.py            (76) | __init__ | Client Client2 ignoring given ha HA(host='0.0.0.0', port=5951) and using HA(host='127.0.0.1', port=6426)
+2016-11-03 22:03:56,306 | DEBUG    | ledger.py            (164) | start | Starting ledger...
+2016-11-03 22:03:56,306 | DEBUG    | ledger.py            (69) | recoverTree | Recovering tree from transaction log
+Stack 'Client2': Opened server at '('0.0.0.0', 6426)'
+2016-11-03 22:03:56,389 | INFO     | client.py            (121) | __init__ | Client Client2 initialized with the following node registry:
+2016-11-03 22:03:56,389 | INFO     | client.py            (128) | __init__ |     Node1C listens at 35.161.137.38  on port 9702
+2016-11-03 22:03:56,389 | INFO     | client.py            (128) | __init__ |     Node2C listens at 35.161.111.17  on port 9704
+2016-11-03 22:03:56,389 | INFO     | client.py            (128) | __init__ |     Node3C listens at 35.161.122.249 on port 9706
+2016-11-03 22:03:56,390 | INFO     | client.py            (128) | __init__ |     Node4C listens at 35.160.153.163 on port 9708
+2016-11-03 22:03:56,390 | INFO     | client.py            (128) | __init__ |     Node5C listens at 54.147.219.106 on port 9710
+2016-11-03 22:03:56,390 | INFO     | client.py            (128) | __init__ |     Node6C listens at 52.199.48.127  on port 9712
+2016-11-03 22:03:56,390 | INFO     | client.py            (128) | __init__ |     Node7C listens at 54.169.186.146 on port 9714
+2016-11-03 22:03:56,390 | DEBUG    | plugin_helper.py     (25) | loadPlugins | Plugin loading started to load plugins from basedir: /home/lovesh/.sovrin
+2016-11-03 22:03:57,269 | DEBUG    | plugin_helper.py     (68) | loadPlugins | Total plugins loaded from basedir /home/lovesh/.sovrin are : 1
+2016-11-03 22:03:57,270 | DEBUG    | client.py            (148) | __init__ | total plugins loaded in client: 1
+2016-11-03 22:03:57,270 | DEBUG    | selector_events.py   (53) | __init__ | Using selector: EpollSelector
+2016-11-03 22:03:57,270 | DEBUG    | looper.py            (121) | __init__ | Setting handler for SIGINT
+2016-11-03 22:03:57,271 | DEBUG    | motor.py             (34) | set_status | Client2 changing status from stopped to starting
+2016-11-03 22:03:57,271 | INFO     | stacked.py           (75) | start | stack Client2 starting at ('0.0.0.0', 6426) in always mode
+2016-11-03 22:03:57,279 | INFO     | stacked.py           (851) | start | Client2 listening for other nodes at 0.0.0.0:6426
+2016-11-03 22:03:57,279 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node4C
+Added transaction to Node4C at '(False, 5, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node4C in 1 at 0.8900675309996586
+2016-11-03 22:03:57,290 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,290 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node3C
+Added transaction to Node3C at '(False, 6, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node3C in 1 at 0.9008541900038836
+2016-11-03 22:03:57,303 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,304 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node7C
+Added transaction to Node7C at '(False, 2, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node7C in 1 at 0.914617091002583
+2016-11-03 22:03:57,310 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,310 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node6C
+Added transaction to Node6C at '(False, 7, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node6C in 1 at 0.9208245170011651
+2016-11-03 22:03:57,315 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,315 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node5C
+Added transaction to Node5C at '(False, 8, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node5C in 1 at 0.9263150170008885
+2016-11-03 22:03:57,321 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,321 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node2C
+Added transaction to Node2C at '(False, 4, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node2C in 1 at 0.9321837070019683
+2016-11-03 22:03:57,327 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,327 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client2 retrying to connect with Node1C
+Added transaction to Node1C at '(False, 3, 3, 19, 1, False)'
+Allower Client2. Do Hello with Node1C in 1 at 0.9379946390035911
+2016-11-03 22:03:57,332 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client2 disconnected node is joined
+2016-11-03 22:03:57,332 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Client2 nodereg is odict_items([('Node1C', HA(host='35.161.137.38', port=9702)), ('Node2C', HA(host='35.161.111.17', port=9704)), ('Node3C', HA(host='35.161.122.249', port=9706)), ('Node4C', HA(host='35.160.153.163', port=9708)), ('Node5C', HA(host='54.147.219.106', port=9710)), ('Node6C', HA(host='52.199.48.127', port=9712)), ('Node7C', HA(host='54.169.186.146', port=9714))])
+2016-11-03 22:03:57,332 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Client2 nodestack is ['Node4C', 'Node3C', 'Node7C', 'Node6C', 'Node5C', 'Node2C', 'Node1C']
+2016-11-03 22:03:57,332 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 5 ('35.160.153.163', 9708)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 6 ('35.161.122.249', 9706)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 2 ('54.169.186.146', 9714)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 7 ('52.199.48.127', 9712)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 8 ('54.147.219.106', 9710)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 4 ('35.161.111.17', 9704)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 3 ('35.161.137.38', 9702)
+2016-11-03 22:03:57,333 | DEBUG    | stacked.py           (490) | maintainConnections | Client2 next check for retries in 6.00 seconds
+2016-11-03 22:03:57,338 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 2\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x12(I\x05\xee\xca:\xc7\xf6g\xb0\x16\x11`or\xb7\xf7M:\xe2\xa5\x10\xdd\x1c\x1aPzC\x1a\xd6\x82\xd9G\xdd<c\xc6\xf69\xa2!\xbe\xd4a\x95\xdb?n#\xfc\xb8\xc8\x9dST\x8c1\x9fRQc/\xceo@\xd2\xa6A\xafWP}\xf4\xfdm\xc1iB\x91\xb5\xb6Y\xca\xe5\x1c\xdd\x99\xb3\x04\xa2\x88\xec1\x99\xe6\xfe\x1b\te\x9d\xe6\xab\x89\x1eka\xb8\x99\x1f\xd53\x08o\xc2\xd6\x0b\x0b\xc6\xf5\x8esi\xbc8\x1f\x7f&\x0fKtn7\xc3\x08"om\xd9\xfaN\xf4\xb5|GQ\xaa\xed9\xae/\x12\xc1\x10s\x9bn\xb7\xdcs\x85\x91\xf0\x08M\x89s\x04'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 2, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=2, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'\x12(I\x05\xee\xca:\xc7\xf6g\xb0\x16\x11`or\xb7\xf7M:\xe2\xa5\x10\xdd\x1c\x1aPzC\x1a\xd6\x82\xd9G\xdd<c\xc6\xf69\xa2!\xbe\xd4a\x95\xdb?n#\xfc\xb8\xc8\x9dST\x8c1\x9fRQc/\xceo@\xd2\xa6A\xafWP}\xf4\xfdm\xc1iB\x91\xb5\xb6Y\xca\xe5\x1c\xdd\x99\xb3\x04\xa2\x88\xec1\x99\xe6\xfe\x1b\te\x9d\xe6\xab\x89'
+Allower Client2. Do Initiate with Node7C in 1 at 1.0219504670021706
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 2\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\nf\x94E\xf0\xac{\xbe\xb4\xea\x1eb;\xbcK\xd8\x86%\xd9X\xe0\xe4~\x0b\x04\xfbo\xe0x7\x91\xed\xc0p\xb3l\x86\x9fl\xb6\x17b\x9c\x07%\x11\x13isg$\xc7\xec\xc2F\xce"*\xdc\xad\x8a\xc99U\r'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 2, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=2, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node7C at '(False, 2, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node7C in 1 at 1.1211781149977469
+Added transaction to Node7C at '(False, 2, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node7C in 2 at 1.1211781149977469
+2016-11-03 22:03:57,540 | DEBUG    | stacked.py           (294) | conns | Client2's connection changed from set() to {'Node7C'}
+2016-11-03 22:03:57,540 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node7C
+2016-11-03 22:03:57,540 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node7C
+Added transaction to Node7C at '(False, 2, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node7C in 3 at 1.1622242140001617
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 7\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x80~J\xac\xecx\x01v\xae\xe1\x0e-\xcbb\xcc\x9a\xea\x1a"~\x86\x9f\xb5\x08C\xfb\xbae\xb4\xf8\x1f\xdb\x11\x95\xec\xe2\xeb\x8aB\x819\x97g\xf5\xdf\x1c\x97\xa8\xafly`V"\xbf\xd3\xc8\xd3H\xdf\xad\x0c\r\xeb*\xf7\x19\xd7x+n9\xddQw=\x8bD\xe8\x01\xd3hu1qE\xec\x10\xfc\t\xfe K\xc8a\xab6!-\x18\xa4$\xb5?\x01\xdd\x8aE\x0c\\\xd3\xaej\xf8\xd5N7\xd7n\x04U\xcc\xe4\x96\x91d\xcb\xac\xc6n%\x96S\x1c\x14d69\xa4\x05_B\x1d)\x8c#k\xbf\x02Z\x05\xf4\x8ar\x1f\rR\xd2\x82\x98\xdb\xa7\x11\x19\xea\xbc{\x0c'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=7, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'\x80~J\xac\xecx\x01v\xae\xe1\x0e-\xcbb\xcc\x9a\xea\x1a"~\x86\x9f\xb5\x08C\xfb\xbae\xb4\xf8\x1f\xdb\x11\x95\xec\xe2\xeb\x8aB\x819\x97g\xf5\xdf\x1c\x97\xa8\xafly`V"\xbf\xd3\xc8\xd3H\xdf\xad\x0c\r\xeb*\xf7\x19\xd7x+n9\xddQw=\x8bD\xe8\x01\xd3hu1qE\xec\x10\xfc\t\xfe K\xc8a\xab6!-\x18\xa4$\xb5?'
+Allower Client2. Do Initiate with Node6C in 1 at 1.1833050400018692
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 5\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\nd\xa7?\xa1\xed\xa0}X\x00\xc78\xc3\x88\xf5\x7f\xf9\xd7\xff\xdbK-+\x1b/\x9a{\x90r|\xac\xd9\xf4\xdeu\xdf\x82\xbcm\x0b\xa6\xa8\xee\xbf80\x83~\x15!\xe4\xa27\x86\x0bI\xcb\xa8\x00u\xd6\xa6;b\xca.\xbcPu\x91.6^4\xcdq\x90D~\\\x91\x83r\x01s,\x99\x9b\x02\xaf\xb2d\x9a\xf31l\xc9\n\xd6\xf2\x8a\xcc@j\x1aEjzLhI\x01\xb26T\x81\xff+<Yp\x10\xd7U\xcc\x97\x99\xb5w\x9b\xd7YPX\xb9P\x91t\x92\xa8\x8a\xed\xed\x11r\xbf\xd7\xfb\x84\xb3\xe9U\xa6>\t7\xff\xc8\x00\x82kr\xc6BJ\x0b\xcf\x9f\r'
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=5, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'd\xa7?\xa1\xed\xa0}X\x00\xc78\xc3\x88\xf5\x7f\xf9\xd7\xff\xdbK-+\x1b/\x9a{\x90r|\xac\xd9\xf4\xdeu\xdf\x82\xbcm\x0b\xa6\xa8\xee\xbf80\x83~\x15!\xe4\xa27\x86\x0bI\xcb\xa8\x00u\xd6\xa6;b\xca.\xbcPu\x91.6^4\xcdq\x90D~\\\x91\x83r\x01s,\x99\x9b\x02\xaf\xb2d\x9a\xf31l\xc9\n\xd6\xf2\x8a\xcc@j\x1a'
+Allower Client2. Do Initiate with Node4C in 1 at 1.2107715500023915
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 3\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x14\x13\xc2R\x03\xfb\xff\x1c\xf9\xed|f\xf5)\xf8\'\xca\xa3g\xfb\x8b\xd4\x03\x0e\x8avO\xfc)$=Fo\xb5]\xb0\xd7\xefX\x1e\x9cH\xc4\xe2^\x9c\\\xec\x11^k\xe2\x12v\xc5"\x98\xd2\xac\xfa\x1f\x04\xf4\xcf\xa8\x9eD\x9d\x12#\x84\xa8\x9b\xf8!\xc4\x0f\xa9\xda\xa8\x0b\xfd\x005\xe68G\xcd{,\xfc\x0e\xdeA\xf1\xe8\x1c\xf0\x18\x87KF|\xe7j\xce\xe4\xe5\x88\x0f\x9elA\xf7Ezy\xed\x0b\xc3@\x04\x7f\x86Vu\xb8ZsH\x91\x89B)\xef2c\x1c\xb6W\x15\xcf)\xf00\x90\xfew\x05*\x0c\xea\xfeU\xf3q;\x1dK\xa7\x84\xab\xef\x97c\xf0\xae\x0e'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=3, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'\x14\x13\xc2R\x03\xfb\xff\x1c\xf9\xed|f\xf5)\xf8\'\xca\xa3g\xfb\x8b\xd4\x03\x0e\x8avO\xfc)$=Fo\xb5]\xb0\xd7\xefX\x1e\x9cH\xc4\xe2^\x9c\\\xec\x11^k\xe2\x12v\xc5"\x98\xd2\xac\xfa\x1f\x04\xf4\xcf\xa8\x9eD\x9d\x12#\x84\xa8\x9b\xf8!\xc4\x0f\xa9\xda\xa8\x0b\xfd\x005\xe68G\xcd{,\xfc\x0e\xdeA\xf1\xe8\x1c\xf0\x18\x87KF|\xe7'
+Allower Client2. Do Initiate with Node1C in 1 at 1.2107715500023915
+Client2 received packet
+b"ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 4\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x17U\xc3\xd8'\xd3\xd9,\x8f\x14v\xabdq\xc7\xabZ\x14\xd5\x9c\xb9\xcc\xf1R{\x953\xc5\xa0Y\x06\x08\x1f\x83y\xb8)\xaf\xf3\xbd\xd3&o\xaa\xdf\xd9\n\xa22j\xe4\x8a~\xb6o\xfb\xb0Z\x9cV1\xef\x97\xf6k\xf3.\xe7:\x99u/\x80,MC\xf6\xe4.\x88\xae\x0b\xb3W\x80h\x9at\x1e\x94\x12\x03J\xad\x1c:^\x1c\xfd\xf48x\x1b\x85B:\x10:\x96\x01N\xce\xc8\x9a\x1c\xf3\x144pq\xdf\xd4\xc6\xb4\xd9\xd9\xc4)\xeaVH\xc4;\x87\x11U#`\x16\xd2\x8c\nc\xfc\x01t\x93\xa6\x98\x83\xab\xb4\xe4\r\xde\x11\xa0+e\xd9\xd9\xf6\x95E\x04%\x1f\x04"
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=4, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b"\x17U\xc3\xd8'\xd3\xd9,\x8f\x14v\xabdq\xc7\xabZ\x14\xd5\x9c\xb9\xcc\xf1R{\x953\xc5\xa0Y\x06\x08\x1f\x83y\xb8)\xaf\xf3\xbd\xd3&o\xaa\xdf\xd9\n\xa22j\xe4\x8a~\xb6o\xfb\xb0Z\x9cV1\xef\x97\xf6k\xf3.\xe7:\x99u/\x80,MC\xf6\xe4.\x88\xae\x0b\xb3W\x80h\x9at\x1e\x94\x12\x03J\xad\x1c:^\x1c\xfd\xf48x\x1b\x85"
+Allower Client2. Do Initiate with Node2C in 1 at 1.2107715500023915
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 6\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xefZg4\x82\x8b\xc4\xcd"hU>)D\xb9\xb4z\x94Q\xdd\x13K\x8f\x96J\x1ez\x95\xc4\xca\x9c$\xd9h\xff"\xcdy\xcc\x03\xf1\xecVx\xe5\x0f@i.%\xbc\xf3\x17\xe5\x90\x0c\xda\xb8#Bw\xe4\x86}\xa7vj=\xef\xc7^\xe8mgH\rH\xb1\x99\xf5\xb7+f\xdbY\xae\x1b\xfd\x07\xb3\xeb~\xceW\x83n\xd4\xfc\x83\x83\xd10\xc9\xabF\x7f\xb6\x95\xd7\x82~h\xa8\x84tJy\xc6\xa9\xae\xa3\x98s\xe9\xd9wS_\xb8Ex5wMi\x1b\xa7\xf8\x13\x8a\xd6\xbe\xda\xb5\xa55y\x0f(M\xe2dd\xe4&\r\xa8\xac6\x15A\r\xf1]\x92\x0e\xa3\x03'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=6, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'\xefZg4\x82\x8b\xc4\xcd"hU>)D\xb9\xb4z\x94Q\xdd\x13K\x8f\x96J\x1ez\x95\xc4\xca\x9c$\xd9h\xff"\xcdy\xcc\x03\xf1\xecVx\xe5\x0f@i.%\xbc\xf3\x17\xe5\x90\x0c\xda\xb8#Bw\xe4\x86}\xa7vj=\xef\xc7^\xe8mgH\rH\xb1\x99\xf5\xb7+f\xdbY\xae\x1b\xfd\x07\xb3\xeb~\xceW\x83n\xd4\xfc\x83\x83\xd10\xc9\xab'
+Allower Client2. Do Initiate with Node3C in 1 at 1.2749698609986808
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 2\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n,-2\x89\xad\xf1\xe8q58\x84\xa0%\xedJ\xeed\xdd\t\xf8\xe5\x90y,\xac\x14#\xf2\xf6uX\x84\x8c\xc9k|\n\xd4\xb3\xa8&\xc6G\x96"0\xb4,{\xaf\xd2\xf2\xc1\xbc%\x1fl\xd55\xdc\xc1qS\x08'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 2, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=2, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node7C at '(False, 2, 3, 20, 2, False)'
+Aliver Client2. Done with Node7C in 2 at 1.2749698609986808
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 8\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\nA3\xd9K\x8a\x02\x02\xb0\xe9\xda\xe7r\xe6\x83`\x9b\t\x02f\x96TVE2\x05\xa3\xee\xbe\x9b\x10\xfd\x92;2\xebYn\x98%\xa4\xd7C\x92=+|\xde\x1b\xf7\xfe\xfb\xc9\xb8!s\x82\x03\x8e}\xe5\xa3f{\xb9\xf6\x01\xb4\xa4%\x00]\xa0\x8an>\x84\xef\xcbZ\xe5\xd82Z\x99\xc9BGg\x8d\xd5\x07O\xa7<\xff\x8f\x7f\x94\xef\x94\x19\x00\x99t\n=\x8f"\x87 \x00>\x1d\x9fh\xb7i\xf5\xcf\xa4\xa2G3\xa0\xab\xaf\xc8\xb2>Bx-\xb9i\x90,r\xb8n\x17\x12\xbb\x11K&\x84\xa5\xa7\xbd\xeeM\xbb\x17\xc2a9\xe3\x8b\\Y\xcb\x14\x1c\x16\x95\xb8\xaa\t'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=8, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'A3\xd9K\x8a\x02\x02\xb0\xe9\xda\xe7r\xe6\x83`\x9b\t\x02f\x96TVE2\x05\xa3\xee\xbe\x9b\x10\xfd\x92;2\xebYn\x98%\xa4\xd7C\x92=+|\xde\x1b\xf7\xfe\xfb\xc9\xb8!s\x82\x03\x8e}\xe5\xa3f{\xb9\xf6\x01\xb4\xa4%\x00]\xa0\x8an>\x84\xef\xcbZ\xe5\xd82Z\x99\xc9BGg\x8d\xd5\x07O\xa7<\xff\x8f\x7f\x94\xef\x94\x19\x00\x99t'
+Allower Client2. Do Initiate with Node5C in 1 at 1.2749698609986808
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 2\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\n\x9b_(\x7f5\x83\xe6N\xd9\x1f\x1e\x07\xf8D\xbd\xae\xf0\x93\xbd\x1eJ\x139\x15\xefN\xab\xe4CW1\x89\xa4l\x0b\x0f\xa8\x85\xfe\xbc\xf7\xcb\xf9\x8cgO"G\x85\xa7l\xea\xcf\xb1~\xbb\x9d\xe0K\ncR\xbd\x00'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 2, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=2, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node7C at '(False, 2, 3, 20, 3, False)'
+Messenger Client2. Done with Node7C in 3 at 1.2749698609986808
+Client2 received packet
+b'ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 2\nsi 31\nti 170\nbk 1\nck 1\nfk 1\nfl 40\n\n)\xff\xc5\xc68%v\xcb\xf3\xf5\xd1\xc0}`\xf1\x9b\x0cC\x16\xe1\t&\x07\xac}h\xae\xfa?\x91S\xac\x91a\x00\xf4\xa1\xf7\xc2\x18\xfeO\xc1\x95I<\xc4\xe3\x06\xd7BT\x1e\x17\x94\xe5pn+\xdd\xfap\xb70\x1d}\x84\x85\x1b\x8d\xba\x8d\xaf\xef<\xde~\x07\xc4}\xef\x8b4\xfe\xae\n*\x90e\\J\x14\xa3\xc8\x9cro\x99\xcfF\x9f\x07a\x8c5\xd38,\xfc\x05\ne\xba\x87="\xbf;w\xd4\xc8\x96\xffiA\xfe|\xe8\xb5\xa2-\xe7\xba \xd5%\xaf\xa2z\xcb\xf8\xc4\xa6\xc88\xcc\x80\xeeL|@\xdd\xc4\x15,re\xaf`E\xd6\xf0b\n\xe5\xf7\xd5K\x1f\xe4[Z\xa72\x0b\xca`|\xe6}\xea\x8e\xa7{\xeb\xbd\xae\xd5\xd3ldxk^6\xcecHB:\x08\x8e\xef\x05\xebaJ\x89l\xe4\r\x9bU\x0c'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 2, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 49, 'ti': 368, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=2, re=3, si=49, ti=368, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=368
+Added transaction to Node7C at '(True, 2, 3, 49, 368, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node7C in 368 at 1.2749698609986808
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node7C at '(True, 2, 3, 49, 368, False)'
+Messengent Client2. Complete with Node7C in 368 at 1.2749698609986808
+2016-11-03 22:03:57,780 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node7C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:57,780 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node7C
+2016-11-03 22:03:57,780 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:57,780 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+2016-11-03 22:03:57,783 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.119 seconds
+2016-11-03 22:03:57,783 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 1 / 7 nodes
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 7\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x8bYD\x12\xe3w\xa6\xe4\xd3z\x8e\xd8%\xeft\xb4\xec\x0c\xb5?\xdc\xb4\x87\xb1\xbek\x01(\xc8\xb0\xd0\xbc\xa1\xeb7\xbf\x0e\xd2+|B\xd5\\\xc5\xe6\xe8_ih\xf59\xd5\xeb\xafh6W^7\x1d\x13J\xbe\x0f'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=7, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node6C at '(False, 7, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node6C in 1 at 1.4509358299983433
+Added transaction to Node6C at '(False, 7, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node6C in 2 at 1.4509358299983433
+2016-11-03 22:03:57,873 | DEBUG    | stacked.py           (294) | conns | Client2's connection changed from {'Node7C'} to {'Node7C', 'Node6C'}
+2016-11-03 22:03:57,873 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node6C
+2016-11-03 22:03:57,873 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node6C
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 5\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\nd\xa7?\xa1\xed\xa0}X\x00\xc78\xc3\x88\xf5\x7f\xf9\xd7\xff\xdbK-+\x1b/\x9a{\x90r|\xac\xd9\xf4\xdeu\xdf\x82\xbcm\x0b\xa6\xa8\xee\xbf80\x83~\x15!\xe4\xa27\x86\x0bI\xcb\xa8\x00u\xd6\xa6;b\xca.\xbcPu\x91.6^4\xcdq\x90D~\\\x91\x83r\x01s,\x99\x9b\x02\xaf\xb2d\x9a\xf31l\xc9\n\xd6\xf2\x8a\xcc@j\x1aEjzLhI\x01\xb26T\x81\xff+<Yp\x10\xd7U\xcc\x97\x99\xb5w\x9b\xd7YPX\xb9P\x91t\x92\xa8\x8a\xed\xed\x11r\xbf\xd7\xfb\x84\xb3\xe9U\xa6>\t7\xff\xc8\x00\x82kr\xc6BJ\x0b\xcf\x9f\r'
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=5, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'd\xa7?\xa1\xed\xa0}X\x00\xc78\xc3\x88\xf5\x7f\xf9\xd7\xff\xdbK-+\x1b/\x9a{\x90r|\xac\xd9\xf4\xdeu\xdf\x82\xbcm\x0b\xa6\xa8\xee\xbf80\x83~\x15!\xe4\xa27\x86\x0bI\xcb\xa8\x00u\xd6\xa6;b\xca.\xbcPu\x91.6^4\xcdq\x90D~\\\x91\x83r\x01s,\x99\x9b\x02\xaf\xb2d\x9a\xf31l\xc9\n\xd6\xf2\x8a\xcc@j\x1a'
+Allower Client2. Do Initiate with Node4C in 1 at 1.4966331440009526
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 3\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x14\x13\xc2R\x03\xfb\xff\x1c\xf9\xed|f\xf5)\xf8\'\xca\xa3g\xfb\x8b\xd4\x03\x0e\x8avO\xfc)$=Fo\xb5]\xb0\xd7\xefX\x1e\x9cH\xc4\xe2^\x9c\\\xec\x11^k\xe2\x12v\xc5"\x98\xd2\xac\xfa\x1f\x04\xf4\xcf\xa8\x9eD\x9d\x12#\x84\xa8\x9b\xf8!\xc4\x0f\xa9\xda\xa8\x0b\xfd\x005\xe68G\xcd{,\xfc\x0e\xdeA\xf1\xe8\x1c\xf0\x18\x87KF|\xe7j\xce\xe4\xe5\x88\x0f\x9elA\xf7Ezy\xed\x0b\xc3@\x04\x7f\x86Vu\xb8ZsH\x91\x89B)\xef2c\x1c\xb6W\x15\xcf)\xf00\x90\xfew\x05*\x0c\xea\xfeU\xf3q;\x1dK\xa7\x84\xab\xef\x97c\xf0\xae\x0e'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=3, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'\x14\x13\xc2R\x03\xfb\xff\x1c\xf9\xed|f\xf5)\xf8\'\xca\xa3g\xfb\x8b\xd4\x03\x0e\x8avO\xfc)$=Fo\xb5]\xb0\xd7\xefX\x1e\x9cH\xc4\xe2^\x9c\\\xec\x11^k\xe2\x12v\xc5"\x98\xd2\xac\xfa\x1f\x04\xf4\xcf\xa8\x9eD\x9d\x12#\x84\xa8\x9b\xf8!\xc4\x0f\xa9\xda\xa8\x0b\xfd\x005\xe68G\xcd{,\xfc\x0e\xdeA\xf1\xe8\x1c\xf0\x18\x87KF|\xe7'
+Allower Client2. Do Initiate with Node1C in 1 at 1.4966331440009526
+Client2 received packet
+b"ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 4\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x17U\xc3\xd8'\xd3\xd9,\x8f\x14v\xabdq\xc7\xabZ\x14\xd5\x9c\xb9\xcc\xf1R{\x953\xc5\xa0Y\x06\x08\x1f\x83y\xb8)\xaf\xf3\xbd\xd3&o\xaa\xdf\xd9\n\xa22j\xe4\x8a~\xb6o\xfb\xb0Z\x9cV1\xef\x97\xf6k\xf3.\xe7:\x99u/\x80,MC\xf6\xe4.\x88\xae\x0b\xb3W\x80h\x9at\x1e\x94\x12\x03J\xad\x1c:^\x1c\xfd\xf48x\x1b\x85B:\x10:\x96\x01N\xce\xc8\x9a\x1c\xf3\x144pq\xdf\xd4\xc6\xb4\xd9\xd9\xc4)\xeaVH\xc4;\x87\x11U#`\x16\xd2\x8c\nc\xfc\x01t\x93\xa6\x98\x83\xab\xb4\xe4\r\xde\x11\xa0+e\xd9\xd9\xf6\x95E\x04%\x1f\x04"
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=4, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b"\x17U\xc3\xd8'\xd3\xd9,\x8f\x14v\xabdq\xc7\xabZ\x14\xd5\x9c\xb9\xcc\xf1R{\x953\xc5\xa0Y\x06\x08\x1f\x83y\xb8)\xaf\xf3\xbd\xd3&o\xaa\xdf\xd9\n\xa22j\xe4\x8a~\xb6o\xfb\xb0Z\x9cV1\xef\x97\xf6k\xf3.\xe7:\x99u/\x80,MC\xf6\xe4.\x88\xae\x0b\xb3W\x80h\x9at\x1e\x94\x12\x03J\xad\x1c:^\x1c\xfd\xf48x\x1b\x85"
+Allower Client2. Do Initiate with Node2C in 1 at 1.4966331440009526
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 6\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xefZg4\x82\x8b\xc4\xcd"hU>)D\xb9\xb4z\x94Q\xdd\x13K\x8f\x96J\x1ez\x95\xc4\xca\x9c$\xd9h\xff"\xcdy\xcc\x03\xf1\xecVx\xe5\x0f@i.%\xbc\xf3\x17\xe5\x90\x0c\xda\xb8#Bw\xe4\x86}\xa7vj=\xef\xc7^\xe8mgH\rH\xb1\x99\xf5\xb7+f\xdbY\xae\x1b\xfd\x07\xb3\xeb~\xceW\x83n\xd4\xfc\x83\x83\xd10\xc9\xabF\x7f\xb6\x95\xd7\x82~h\xa8\x84tJy\xc6\xa9\xae\xa3\x98s\xe9\xd9wS_\xb8Ex5wMi\x1b\xa7\xf8\x13\x8a\xd6\xbe\xda\xb5\xa55y\x0f(M\xe2dd\xe4&\r\xa8\xac6\x15A\r\xf1]\x92\x0e\xa3\x03'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=6, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'\xefZg4\x82\x8b\xc4\xcd"hU>)D\xb9\xb4z\x94Q\xdd\x13K\x8f\x96J\x1ez\x95\xc4\xca\x9c$\xd9h\xff"\xcdy\xcc\x03\xf1\xecVx\xe5\x0f@i.%\xbc\xf3\x17\xe5\x90\x0c\xda\xb8#Bw\xe4\x86}\xa7vj=\xef\xc7^\xe8mgH\rH\xb1\x99\xf5\xb7+f\xdbY\xae\x1b\xfd\x07\xb3\xeb~\xceW\x83n\xd4\xfc\x83\x83\xd10\xc9\xab'
+Allower Client2. Do Initiate with Node3C in 1 at 1.4966331440009526
+Client2 received packet
+b'ri RAET\npl 00f4\nhl 4c\nfg 01\npk 7\nse 3\nde 8\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\nA3\xd9K\x8a\x02\x02\xb0\xe9\xda\xe7r\xe6\x83`\x9b\t\x02f\x96TVE2\x05\xa3\xee\xbe\x9b\x10\xfd\x92;2\xebYn\x98%\xa4\xd7C\x92=+|\xde\x1b\xf7\xfe\xfb\xc9\xb8!s\x82\x03\x8e}\xe5\xa3f{\xb9\xf6\x01\xb4\xa4%\x00]\xa0\x8an>\x84\xef\xcbZ\xe5\xd82Z\x99\xc9BGg\x8d\xd5\x07O\xa7<\xff\x8f\x7f\x94\xef\x94\x19\x00\x99t\n=\x8f"\x87 \x00>\x1d\x9fh\xb7i\xf5\xcf\xa4\xa2G3\xa0\xab\xaf\xc8\xb2>Bx-\xb9i\x90,r\xb8n\x17\x12\xbb\x11K&\x84\xa5\xa7\xbd\xeeM\xbb\x17\xc2a9\xe3\x8b\\Y\xcb\x14\x1c\x16\x95\xb8\xaa\t'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 7, 'pl': 244, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=8, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '7'
+Stack 'Client2'. Received packet body
+b'A3\xd9K\x8a\x02\x02\xb0\xe9\xda\xe7r\xe6\x83`\x9b\t\x02f\x96TVE2\x05\xa3\xee\xbe\x9b\x10\xfd\x92;2\xebYn\x98%\xa4\xd7C\x92=+|\xde\x1b\xf7\xfe\xfb\xc9\xb8!s\x82\x03\x8e}\xe5\xa3f{\xb9\xf6\x01\xb4\xa4%\x00]\xa0\x8an>\x84\xef\xcbZ\xe5\xd82Z\x99\xc9BGg\x8d\xd5\x07O\xa7<\xff\x8f\x7f\x94\xef\x94\x19\x00\x99t'
+Allower Client2. Do Initiate with Node5C in 1 at 1.4966331440009526
+Added transaction to Node6C at '(False, 7, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node6C in 3 at 1.4966331440009526
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+2016-11-03 22:03:57,993 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.108 seconds
+Client2 received packet
+b"ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 5\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xc5\xff=\xd1\x83!\xc3\xd8\x011\x86Bm\xa1\xcc\xc2\xc6\xf1\xc0\xa1\xe09\xd5w\x98\xee\xa5\xcf\x98'\xc2)w\xa4\xbc\x15\x1aX\x95O\xb9\x13cw\xecG \xb5\x843\x06\x10\x80\xaau\xdf*\x1c\r`\x897M\x0e"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=5, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node4C at '(False, 5, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node4C in 1 at 1.6144544819981093
+Added transaction to Node4C at '(False, 5, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node4C in 2 at 1.6144544819981093
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 4\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xe8S\x1d\xa9d\xdb\x16\xbc\xd2\xefw%\x9c\xe8b3U\xc8v\x0c\x86\x82}\x0eE\xde\x80t:\xf5\xad<,\xab\x81\xcd{\xc1\xe9OA\xc9\x16L\xc0a\x03Jp\x04\x14\xcc>\n\xfd\xdfw\x95\xa8\x89?#\xce\x0b'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=4, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node2C at '(False, 4, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node2C in 1 at 1.6144544819981093
+Added transaction to Node2C at '(False, 4, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node2C in 2 at 1.6144544819981093
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 3\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xa5\xc7t!~Z\xdd\xaa3\x18u\xc8-\xe8\xf6\x83K\xe7\xbcd\x18\x02\xfa!\xd4\x80\xd1\x85\x999\xe9\xcfb\xc8\xeemFG\xc9\x9f\x8f\x96.\r\xd4pG,\xb9\xbf\xe5T~Z\xa2\xc7c$\x06\x03\xae\x9a\xdc\n'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=3, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node1C at '(False, 3, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node1C in 1 at 1.6144544819981093
+Added transaction to Node1C at '(False, 3, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node1C in 2 at 1.6144544819981093
+2016-11-03 22:03:58,131 | DEBUG    | stacked.py           (294) | conns | Client2's connection changed from {'Node7C', 'Node6C'} to {'Node7C', 'Node2C', 'Node1C', 'Node6C', 'Node4C'}
+2016-11-03 22:03:58,131 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node1C
+2016-11-03 22:03:58,131 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node2C
+2016-11-03 22:03:58,131 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node4C
+2016-11-03 22:03:58,131 | DEBUG    | motor.py             (34) | set_status | Client2 changing status from starting to started_hungry
+2016-11-03 22:03:58,131 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node1C
+2016-11-03 22:03:58,131 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node2C
+2016-11-03 22:03:58,132 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node4C
+2016-11-03 22:03:58,132 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.129 seconds
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 8\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xd0|\xe6\x0esT&i\xd4\xf3\xfe!\x90\xd7\xf3\xbc`1\xd0\xb9D3\x17\x01\x17\xe6\xad\xe0\xfa\xc9\xcd-\xd7O5f(F|\x158\x03\x8d\x15y\xdf\xba\x0f\x9a\xfe\xa3f\x02\x94m\x1f\x0e,\xeb\xfa\x1e\xed\xaa\x05'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=8, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node5C at '(False, 8, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node5C in 1 at 1.7538729360021534
+Added transaction to Node5C at '(False, 8, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node5C in 2 at 1.7538729360021534
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 6\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x03\xd7\xc87)\xfe\x82k\x91L\xf9\xf2>\xb0?\xa6\xcf\xd8\x93\xe1\x19\xd4\x8d\x07\xe1\xae\xeb=Y\xb0\xbb\x18^\xc4\x18\x8b1\xed\x00\xab\xdb\x93\xc5\xdf\xe5\xbb\xd4m\xa5\xdfb9\x1b\xdc{LA$\xa8|\x15\xab\x83\x0f'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=6, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Stack 'Client2'. Received packet body
+b''
+Removed transaction from Node3C at '(False, 6, 3, 19, 1, False)'
+Allower Client2. Do Ack Final, Done with Node3C in 1 at 1.7538729360021534
+Added transaction to Node3C at '(False, 6, 3, 20, 2, False)'
+Aliver Client2. Do Alive with Node3C in 2 at 1.7538729360021534
+Aliver Client2. Redo with Node6C in 2 at 1.7538729360021534
+Added transaction to Node1C at '(False, 3, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node1C in 3 at 1.7538729360021534
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+Added transaction to Node2C at '(False, 4, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node2C in 3 at 1.7538729360021534
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+Added transaction to Node4C at '(False, 5, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node4C in 3 at 1.7538729360021534
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+2016-11-03 22:03:58,274 | DEBUG    | stacked.py           (294) | conns | Client2's connection changed from {'Node7C', 'Node2C', 'Node1C', 'Node6C', 'Node4C'} to {'Node1C', 'Node6C', 'Node3C', 'Node5C', 'Node7C', 'Node2C', 'Node4C'}
+2016-11-03 22:03:58,274 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node3C
+2016-11-03 22:03:58,274 | INFO     | stacked.py           (320) | _connsChanged | Client2 now connected to Node5C
+2016-11-03 22:03:58,274 | DEBUG    | motor.py             (34) | set_status | Client2 changing status from started_hungry to started
+2016-11-03 22:03:58,274 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node3C
+2016-11-03 22:03:58,275 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')]) to Node5C
+2016-11-03 22:03:58,275 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.133 seconds
+2016-11-03 22:03:58,276 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 7 / 7 nodes
+2016-11-03 22:03:58,276 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkIfConnectedToAll) succeeded with 6.56 seconds to spare
+2016-11-03 22:03:58,277 | TRACE    | signing.py           (86) | serializeMsg | serialized msg {'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': None, 'reqId': 1478190838277399, 'operation': {'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'type': 'ATTRIB'}} into identifier:C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig|operation:raw:79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481|type:ATTRIB|reqId:1478190838277399
+2016-11-03 22:03:58,278 | DEBUG    | client.py            (228) | submitReqs | Client2 pending request since in mode 1 and connected to {'Node1C', 'Node6C', 'Node3C', 'Node5C', 'Node7C', 'Node2C', 'Node4C'} nodes
+2016-11-03 22:03:58,278 | DEBUG    | client.py            (416) | pendReqsTillConnection | Enqueuing request since not enough connections with nodes: Request: {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+2016-11-03 22:03:58,279 | DEBUG    | gen_load_ratcheting  (123) | _submit | Client Client2 sending request Request: {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Client2 received packet
+b"ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 7\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\xcc\xf6\xfb]gB\x16J\xf5\xf3\xa1\xda?\x92\x82\x03\x05#\xe6\xfb9\xd6\xd2g\xcd.\xe3G\x83\xc4'\xf1\x08c\x87\x15\x00\x972\x9d\xdbr\x8d)\xaa\xa5\xecH\x1b\xc7\xc2\x94\xaf+\x1cn_\x08h}y\x9d.\t"
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=7, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node6C at '(False, 7, 3, 20, 2, False)'
+Aliver Client2. Done with Node6C in 2 at 1.896796879998874
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 7\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\ni\x1fK@YxV\x05o\xa7@o\xed\x04\xfd\xebE\x9c<\xf8o\x80^pV\xc0\xbd\xfd\x04\x8b\xa0 EP\xb9M\xb3\xa22\x0f\x1c\xf4\xd1\x7f\x8fG\xfcQ\nq\xac&D\xf4\xf8\xda\xbczf\x1f\x16V\xdd\x0e'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=7, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node6C at '(False, 7, 3, 20, 3, False)'
+Messenger Client2. Done with Node6C in 3 at 1.896796879998874
+Client2 received packet
+b'ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 7\nsi 37\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\n\xfe\xd8\t\xbb\xf3\x0cr\r\xf3\x90\x8b\xa7\x15\xc9\xe4\xa6Q\x02\xa8\xeb)\x8d\x82"\x0e\x1a4\xf2\xb9\x14\xd8\xae\x9a\xf8\x00;g\x1a\x95j3\x8c\xcc\x12\x83Wvf\x94\xcb\x99n\xdc\r\xd6\x86\xa1\xcd\xb8H\x97G<l5\x84\xf0\x19N\x1fK\xe7~\xb6\xf6a\xdet\n\xcb\x8f}\xe7\x15\x92\n};\xdc \x17H}\xf1\x1e\xc9\xed\xb7Bx\x8d\xeb\xd09\x11Ve\xc8,)\x87j\xc3va)\x15\xab,f\x0b?Pl\x13\x8d\xcb4\xff\x13\xa18\xbc\x8b\x91\x1f\xf2\x8d\xba\x9b\x01X\xf1\xb3\x83:\xed\xca\xf4\x9e\xb7\t\xb8Y-.\r\xa9;\x81DU^\x0f\xfc\xcfzt\xfdk\x1a\xb6M\xd0\'\xec\xde\xd0tir\xde\xbch\xbf\x98\xb1\xe7\xcbV\xb8\x82)\xa7\x9e{KEw\x93\xbfj\xe8?\x14\x11g\xfe\xaf\x16\xf7W\xc0\t'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 7, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 55, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=7, re=3, si=55, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node6C at '(True, 7, 3, 55, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node6C in 369 at 1.896796879998874
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node6C at '(True, 7, 3, 55, 369, False)'
+Messengent Client2. Complete with Node6C in 369 at 1.896796879998874
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 4\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xe8S\x1d\xa9d\xdb\x16\xbc\xd2\xefw%\x9c\xe8b3U\xc8v\x0c\x86\x82}\x0eE\xde\x80t:\xf5\xad<,\xab\x81\xcd{\xc1\xe9OA\xc9\x16L\xc0a\x03Jp\x04\x14\xcc>\n\xfd\xdfw\x95\xa8\x89?#\xce\x0b'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=4, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Staler 'Client2'. Stale transaction '3' packet '1' from '('35.161.111.17', 9704)' in 1 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.161.111.17', 9704) in 1 at 1.896796879998874
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 6\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\x03\xd7\xc87)\xfe\x82k\x91L\xf9\xf2>\xb0?\xa6\xcf\xd8\x93\xe1\x19\xd4\x8d\x07\xe1\xae\xeb=Y\xb0\xbb\x18^\xc4\x18\x8b1\xed\x00\xab\xdb\x93\xc5\xdf\xe5\xbb\xd4m\xa5\xdfb9\x1b\xdc{LA$\xa8|\x15\xab\x83\x0f'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=6, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Staler 'Client2'. Stale transaction '3' packet '1' from '('35.161.122.249', 9706)' in 1 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.161.122.249', 9706) in 1 at 1.896796879998874
+Aliver Client2. Redo with Node4C in 2 at 1.896796879998874
+Aliver Client2. Redo with Node2C in 2 at 1.896796879998874
+Aliver Client2. Redo with Node1C in 2 at 1.896796879998874
+Added transaction to Node3C at '(False, 6, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node3C in 3 at 1.896796879998874
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+Added transaction to Node5C at '(False, 8, 3, 20, 3, False)'
+Messenger Client2. Do Message Segment 0 with Node5C in 3 at 1.896796879998874
+Client2 sending
+OrderedDict([('op', 'LEDGER_STATUS'), ('ledgerType', 0), ('txnSeqNo', 7), ('merkleRoot', 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=')])
+2016-11-03 22:03:58,434 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node6C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:58,434 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node6C
+2016-11-03 22:03:58,435 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:58,435 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 3\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xa5\xc7t!~Z\xdd\xaa3\x18u\xc8-\xe8\xf6\x83K\xe7\xbcd\x18\x02\xfa!\xd4\x80\xd1\x85\x999\xe9\xcfb\xc8\xeemFG\xc9\x9f\x8f\x96.\r\xd4pG,\xb9\xbf\xe5T~Z\xa2\xc7c$\x06\x03\xae\x9a\xdc\n'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=3, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Staler 'Client2'. Stale transaction '3' packet '1' from '('35.161.137.38', 9702)' in 1 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.161.137.38', 9702) in 1 at 2.046335865998117
+Client2 received packet
+b"ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 5\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xc5\xff=\xd1\x83!\xc3\xd8\x011\x86Bm\xa1\xcc\xc2\xc6\xf1\xc0\xa1\xe09\xd5w\x98\xee\xa5\xcf\x98'\xc2)w\xa4\xbc\x15\x1aX\x95O\xb9\x13cw\xecG \xb5\x843\x06\x10\x80\xaau\xdf*\x1c\r`\x897M\x0e"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=5, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Staler 'Client2'. Stale transaction '3' packet '1' from '('35.160.153.163', 9708)' in 1 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.160.153.163', 9708) in 1 at 2.046335865998117
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 01\npk 1\nse 3\nde 8\nsi 13\nti 1\ntk 3\nbk 2\nfk 1\nfl 40\n\n\xd0|\xe6\x0esT&i\xd4\xf3\xfe!\x90\xd7\xf3\xbc`1\xd0\xb9D3\x17\x01\x17\xe6\xad\xe0\xfa\xc9\xcd-\xd7O5f(F|\x158\x03\x8d\x15y\xdf\xba\x0f\x9a\xfe\xa3f\x02\x94m\x1f\x0e,\xeb\xfa\x1e\xed\xaa\x05'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 19, 'ti': 1, 'tk': 3, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 2, 'ck': 0, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=8, re=3, si=19, ti=1, bf=False)
+Client2 received trans kind = '3' packet kind = '1'
+Staler 'Client2'. Stale transaction '3' packet '1' from '('54.147.219.106', 9710)' in 1 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('54.147.219.106', 9710) in 1 at 2.046335865998117
+Client2 received packet
+b"ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 5\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\nGy;\xad\x1a\x10\x9b\xc4\xdd\x8a\xe6\xfc\x02\xfc\xbfH?Nb\x19\xe7\xd9V\x16\xcd\xedy\x85#\xa7p\n\xabW\x98\x92\x16\xf5m4~\xf6\xe2\xb6#H\xee\xa0J\xd7\xa8\xf8\x97\x80\xce'.\xaeU\xb6g3\xc8\x07"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=5, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node4C at '(False, 5, 3, 20, 2, False)'
+Aliver Client2. Done with Node4C in 2 at 2.046335865998117
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 4\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n$\x9c\xa1\xb5?\xba\x9e}p\n\tW-\xe3\x886Br\xf9\x10\xdc\xa4\xd4CE\xd0\x92\x82\x969\x08\xeb\x14\x85\x8a\x0fL/\xd7\xfbf\xff\xf4,\x80\x0b0\xae\xb47\xcf\xa0g**\xcc`r\xe0\xd8\xa8)O\n'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=4, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node2C at '(False, 4, 3, 20, 2, False)'
+Aliver Client2. Done with Node2C in 2 at 2.046335865998117
+Aliver Client2. Redo with Node3C in 2 at 2.046335865998117
+Aliver Client2. Redo with Node5C in 2 at 2.046335865998117
+2016-11-03 22:03:58,542 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.256 seconds
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 3\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\ns\x9b\xde\xcc\x8dn\xa0\xa5"\x97I^\xb6&&\xa2\x1b\xea|\x16\xf6$8\x9d\x0e\xc8M\x04\x96d\xba\xdb3>\xb3\xa1\x89n(r\xbf\x89\x87\xf1\x0c\x91wy\xbe@SAy\xef\xe5\x8e\xed\x98@\xf6\xccN\x06\x0e'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=3, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node1C at '(False, 3, 3, 20, 2, False)'
+Aliver Client2. Done with Node1C in 2 at 2.1645476019984926
+Client2 received packet
+b"ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 7\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\xcc\xf6\xfb]gB\x16J\xf5\xf3\xa1\xda?\x92\x82\x03\x05#\xe6\xfb9\xd6\xd2g\xcd.\xe3G\x83\xc4'\xf1\x08c\x87\x15\x00\x972\x9d\xdbr\x8d)\xaa\xa5\xecH\x1b\xc7\xc2\x94\xaf+\x1cn_\x08h}y\x9d.\t"
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=7, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Staler 'Client2'. Stale transaction '4' packet '1' from '('52.199.48.127', 9712)' in 2 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('52.199.48.127', 9712) in 2 at 2.1645476019984926
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 4\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\n\xa6\xae\xa3\xe5\xd2\xe1\xc5_\xa3]\xe4#\x9c\x03\x1d\x11\xd4\x83\x9a\x80\xc6\xd5\x0e[\x19s\x11*n7m>:Q|1{\x00JAnD\xe4\xac\x97\x17;\xf0P\xb2\r\xa9&\x17\xa5w\xfab\xcaQ9\x05\xcd\x0c'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=4, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node2C at '(False, 4, 3, 20, 3, False)'
+Messenger Client2. Done with Node2C in 3 at 2.217086696997285
+Client2 received packet
+b"ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 8\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n^j\x88K\xa3W\xbc\x0bV\xb2\x9e\xab\x96X\x9bF\x11\xdc\x82X\x92m\xdd\x81f\xe3\x93\xd7C+Q\x84.d\xea\x19\x98\x94\x10.{\x10\xb7\xb6[\xa9\xff\xd8w>\x0b\r\x93\x9d\x0en\xbdYJW'\x8bf\x01"
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=8, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node5C at '(False, 8, 3, 20, 2, False)'
+Aliver Client2. Done with Node5C in 2 at 2.217086696997285
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 3\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\n\xb6D\x0f\x85\xff]\xbfq^\x04\xb0\x18N\x08\xdeL\x82\x12\xd9\x8f\x9dVd\x87!-\xfeY\xa8{\x1c\xb3^:\xffu\xa4?\xa8\xa0\xbaH\x84\xc4\xe0\\"f\x86n\x00\xb2\xb8\x9f\xbe\x00\x1f\xf6\x12\x16\x9f\xb3\xec\x02'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=3, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node1C at '(False, 3, 3, 20, 3, False)'
+Messenger Client2. Done with Node1C in 3 at 2.2733617539997795
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 5\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\n\x17\xf09R\x93\xdb\xee\x19U\xfb\xed\x9a\xae\x7f\x16\x02D<\xad!8\xd1\x83~<t\xf3\xb8\x83\xd9\\\xe0&\x1b\x11\xc6a\xc2\xc0\xad7\x91\xa1\xa9\xe2\x0b,{\x823\xbd\xd0\x94\x80\x95l\xf6G\xf1s\xa1tf\x01'
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=5, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node4C at '(False, 5, 3, 20, 3, False)'
+Messenger Client2. Done with Node4C in 3 at 2.2733617539997795
+Client2 received packet
+b'ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 4\nsi 45\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\ny_\xa0%\xbf\xbe\xd8\x874\x1fL5J.\xf55\xa3\x17\xb9\'\\\x88\x81\xfd\xa5\xbbf\xffA&Q"\xb3N\xccX\xf2\xe55\xd0\xdf\xe4\x8de(\x80h\xda\xf0/\xa6:[s~\x93\x83\xbd\xa0\xaa\xa7\x90\xba\xdd\xf5\x82S\x1aWo\xfd;\x17\xb3\x19\xe1\xc8\x03\xb05\xbc\xa3}\x8d\\\xa89\xef\x9d/\xf9j\xe2\x94\x86\x89O<Jy\xadRE\xc3\xa2\xef+)6y\x12\xc7\xfb\xb1JK@\xccQ%\xb0\x9e/\xc7t\x04\xce\x08\x96o\xdb\x08\xc0\xb5\xe1\xca\xe6\xcc\n\x8eX\xaa\xdd\r\xf5\xe9"\x12K9\xd0\xbaZP\xee\xa5\x15\xd2\xb8\xd6\xa4CrB\xad0n~\x0b\xd2\xdco\x9a\xb12>\x1d\xd4l^\x13i\x1dt\xcc\x12$\xa2#\xe9f\xee1\xfe\x9c\x90\x18Y(DE\xbe\xf3\xda\xd3h\xb1\x17|D\xf7{K\x00'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 4, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=4, re=3, si=69, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node2C at '(True, 4, 3, 69, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node2C in 369 at 2.2733617539997795
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node2C at '(True, 4, 3, 69, 369, False)'
+Messengent Client2. Complete with Node2C in 369 at 2.2733617539997795
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 6\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\njg\xc7\x7f\xd9\x11\x8d\xa1\x07\xe1X!\xa3:-\xd8\xac\xd9.\xaf[KzKi<\xb7Pd,\x0fL\xc4x\x81\xa7w\xf7&\xdd\xd9e>\xb7t\xedL\x15\xa6\x88\x9bLn\x06\xd9\xde\x04hwIv\x0e\xb9\t'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=6, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node3C at '(False, 6, 3, 20, 2, False)'
+Aliver Client2. Done with Node3C in 2 at 2.2733617539997795
+2016-11-03 22:03:58,754 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node2C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:58,754 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node2C
+2016-11-03 22:03:58,755 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:58,755 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+Client2 received packet
+b'ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 3\nsi 45\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\nN\xe0\xc7\x07\xa8>s\xe8&\xaaB\x8cv\x99\xf4\x0f]6?\x9b\x04\xfcW(i\x9e\xd4\xc7O\xa5\xd1\xfe\x0f8Vs\xfeUZbc\xb4i\xfd\xcbS\x18Q\xa2\x81\xcfi\xaa\xefQN\xb3\xffu\xdd\t\xafW\xe8\xf6j\xd3\xee\xe9_\xbd2S\xe5fb\x16\xb7%\xfa\xa0$a\xc7,\xb4V\xd58-\xb4\xcaHN\x9cK@m$\xa0X\x83\xabv\x8d#|\xda=\x14Y=>-\x83dIx\xcd\xeeB\xdd9\xa3c\xb1\xd0\xbbl\x9e\xa6\x14\xa1\xe5\xd5G\t\xd5\xaf\xce\xd1\xd4\xb0\xef\xae\x98\x7f\xc0\xa1B\xf96\xde!\x1c\x85\r\xcd\xf0m\x89\x864\xda\xf6\x0ckF\xdb\x91)\xd2\xe79\xf7\xbd~(P\xfeR{x\xee\xfe\xa0\xac\xecT\xa1_^sE\xb8\xa6\xce\x9f\xa0\xc6\xb1\xb3\x15\x9d\xe6v\xcc\xac\x9b[\r\xd7\x91\x04'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 3, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=3, re=3, si=69, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node1C at '(True, 3, 3, 69, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node1C in 369 at 2.3669510850013467
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node1C at '(True, 3, 3, 69, 369, False)'
+Messengent Client2. Complete with Node1C in 369 at 2.3669510850013467
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 4\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n$\x9c\xa1\xb5?\xba\x9e}p\n\tW-\xe3\x886Br\xf9\x10\xdc\xa4\xd4CE\xd0\x92\x82\x969\x08\xeb\x14\x85\x8a\x0fL/\xd7\xfbf\xff\xf4,\x80\x0b0\xae\xb47\xcf\xa0g**\xcc`r\xe0\xd8\xa8)O\n'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=4, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Staler 'Client2'. Stale transaction '4' packet '1' from '('35.161.111.17', 9704)' in 2 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.161.111.17', 9704) in 2 at 2.3669510850013467
+Client2 received packet
+b"ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 5\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\nGy;\xad\x1a\x10\x9b\xc4\xdd\x8a\xe6\xfc\x02\xfc\xbfH?Nb\x19\xe7\xd9V\x16\xcd\xedy\x85#\xa7p\n\xabW\x98\x92\x16\xf5m4~\xf6\xe2\xb6#H\xee\xa0J\xd7\xa8\xf8\x97\x80\xce'.\xaeU\xb6g3\xc8\x07"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=5, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Staler 'Client2'. Stale transaction '4' packet '1' from '('35.160.153.163', 9708)' in 2 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.160.153.163', 9708) in 2 at 2.3669510850013467
+Client2 received packet
+b"ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 5\nsi 42\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\n\x18\xce\x93\xa2\xeb\xf3;\xdc3\xbc$[\x8f\x94\xdd\x9b[\x94\xa4?\xc9\xa6\xe6Z{\xf0m\xd2\x08~B\xe0\xedF'\xc2\xf1v\xf1\xd99P[\x0b\x80\x9f\xf5\xf6\xd0\x01\xec\x92#P*\x06\x0b\x89\xe8\xc6\\\xc3M)\x14\xeb\xa0\x13\xe0\xde\x87\x8fG\xf6\\\xe2\xa9!`\xc3\xfe\x8d\x1dm\x99?\xf7\xb1eC_ua\x04\x0f\xcfN\x85\xaa]<\xe1\xd8O\xea\xc7Q/\x84\x10s{\xb3\x82\xf2Q \x060K?\x15\xca\x9a\x07\xed\xc2\xbd\xd3\xe28\xcf\xe1\x04W\xe6$6\xc7gS\x98\xd9~!$O\xd4\x9f\xb7S\xd4\xd0\x9b\xe4\xe7->\x94F\x1c'\xe4\x03-\xa1\xb0\x99\xf5\x1b.q\xbam\xea\xc3\x8b\xef\xf9L|\xe9\xa1\x04\xea\x1f\xf6[\x00\xd3F\x9cEI\xbbyM\x9b\x89\xc4z\x87\x0f\x9d\xc7\x17\x981K\x1c\x90Y\x94\x0c"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 5, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 66, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=5, re=3, si=66, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node4C at '(True, 5, 3, 66, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node4C in 369 at 2.3669510850013467
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node4C at '(True, 5, 3, 66, 369, False)'
+Messengent Client2. Complete with Node4C in 369 at 2.3669510850013467
+2016-11-03 22:03:58,857 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node1C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:58,858 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node1C
+2016-11-03 22:03:58,858 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:58,858 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+2016-11-03 22:03:58,858 | DEBUG    | ledger_manager.py    (304) | processLedgerStatus | Client2 found out from {'Node7C', 'Node2C', 'Node6C', 'Node1C'} that its ledger of type 0 is latest
+2016-11-03 22:03:58,858 | DEBUG    | ledger_manager.py    (691) | catchupCompleted | Client2 completed catching up ledger 0
+2016-11-03 22:03:58,858 | DEBUG    | client.py            (422) | flushMsgsPendingConnection | Flushing pending message queue of size 1
+2016-11-03 22:03:58,858 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node4C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:58,858 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node4C
+2016-11-03 22:03:58,859 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:58,859 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+2016-11-03 22:03:58,859 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node7C
+2016-11-03 22:03:58,859 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node1C
+2016-11-03 22:03:58,860 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node2C
+2016-11-03 22:03:58,860 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node4C
+2016-11-03 22:03:58,860 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node3C
+2016-11-03 22:03:58,860 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node6C
+2016-11-03 22:03:58,860 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}} to Node5C
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 8\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\n\xa4\xb6\x8d>\x17\xa8\x1d\x1814N\xee}h\x91\x9a*<\x8c/\xdaI\x13DH\xea\x9c\xb9\xc7\xac\xb8oR\x12\x1b\x1eL\xdf\x12\xcb\xf3Pb\x01\x87]\x8c\xff\x88@s\xf6\xb7a\xa9\xe1\x93\xfa\xff\xb1\x10\x82\x8a\x03'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=8, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node5C at '(False, 8, 3, 20, 3, False)'
+Messenger Client2. Done with Node5C in 3 at 2.471957651003322
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 6\nsi 14\nti 3\nbk 1\nck 1\nfk 1\nfl 40\n\n/dAR\x0e\xcf\xa7\x0f\x82o\xbf?\xdf\xea\xc9bF\xc2dm\xd3k\x01\xd9\xfa\xc8\t\xf3W_\x11\x16\x05S\\-\xc4\x9c\xfe\xdf\xd4P\x98\xba\x05]\x9b`A\x1d\xe4\xe6\xbb1G32 H\xf3R\x97Z\t'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 3, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=6, re=3, si=20, ti=3, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node3C at '(False, 6, 3, 20, 3, False)'
+Messenger Client2. Done with Node3C in 3 at 2.471957651003322
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 3\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\ns\x9b\xde\xcc\x8dn\xa0\xa5"\x97I^\xb6&&\xa2\x1b\xea|\x16\xf6$8\x9d\x0e\xc8M\x04\x96d\xba\xdb3>\xb3\xa1\x89n(r\xbf\x89\x87\xf1\x0c\x91wy\xbe@SAy\xef\xe5\x8e\xed\x98@\xf6\xccN\x06\x0e'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=3, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Staler 'Client2'. Stale transaction '4' packet '1' from '('35.161.137.38', 9702)' in 2 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.161.137.38', 9702) in 2 at 2.471957651003322
+Added transaction to Node7C at '(False, 2, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node7C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Added transaction to Node1C at '(False, 3, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node1C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Added transaction to Node2C at '(False, 4, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node2C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Added transaction to Node4C at '(False, 5, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node4C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Added transaction to Node3C at '(False, 6, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node3C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Added transaction to Node6C at '(False, 7, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node6C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+Added transaction to Node5C at '(False, 8, 3, 20, 4, False)'
+Messenger Client2. Do Message Segment 0 with Node5C in 4 at 2.471957651003322
+Client2 sending
+{'reqId': 1478190838277399, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '31zkY87YzeYywrLTY5gBveifULJ8o9ADZU12DEqv79dKHq8Wx45oEfGE1mY3xxrmR2fCNv8FdJLR91dRPDWzBnGM', 'operation': {'raw': '{"64gjFCAW9wTbzyRr5G0D_217314": "822592379317_uDfdBRWZMY4GiJPvaswA8ml6QbHgSEKyzOI9qrcjN0nUk5F17x"}', 'type': 'ATTRIB'}}
+2016-11-03 22:03:58,996 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.334 seconds
+Client2 received packet
+b'ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 6\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\njg\xc7\x7f\xd9\x11\x8d\xa1\x07\xe1X!\xa3:-\xd8\xac\xd9.\xaf[KzKi<\xb7Pd,\x0fL\xc4x\x81\xa7w\xf7&\xdd\xd9e>\xb7t\xedL\x15\xa6\x88\x9bLn\x06\xd9\xde\x04hwIv\x0e\xb9\t'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=6, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Staler 'Client2'. Stale transaction '4' packet '1' from '('35.161.122.249', 9706)' in 2 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('35.161.122.249', 9706) in 2 at 2.6190570879989536
+Client2 received packet
+b'ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 6\nsi 46\nti 16e\nbk 1\nck 1\nfk 1\nfl 40\n\n\x7fa\x9anQ\x02\x82\xf8\x85\x8e;\xef \xc0\x81\x88\x8e\xb8\xbd;\xd3\xae\xd7>\xe0\x0f\xacd\xe0V<g\xd3c\xbc\x80\xa5Za\xaa\x9d\xc5\xcc\x0c\xea;\xd7E\xc9\xa1\xac\x19g\x110GZj\x81\xd8\x9f\xc7\xf7\xeb\xf1\xd8\xa3\xc4v\x83-\x83;\xa5+\xf3K\x9ff\xeb\xe3\xb1\x88\xb8\x887\xa7\x16\x84v\ry\xdb\x8cmX\x94\xe1\xef\xb2}\xce\xf6\x9dc5%\x8d\xecsTL\xc4\x9fK\xca\x08[\xd7\xddf\xb4\xa7\xf8\xe7J&\xa3aUl\xe2\x002|\xd5\xac\x81H9\xaf\xcan\xa2\x9e\x8bEz\xf9\xbe\xbbh7\xeb\x08\xdc\xf9\xa8n\xa1\xe8\x13\x96\rK\x08H\r\x14\xad=\x1a(\r\x1d\x1d\x0f/\xdd\x18\xa9\xf0\xc2\xb0 N|\xd7\xc1oc\x0b\xc8\xe9\xa5]\x89\xdd0\x93\xfe\xdd\xcc\xa2*\xc0\xe4C\x0eSf\xbaP\x0e'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 6, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 70, 'ti': 366, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=6, re=3, si=70, ti=366, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=366
+Added transaction to Node3C at '(True, 6, 3, 70, 366, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node3C in 366 at 2.6190570879989536
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node3C at '(True, 6, 3, 70, 366, False)'
+Messengent Client2. Complete with Node3C in 366 at 2.6190570879989536
+Client2 received packet
+b"ri RAET\npl 0091\nhl 51\nfg 01\npk 1\nse 3\nde 8\nsi 14\nti 2\ntk 4\nbk 1\nck 1\nfk 1\nfl 40\n\n^j\x88K\xa3W\xbc\x0bV\xb2\x9e\xab\x96X\x9bF\x11\xdc\x82X\x92m\xdd\x81f\xe3\x93\xd7C+Q\x84.d\xea\x19\x98\x94\x10.{\x10\xb7\xb6[\xa9\xff\xd8w>\x0b\r\x93\x9d\x0en\xbdYJW'\x8bf\x01"
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 1, 'pl': 145, 'hk': 0, 'hl': 81, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 2, 'tk': 4, 'dt': 0, 'oi': 0, 'wf': False, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '01'}
+Client2 received packet index: (rf=False, le=8, re=3, si=20, ti=2, bf=False)
+Client2 received trans kind = '4' packet kind = '1'
+Staler 'Client2'. Stale transaction '4' packet '1' from '('54.147.219.106', 9710)' in 2 nacking...
+Staler 'Client2'. Do Nack of stale correspondent ('54.147.219.106', 9710) in 2 at 2.6190570879989536
+Client2 received packet
+b'ri RAET\npl 011f\nhl 49\nfg 04\nse 3\nde 8\nsi 32\nti 16e\nbk 1\nck 1\nfk 1\nfl 40\n\nE\xcc\x10\xe6\x1e\xf9\x7f\xa6*+\xcc\xb6\xf4\xb5\x1b\x0f!\t\x82 \xaa^\xd9%A\x8b\x8c}\xbc\xfc\x902>\x9e\x9f\xeey\xa9\x93\xb5\xa0\x8cNL\x1a\x08R\xb2\xdf\x87\xf0A\xd2\xdc\xb4~\x8a\x19\xbek\x97!_FK\xb3\xa72b\xc6\xd1g:\t\xc8\xacr\xfd\x8fq+\x1dqBV\x91\x1fnx\xd7\xf7\xebw\xd7i\xdb\xc8BQ\x0b\rEi\xa3\xb5\xc8~\xbf\xa5\xb5\x9e\xc7.\xd2\xc4\x00\x7f\x8c"\xb6^\x0f\xbc>\x14\xcfJ\xd7\xb8\xcaR}=>g\t\x1b\x1e\xb1\xb4*\xae\xac\x17\x93\xfeQ~\x08\xed\xc47C\xb2\xaa\x1e\'\x89\xae\xe8M{\x9b\xd7y\xf8\x1a\x18\x06\xc3\x18\x1e\xa1*\xaa\xe2\xc0^k\xf1\xef`\x83\x93x\x8ce k\x9d\xa3(\x90/&\xc6yam\x90\xa3\xd6\xb6n\xca\x1d\xb9\xda\xf3$\xc0\xec\x00\x08'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 287, 'hk': 0, 'hl': 73, 'se': 3, 'de': 8, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 50, 'ti': 366, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=8, re=3, si=50, ti=366, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=366
+Added transaction to Node5C at '(True, 8, 3, 50, 366, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node5C in 366 at 2.6190570879989536
+Client2 received message body
+{'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+Removed transaction from Node5C at '(True, 8, 3, 50, 366, False)'
+Messengent Client2. Complete with Node5C in 366 at 2.6190570879989536
+2016-11-03 22:03:59,109 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node3C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:59,109 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node3C
+2016-11-03 22:03:59,109 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:59,109 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+2016-11-03 22:03:59,109 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node5C: {'op': 'LEDGER_STATUS', 'ledgerType': 0, 'txnSeqNo': 7, 'merkleRoot': 'V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8='}
+2016-11-03 22:03:59,109 | DEBUG    | ledger_manager.py    (250) | processLedgerStatus | Client2 received ledger status: LEDGER_STATUS(ledgerType=0, txnSeqNo=7, merkleRoot='V4oNRltacPc1u3e7yGgs83Znc6ul1kjJwqwDNabbRp8=') from Node5C
+2016-11-03 22:03:59,110 | DEBUG    | ledger_manager.py    (846) | clientstack | Client2 trying to get clientstack
+2016-11-03 22:03:59,110 | DEBUG    | ledger_manager.py    (764) | _compareLedger | Client2 comparing its ledger 0 of size 7 with 7
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 2\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\nU\xcc\xa6\xef\x15\n>\x96\xb7\x04\x86y\x05\x9a\x8e(\xdc`\xf3\xb3&\xe7`u\x8f\x011\xe9\xcd\x97\x9f\xb2\xd5\xd6^\xa8\x8b\xf3\xa0R\x87\xc0\\\x7f\x82\xdc\xa7\x10B\xd6$\x14\x9c\x0f\xae);|\xc4\x8e\x9c<9\x00'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 2, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=2, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node7C at '(False, 2, 3, 20, 4, False)'
+Messenger Client2. Done with Node7C in 4 at 2.7211546109974734
+2016-11-03 22:03:59,131 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.123 seconds
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 2\nsi 31\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\n_\x05\xaavC\xa1\r\xaco\n\xc5\xf8\x90\xe4[\xe1\xc3q3\x0fW\xd7\x9d1\xa8\x04\x9c\xc7\xa4\xf5:\xc1\xea\x9d\x1e\xf5\x14\x1c\xd3\xd9\xab6;\x97\x93[_\x86\x8e?\xd7\xad\x92qV\x86\x10\xae(\xeb_\x93\x07\x7f\x07\xd4\xc2\x94\\\xe9\x12\xd3\xef\xb0\xd3\x13\x0e\xb3\x98\xf4\x03[\x04rfP\x85\xda\x81\x1b{\xf6+\xf2X\x0bZ\x9a?:\xfdN3\xed\xady \xbe\x17c\xbcD\x8c\xe3x\xd3\xb9\xb2$\xd4<z\n\x1a\xfa\x1d\x0bn\xb3\xcd3\xf4\x8e#GO\xec\x93\xa7l+\x83;\x00'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 2, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 49, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=2, re=3, si=49, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node7C at '(True, 2, 3, 49, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node7C in 369 at 2.7637585019983817
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node7C at '(True, 2, 3, 49, 369, False)'
+Messengent Client2. Complete with Node7C in 369 at 2.7637585019983817
+2016-11-03 22:03:59,183 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node7C: {'op': 'REQACK', 'reqId': 1478190838277399}
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 7\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\x89\x02\x15\xfc\xf4Y\xedO\xf1\xac5\\\xa8\xec\xcd\xbc\xb5\xe8\x0b\x87w\xc5\xcb\xd1\xbf\x13w\xc8\xe9`\xdf\xca\xb7x\xf8\xff%\x96\xd3{\x1c\x93\x1b\x0cB[\xcc\xda\xb2\xa1\x16\x82\x8d\x07\x90\xf2\xe5\xb6\x12\x82\xbaL#\r'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=7, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node6C at '(False, 7, 3, 20, 4, False)'
+Messenger Client2. Done with Node6C in 4 at 2.8404928099989775
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 6\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\xf0\xe0=\xf7\xfa\xd0\xcd\xe1\xcbX\x05P\xfc<\xb7\xc9\x91n\xb3\x0cN\xeb\xe7\x8e\xf72F\x1c\x01\xf80\xd4\xa0Q\x9e?*\x97=.\x83\xa0\xccBr\x7f\xb4\xe1G\xa0\xefm\xcc\x93\x16\xdb_t\xdfI6\xb6\x8f\r'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=6, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node3C at '(False, 6, 3, 20, 4, False)'
+Messenger Client2. Done with Node3C in 4 at 2.872409871997661
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 3\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\xe2uc\xf6\x8d\xd5.5\xb1.\x89c1\x01\xf5<\x90\xfb\xf3tjx\xa0H\x1dN9\x0b\xd9\xa9\xe9\xe7\xa1\x06\x9eh\x8bI\xf7\xd9\raWE\xed\xc0\xd5\x08\xc1\r&\xf0\xcct\x0c\xdd\xcf\x82s\xc4\x80C\xa9\x03'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=3, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node1C at '(False, 3, 3, 20, 4, False)'
+Messenger Client2. Done with Node1C in 4 at 2.9039746330017806
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 4\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\xabJ?\x10\x1a\xdbAZq\xa8\x18R\xbdH\xe3Ea\xa5hu\xe9\xa2\xeajXJ /\xd7\x00Q\xb3L\xa6&\nH\xd0#\xe1\xc6\x1d\xff7\xa3M#\x19c\xe0.\x04\xc4\x9e\x18\x04q]G\t\xf6m\xcd\x02'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=4, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node2C at '(False, 4, 3, 20, 4, False)'
+Messenger Client2. Done with Node2C in 4 at 2.9039746330017806
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 7\nsi 37\nti 172\nbk 1\nck 1\nfk 1\nfl 40\n\n\xd4E\xf4\x0b%sA\x1c\xc5f=\x1cwSX\xf67\xcfb*J\x8c\xd7\\\xd5\xab\xca\xf8\xb2\xe6\xeef\xc2\x14\x12\xccP\xa8\\CQjw\x05\xa1AC\xaes\xe7\xa2z\x05\x0b\x82\x19j\x15\xb4\xa4\xe7\xed\xe9ar\xb7\x0b\x9ebU\xb8cE\xe6+\xbe\xd1\xbf\xc0\x1f\xf0\xb9z2\x823"J"/\xb6J\xc9\x8c9my\x1d\xb2\x98\xa7\x87i"\xfa\xbbdY\xfa\xa6\xae\x14\x1b\xbe\xebpy-\xd4\x99W@\x05\xd2\xc7\xf1\xf1\xcc\xd2\x960\xdb\x86*\xbf\x80\xee\xaa\x83\xd6\xe1\xcb\x0c\x00'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 7, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 55, 'ti': 370, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=7, re=3, si=55, ti=370, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=370
+Added transaction to Node6C at '(True, 7, 3, 55, 370, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node6C in 370 at 2.952407418000803
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node6C at '(True, 7, 3, 55, 370, False)'
+Messengent Client2. Complete with Node6C in 370 at 2.952407418000803
+Client2 received packet
+b"ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 5\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\n\xd6\x9d\x19\x1e&\x9a8\xbc\xd3>\xd0\xa2\x8a\xc1\x0e!\xeb?h\x00\x08Z\xf7\xcf)\xc8\xd3'?4Wl\x0f\xca\xc9YDr\xbcW\xb7\x9b\xd0\x03-=#a`\xce\x81\x02\xe5\x03\xa1\xe5\xea\xac0\xdb4\xc8G\n"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=5, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node4C at '(False, 5, 3, 20, 4, False)'
+Messenger Client2. Done with Node4C in 4 at 2.952407418000803
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 6\nsi 46\nti 16f\nbk 1\nck 1\nfk 1\nfl 40\n\n.\xcc\x0b@\xc6\xc4\xff\x0f@]&\xca\xa3PIy\x1a\x7f\x1c\xf5\xd6c9H?\x8a\x08\xf5\'-;\xd9\xfc\t\xbezh\xaa`\xca\xe5\xedE\x00\x02\x1cMa\x07+\xa4S\xcc\x1c\xe3<s9\xde\xce\xefw\xebMwb\xc5\xb1R\xa5 5F\xfaW4\x1b\x1e\x16\t\n\xaa5c\xb1\x90\xe8\x90\xbcf\xb0\x1d\t\x01\x03"\x8e\xdf\x87\x14\xb2\xe5\x89\xf1ar\xaa\xc0\xb6\xa4\xf7\x90\xb5\t\x83\x8fe<\xa3\xe2\x9f\x1c\xfdD\xb8\x98\xe6\x03\x90;\xe1\xfds\xb8\x9e}\t\xb5\xf1\x01\x11\x9b\xf1\x04'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 6, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 70, 'ti': 367, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=6, re=3, si=70, ti=367, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=367
+Added transaction to Node3C at '(True, 6, 3, 70, 367, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node3C in 367 at 2.952407418000803
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node3C at '(True, 6, 3, 70, 367, False)'
+Messengent Client2. Complete with Node3C in 367 at 2.952407418000803
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 8\nsi 14\nti 4\nbk 1\nck 1\nfk 1\nfl 40\n\no\t\x93\xb4\x80:\xa4*\xd5\xd8]>\xef\xd2\x14\xdc\x98\xee\xbb\xc7\xc2\x02\x97]\xf6Y-J\xad\xcbn\x84b\xc78j\xea6\x08\x06\xae\xfdL\x9b\xbf\xd4D#\xf4\x8a\xbb\xa9z\xc9\x98\xe8u\xff\xd2\xc3\x1d3\xf9\x00'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 4, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=8, re=3, si=20, ti=4, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node5C at '(False, 8, 3, 20, 4, False)'
+Messenger Client2. Done with Node5C in 4 at 2.952407418000803
+2016-11-03 22:03:59,445 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node6C: {'op': 'REQACK', 'reqId': 1478190838277399}
+2016-11-03 22:03:59,445 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node3C: {'op': 'REQACK', 'reqId': 1478190838277399}
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 3\nsi 45\nti 172\nbk 1\nck 1\nfk 1\nfl 40\n\n\x7fB\xe5\x7f\xa1\xbdk0m]P\xb1\xecqUAEh\xfa\xef\xb3\x81|\xdb-\x03\x19/D\xfc\xdc\xdb%\xad\x9bi\xdaN\xb4\x15\xdc^V\xa7\x11\x04\xd8\xb9h\xee\xb7\xe9\xd9w*\xc6\xc4\xe9\xe2\xb5\x0f\xd0p\xc7\xc0Z\xab\x95:&\xa0\x1c\x06\xc1\xcb\xd8\x01M\x9eG.\xf84\x04\xb8o\x15e\xe0\x93\x15\xd2\xd3*]f)\xbb\xfc\n\xc3\x99\xf4\x0c%\x13me\xaf\x8d\x95=\t\x02y\x8b\xc2\xd3ffI\x00\xa6\xc4M\xbd\xcbv\xf2\xb6\x97\xe630\xad\xbd\x110\xea#\x88\xfbL\x08'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 3, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 370, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=3, re=3, si=69, ti=370, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=370
+Added transaction to Node1C at '(True, 3, 3, 69, 370, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node1C in 370 at 3.056692338002904
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node1C at '(True, 3, 3, 69, 370, False)'
+Messengent Client2. Complete with Node1C in 370 at 3.056692338002904
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 4\nsi 45\nti 172\nbk 1\nck 1\nfk 1\nfl 40\n\n\xaa\xb4\t\x9d\x8d\xb4\x9b\xabz\xf2\xe8\xe8t\xca.\xea\xb9z*\xeb\xe4"w\\\x8f\x7f\x06||\xde8\x16\xd0G4gr,^q=42\xb6k<\x8de\xbb\xbc\x1e\x83\xc1\xb3\xef\t\xf8!\xe9\xa4\xe2i\xa9\xdfB\xd4\xe4%\xfc Y\xb7\x8e7\xd1E\x82\x1a\xdc\xf1\x07\x84v\xea|f\xc5\xd2V\xb4\xd4\xbd\xc5\\<\x1cH\xc0({\xb1\xd4Qq\x85\x94[\x1a8\xd3\x83\xab$\x18\r0\x14\xa6UI@\x10r\xf4\x84\x11/\x04\x82\xd3\x9a\xaa\xa2\xfe\x90\xab\xc6-\xa0\x8d%\'\x87\x02'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 4, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 370, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=4, re=3, si=69, ti=370, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=370
+Added transaction to Node2C at '(True, 4, 3, 69, 370, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node2C in 370 at 3.056692338002904
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node2C at '(True, 4, 3, 69, 370, False)'
+Messengent Client2. Complete with Node2C in 370 at 3.056692338002904
+2016-11-03 22:03:59,513 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node1C: {'op': 'REQACK', 'reqId': 1478190838277399}
+2016-11-03 22:03:59,513 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node2C: {'op': 'REQACK', 'reqId': 1478190838277399}
+Client2 received packet
+b"ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 8\nsi 32\nti 16f\nbk 1\nck 1\nfk 1\nfl 40\n\n\xae\xc8\xfd\xf9W? 5\xc9\n\xef*w\x8d-\xda\x9c&\x1d\x82B\xf8\x17\xd6_\xd4\xbd'r\xd3\xc3[k\xb2&\x8c\xe9\x8a\xb7glVl\xdf;\x03Z\xa7~\x7fC\xb8\xf5\xfd\x0e\x92\xa4\xd59\x0b+\xa0\xae\xc7\x94\t!V!\xa0\xe1\xc8\xe6#\x8c<i\xe2\xa15\xe5\x00o6\xae\xf2\x14\xf2\xc1p\x14K\x95\xe5\t[!j\xf6\xfa\xadg;\xec\x01\x19\x84\x8f\xf7fl\xf3F\xefWm\x81\xc9\xa6\xc6\xc7\x98$\x0cj\xbf\x9b\x00\x87\xa2v\x96ty\xf3=\xc9\xb1Ma,\xdb\x9a\r"
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 8, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 50, 'ti': 367, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=8, re=3, si=50, ti=367, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=367
+Added transaction to Node5C at '(True, 8, 3, 50, 367, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node5C in 367 at 3.1247464690022753
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node5C at '(True, 8, 3, 50, 367, False)'
+Messengent Client2. Complete with Node5C in 367 at 3.1247464690022753
+Client2 received packet
+b"ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 5\nsi 42\nti 172\nbk 1\nck 1\nfk 1\nfl 40\n\nL\x10&!>\xc7Z5\xb4Po\xce\xb9\xaeQ\x9a\xf9\xfc\x906u9\xf7]\x8a\x1f\xc3\x14\xe1\x87x\x8c@/\xf2\xe7\xdcW\xa0=\xf3!\x89\x1eM\x9cK\x18\xff-$\xa2w&\x1da'\xb2\x0e\xbe'\xc82\xdd\xa4\xc2|l\x81\xf0l\n$'\x9a\xd4\x1f\n\r\x97\xf7\xd3\xfeS\x0e\x06\xbc\xc2&bO\x08\x93\x94\xf6\xf4I\xdc\x12\xd9\xf7\xba^?9!\x12o\x11@\xdfC\xd1\xa7\xc6<\xb1\x83\x18'\xd6\xa5>T\x00'\xde\xc1\xa7\xc7828 \xb1ZlC?\xe1\xcd\xde\xaa\x02"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 5, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 66, 'ti': 370, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=5, re=3, si=66, ti=370, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=370
+Added transaction to Node4C at '(True, 5, 3, 66, 370, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node4C in 370 at 3.1247464690022753
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190838277399}
+Removed transaction from Node4C at '(True, 5, 3, 66, 370, False)'
+Messengent Client2. Complete with Node4C in 370 at 3.1247464690022753
+2016-11-03 22:03:59,564 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node5C: {'op': 'REQACK', 'reqId': 1478190838277399}
+2016-11-03 22:03:59,564 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node4C: {'op': 'REQACK', 'reqId': 1478190838277399}
+2016-11-03 22:03:59,566 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.225 seconds
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 2\nsi 31\nti 172\nbk 1\nck 1\nfk 1\nfl 40\n\n\x1aO$PG\x19\xf2\xb6+\x0fj)\xfd\xc1`)^|e\xa56\x00\x86\xac\xa7e\xbe\xe0a\x0c\x97\x97K\x86d$\x88\xc8\xa9?\xc5\x15\xecI\x03h\xfb\xfe\x87Bp\xf7kQ\x1b\x10\x01\xb4n\xbd;\xb1\x9d\x07\x07\xa6\x82U|N\x0e\xac)\xd3\x93w\xfd\x0b\xae\xd0#\xdaA\xa1\xaa\xa8\x17\x95X\xab\\\t\xe1\xdd\t\xbe\x02@\x18\x16\xc5\x13b\x1e\x1b\xd3\x00\x8b7\x8eT\xef,gL"\x8d#\x8a\xde\x9a?\xd8T\xf2\xb0gM]\x7fGR\x9e\x88\xaa\xfe\x9e\xd3\xd0\x9b\xeeM\xcf\x94S\x15\r\xd7o\x01\xc8vS\x8ek\xd9\xa5\xc5\xed\x93\x13\xf1\xf9\xdf\xc6\xf8\x8d\xc9\x16\x14\xe8T\x9cF\x9c\xd7\xbe\x84\xda\xb2@\x96\x90\x99\x1dz\x82\xffW\xce\x08O[x\xe7\x1d\xb0U\x1c\x04\x7fT\'zpmD\x0f\x83\x1c\x98\xc3f\xbal\xbb\x99"7.bwx\x1cG{Yy1U\x93\xd9\xd5\xc7L\xd6\xfd\x82$\xb5J`.2\xeb\x18\xb9\xca\xb6\xdbH\x00K\xf8atxu<UM[xN\x1c\xcf\xd0|\x1c&\xde?\x85j\xdc\xbd_\x89S\xf1)\xac\x9cNa0aO\x98\xd2\xdb\x90E\xdaj=t\xe7_\x8eM\xfa\xa8\'1\xc0\t\xaf9\xbf\x0b\xcd\x94Rr\x9ad\x1a\xa2\xff\xfe\x1b\x98/\xe8\xa3\xaf\x86%\x14C\x96\x82\xbb\x028\x14R\xdd\x80|b\xd6\xfew\xec\xcd\xa55\x91\x1b\x820#D\xec_\x87.\x13\x9dO\x86\xf7\xa4-h\x93\xa0\x93\xa7\xabz]\x05\xaa\xe0\x8a\xcd\x15\x96\xd7\xc2A\x8f\xa1Q\x18\xd8\x8e\x18o\x02\x10\xc5\xc5\'\xdaDzH\xbbT\x15g\xc9\xc4\xdd\xba\xcb:{\xc4\n\xb4\x1c2\xd0q\xa6\x03\xa0`\xbf\xba\xa6audD\xbbw\x89\x92\x1eg\x0e{l\xd4\x92\x80\x0cxWjj\xe20\xfa\x86\xbd\xec\xd8\x93_*\rY\x0f)\xfc\\\xfa\x95\x99\x954bE\xb6\xd1\xbd@\xc6\xa4\x9f\xe3c~\xe00a\xf9\x7f\x9f\xf1\t\xbcA\x8c\xb0u\x9b\xd6\x9e&~\x03\x81o9\xd7\x8e\xe9?M\xd9\x1f\x8c\xe7\xd6\xe4\xb2\x0c\xda\xed\xbb+\x96O\xe9\xab\xa9=E\x05\xd5\x9f\xa5\xda5\xa9\xe2A\x93G?\xc7\xec\xea\xe4XE\xf0,I*\x93\xc8\xad\xcb\n\x93\xe8m&_:g\xcb\xfc\xc6\xb9\xff>\xdd?Srwk2\xe7\x92\xeb\x1de\x80\x11\xab\x88m\xb3\x01\x88\xcc\xe1\xdd\xeez!?({\x8f\xbd\xfci#\xd0\xa9y\xd7\x8d>)\\\'+\x0e\x15/\x0c\xe5\x89l\xf7\xeeA4\xe7\x8f4\x8a\xdawV\xa6.e\xae\xa6\xf6\x88\x10\xb2v\xe7d\xa7\xf9\xbd\x0f\xfeLF\xd2\x18\x1bw\x10\xe4~\xb5\xca\xd0\x87&G\xb9W\xdd\x13\xaee\xdc\n\xbe\xc5~\xaf\x13\x05\x06'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 2, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 49, 'ti': 370, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=2, re=3, si=49, ti=370, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=370
+Added transaction to Node7C at '(True, 2, 3, 49, 370, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node7C in 370 at 5.13764938100212
+Client2 received message body
+{'op': 'REPLY', 'result': {'seqNo': 2325, 'reqId': 1478190838277399, 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnTime': 1478190848070, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig'}}
+Removed transaction from Node7C at '(True, 2, 3, 49, 370, False)'
+Messengent Client2. Complete with Node7C in 370 at 5.13764938100212
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 7\nsi 37\nti 173\nbk 1\nck 1\nfk 1\nfl 40\n\n\xcc\xbf\x15Q\xaeZu\xbc%"rAB\xdf\xaa^^s\xf7\xca\xed\xaetF\x0eE\x13Q\xa7A\x0b\x9ez\xe8(\x82WR\xd2\xb5\xd8\x11#\x84\xe1\x8e8k\xed\x1b\xae(iU70A\x19\x01\x9d\x18\xe5\xb7\x98G\xac\xfc\xdf\xba\x97\xfa\xc9\xb1J\xef\xb2\x8f\x06\xbcr7z\x90\xeb\xfa\x86PBcft\xe4\xa9\xe2\x0c\xff\x0e\x82\xe1\xe1\xfe\xe8\x8d\x078\xcb}\x9e\x17\x82+h\xc2d\xa3@\xc9\xdb\x15\xd8\n<H{$\xfa\xaa\xc2\xd0\xe1\x9d\xaf\xd4\xad((52\xb2\x1a\x94\xc7 )\x00\x03\x16W<4\x14\x97\xfc,.\x9f7e%\x1a\x07\xaf\xac,\x10\xf8\xc0\xac8\xe6\xb5\x89w\xac\xe7\xbf\x00%\xbb\xbe\x81G5\xd2C\xbc\xbd\x16\\\xd9(,F\x99\x90y\x91\xed\x8c\xfa\xaa\xa0\x96J\xd1m(F\xd8S\xa5\xebb@\x11q\xf8D\xad\xcb9\x97\x85?\xfb)wG\xe65\xd7\x1c\rc\xac\xefZ"K\xd2&,\xf5\xd33u\xc6S\xe8\xc2e\xa1\x0f[\xcff&\x91\x03\n\t\xd5#\xef&Z`\x9c~\x0b\xa4\xf8\x03an3~7\xd3v5\xa2N\xb6\xf1(\x04\x95D\x00@\x90\x1e\x8d?\x95\x10\xdc\x8by\xd5\x03\xb7\xad\x10!C\xd5\x9c\x9f\xd1\xf8\xa0\xd1\xe7RW\xa8\x1d\xf2\xb4W#\xbd\xa6\xdf\xc4#\xcf\x00ojA+}\xb8y\xbe\x1d9\x88Y\x9a\xd1\xf3`\xaa\xcdQu\x7fx\xdc\x19h\x15\xd0,\x1cq\xcb\xc6\xf4\xa8*v\n#\xdf\xed\xce\xb3qP\xe06{\x7f\xdf\xf4\x01\xbdH\x9c\xf6Ea]\x07\x95\x8f\xf6q}{\x8e\xaaY\xe4\x81\xa1xr\xbd\xca\x03C$!\x96%H\x01\xe8\xd0^-v\xc2\x834q\x81\x84\xd0s\x92\xb6\xcf\xb2\xaf@y\x80\xa9\xc1\xf3\x901F\xa8\xc3?\xbf\xf5\xd1\xb9\x10%\xe3W\x86\xb9\xde\xd80\x86+\xa1\xa0\xa7\x07\xe7\x8ah\x8a\xbb&\xa0\x82\xcd\xe1\x1f\x89\xc9\xf9\xb4\xa7\xee\xc3$lT"\xd4\x00\xd4\x8e\x14\x8e%\x9eC\x1b\xe6\xbb\xff\x16\xab\t\x98\xb4j2%K\x91y\xe4\x15l\xca\xab\x13\x83\t\xe3.\n|\xe9\x9d\xfa\xe1^\xcb\x00\xd2\x9e\x85l\xe6$\xear\x02"\xfbq\xa6\xb6\xf4%\xfb\xfbR\xf3\x17"\x1eNJ\x96\r\xa5\xde$$\xda\x98\xae\xach\xbag\xde%&:]`\xa0i\xda\xdf\x92`\x0e!U\x9b\xc7\xa1\x9d\x81\xa0\x1f\xeb\xb1\x89 \xc0\x80\x03\xc2C\x08\x1eC\xcf\x17\xc3u\x1d\xd0\xf8\x8cX\x14\xc8\x1b\xcaxiV\xf8\xc8\xd1\xf3b\xf7/\xb3\x16D7\x8bz\x8f|\x90\x1b\xf2\xb2\xfa\xe0\xe6\xaa<\xfa\x94]G\xe0\xc6\xe9\x0f\xa9!\xa3(\xe6\xb1\xa1\xae\xf9pE\xb3e\x9bS$\xd9\x8aH8s\xaf\x1e\xe8{\xa1m\x04'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 7, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 55, 'ti': 371, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=7, re=3, si=55, ti=371, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=371
+Added transaction to Node6C at '(True, 7, 3, 55, 371, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node6C in 371 at 5.13764938100212
+Client2 received message body
+{'op': 'REPLY', 'result': {'txnTime': 1478190848070, 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'reqId': 1478190838277399, 'seqNo': 2325, 'type': 'ATTRIB', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a'}}
+Removed transaction from Node6C at '(True, 7, 3, 55, 371, False)'
+Messengent Client2. Complete with Node6C in 371 at 5.13764938100212
+2016-11-03 22:04:01,583 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node7C: {'op': 'REPLY', 'result': {'seqNo': 2325, 'reqId': 1478190838277399, 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnTime': 1478190848070, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig'}}
+2016-11-03 22:04:01,584 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node6C: {'op': 'REPLY', 'result': {'txnTime': 1478190848070, 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'reqId': 1478190838277399, 'seqNo': 2325, 'type': 'ATTRIB', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a'}}
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 6\nsi 46\nti 170\nbk 1\nck 1\nfk 1\nfl 40\n\n\xed:#\xfdR\xfeb:\xc1\xc14\xcc+\x07K\x07\x0c\xb98gK\x1c=\xa6\x92J\x92\x03._\xfa\x8cQ%\x8f\x99\xde\x9d\xa2\x9e;y?@An\xff\xbb\xb0}\xe6t\xa4\xad\xf8,f\x18\x1da\x8a@%\xd7k\xae\xf9\x1cY\xf2@\xa0\xc0\xac\x96z\xebJ\xe7\xabP\xe7\xc8\x12\xf8u1\xd3\x99U\x00\xb9"~\xab\x89\xe2r-"\x93B\xe0\x87\x0f\xce\xfc5/\xf0\xc5y\xbds\x01\xdd\xec\xa5\xa8;\xcdgS\xc8W\xa9\x03\xb0k\x1d\x8fA\xdd\xa7`\x14\xa8wS\xfbFVM\x8eK+\x15\x99\xc7\xbe\x04\x9c\x83\xf3*\xa46\xcf\xa0\x1d\xd6\x14\x1a]\xee\x97\x06s\'\xea\x88\xa4\x83\xca\nx\xd7\x8f\xf0\x02xh\xfd\x0f\xc7\r\xc6h(\xd7\'4\x1f\xa9\xe2\x03\xf0e\x9c \xd7\x86\x16\x82\xdc\xfc{\x92\xb1w\xc3\xd1\x1ak[\xa5\xd8\xf2\xf7\x1c\xf8j\x07\x02\x19tLM(\xec+\xaa\x8d=\xd0\x11\x16\x07\x00\x8b\x93\xb9\xabL\xba|\x94o\xa5\xf1\xc0\xac\x19v\xae\xb4\xe4\xb0~(\x84\x16\x00\xf9\x18\xd2i9\x03\xbe\xc6\x91\x91\x91\x1fv\x13@>\x86\x88s\xc1\x1a,i\x1e\xbd\x00\xc3\xf1\xf6\x9f\xc7\x18\xb6\xcc\xae~\x9e\xfc\x17*\xe6\xbc_\xdb\x8b\xce\x01 tm\xa6\x04\xa1\x00\xb7\xd8\xeeV\xb4c\xa2\xe1H`5\xa3Ed\x99)\x93{\xb8\x8a\xf8@\x17\xe5\xc8\'\x93Y\xb0\xbd\xcc\xf2\xa6\x19\x98\xc3\xdeC\xdf\xd3UL\x19\x8b+\xa3P\xda\x06K\xaf^2\xe8~F-\x0bejp\xd8)\xb1}\x1e\xa3c\xc4\xcb;\xad\xdf"\\\xdd\xe2h{\x86\xee\xcb\xf4U\xe5y\xdb\x0c\xc7 \x1c\nD\x13\xce\xb4E\x80Jj\t\r\x99\xba=\xda\xed"ME\x92\xa5\x19\x06\xe2\xdc\x1b\xfb\x10\xc9\x92e\xe99\xed\xa91\xcf:E9\x0ed\xae\xa6\x81\xad\xc2\xf4\xc8\xd9\x84\xe5\x9a\xc4s\xd2F\xe9\x98F\x15\xe6\xab\x03\xa16\xb7\xf6C\xee\x87"2anu\x06\xd8\xaf\xed\x17\x11\xa4\x95tJ\x0b\xc3\x16\x1c\xcc}\xf5Zv,\xec(\x8dZ\xbd\x91\xfd,\xd7j\xd2\x18&\xf0\x0c\x96\xf3:V\xa7\x8dp\xb1\xdf\xcc\x07\xa7!\x8c]\xbfl\xfc\xfa\x97hc\xdf*?\x13\x10\xe6SG\xfe\x90ce\xdf\xf9\xc4[]`\x8e\x02CZ\xa4B\xb1a5\xed\xb6\xff\xe7i\xdb\xc5\xea\xe4:[%\x16\xe56\xe2\x85\xad\x80\xec\x1a\xeb\xb7\xacg\xaei>\x08t\xdcR\xe8\xb1\xc7\xe2\x10o\x05x\x0b\xb4\x05\xfdI\xb98\xb3{t\xd0\x0bJA\x9c\x02\xdb\xae\x87\xf3\x8f\\h\xd7\x14\x174\xdd\xc1\x9e\xb5%\x1e0F\x19%-n>\xceF\xa0\x93^\x04\x81\xa3\x00+=\xf7\x87\xa8a?J\xdf\x98h\xa3Z\'v;\xd9\x02'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 6, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 70, 'ti': 368, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=6, re=3, si=70, ti=368, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=368
+Added transaction to Node3C at '(True, 6, 3, 70, 368, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node3C in 368 at 5.195838363004441
+Client2 received message body
+{'op': 'REPLY', 'result': {'seqNo': 2325, 'reqId': 1478190838277399, 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'type': 'ATTRIB', 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnTime': 1478190848070}}
+Removed transaction from Node3C at '(True, 6, 3, 70, 368, False)'
+Messengent Client2. Complete with Node3C in 368 at 5.195838363004441
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 8\nsi 32\nti 170\nbk 1\nck 1\nfk 1\nfl 40\n\nJ\xfc1\xbb\x8bZ%\xd5\x0eH\xf4\xe5\xd7\xa4ii\x80\x92\xa3O>\xc3\xca\x01\x8d\x04\xda\xefR\x93\xfas\x80\x8d\xf2h\x86\x1ae+\xe1mH\x07\x96\xd3I\xba*\x93t\x08\x0f\x8d=\r\xe7\xed\xcf#\xfa\xa2\xc4j\xf7R1\xe5\xaf\x9aNn\x8c\xfc\x19\xe1\x13\x18\xad\r\x06\xb3\x9b\xfc\x02mi4E@A\xe0\xe9\x15]4\x16y\xc0J\x0e\x07-\xad\xcc\xc4^\xc7\x8b\x08\x00\x90\xc3r\x92&\r\xa05\xb6\'\xfb\xb9\xecw$m0^T1"\x92\xd9\x04\x1b\xcb+\x84\xbcE\xb1\x90\x95\\\x921\x11\xa1=\x9b\xe5A}\xc7\xc3\xc9\xe3k\xeeZ\x1eUN\xa5\xb5\xecz\x19\x12\xf7\x1f\x1a\xf5\xd42~\xc7\xac\x08\x92\xd6\x93\xad\x86\xee\x17\xc9\x91$&\xdf\xeb\x12\xe3\xdc\xb4\x9d~c\xf8\xb3Q"\x17!W\xc1\x19\x1e\xb6\x91Y\x86A\xa0\xbf\x0e=\x9342\xa60\xd0h\xf2\x93\x90\xeb\xd7\x8e \x8f\x16\xcb\x99{\xebA\x05y\xe5\xfc7\x0b\xfa\x11x G(\xc1\x0b\xb5)g9Gh\xcdQ>C*\xa3\x96\x10\x10\xa0\x86\xcf/:\xbf(\xdd\x95\xbc\x97x\x01\xb9\xfdG\x1fG\x1a\x03$\xfd\x1d\xdb\xe4\xce\xc3b\xc6\x80f\x8c\xc8\xb8\x82\xf5\xdf\xed\xe6\x83\xfc\x83\xd2\xfb\xbd\xf6\x98b`YsU \xd2f\x18X\x1d\xfd\xbb\x8a\x86\x1f\nk\xed\x18Hbt\xd6\'\xfa.p\x07\x8f\xec\xb2\xa9\x94\xacf$p\xdb\xd9\t\xb7r\xfdTW\\"\xcc\x15{\r\x9c\x9eGl\x02)\xeb\x9c\xd3\xdcj\xb2\xd4\xae\xd9\xdb\xbd\xe4>#M89n\x90\x80\x89\xd1\xb5\xb7\x1e\xa5\xae\x9b0\xd7\xee\xef5\x86\xebZ\xfd\xe2\xb7\xffe\x81&\x99\'/H\xf4\xd9\xcf\x96\xf6\x1c\xfc\xa2V\xd5\t}\x0c\xf7>\xb0z\xcc\x1d\xe1&\xb76\xf4\xc7\xe0\xa6\xb0|\x91\x93\xb99\xb5J.t\xceg\xa1\xee\xd4\xfa\xd4!7\xdbgZ\xfc\x13\xc1\xb6\xef]\xd1\xca\x07#\x97\xd5\xe9\xefa\xdc\xcc\x94\xf6\xa1\x9ff\xc8}9v\xf1\xba\xd2q\\\xde\xf5\xd5j\xab\xe9\xd9\xfb\r\xc1v\x19:\xd5\x9c0~\xf7:&\xbeL"9\xc2.OJ\xd8;d\x13\xce\x07bO_\x8a\xedT\xbe\xbe\x93\x88E\xa8\x84\xe6\x88#N\x0c|O7\xb4\x1f-#\xf4\xfaNr\x12\xe1\xf6\x8a\x98\xe1\x81WT\xf5\xe8\x00W\x1a\x0f\xf6\x10jd\xea\x0f`\x0c<\xe9\x92.\x04ZX\xef\x88\xabR\xa2\xbc\x08\xf7Cv\xdf-\x95\x85\x0e\xcb\xf4\x94g(`\x95cto{P`\xfc\xec\xb0\x8e\xbd\xaeZ\xc1\x9b\xcf,\xc6$7\x7f\xc0\x91\xce\xc4A\xc4\x1f\xa3\xbe+\xaa)~\x1e\x8f\xe4\x0b\x90\xc4\x01\xe3\xee1\x8a\x8d\x00\x0f\x10\\\xbb\x88\xef+U\xea\x91\x08\x08'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 8, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 50, 'ti': 368, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=8, re=3, si=50, ti=368, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=368
+Added transaction to Node5C at '(True, 8, 3, 50, 368, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node5C in 368 at 5.195838363004441
+Client2 received message body
+{'op': 'REPLY', 'result': {'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'seqNo': 2325, 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnTime': 1478190848070, 'type': 'ATTRIB', 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'reqId': 1478190838277399}}
+Removed transaction from Node5C at '(True, 8, 3, 50, 368, False)'
+Messengent Client2. Complete with Node5C in 368 at 5.195838363004441
+2016-11-03 22:04:01,640 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node3C: {'op': 'REPLY', 'result': {'seqNo': 2325, 'reqId': 1478190838277399, 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'type': 'ATTRIB', 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnTime': 1478190848070}}
+2016-11-03 22:04:01,643 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node5C: {'op': 'REPLY', 'result': {'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'seqNo': 2325, 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnTime': 1478190848070, 'type': 'ATTRIB', 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'reqId': 1478190838277399}}
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 3\nsi 45\nti 173\nbk 1\nck 1\nfk 1\nfl 40\n\n\x05\xfen\xd2\xc5\xf52\x182\xefk\x94\x83\x80C\xf9\xd2\xa1\xc8dl\xc9\t\x1e^\xe0\x93\xad\\\xb7\x06\xd6\x03\xd0\x98\x98f\'d\x96\xee\x16O\x82_\xdc\x88\x90Vat\xbc\x8f6h\x04\x90\xe4j\x97\x85\xdd\x19S\x8a\x12\xb1\xca[\xcd\xfe\x16\xa3\x89\xdbq/0F\x93\xbc\x1f\xc1<;\xf2$\xdf\x15]\x9a\xfe\x88\xaa\xceuG\xaa\xf1YHJ\x10\xc2\xa1\xe9we\x19\xfd\x9d\x00\x8cWS\x1b\x03K<q@\xea\xf0\x83\x01O\xaf8\xa5\xe2\xaf\xc7:\xa8\xd2uE6v?Ln\x9cV\xfa\xb1\x98\x8fG\xf3\xdd>?)\xe7G\xf9\xec\xff\x1e\xe7;\x90\xb9\xda\xb3\xb2\x8cq\x9c\xeb*x"\xd1s\xea\xdd\x05\\\xb1\x972\x80\x93Y\x1f\xceH\x0cOm\xb1\xe1\'o\xccp\xac\x9e\xca\x1e%X\x86\xc0\x99\xaf\x82\xdf;\xdfx\x82\xfe\xf6\xf2\xea\xa7\xfdB\xbc\x93s,E\xe3S%\xb8\xe5\xa1\xae\xcf\x84\xa7\x8e/\x0b5\xf7{\xcdn\\\xe8\x94\xf33\xd6\xc5\xa3\xd9\xe8N\x04\rM\x17-\x91\xd9\x8a\xba\xb1g\xd9\xc3\xd2y\xf4\xee\xf4m\xdc\xcd\xd0\x05\xa3\xa31\x9a\x05\xa6V9\xe7\x81\x9f\xa2\x08\xaar\x8a\xe13\xe1a\x9c\x81:\xa4\xd2Fq%\xee\xd0\xde\xc5q:\xde>\x8a\x97\xde%P\xf8\x1f\x88np\x1f\xb8\x86V\xde\x19\x9a\x8b\xce\x94q\x9br\xa4\xe4\xb9\x7f\xc3^\x83\xa7\xfeC\x12\xd4xy\xc8\xdc\x98T{\x0e\xe3\xee\x04\xd3qK\xdb\xfc\xed\xe3\x9b\xb1}\xbb\x1a$\x9d:\xe3\xeaW\xb8\xb4\xc0\x10f\xf6\xb2\x8f\x9a-\xf99\xd3\xc3\xef{1\xbd\xd3\xefh\xd8}~M\xb4\xaa\xfd\xd7\x17\x19yZb\xe0d\xba\xf0\xb5\x10\xae,\xe4t\x8c\xd65\x90\x06fM\xda6\xd6\x06\x8cQ\xe5\x95U\xb1\xfe\x904g\xf8\xd5\xa1\xd1\xfc\xdfb\x08hM\x1f\xb9Yf\xc9\xaf3\xd1\xd1Zz\xdb\x18\x109\x12r\xb4\x1b\xec\x909i\xa6f\x1b\xbb\x1aU\x84\xddG?_\xad\xff\xfe\xab\x92\xe491\xe2\xfa\x8a\xe2\xbf\xf7\xdb\xdc\xfd\x80\xb3\xcetk\xf3K-\xa9\xaf\x9e[ C;\xce\x14ciLm\x8f_ \xa2\x9aP\xe8S\xc0\xf7Pm\x19ml\xd21g+"\xe9\xb6H\x8cl}\x89A\xd8\xaf/\xc9\xba\x15f\x97\xady\x12\x9b\xa0\xf1@\xc2\xb8\xa9\'\x1db\xa4\xb3"s\xb3\xba\x81Z\xa3\x1bF0\x96p\xad\x01{K\x81W\x8b`#\x9df\x96\xcf\x05Z\xd3\x01\x97\x0e\xb3\xf3p1k\x06K\xc2\x8a\xcb\xc9\x12|\xac\x0f\xa3"\x07\x1d\xa3\xcf\xedH\xea\x0e\xdaZ\xff\xe1\x14\xf5\xfd\xf1\xf2\xae{\xcaw\x02yC~\xb1\xadi}wUD\x9f\x16\xb1\xe8\x99h\t\xfek\x97x\xfa\x03\x82\x81\xf2\x13\x94\x03'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 3, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 371, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=3, re=3, si=69, ti=371, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=371
+Added transaction to Node1C at '(True, 3, 3, 69, 371, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node1C in 371 at 5.255474397999933
+Client2 received message body
+{'op': 'REPLY', 'result': {'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'seqNo': 2325, 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'type': 'ATTRIB', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'txnTime': 1478190848070, 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190838277399}}
+Removed transaction from Node1C at '(True, 3, 3, 69, 371, False)'
+Messengent Client2. Complete with Node1C in 371 at 5.255474397999933
+2016-11-03 22:04:01,674 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node1C: {'op': 'REPLY', 'result': {'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'seqNo': 2325, 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'type': 'ATTRIB', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'txnTime': 1478190848070, 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190838277399}}
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 5\nsi 42\nti 173\nbk 1\nck 1\nfk 1\nfl 40\n\n\xa4=\x05a_\xf0\xe2\x0b(\xda\xd3}\x87\x8f\xf6\xb6\x1b<F\xb5\x0e\xe0.5c\xb8\x9aTUMD\xd8\xa7\xed\x06wm\x89\x15\xd8G8v\x04\xe9\xf2\xc3?\n>\xbeg\xe1s\xd6\x03q\x13\xe0\xdbw\xb7\xcaO7 x\x14\xb9Q o\x14\xe6D\xd0\x8a\xe5\x9d/}>hn~\xa0\xd70\x8c\xb89:\xcb\x90\xfe\xc4\xbc\xab\xf2\x16\xc3J\x13\xa8\x04\xf4\xc5\xce\xa5\xf2jY\xdarXS\x06\xd1py\xaavD\xea\xaf\x1f\xd1\xdbaL(\x00}<\xde\xf5t\xdf\xfa\x13\xbaK\x7f\xbe\\\nz\xbe)h\x0e@"=\xa7\xb1\x8c\x03\xe4\x88\x08k{\xc0G\rL\x03\xa4\xec\x8c\xa1\x13\x0fl\x8eV\x8bo.\xc1`y\xd5\x93\x1a\xd1\x96~\rh\xe5\x0b\xc7V\x0e?W\x84\xaaM\xa5\xd6\xbb\x135\xcc\x05|\xd0\xee\x97\xb7\x07I\x1f`\xe8\xf8[\x1d\x7f\xf3/\xd4\xa4[\xf7\xab\x04/\x1b+\x96\x11\xa5E\x01\x1d\xe0\xf1>\xb1\xe8[\xeb\xba\x83g\xb2\x16\x8d"\xe3=\x86*E\x91\xcc8"\xb4|\xa4\xb9b\xf2\x08\xdd@3\xf2~\x8d\xa6\xa7\t\xd9\x0f\xd2b&P\x0f(\t\x014\xe2A\x96Z\xf8\xd4\xcfZ{bQ\x9b\r\xb4"B\xba\xc5E\x86\\\xe5|\xbc\x07\x12\xf4\x0f\xefk\t\xa0\xcc:"\xa4\x02_\xa47\x89\x81\xd9\xf9O\x8e~\xdba\t\xc1\xee\xd4\xcc\xf2\xb1w2\x80q\x03\x99K\x19\x81\xde\xcdwG}]7\xffr\x85\xfe\x19t\x1a\x89K\x1e\x02\x11\xf4\xab\xc2;h`-:\xe3\x02B\x83\xbf\xea\x00\xb8\xa9\xa0\x8e\xbc\xdf\xd6A+\xc9\xf02Q\xa0N\x8f\x06qC\xc7\x05\x0e=\x122\x12\xd4)\x10\x94.#\x9b\x15BH\xc0v\x15Q\x88\x15\xdbM\xdf\xbd\xc7\xb1y&\xad\xdb\x03Agl\xaa\tr\x157,\x8c\x80\xa0\xe7\x85\'\x05\xe3\xc6\x1f&\x1d.\x9esBHu\xde\xa8V\xd1\xdf\xb3\xb6hD\x8flXU{\xe4$o\xb7n\xb1\x0e\xfc\xbf\xaf4\xeeTiU-\xdd\xff\xbe\xce\xb6\x84v\xcc\xb1|\xc5\xab\x98\xeb\xb1W\xccg\xc10\x13\xd1\xd7D$\xf1\x95t\xed\xb3\x9c\x0f\xdcL\xc8(8\xf4p\xbadp\'\xd8y2\x80+\xac[\xcc;\x15\xe6\xb9\xc0c\xd3\\]em\xe7\xf1\x8a\xc5\n\x0fs\x16\x87S\xc8\x12A\n\xf9[\x10\xc5\xb3p\x8b\xf2\xe5\xe4[\xe5\xef\xf57Wae\x8e+\x84\xfbl\x04"\x91\x95\x1d\xc1\x96@\x89t\xbc\xc7{6q\x0e\xe8]-B\xa2\xa5\xcd6\x19/dE[\xae\x8df\x06\xb3k*\x02\xd9\xcfr\x90\xe1\x8c\x9b\x1f\n\x07\xc1\xcb^\xf0\x9dth\x02B\x8dt\xb7\x83\x19\x86\x17\xd5\x05\xdc\xff\x00E\xb1\xf8\xf4\xfbY\xd0\xe2=\x05'
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 5, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 66, 'ti': 371, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=5, re=3, si=66, ti=371, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=371
+Added transaction to Node4C at '(True, 5, 3, 66, 371, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node4C in 371 at 5.286623974003305
+Client2 received message body
+{'op': 'REPLY', 'result': {'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190838277399, 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'type': 'ATTRIB', 'seqNo': 2325, 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnTime': 1478190848070}}
+Removed transaction from Node4C at '(True, 5, 3, 66, 371, False)'
+Messengent Client2. Complete with Node4C in 371 at 5.286623974003305
+2016-11-03 22:04:01,704 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node4C: {'op': 'REPLY', 'result': {'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190838277399, 'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'type': 'ATTRIB', 'seqNo': 2325, 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'txnTime': 1478190848070}}
+Client2 received packet
+b'ri RAET\npl 02ec\nhl 49\nfg 04\nse 3\nde 4\nsi 45\nti 173\nbk 1\nck 1\nfk 1\nfl 40\n\n\xf1\xaa\x8al\x83\xc3\x80\xff\xe1#\xbc\xa2?\x84\x1b\x03\xc2\xda-\x83L\xee\xd2q\x85\xd6\xd6\xfd\xc2\xf0$\xb7\xb5\xd9U\xecw\x86\xf1\xca\x8d\x14\xae\xcb\x11uQ\x00\xd5\x1fN:\xda\x18\xd9\xd1\x1a\x0b\xd72p\xc0\x10\x16Y\x0b\xa3\x84\xf8\x06\xe6[\xd6\xa1\x11\xb0\x1c\xdc\rA\x17aC@=y\xe8\x93\xb4X.a\x1a~, \xe8\xd6do\xd5s\x8exL\xde\xcdxQ\x01\xdb\x1e\xd6\xa3\x1a<\x11w\xb9\x00\x1b\xbc\xe6\x90\x91\xac\xa7G\xd1\x8d\xdc\x95\'\xd9\xd8|\xd0\xf5\x18\xcc\x87\xe9\xf2\xe8\xd8\x14\xf4\xa0\x9a\x87\xf2Z\x92Y\xc0d\xe4\xc4\xff\x7f-_7\x13`\x1a\x8f\xbcL\xfb\x03\xaf2\x14\xe2\xfdx\x8aTR\x15\x1e\x8d\\I\xefH\xb8\x1ey\xd1\xdf\xd1\x0e\x02\xce\x8c\x9c\x98"\x11>\xc1|3"\xfc\xa4k\x17\xb7E\xaf}\xe1\x03V\x1a\xd3\xfck\xf5O\xf7\xe4sYM\xf8\xfd\x0f\x03\xd7A\x07@\xec\xe6\xf33\xc0\xae\xe7\xcb\xc3W\x85\x8dy\x84\xe1\xe5\x18v.\r\x85\x1a\xfe\xc6\x89\xeb\x8d\xd7\xba"^\xedk\x8f\xbb\x19\xdf\x00b\x83"\x83\xd2O8H\x02O`~\xbd;\xcccA\xdb\xc1\xe0\xc2\x8b\x16\xc2:\xe2@\xdb\xeb`\xf2~<\x11\xc52\x01\'\xa6\x9c\x1d\x1d\xc6\x9dM\xbc\x12\xca\x8e\\\xac\xef:\xd6\x08\xdb=\x0c~\x9a\xe2\xdb\xdb\xf8\xdfo2{\xfa\xc5\x96\xc5\x9b\xf5\x19\xf7\xa7+`\xfdj]\x80%]\x86P\x12\xef\xa5\xccpy(bF\xf9\x18WJ\xc437\x136\xf9\xe0\xc3\xe8\xf8\xf3m\xdf\xb0\x03\x0b\xf2\xbe\xe0\xb6IH\xa8\xd9\xa0x\\x\xaa\x07E\x89\xac\xdf\x97\xb8\x0f\xd4w\x85W\xce\xf3\x9a]\xbe`\x8e\xb31S\xa8\x0brR\xf7%\xd0j\xe6"\x8cO\xba\xb1=\\\xe7\xcc3\xda\xce\x94\x1e\xbeC\'\x8fg\xf7\xa1\xfc\r7\xdd\x9e\xb1\xb5\x8e\x88\xee\x97c\xee)\xb63\xd2\xe1\x18\x1c\x01]\xe3h\x02\xc1\xd4\xce\x15\r\xb3}Ar\xc9\x16tF\x1bP/\x1f#\x86#\x87^!wkG\xa9\x8c\x1a\x1c\xed\t\xd0P\xc1\xe4\xe0\xe5\x0bq\x96\x84\xdeO\xb2vd\x93G\xde\xee\xc6~\x7f\xce^Tn\x7fBs\x94\xd0\xd3\x9eKvr\xeb\xf5\x17\xeas\xd5U\xf9\xea\x19\x8fM\xffC!p\xd7\xc2\xd9\xd3\xb4\x9f)\xb0\x18\xe5\xa13\x00\x7fD\x8c\xa5)Z\xab\xf5\xf9\x0c`\x9c\xf3\xe3Sp\x958\xce\x84\xef\xe3\xb9\x96$F\x15e\\\xdb\xd9\xfd\xd5l#f\xb8\x9e\x99UJ_R\xa4\xfa\xac\xa1S\xd5Nr\xd0\xf25\xf4\n>\xfe\xf8\xcd\xac?@m\x1f#SM\xcd!\x04\r\xb5}\xef\xa6b\xa2\xf9\x8cB\x95\xe0,_\xf2\xd1\xc76I\xf0\xfe\xe4s\x9d\xc5\xb1\x00'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 748, 'hk': 0, 'hl': 73, 'se': 3, 'de': 4, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 371, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=4, re=3, si=69, ti=371, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=371
+Added transaction to Node2C at '(True, 4, 3, 69, 371, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node2C in 371 at 5.316346334999253
+Client2 received message body
+{'op': 'REPLY', 'result': {'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'txnTime': 1478190848070, 'seqNo': 2325, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190838277399}}
+Removed transaction from Node2C at '(True, 4, 3, 69, 371, False)'
+Messengent Client2. Complete with Node2C in 371 at 5.316346334999253
+2016-11-03 22:04:01,734 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node2C: {'op': 'REPLY', 'result': {'raw': '79b81a59e85b5886bd69586a46e7f46d7e1422c6240794bc3158c0d608a98481', 'rootHash': 'CotjceVLa4biUmx+JZUAdZHQ9cxLSGXlfxdZf0NpLVg=', 'txnId': '3e429b94d3157c8dde3a8460a88b62d2fe49c186d5a0f28e47314570bae0191a', 'auditPath': ['TVC1hQzd9et4+O039Zux1oV4Fn0rLtSLyT3U13cKXds=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'txnTime': 1478190848070, 'seqNo': 2325, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190838277399}}
+2016-11-03 22:04:01,736 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.210 seconds
+hasConsensus took 3.2901763916015625e-05 sec
+2016-11-03 22:04:01,737 | DEBUG    | gen_load_ratcheting  (206) | checkReplyAndLogStat | COUNTER ResultRow(signerName='Client2', signerId='C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', reqId=1478190838277399, transactionType='ATTRIB', sentAt=1478190838.2782404, quorumAt=1478190841.7369983, latency=3.4587578773498535, ackNodes='Node1C,Node6C,Node3C,Node5C,Node7C,Node2C,Node4C', nackNodes='', replyNodes='Node6C,Node5C,Node3C,Node7C,Node1C,Node2C,Node4C')
+2016-11-03 22:04:01,737 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkReplyAndLogStat) succeeded with 4.04 seconds to spare
+2016-11-03 22:04:01,737 | DEBUG    | gen_load_ratcheting  (269) | printCurrentTestResults | 
+        ================================
+        Test time: 3.4606575965881348
+        Average latency: 3.4587578773498535
+        Throughput: 0.2889624217622399
+        Error rate: 0.0
+        Succeeded: 1
+        Failed: 0
+        Query Time: 0
+        ================================
+        
+2016-11-03 22:04:01,737 | TRACE    | signing.py           (86) | serializeMsg | serialized msg {'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': None, 'reqId': 1478190841737825, 'operation': {'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'type': 'ATTRIB'}} into identifier:C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig|operation:raw:542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16|type:ATTRIB|reqId:1478190841737825
+2016-11-03 22:04:01,738 | DEBUG    | gen_load_ratcheting  (123) | _submit | Client Client2 sending request Request: {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node7C
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node1C
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node2C
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node4C
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node3C
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node6C
+2016-11-03 22:04:01,747 | TRACE    | stacked.py           (775) | flushOutBoxes | Client2 sending msg {'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}} to Node5C
+Added transaction to Node7C at '(False, 2, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node7C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Added transaction to Node1C at '(False, 3, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node1C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Added transaction to Node2C at '(False, 4, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node2C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Added transaction to Node4C at '(False, 5, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node4C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Added transaction to Node3C at '(False, 6, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node3C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Added transaction to Node6C at '(False, 7, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node6C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Added transaction to Node5C at '(False, 8, 3, 20, 5, False)'
+Messenger Client2. Do Message Segment 0 with Node5C in 5 at 5.369426607998321
+Client2 sending
+{'reqId': 1478190841737825, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'signature': '5UiMRDhf48UvLZWdApqonTFQrCh77uyqWPuo4wS2o39TCcwrWjE1UMREM74DCj6FSXdXdjHpLkPLvSgLCS7JwJH2', 'operation': {'raw': '{"YuHqczhdLAE5mfCJ8W12_354546": "126748501067_JieqNtFDB8IUZWCrXoQjYMfmdz7KAbwx5nsvEl6TkGhLRVyO93"}', 'type': 'ATTRIB'}}
+Client2 received packet
+b"ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 2\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\n\xa4q\xcb\xdc\x08,P\n\xdba\xa5T\x90'\x92\xbe\xa4pR\x87~\x05\xd3C\xfd\xb9G\n\xba\xc5\xec_\xb4\x95X\tq\xc3m\xb7\x05%}\xf3LF\xef11\xdcb\t\xe0\xdc\xde\x0c\x89\xd3\x108hnD\x0b"
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 2, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=2, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node7C at '(False, 2, 3, 20, 5, False)'
+Messenger Client2. Done with Node7C in 5 at 5.508921909997298
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 2\nsi 31\nti 173\nbk 1\nck 1\nfk 1\nfl 40\n\n\xc3\x99\xd2i\xa0c\x01\x9a\xc8\xb2\xf5!)\x93sV\xee\x07\xce\x0c\x9a(\xa6\xc3\xca\xc6\x16\xde\xc7\xb2r\xd8^U\xb6\xe5(6[\xd47\xf9\xeb&\xc3Dj\x9c\xeb\xd1\x82\x11x\x7f\x80Qro\xc2\xb1na.WnQA}f\x92w\xf1\xf3\x95\xfa\x12\x82\xd0f\xc4\xce\xeb\xf5SY\xfe7\xa4\xae\x96C\xae\x02\x93N(q\xd9\xabG<,+l\x01[\xcc\x91m\x91c\xf1\x8c\xbe\xfd`\x7f\x1c\x1d(wtU<R2uV\xb1\x8c\x0eW\xc4|\x99\xe0x\xb7\xea\x1c\xef\xcdW\t'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 2, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 49, 'ti': 371, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=2, re=3, si=49, ti=371, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=371
+Added transaction to Node7C at '(True, 2, 3, 49, 371, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node7C in 371 at 5.6221661230010795
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node7C at '(True, 2, 3, 49, 371, False)'
+Messengent Client2. Complete with Node7C in 371 at 5.6221661230010795
+2016-11-03 22:04:02,040 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node7C: {'op': 'REQACK', 'reqId': 1478190841737825}
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 7\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\n\xac\xc2+\x8c\x17\xef!D\xc2S\xcfb\x94\xf1\xae\x8c\xf9\xc4>\xeb\x14e?y,5\xd6\x14\xd3\t\x95\x9a\r\xfb\xc9\x85\x13\xc2r~\xc3\xec5\xfaAm!"\xd0>ch\xaa\x1f\x9d\xaafX\xf3b!\xe1\x80\x07'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 7, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=7, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node6C at '(False, 7, 3, 20, 5, False)'
+Messenger Client2. Done with Node6C in 5 at 5.70997400500346
+Client2 received packet
+b"ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 5\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\n.\xf4\xaa\xa0M\x18\xc4\x03\xaeA}lPi\x9c\xf8\\g\x7f\x9f\xed\x8f\xb1'LC#\xe7Px\xbc\xf0H\x9b\xb7\xa4v\xbew\x1e\xb9\x85\xe5\x07Up!\x03\x14o\xfc4G\x9b%\x02\xeb#\xc5\xf9\x87\x9e\xb5\x05"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 5, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=5, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node4C at '(False, 5, 3, 20, 5, False)'
+Messenger Client2. Done with Node4C in 5 at 5.742458111002634
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 6\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\n\xf0\xce\x87db$6\xb9\xd3\xf3\xa5N\x89\xa2\x1bh-\xe5\xbbnu\xb3{\x95\xbb\x85\x8f\xaat\xd0L*}\xdbH\x0e\xc0\xc53\xfb\xeb\xc3\xe3\xc7\xa3\xb4\x9e\x1e8\xb55vF\x08\x88\x85\x04`\xe3\xe0\xe3\x93\xfc\x0e'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 6, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=6, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node3C at '(False, 6, 3, 20, 5, False)'
+Messenger Client2. Done with Node3C in 5 at 5.76850413899956
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 4\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\n\xed\xccFg\xaa\x84L\x06\'\x9b\xcb\x1a\xbe\x89\x17E\xaa\x8a$a_NV\xd7\x15\x9b\xfe$\xdb\x04\x81\x1a\xb0r\x02\xaf\x85oC+\x06?f*M\x03\xdf\xf4\xac\xc0A\xb2\xc2\xafM\x81\xbfW"?\xcb\x88\xa3\n'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 4, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=4, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node2C at '(False, 4, 3, 20, 5, False)'
+Messenger Client2. Done with Node2C in 5 at 5.76850413899956
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 3\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\na\x93r?wE\xe0\xe7a+\x1d\x9c4m]\x9cMm}M\x8b\x9a\x82\xe6\x89\xc8\xc0zD\xea\xa0\x88\xe0\xe0\xf8\x90\x13ZS\xac\x05\xf0g\x9e\x86\x8f\x9eb\x1c\x8cg\xe9\xaf\x1fQ\x19\xff\xda\x16W\xf4;:\x0b'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 3, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=3, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node1C at '(False, 3, 3, 20, 5, False)'
+Messenger Client2. Done with Node1C in 5 at 5.819672318997618
+Client2 received packet
+b'ri RAET\npl 008c\nhl 4c\nfg 05\npk f\nse 3\nde 8\nsi 14\nti 5\nbk 1\nck 1\nfk 1\nfl 40\n\n\xe7\x04\xae\x88\x0b|\xe2\xb5>\x1en\rHc\x05O\xdd\\\xfc;\xe5\x8c7[\x8c\xb9E\x14\xf5N?\r\x94\x87P\xd6\x840\xc6\x94\xc4\xa5I\x04\xe9C\x15V\x15\xe7\x8f\nk\xa2\xe5\xf2\x1f\xb5mb\xe4\xac\x81\x06'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 15, 'pl': 140, 'hk': 0, 'hl': 76, 'se': 3, 'de': 8, 'cf': True, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 20, 'ti': 5, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '05'}
+Client2 received packet index: (rf=False, le=8, re=3, si=20, ti=5, bf=False)
+Client2 received trans kind = '0' packet kind = '15'
+Stack 'Client2'. Received packet body
+{}
+Removed transaction from Node5C at '(False, 8, 3, 20, 5, False)'
+Messenger Client2. Done with Node5C in 5 at 5.850330211003893
+Client2 received packet
+b"ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 7\nsi 37\nti 174\nbk 1\nck 1\nfk 1\nfl 40\n\n\xfdm\xb2\xfe\x0c\xfd=\x01\xe8\xe6d\x92\x92\x0e]\xa5\xfd\x84\x11\xa22\x95\xc9\x93\x81\xad\xf5\x14\xb9\xd8$\x97#\x18n\xa7\x05X\x15U\xc8\xb5\xe1\x1d\xe7H\x17p\xb7+\xc1\xaa\xc4\x02Z\x1c\xa5TG\xe6#x;\xe6\x03\x0b+3P\x03\x82\x0fG\xac\xb7\xc8\xcch\x19\xa1\x00\xe8\xed\xef\x11\xc0u\x0c\x8b;\xbe\xa8\x9f\xa50\x88\x1f\xd0'\xde\xc0\xf0\xda\x04\xe2\xa6\xcdy<\x8fR\xbb\xd3g>v\xb2\xf7\x04\r\xc8\x13E\xe0\xe3\xdb\xfa_\xb7[\xad\xe3\x14\x08\x17\xd3-\x8e\xa1\xbd\xb0\xd7)\x00"
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 7, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 55, 'ti': 372, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=7, re=3, si=55, ti=372, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=372
+Added transaction to Node6C at '(True, 7, 3, 55, 372, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node6C in 372 at 5.891295465997246
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node6C at '(True, 7, 3, 55, 372, False)'
+Messengent Client2. Complete with Node6C in 372 at 5.891295465997246
+2016-11-03 22:04:02,316 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node6C: {'op': 'REQACK', 'reqId': 1478190841737825}
+Client2 received packet
+b"ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 6\nsi 46\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\nU\x9c\xff@\x13\x93\x07\xff\xfdL8\x88\x00K\xcc\x85\xa6+\x95\xf0Q\x8d\xdd\x06\xef/\xd1\x82\xf5\xa7\xc7M\xa1\xef9f\xadZ\x05\xf6T\xa9_\x99\x06J:[\xcb\x0f\xf7M\x88\x1avL\xd4\r\x01bHp\xc3g\x98Y\x1b\xa4\xe6^\x16\xa9\xa2\x97Y2\xe4\xf7p4R\x19\x13=\x11Q\xe3\x88q!Y.\xbd\x9d\x12\xa38P\x82'\x02\xee\xbbOfB\xc0K\x9c\xb9 ?\xa9\xf6\xa4\xda\x12Q\xbb\xe9jS\x151!\x88\x0c\x9e!\xc7\xc8\xb7\x1b'\x02\xe4\x1b\xa7a[\xaf\x86\x12\x05"
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 6, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 70, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=6, re=3, si=70, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node3C at '(True, 6, 3, 70, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node3C in 369 at 5.984431525001128
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node3C at '(True, 6, 3, 70, 369, False)'
+Messengent Client2. Complete with Node3C in 369 at 5.984431525001128
+2016-11-03 22:04:02,401 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node3C: {'op': 'REQACK', 'reqId': 1478190841737825}
+Client2 received packet
+b"ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 5\nsi 42\nti 174\nbk 1\nck 1\nfk 1\nfl 40\n\n}\x08\x7f\xda\xc0\xb4\xb8FM\xbd\x1f\xd0\x05\xb3\xf0\xa5s\xc8\xf3B4\xb9\xed\xf4\x99\xdb'\xb6\xfbT7v\xa9\x8ad?O\x89\x7fp\xd4t\xed\xe0d\x11\xf1\x8d\xc0\xe9z\xa9\x9dgn\x9c\x10\x96[\xbc\xdd\xbf\x83\xda\x1buP\xf8\xf4d\xb3\xd7m\xa4;\xf1\x1cm\x05\xaaG>K'!8\xfa\xa1\xb4\x1bhi\x80\xbd\xfe\xb4\xe5W\xc5\x13\xfa\x8f|\xe0D<\x8co\x0c,\x1f\x8f\xac\xc2\xc6]\xc5\xde>\xf3\xf9(\x0e\xe2\xdc\xf2\x81M\x01WO\x98\x99\xba \xa2\x06\x0f\x80\xab%>\x1b\x04"
+Client2 received packet data
+{'sh': '35.160.153.163', 'sp': 9708, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 5, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 66, 'ti': 372, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=5, re=3, si=66, ti=372, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=372
+Added transaction to Node4C at '(True, 5, 3, 66, 372, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node4C in 372 at 6.025400234997505
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node4C at '(True, 5, 3, 66, 372, False)'
+Messengent Client2. Complete with Node4C in 372 at 6.025400234997505
+2016-11-03 22:04:02,443 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node4C: {'op': 'REQACK', 'reqId': 1478190841737825}
+Client2 received packet
+b"ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 4\nsi 45\nti 174\nbk 1\nck 1\nfk 1\nfl 40\n\n\x97\xa5\x11\xfc\x9b\x92\x08\x81l\x85\x0e\x9e\x1b`0\x8e\x12\xae>\x91\xe4f\x1c\x17v\xf3\xe0\x0ey\xa4\xae\xd8\xbf\x88\x1e7\xe8\n\x8d\x05\x04\x04\xf9\x06\xfb\xc5<\x14EB\xbd\x83\xab\xf7\x9f^t\xf1\xb8\xe7$R<\xb4\x98\xd2\x03\xe4\x9e 'y\xb8e\xb3E\x82R\x91J+\xb1\xfb\x04\xe4\xdc\xa3|\r\x86\xee~aIT\xe6\x04\xc4\xe2.\x93)cd\xc4\xab\xe2\xe0\xb4\x18~\xa1\xac\xf0\xcb\x16\xb1\x00N\xe5K\x9c\xf4\xf0r\x99\xc2'+\x0c\xf8Y\xef\xc2\x94i\xb8S\x8aV\xda\xceZ\x0c"
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 4, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 372, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=4, re=3, si=69, ti=372, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=372
+Added transaction to Node2C at '(True, 4, 3, 69, 372, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node2C in 372 at 6.054552572997636
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node2C at '(True, 4, 3, 69, 372, False)'
+Messengent Client2. Complete with Node2C in 372 at 6.054552572997636
+2016-11-03 22:04:02,474 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node2C: {'op': 'REQACK', 'reqId': 1478190841737825}
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 3\nsi 45\nti 174\nbk 1\nck 1\nfk 1\nfl 40\n\n\xe6\xab\x9f\x19z\xad\xbb\x16\xb7\xcf\xbcZk\xc9\x8f\x89\x83m\xa8\xab\xb9p\x80\x0f3\xa9\xc6\x0fZ*\xcd\x1fB?~p\x870A\xbdZy\xda\x02\xff`i\xb2\x1b\xd0g\xd2V\xac\xe9d\xaaum\xac\x16k\xf8z\xb1\xdc\x89\xeb\x17\x04\xabkQ\xbe\xf4y6\x99\nK\x18\xf6Qs\x9d\xc2\xa9\xa83$\x01\xd6h\xa1s\x03k\x03\xf80\x12\xe1_\xe7\xean\x1e\xac\xbb\xc3\xf4g?\x87_\xb7\xed\x82\xef\x8a\x91\xb1\xf6n\xd9:\xf9qV\xf1B-\x14\x18\xee\x8d_f}Q\x19\xe5_\x03'
+Client2 received packet data
+{'sh': '35.161.137.38', 'sp': 9702, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 3, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 372, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=3, re=3, si=69, ti=372, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=372
+Added transaction to Node1C at '(True, 3, 3, 69, 372, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node1C in 372 at 6.085652563997428
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node1C at '(True, 3, 3, 69, 372, False)'
+Messengent Client2. Complete with Node1C in 372 at 6.085652563997428
+Client2 received packet
+b'ri RAET\npl 00d9\nhl 49\nfg 04\nse 3\nde 8\nsi 32\nti 171\nbk 1\nck 1\nfk 1\nfl 40\n\n\xef\xcfH\xa8\xbdO`\xa8\xde\x18\x0c\xccu$\xf9\xc9\xfe\xe3\xd5\xca\x81\r\x00\x15\xd013\x86\xcbc*\xc7\x0669\xfc\xa5Q\x0f:\x07:\xf8g\x98\x00J\xfes\x13n\x16\xbd~i\xff\rK9\x14U\xdb\x85\xd4\x8c\xaai.\x1eOJ1F\x194\xe3L\x81\x01=\xf4N\xcb\xfc`\x8aiz{\xd6\x84\x8e^\x8a\xa2\xbe\x7f\x9e\x15\x9c\xc1\x93\xc0\x88B-\xc8\x03B\x046/"\x10j;z\x89\x1b0\xfb\xc8B\xeb>\t\naFN\xb5:)\xde\xb8\xda\xb8\xaa\x9e\'\xc8w4\x08'
+Client2 received packet data
+{'sh': '54.147.219.106', 'sp': 9710, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 217, 'hk': 0, 'hl': 73, 'se': 3, 'de': 8, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 50, 'ti': 369, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=8, re=3, si=50, ti=369, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=369
+Added transaction to Node5C at '(True, 8, 3, 50, 369, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node5C in 369 at 6.085652563997428
+Client2 received message body
+{'op': 'REQACK', 'reqId': 1478190841737825}
+Removed transaction from Node5C at '(True, 8, 3, 50, 369, False)'
+Messengent Client2. Complete with Node5C in 369 at 6.085652563997428
+2016-11-03 22:04:02,529 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node1C: {'op': 'REQACK', 'reqId': 1478190841737825}
+2016-11-03 22:04:02,530 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node5C: {'op': 'REQACK', 'reqId': 1478190841737825}
+2016-11-03 22:04:02,531 | WARNING  | base_events.py       (1308) | _run_once | Executing <Task pending coro=<Looper.runForever() running at /home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py:204> wait_for=<Future pending cb=[Task._wakeup()] created at /usr/lib/python3.5/asyncio/base_events.py:252>> took 0.118 seconds
+2016-11-03 22:04:03,281 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Client2 nodereg is odict_items([('Node1C', HA(host='35.161.137.38', port=9702)), ('Node2C', HA(host='35.161.111.17', port=9704)), ('Node3C', HA(host='35.161.122.249', port=9706)), ('Node4C', HA(host='35.160.153.163', port=9708)), ('Node5C', HA(host='54.147.219.106', port=9710)), ('Node6C', HA(host='52.199.48.127', port=9712)), ('Node7C', HA(host='54.169.186.146', port=9714))])
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Client2 nodestack is ['Node4C', 'Node3C', 'Node7C', 'Node6C', 'Node5C', 'Node2C', 'Node1C']
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 5 ('35.160.153.163', 9708)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 6 ('35.161.122.249', 9706)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 2 ('54.169.186.146', 9714)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 7 ('52.199.48.127', 9712)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 8 ('54.147.219.106', 9710)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 4 ('35.161.111.17', 9704)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client2 matched remote is 3 ('35.161.137.38', 9702)
+2016-11-03 22:04:03,282 | DEBUG    | stacked.py           (490) | maintainConnections | Client2 next check for retries in 6.00 seconds
+Client2 received packet
+b'ri RAET\npl 034a\nhl 49\nfg 04\nse 3\nde 2\nsi 31\nti 174\nbk 1\nck 1\nfk 1\nfl 40\n\n\x80\xd0\xc6-hP\xe0\xd8\xc9\xab\xc6\xe4\xa3\xea@\xd8k\xdd =\xff\xf5\x01\xb7\xa4\xf4\x89M\x8e!\xd3\x95 o\xb0!\xb2\x8d\xeedQ\x15\x9a\xb1\xed\x8e\xae\x8d\xf6g\xc1\x0c\xfb@r}\xcf\xbe\x82\xe3\x06\xdd\x85Y\x0bs\xdfy\x91V\xd6\t\rr\xb3Y"Q\x88\xbe\x92\x90h\xaa\xb69C\xce\xb5\xf3\xectVl\xc9\xff=Z\x9a|.\x82y\xd0\xf1&\x081\x87\\Ya)=L|X\xbf\x93@\xff\r~\xe3\xd1\xf8\xbc\xa4pq\xb3\x9e\xfb\xbf\x01\xea\xa4\xa0\x94\xd2`\xd9\x11@j\xb1\xe7V4\x13\x0b\xedt\x80\x92k{\xa5\xe2\x88r\xb3\xe5\xef\x1c\x13.\x8c\x9f:\xdb\xf5+\xfb\x1e\x10(\x96\r3$\xdf\xd3\x1f\x08\x87D82zNM\x07\x93\x0c`8><L%\xb6~\xf1N\x168Y#\xe4\xd6S\x95\xf4\xa2\rL/Z\xb7&Ab8cU\xdd(\xc6\xfdFp0\xb1Cc\x99\xdf\xce\x1f\xbd\xd3\x07B\xcc\xad)\x0f6\xc1\xdaHX\n\xb64!\xddG\xe2\x05#,\xb0\xb6\xd2a\x0e6l\x11\xa6\xcd6$\x10() \xae\xa27\xd6\x9fx\xc8/\xf4}\xd3\xe8\xbcT\x80g!\x06\xd6\xe3\x87\xd9/P\x9e\x81fh\x02\xac\x0b\xfeS_\xb3\x10R\x07\x9e\xe7\xd5\xc8_\x91\xe7(\xf3\xd5,\xee\\\xe0j\xc5\xc9\xaa\xc7\xf0D\x7f\xa2S\xbc7:p3N\x0b\x88\x9ec"<8n\x8fNyHD\xf2\xcb\x0e\xf5!\x01\x83\x06\x9d\xe5\x1b\x8d4,\x90\x95\x1b\x94w\x8c\xfa\xf7\xb5D5&Vr\x9c\x16\x05\x9eZzb\xe9\x90%\xc0\x1ax\x1a\n\xf3\xe9\xb6\x8b\xad\xce1\x10:s&\xb3\r\xae\xdcm\x8c#r\xedBZ\x0b\x9e\n\xab\xc9w\xc9\xc3\xc8{\x85%\x85w*\xba\xc9\x9f\x84G\xe2\xcf\x13\x00=\tL\x8ac\x9ea\xc8\xb9hk\xf1\x03\xff\xab\xc85\x0c\xa17)\xf2\xc3&\xd2\xc0>\x04x\x80\xd9a?q\xc8\xc2Yq\xa6F\xd3\x1ai\xff\xbdL\xe6\xab4ph\xb3\x94\x97m\xb1\xb0TI?\x15\xc5)gzS<\x17\xf5\xdee\xb6\x8d\x9c\x16j\x00R\x12\xd1\x9b\xfa\x8f=\x80m\x00a\xc5\xe2\x0eX\xb9E\xe8`-\xfd\xf14\x01^\x00e#\xd7\xe6/2\x8e\xbfG\xab>\xc7\xc4e%\x9f\xc7\x9a9vx\xc4z\x12\xb6\t\xc7\xe77\xa3\tg[\xda\xbc\xf4I\xf6E*`.Q\xb94\xcb\xb2K\x96=5\x90.\xfe\x9c\x08!\xfd\xcf\xdb\xd2\xb3g\xe5u5/v\x86\x11\xef\xd6\xe1xK+z\x00(\xdb\x99;\x9d\xdfgdg\xf2\xfb: \xfd\xa3c\x86\xbfRn\xa3T N\x9f\xce\xb0\xc9\xbb\xd9\xa9I1ZAu\xa7C\x11s.(\x10v\x9a\xaa-6\x9b\xb1yS\xe3\xa7\x84;]\xf1\xe2B\\P\'\x00\x92\x08F\xfc\xea\xf9|\x19\xde\x11\xe3c\x8a\xb3\xce\xa0:\xb6L\xec\xb6\x0b\x14\xf9\x87D\xc3|E\x12\xab\xd8\xf1\xb0\xfb\x95\'!\x95\x0f=\xca\xee\xd32\x84\xd0\xe5P\nT\xd7\x8a }\x19\x9b\x87X\x9eb_\xb5\xeb\xed\x0c\xfa\xc4\xd7\xe9\xf7\xfb\x81\xfb\t'
+Client2 received packet data
+{'sh': '54.169.186.146', 'sp': 9714, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 842, 'hk': 0, 'hl': 73, 'se': 3, 'de': 2, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 49, 'ti': 372, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=2, re=3, si=49, ti=372, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=372
+Added transaction to Node7C at '(True, 2, 3, 49, 372, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node7C in 372 at 7.728652907004289
+Client2 received message body
+{'op': 'REPLY', 'result': {'seqNo': 2335, 'reqId': 1478190841737825, 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad', 'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'txnTime': 1478190851040, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig'}}
+Removed transaction from Node7C at '(True, 2, 3, 49, 372, False)'
+Messengent Client2. Complete with Node7C in 372 at 7.728652907004289
+2016-11-03 22:04:04,145 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node7C: {'op': 'REPLY', 'result': {'seqNo': 2335, 'reqId': 1478190841737825, 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad', 'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'txnTime': 1478190851040, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig'}}
+Client2 received packet
+b'ri RAET\npl 034a\nhl 49\nfg 04\nse 3\nde 6\nsi 46\nti 172\nbk 1\nck 1\nfk 1\nfl 40\n\nF\xec\xb9\x03\x18l\xdb\x12?_b\xce\xfd\x11!\x05\xfa\xc8\x9c_\xcas\\P.\x97\x96\xe9\x1b\xb3\x95\xa1\x89\xf7\xf9d\x856?\xb6\\h:cd\xfb0Sj<O\x05$\xb5~|\x05\x08\xdc(\xb2\xb2\xb1LmW\x8b\x91\x9a?\xa9\xa3\x96^0)\xc4\xb3\x13\x16\xb4i\x80\x12Y\xbb\x0e\xc5\x8c\x8f\xd9\xf0\x0b|V\xe0\x8fv\xe4\r\x9d\x89\xa4\x8e\xec\xe9\xc2tV\xfb\xcf\xfd\xc6a\xf9L\xf3\x9c\xf7w\xd9\xec\x14R\xc2V\x149\xbes\xe2b\xe1\xe3ria\xfa\x0fC\xaa\xb1~\x0e\xb5s(\x10\xb0\\umg\xc0/\xb3^\x1a\xf4\xbb\xaa\xdc\x05\xaa\x8baC.\xd6\xb2/\xae\xfe\x87\xc91\xb6\x93V.\x07z\x9d\x9e\xa1\xf9A\x1ba\xe8\x89\x84&K8\xe2^o?<\xe2\xfd\xc9\xa9e$\xb2\xb3`\x95\xe7\xb3N\x14\x04\x8a\x84$V\xd7_\x0eA\xcf\xc1\xb9J{\x89y\xde\xf0\x07\x83\xed\t"EJ"\xbf\x9f\x00\x8e\x81\xda=\xfaR\xdb5\xe1\xb4\x80B\xdf\xeeG\x1f\x9c,\x11\xff\x04\xde\xeb*^:\x13&?\x96\xaa\xdeT\x0e:\xbck\x16\x1e\xd2\x93\xb7\x9f\x96\x8d\xfd\x837\xfd,\xc8\xac\xf6\x96\xa8\xac\xa4\xb6z(\x87\x10\xbe\x02h\xce\x9e\xf0QJ\xdb\xccR\xb7\xb18\x9afl\t\x16\x04\xff\xdb4d\xbe\xa1\x1f\xb3\x8e\xc0\xa6\xec\xde\x99h\x93\x12\n\xe4\x8c\xcf\x1d\xfdkB\x0f\xa3v\xba|\xccx<\xf4l$\x8c\x81ra\xb8\xcc\xd4P~\x15\xb9\xb7[\xc3\xea\xaaR2\xc3P\x1be\x84\x83\x07\xab\x9fEK\x94\xa2/\x14X\'\x0c\x93<\xfa;\x80\xdc\x0fo\xd6d\xc9\xea\x02\xc4\xb3\xecj>\r{\xcd\x91\x98\xbd\xdc,\x00*JY\x02\x1d)b\xea\xd7H&\xe7\xd7\x90\xe6\xf9\xe3\xf1\xd3]\xb7\x1d\x13\x96\x9b{At\xe2<\xc87h\xe0\xa4M\xd6\xcd\xf2\xde\x8d\x12\x1bpG\x9e\xfa\x0b\xbd\xf3\x9d\x9c:N`=\xd9\xdc\xb4\x86y\xab\x05yc\t\x80*\xe1Td\xd8\x924\xd8\x80\xaf)\xbc\xdbm\x80][qq\t@\x8ab\xc1\xd8\xd9X\xd1\xa8]n\xe1\x13\xe8\x95 Y\xeb\xfc9\xef\xd4\x16$\n\x860w\xc6\x88\xafm\xdc_d;t50]V\x189\xfb^\x1d\xf6\xb6\xf3\xf0\xf6\xac&/\xd6}q,|\x95\x12o\xa7\x00\xcat \xa9\x94\x16G\xa3\x7fUL\xbe\xe0\x8a\xe7k{\xb5\x08/\x97\xb8\x95#\xc8\xaa\xf3\x15\x06_\xaa\xf5\xa1\xb69\xff\xba\x1e\x19\xcd\xdd\x9c\x7f\xcb\x12\xb9\x18\x06\xc5c\x18\x87\xd0C\r\xfe\xec\x87\xb1F@\xbd\xd2q\xe56\x0c\x85\xff\xfbNC\xba\xf6\x08}\xc0\xd0\x1br\xa5\xec\x83\xc9)\xc8t\xe0\x1f\x95O\x1d\xd8\x950\x89\xe2\xac\xbb\xd7T\\\x887\xbf\xc8\x03=\x19\xb08\xb4\x84W\x1d\x1f\x08[\xe2\xa4\x19\x1f\xcc\xf44\xd1"\xc1\x15\xafK0\xfd\x84\x85\xaa\xc6I.\xed\x07\xd5\xfbJ\xf38\xc0\xc0\x81{\xc7\xd7B\x94%,\xd91W\x8ar\xc6\xa2\x9a\x9aEA9\xbc\xd4\xec\xbb\xc2\xe5gz7\x04s\xcaN\x7f\xca\xbb\x03\xe9\xf3*M\x95\xa4\xe3\x86\x0f'
+Client2 received packet data
+{'sh': '35.161.122.249', 'sp': 9706, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 842, 'hk': 0, 'hl': 73, 'se': 3, 'de': 6, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 70, 'ti': 370, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=6, re=3, si=70, ti=370, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=370
+Added transaction to Node3C at '(True, 6, 3, 70, 370, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node3C in 370 at 7.794995814001595
+Client2 received message body
+{'op': 'REPLY', 'result': {'seqNo': 2335, 'reqId': 1478190841737825, 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad', 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'type': 'ATTRIB', 'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'txnTime': 1478190851040}}
+Removed transaction from Node3C at '(True, 6, 3, 70, 370, False)'
+Messengent Client2. Complete with Node3C in 370 at 7.794995814001595
+2016-11-03 22:04:04,204 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node3C: {'op': 'REPLY', 'result': {'seqNo': 2335, 'reqId': 1478190841737825, 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad', 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'type': 'ATTRIB', 'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'txnTime': 1478190851040}}
+Client2 received packet
+b'ri RAET\npl 034a\nhl 49\nfg 04\nse 3\nde 7\nsi 37\nti 175\nbk 1\nck 1\nfk 1\nfl 40\n\n\xdc\xb6\x85\xbcq\x82h)u\x8c\'(m>\xb9\xca\x85\t\x97\x19\xa0e6X\xa9{\xc7\x1e\xc9Z\xc7\x9f\xeb\xb7I\x86\x01\xcd\xf7&\xa4\x04h\r\x08\xb34\x07j\xd8O\xa3\x83\xca]\x00\xaf\xcf\xf9\x84\xa4X^\x11W\r\xc2\x83\x0e\xf5P\x03J\x90\x7fi\xda^\\a5\xf9\xc6x\x1d0\xaa|l\xb3<%\xce\xdc\x96\xbfj\xe1E3 *\x08z%\xc5w\xff\x00\xbe\x168\xc35\xa38\xad\xb5\x18\xde\xed\xf6r\xc7\xa2\x93\xa0C\x1dc\xe2\xbe\xaa0\xe4T\xba\x0e\x06V\xb2?o]\x19\x1f\x11?\x0b\x17b\xdd\xb1\x10\'\xf1\n\xe8\x91:m\xb5\n\xa8-\xa5\xfb\x9f]\x02T\xb9\xe1\xfbl\xfbT\xec:\xadBE\x17~\xc1\x08is\xa9H0\xec\xafV}\xec\xe2AI\x14\xa7\x1d\xa7\xd2\xfa\x08\xf2}Xj\xd4\x1e_jI\xf4\xf9\x8d\xe1\xc1K\xd3\x14\nS\xeea\xdd*\xd3\xdf\xddh\x96\xb6\n\xb8a\xb4\x96\x02\xc5\n\x94\xf2o7\xb8u\xfd\xbbz\xd6\x14i\x14\xf0[\x988\xf6\xc3\xfe\x0f\xbc\x86\xca=`\x12no\x04S\xda\xfbP\xb8%M\xe2:\x85\x98\xa5\nPc\x18\'\x19)\xcbg\x87\xc4\xa5\xea\x97|<\xeeSCR\x0c\xaa\xe6\xa9\x9e\x11L\x0f3\xfe\x8e\x96z\xbf}\xcc\x1c"N\xb8\xd9\x8a\xc3\x90~\xdf=\xdc\x15,\n\tt\xe5\xca\xe9\xaf\x97Nh\x05\xcb\x0e\x1ck\x90%\xf3\xb6\x1d\\\xe4\xddW6\xa9\xa6\xfd$)f\xad\x81p)\x89\xa3\xb4V\x98I\xce6\x12\x0b\xab\x10.ga\t\xf9R\xf9\xf6\x1a\xaa(\xc7ca;{\x92\r\xe5;\x05\x97u\xd7!zp\xe5\xdd\'\x81\x8bU\xd5V\xde\xaf\x83\xad\xc6AV\x81\xd4w*\xcb\xba?\x8d\x88\xfeK\xb5\x01@\xc9\x9e\xe3\x06\n\x87\xa5\x0exV\x9a\xb2[\x972\x05\x0bF\xf6i\xff\xa3\xd9f\xfd\xb5\xd3\xb2P\xa5\xd1\xce\xed\x00\xcc\xaaO\x9aK"\x9d\xdam\x912\x91\x9f\xd0\x9bO\x10\x89\x088\x81\xe2\xb8\xeb\x1b\xbf8\xfc\xf2\xadJ\x1e\xdf\xbe\xcaa\xb3\xebS\xa3w\xfa`\x9fY\xe7\xcd\x9a\xce\xe8\xb1\xa5\x18,\x89\xb1p\x0bF\x87\x0eA\x00\xc9Y+\xab&s\x99c\xc1\x12\xc4\x9b\x0f2\x99\xb9\x0f\x19\x06?\x86\xcaN\x8b\xbb\x87\xff*\x99x^o\xfdlU\xb1[\xf81\xe0G\x04\xf6~?v\xa7\x1fz\x89t\x17G\xea\xfc%Y\xad\xbe\xc7\x98\xea :|\xa7\x8a\xd8\x13\xfc\x1b\xccX}?\xf6\xd9\x80-\xe4wW\x91\xea\x7f\xc0\xb4{\x07z\xd0dD\x06\xe4\xf1\xe5\xb5\xf9\x8c$H\x8d\x0c\xf5\x83\xe3\xe7!\x98\x96\x9a"h\xcbJ\xa1\xc6\xed\x1b]\xc0\xfa+\nE\xaaH\xcf\xc1\xe2C8\xb6P\xf4M\rO,\xad\xdc\x17\xf1\x89:-#,\xa7\x05\xf8C\xb8\x0bF\x00u\x81\xa9=\x89H\xa8^\xcd9\x96\x16\x9a\xe0-\nfze\x8a\'\x96V\x0c\x03\xf9b\xac-L{\xdag{v\x15\x8aH\xaa\xbd\xcc\x9e\x15\x01\x18\xe9\xbf\xb3\xfc\x96\x02\xe1\xc7\xc6\x15v\xf6\xc61\xcb6`\xf9\xef1\xd1\xca\xa2\n\x1a8\xb1L\x03\x0e\xce\x02'
+Client2 received packet data
+{'sh': '52.199.48.127', 'sp': 9712, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 842, 'hk': 0, 'hl': 73, 'se': 3, 'de': 7, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 55, 'ti': 373, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=7, re=3, si=55, ti=373, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=373
+Added transaction to Node6C at '(True, 7, 3, 55, 373, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node6C in 373 at 7.850376203998167
+Client2 received message body
+{'op': 'REPLY', 'result': {'txnTime': 1478190851040, 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'reqId': 1478190841737825, 'seqNo': 2335, 'type': 'ATTRIB', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad'}}
+Removed transaction from Node6C at '(True, 7, 3, 55, 373, False)'
+Messengent Client2. Complete with Node6C in 373 at 7.850376203998167
+2016-11-03 22:04:04,256 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node6C: {'op': 'REPLY', 'result': {'txnTime': 1478190851040, 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'reqId': 1478190841737825, 'seqNo': 2335, 'type': 'ATTRIB', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad'}}
+Client2 received packet
+b'ri RAET\npl 034a\nhl 49\nfg 04\nse 3\nde 4\nsi 45\nti 175\nbk 1\nck 1\nfk 1\nfl 40\n\n\x9d\xe8\xfc\x199cJVY\xa4\x8foy\xa4\xe3z\x03\xbe\x9bF71\xb4\xbd\xd8\xfb\x08\xd3\x05\xf7\xe5A\x11\'\x9e\xfc\x8b|s\x84\xa49\x1cW\'\t\xaf\xde\xd4\xed\xf8\xe6\x84\xd7B\x07\xc35\xf0\xb5\x81\x9d.\x83G\xd4\xc2b\x94\xf3\x8a<\x15\x0b\xa9,\xfa\x84\xbf\xf4\xde\xb9\xc8\x0f\x05-8\xc0za;\xd6m\x08\xdfz\xd4\xa3L\tQMR\xae\xbf\xe9_OH\x11\xe0\x852\xb3\xf4\x97B\xff\xddL\x06\xe3\xb7\x89\x85D\xd5\xc5\xfcy\t\x10\xa2\xefbv\xd4\x96]\xb6\xa4l\x11c\xcb\xfeJ\xaeJa\xaa\x8b$;\xcam\xfd\x9b\xa0\xe3\xc75\xd5\xcae\x0e\x1b\xcb\xa7r\xac6\x9a\xfa\xc01(\nms 1\x8d)N\x9c\x97\xc0\x0b9\xe4\xd5>.C\xaf\xdb\x8f5\x8f\xca8\x10\xde\xdcTm1\t\xb0\xaa\x16\x83wO)\x8f\xed\n\xaf\x03+\xac6\xe4{\x19\xa3<\x84{$\xe7\xf0\x00\xce\xd5io\x1dQL\xbe\x12)\x13\xe1G\'_\xfa\xb1\xa79\x07\x05\xca\x8a\x15\xf8\xaat\x80x\xfd\xda\x9b\xe2\x84\xd2\x15%\x8c\x7f\xa66\xc5\xf8\xa0\\\xb18\xeb\xd8\x81\xa94\xcc\xe0\n\xee\x85\x82V\x8f\xc9\x85\xd6\x1da\xfe\xf3\xee)\x12\x7f\xd9gJ}\xd4\xc9\xd0f(\xa6\xca\xbf\xae3#~\x11o\xcf\xe1\xed\xed\xa3\x89\x1d\xe6O\xb2\xf0k\x04\x86\xa6t\xd0/\x0cA,\xba\x18k\x84\x86\x05\x0f\xd9\x13=P\x8c\xff-N?U\x96\x8a\x98\x80GPP\x9foX\xa5\xd4\xb3\xb9+f\xaf\x0e9\x0b\xabBlxb\x8aGv\xc2-\x02\xad|\xbf\x19\x14\xa0\x0b\xe9CD\xfe\xcd\xd9s\xe1v\x8a\xbe\xf2\x14\x81\x1d6\x8d\xbd\xcb\xf9J\xb0\xbc\x08\x0bCF\xfe\r\xf1\xf0\x107\xbc@\x8a\x95\xa8\x10\xa2"j\xe1[\xa4G\x9d\xfb\x00\xb5\x9c>\xa3\x00]\x12s\xec\x8e\xcf\xcb\x81z\xb2gi\xde)\xfcJ\x9cKE\x1c\xea\xd5\xffXL\xd8\xa8\x0b\xf0\x93.s\x0f\x8a\xc2\xcd\x10\xac5B\xe8\xb5\xe5\xde,\x13>\x9eO\xcd\x8f\xed\x1b\xbe\xfaj\x04\'8\xe1\xa52:\xf8\xe2\x0b\xf1\xe0\xd9\xa3\xaf\x92*7\xb6=?RP\xd3\x19k\xe1\xad\xd9\x14\x8c\x85\xac\xd7\xcc\xaa\x9b\xafH\x18hm\x169\x12A\xcb+v\x93\xe3.\xf1\x93\xd2\xd1\xebM\xa0\x9d8\xd7\xcb\xa6-\xd0\xdb\xe2@~\xa7\x02\xb0\xaa\xe9\x04\xda\x98\xa0\xd8\xa2\x82\x12M\x80N\xd6V\xa8\x9e\xd5\x91\x1a\x15\xb7\xd1\xcf\xa6\xea\xb6\xd7\xab\xb6\xab\xdf\xa03\xe6P\x97\xae\x05\xe2\xcb\xd4\xec)SU\x06\xb1\x96\x01\xdcK\xe1\x19S\xa8\x10j\tAa\x8c\xff\x0ea\x07(o\xe9\x94\xc6i\xe8\x86\x95)< X\xc9\x9a-\xe75\xf9\x8ct\x08\x1c\x97\xaaE\xac\xc8\xdd\xca\xe4\x97\x89 lwr\xe4\xbb\xa7\xa0\x88g\xa8\xc4c/\xe2\xdf>\xf9C\x7f\xbe\xa2\x83\x9e\x92p\x051\xc5\xcf\xfb\xa2\xc4"G\xd4a9\x0e\xba\xe1\xb9\xa0\xda\xe9\x0cG\xc10\xf6bz\xc1\xb7\xd1\xacf ]\x92R\xa1h\xc1\xbb\x18\x9d0\xf4\x18\x9c\x05\xa0p \x86\x04p8;b\x1b\xd1\xf4i\x94\x04'
+Client2 received packet data
+{'sh': '35.161.111.17', 'sp': 9704, 'dh': '127.0.0.1', 'dp': 7530, 'ri': 'RAET', 'vn': 0, 'pk': 0, 'pl': 842, 'hk': 0, 'hl': 73, 'se': 3, 'de': 4, 'cf': False, 'bf': False, 'nf': False, 'df': False, 'vf': False, 'si': 69, 'ti': 373, 'tk': 0, 'dt': 0, 'oi': 0, 'wf': True, 'sn': 0, 'sc': 1, 'ml': 0, 'sf': False, 'af': False, 'bk': 1, 'ck': 1, 'fk': 1, 'fl': 64, 'fg': '04'}
+Client2 received packet index: (rf=True, le=4, re=3, si=69, ti=373, bf=False)
+Client2 received trans kind = '0' packet kind = '0'
+segment count=1 number=0 tid=373
+Added transaction to Node2C at '(True, 4, 3, 69, 373, False)'
+Messengent Client2. Do Ack Done Message on Segment 0 with Node2C in 373 at 7.897736972001439
+Client2 received message body
+{'op': 'REPLY', 'result': {'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad', 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'txnTime': 1478190851040, 'seqNo': 2335, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190841737825}}
+Removed transaction from Node2C at '(True, 4, 3, 69, 373, False)'
+Messengent Client2. Complete with Node2C in 373 at 7.897736972001439
+2016-11-03 22:04:04,312 | DEBUG    | client.py            (249) | handleOneNodeMsg | Client Client2 got msg from node Node2C: {'op': 'REPLY', 'result': {'raw': '542e22def06e827a07658d05b68391b444e8f04663e994ff4913b5adb036fe16', 'rootHash': 'oXHdFRjMDT1rKN+HrXjoBlS1tBOCQu7tsZ8/19JVLgc=', 'txnId': 'fedc960ecb8217abbd455014e34288dfa4cd782155699f12ad2f926b4a4c2bad', 'auditPath': ['afxb4ZpvSYQX9b0IpNc0B+dEkd20NoX2ejLLN13o6Zo=', 'Szv7mOCNSaIFLRSsdAKqylFuRbsRbT6RXWuFg58kd4A=', 'QWtHaaTRtZTgKpcJJT6wJ/0lTBig7hjTFib0uoZn8FM=', 'YlWREoSne/9LzR7fv8/McK6wFuZr0gglKlyU1eTkUqg=', 'j0pjGXpY0zxxHVhqqFLAGeL4TN/MdK7Q8cTpsEDL4Vg=', 'sT33SOembRt82rPu39ytP9ZBFcdZisQYT50/6+BjINk='], 'type': 'ATTRIB', 'txnTime': 1478190851040, 'seqNo': 2335, 'identifier': 'C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', 'reqId': 1478190841737825}}
+hasConsensus took 2.7179718017578125e-05 sec
+2016-11-03 22:04:04,314 | DEBUG    | gen_load_ratcheting  (206) | checkReplyAndLogStat | COUNTER ResultRow(signerName='Client2', signerId='C2YBq1zmm8frh1kTj4iqLmc8hD6A9XgAwYQTQd2Tyxig', reqId=1478190841737825, transactionType='ATTRIB', sentAt=1478190841.7382221, quorumAt=1478190844.3143504, latency=2.5761282444000244, ackNodes='Node1C,Node6C,Node3C,Node5C,Node7C,Node2C,Node4C', nackNodes='', replyNodes='Node7C,Node3C,Node6C,Node2C')
+2016-11-03 22:04:04,314 | DEBUG    | eventually.py        (86) | eventuallyAll | partial(checkReplyAndLogStat) succeeded with 4.92 seconds to spare
+2016-11-03 22:04:04,314 | DEBUG    | gen_load_ratcheting  (269) | printCurrentTestResults | 
+        ================================
+        Test time: 6.03795051574707
+        Average latency: 3.017443060874939
+        Throughput: 0.33123822309970385
+        Error rate: 0.0
+        Succeeded: 2
+        Failed: 0
+        Query Time: 0
+        ================================
+        
+2016-11-03 22:04:04,314 | DEBUG    | gen_load_ratcheting  (326) | main | Sent 1 ATTRIB requests
+2016-11-03 22:04:04,315 | INFO     | looper.py            (253) | shutdown | Looper shutting down now...
+2016-11-03 22:04:04,325 | DEBUG    | motor.py             (34) | set_status | Client2 changing status from started to stopping
+2016-11-03 22:04:04,325 | INFO     | stacked.py           (82) | stop | stack Client2 stopped
+2016-11-03 22:04:04,325 | DEBUG    | motor.py             (34) | set_status | Client2 changing status from stopping to stopped
+2016-11-03 22:04:04,325 | INFO     | looper.py            (260) | shutdown | Looper shut down in 0.011 seconds.
+2016-11-03 22:04:04,364 | DEBUG    | base_events.py       (410) | close | Close <_UnixSelectorEventLoop running=False closed=False debug=True>

@@ -273,11 +273,11 @@ def testClientGetsResponseWithoutConsensusForUsedReqId(nodeSet, looper, steward,
             result = last.result
             assert result is not None
 
-            # TODO: Time is not equal as some precesion is lost while storing
+            # TODO: Time is not equal as some precision is lost while storing
             # in oientdb, using seconds may be an option, need to think of a
             # use cases where time in milliseconds is required
-            replies[node.clientstack.name][f.RESULT.nm].pop(TXN_TIME)
-            result.result.pop(TXN_TIME)
+            replies[node.clientstack.name][f.RESULT.nm].pop(TXN_TIME, None)
+            result.result.pop(TXN_TIME, None)
 
             assert replies[node.clientstack.name][f.RESULT.nm] == result.result
 

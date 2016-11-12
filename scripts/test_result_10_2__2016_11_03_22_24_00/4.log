@@ -1,0 +1,212 @@
+2016-11-03 22:24:00,945 | INFO     | log.py               (128) | setupLogging | Choosing RAET log level 4
+2016-11-03 22:24:03,364 | DEBUG    | testable.py          (126) | decorator | in SpyableTestClient added spy on __init__
+2016-11-03 22:24:03,365 | WARNING  | testable.py          (134) | decorator | method <function Client.handleOneNodeMsg at 0x7f5aaafd0ea0> not found, so no spy added
+2016-11-03 22:24:03,386 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on __init__
+2016-11-03 22:24:03,386 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterReqLatencyTooHigh
+2016-11-03 22:24:03,386 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on isMasterThroughputTooLow
+2016-11-03 22:24:03,386 | DEBUG    | testable.py          (126) | decorator | in SpyableTestMonitor added spy on sendThroughput
+2016-11-03 22:24:03,388 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on __init__
+2016-11-03 22:24:03,389 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on catchupCompleted
+2016-11-03 22:24:03,389 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on processConsistencyProofReq
+2016-11-03 22:24:03,389 | DEBUG    | testable.py          (126) | decorator | in SpyableTestLedgerManager added spy on startCatchUpProcess
+2016-11-03 22:24:03,400 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on __init__
+2016-11-03 22:24:03,400 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on addToPrePrepares
+2016-11-03 22:24:03,400 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canProcessPrePrepare
+2016-11-03 22:24:03,400 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on canSendPrepare
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doOrder
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrePrepare
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on doPrepare
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on isValidPrepare
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on orderPendingCommit
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processCommit
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrePrepare
+2016-11-03 22:24:03,401 | DEBUG    | testable.py          (126) | decorator | in SpyableTestReplica added spy on processPrepare
+2016-11-03 22:24:03,405 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on __init__
+2016-11-03 22:24:03,405 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on checkPerformance
+2016-11-03 22:24:03,405 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on decidePrimaries
+2016-11-03 22:24:03,405 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on discard
+2016-11-03 22:24:03,405 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on eatTestMsg
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on forward
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleInvalidClientMsg
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on handleOneNodeMsg
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToClientInBox
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on postToNodeInBox
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processInstanceChange
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processOrdered
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processPropagate
+2016-11-03 22:24:03,406 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on processRequest
+2016-11-03 22:24:03,407 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on propagate
+2016-11-03 22:24:03,407 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousClient
+2016-11-03 22:24:03,407 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on reportSuspiciousNode
+2016-11-03 22:24:03,407 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on send
+2016-11-03 22:24:03,407 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on sendInstanceChange
+2016-11-03 22:24:03,407 | DEBUG    | testable.py          (126) | decorator | in SpyableTestNode added spy on startViewChange
+Loading module /home/lovesh/.virtualenvs/sovrin-dev/lib/python3.5/site-packages/anoncreds_dev-0.1.8-py3.5.egg/config/config-crypto-example1.py
+Module loaded.
+2016-11-03 22:24:03,975 | DEBUG    | gen_load_ratcheting  (280) | main | Results file: /home/lovesh/dev/evernym/sovrin-priv/scripts/perf_results_1_2_1478192043.csv
+2016-11-03 22:24:03,975 | INFO     | gen_load_ratcheting  (136) | _spawnClient | Seed for client Client5 is b'0000000000000000000000000Client5', its len is 32
+2016-11-03 22:24:03,976 | DEBUG    | client.py            (76) | __init__ | Client Client5 ignoring given ha HA(host='0.0.0.0', port=6016) and using HA(host='127.0.0.1', port=6495)
+2016-11-03 22:24:03,976 | DEBUG    | ledger.py            (164) | start | Starting ledger...
+2016-11-03 22:24:03,991 | DEBUG    | ledger.py            (69) | recoverTree | Recovering tree from transaction log
+Stack 'Client5': Opened server at '('0.0.0.0', 6495)'
+2016-11-03 22:24:04,083 | INFO     | client.py            (121) | __init__ | Client Client5 initialized with the following node registry:
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node1C listens at 35.161.137.38  on port 9702
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node2C listens at 35.161.111.17  on port 9704
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node3C listens at 35.161.122.249 on port 9706
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node4C listens at 35.160.153.163 on port 9708
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node5C listens at 54.147.219.106 on port 9710
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node6C listens at 52.199.48.127  on port 9712
+2016-11-03 22:24:04,083 | INFO     | client.py            (128) | __init__ |     Node7C listens at 54.169.186.146 on port 9714
+2016-11-03 22:24:04,084 | DEBUG    | plugin_helper.py     (25) | loadPlugins | Plugin loading started to load plugins from basedir: /home/lovesh/.sovrin
+2016-11-03 22:24:04,876 | DEBUG    | plugin_helper.py     (68) | loadPlugins | Total plugins loaded from basedir /home/lovesh/.sovrin are : 1
+2016-11-03 22:24:04,876 | DEBUG    | client.py            (148) | __init__ | total plugins loaded in client: 1
+2016-11-03 22:24:04,877 | DEBUG    | selector_events.py   (53) | __init__ | Using selector: EpollSelector
+2016-11-03 22:24:04,877 | DEBUG    | looper.py            (121) | __init__ | Setting handler for SIGINT
+2016-11-03 22:24:04,878 | DEBUG    | motor.py             (34) | set_status | Client5 changing status from stopped to starting
+2016-11-03 22:24:04,878 | INFO     | stacked.py           (75) | start | stack Client5 starting at ('0.0.0.0', 6495) in always mode
+2016-11-03 22:24:04,878 | INFO     | stacked.py           (851) | start | Client5 listening for other nodes at 0.0.0.0:6495
+2016-11-03 22:24:04,878 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node4C
+Added transaction to Node4C at '(False, 2, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node4C in 1 at 0.7951785149998614
+2016-11-03 22:24:04,886 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,886 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node3C
+Added transaction to Node3C at '(False, 3, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node3C in 1 at 0.8032789130011224
+2016-11-03 22:24:04,892 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,892 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node7C
+Added transaction to Node7C at '(False, 5, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node7C in 1 at 0.8095170200031134
+2016-11-03 22:24:04,900 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,900 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node6C
+Added transaction to Node6C at '(False, 7, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node6C in 1 at 0.8171867970013409
+2016-11-03 22:24:04,906 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,906 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node5C
+Added transaction to Node5C at '(False, 6, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node5C in 1 at 0.8232590609986801
+2016-11-03 22:24:04,913 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,913 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node2C
+Added transaction to Node2C at '(False, 8, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node2C in 1 at 0.8302289220009698
+2016-11-03 22:24:04,918 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,918 | DEBUG    | stacked.py           (573) | handleDisconnectedRemote | Client5 retrying to connect with Node1C
+Added transaction to Node1C at '(False, 4, 6, 34, 1, False)'
+Allower Client5. Do Hello with Node1C in 1 at 0.8353493000031449
+2016-11-03 22:24:04,924 | DEBUG    | stacked.py           (585) | handleDisconnectedRemote | Client5 disconnected node is joined
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Client5 nodereg is odict_items([('Node1C', HA(host='35.161.137.38', port=9702)), ('Node2C', HA(host='35.161.111.17', port=9704)), ('Node3C', HA(host='35.161.122.249', port=9706)), ('Node4C', HA(host='35.160.153.163', port=9708)), ('Node5C', HA(host='54.147.219.106', port=9710)), ('Node6C', HA(host='52.199.48.127', port=9712)), ('Node7C', HA(host='54.169.186.146', port=9714))])
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Client5 nodestack is ['Node4C', 'Node3C', 'Node7C', 'Node6C', 'Node5C', 'Node2C', 'Node1C']
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 2 ('35.160.153.163', 9708)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 3 ('35.161.122.249', 9706)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 5 ('54.169.186.146', 9714)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 7 ('52.199.48.127', 9712)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 6 ('54.147.219.106', 9710)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 8 ('35.161.111.17', 9704)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 4 ('35.161.137.38', 9702)
+2016-11-03 22:24:04,925 | DEBUG    | stacked.py           (490) | maintainConnections | Client5 next check for retries in 6.00 seconds
+2016-11-03 22:24:04,929 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:05,306 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:05,682 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+Allower Client5. Redo Hello with Node4C in 1 at 1.8007920969976112
+Allower Client5. Redo Hello with Node3C in 1 at 1.8135659340041457
+Allower Client5. Redo Hello with Node7C in 1 at 1.8135659340041457
+Allower Client5. Redo Hello with Node6C in 1 at 1.8280802970039076
+Allower Client5. Redo Hello with Node5C in 1 at 1.8280802970039076
+Allower Client5. Redo Hello with Node2C in 1 at 1.842725613998482
+Allower Client5. Redo Hello with Node1C in 1 at 1.842725613998482
+2016-11-03 22:24:06,058 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:06,434 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:06,814 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:07,191 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:07,568 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+Allower Client5. Redo Hello with Node4C in 1 at 3.8054503239982296
+Allower Client5. Redo Hello with Node3C in 1 at 3.8191000490041915
+Allower Client5. Redo Hello with Node7C in 1 at 3.8191000490041915
+Allower Client5. Redo Hello with Node6C in 1 at 3.8354401430042344
+Allower Client5. Redo Hello with Node5C in 1 at 3.8354401430042344
+Allower Client5. Redo Hello with Node2C in 1 at 3.851754326999071
+Allower Client5. Redo Hello with Node1C in 1 at 3.851754326999071
+2016-11-03 22:24:07,944 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:08,322 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:08,700 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:09,077 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:09,453 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:09,829 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:10,205 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:10,581 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:10,886 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,886 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,886 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,886 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,886 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,887 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,887 | TRACE    | stacked.py           (542) | handleDisconnectedRemote | Client5 allow already in process, so waiting to check for reconnects
+2016-11-03 22:24:10,887 | DEBUG    | stacked.py           (625) | reconcileNodeReg | Client5 nodereg is odict_items([('Node1C', HA(host='35.161.137.38', port=9702)), ('Node2C', HA(host='35.161.111.17', port=9704)), ('Node3C', HA(host='35.161.122.249', port=9706)), ('Node4C', HA(host='35.160.153.163', port=9708)), ('Node5C', HA(host='54.147.219.106', port=9710)), ('Node6C', HA(host='52.199.48.127', port=9712)), ('Node7C', HA(host='54.169.186.146', port=9714))])
+2016-11-03 22:24:10,887 | DEBUG    | stacked.py           (627) | reconcileNodeReg | Client5 nodestack is ['Node4C', 'Node3C', 'Node7C', 'Node6C', 'Node5C', 'Node2C', 'Node1C']
+2016-11-03 22:24:10,887 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 2 ('35.160.153.163', 9708)
+2016-11-03 22:24:10,887 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 3 ('35.161.122.249', 9706)
+2016-11-03 22:24:10,888 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 5 ('54.169.186.146', 9714)
+2016-11-03 22:24:10,888 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 7 ('52.199.48.127', 9712)
+2016-11-03 22:24:10,888 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 6 ('54.147.219.106', 9710)
+2016-11-03 22:24:10,888 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 8 ('35.161.111.17', 9704)
+2016-11-03 22:24:10,888 | DEBUG    | stacked.py           (633) | reconcileNodeReg | Client5 matched remote is 4 ('35.161.137.38', 9702)
+2016-11-03 22:24:10,888 | DEBUG    | stacked.py           (490) | maintainConnections | Client5 next check for retries in 6.00 seconds
+2016-11-03 22:24:10,958 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:11,334 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:11,711 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+Allower Client5. Redo Hello with Node4C in 1 at 7.80819753799733
+Allower Client5. Redo Hello with Node3C in 1 at 7.821333412000968
+Allower Client5. Redo Hello with Node7C in 1 at 7.821333412000968
+Allower Client5. Redo Hello with Node6C in 1 at 7.838842769997427
+Allower Client5. Redo Hello with Node5C in 1 at 7.838842769997427
+Allower Client5. Redo Hello with Node2C in 1 at 7.855266919003043
+Allower Client5. Redo Hello with Node1C in 1 at 7.855266919003043
+2016-11-03 22:24:12,087 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:12,463 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:12,839 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:13,216 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:13,592 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:13,969 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:14,346 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:14,724 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:15,100 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:15,479 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:15,855 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:16,231 | WARNING  | eventually.py        (133) | eventually | partial(checkIfConnectedToAll) last try...
+2016-11-03 22:24:16,231 | DEBUG    | gen_load_ratcheting  (216) | checkIfConnectedToAll | Connected 0 / 7 nodes
+2016-11-03 22:24:16,231 | ERROR    | eventually.py        (156) | eventually | partial(checkIfConnectedToAll) failed; not trying any more because 7.499990479002008 seconds have passed; args were ()
+2016-11-03 22:24:16,232 | DEBUG    | eventually.py        (79) | eventuallyAll | a coro partial(checkIfConnectedToAll) timed out without succeeding; fail count: 1, acceptable: 0
+2016-11-03 22:24:16,232 | ERROR    | looper.py            (230) | wrapper | Error while running coroutine eventuallyAll: Exception('Not connected to any',)
+2016-11-03 22:24:16,234 | INFO     | looper.py            (253) | shutdown | Looper shutting down now...
+2016-11-03 22:24:16,244 | DEBUG    | motor.py             (34) | set_status | Client5 changing status from starting to stopping
+2016-11-03 22:24:16,245 | INFO     | stacked.py           (82) | stop | stack Client5 stopped
+2016-11-03 22:24:16,245 | DEBUG    | motor.py             (34) | set_status | Client5 changing status from stopping to stopped
+2016-11-03 22:24:16,245 | INFO     | looper.py            (260) | shutdown | Looper shut down in 0.011 seconds.
+Traceback (most recent call last):
+  File "gen_load_ratcheting", line 331, in <module>
+    main(commandLineArgs)
+  File "gen_load_ratcheting", line 314, in main
+    retryWait=RETRY_WAIT))
+  File "/home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py", line 240, in run
+    return self.loop.run_until_complete(what)
+  File "/usr/lib/python3.5/asyncio/base_events.py", line 387, in run_until_complete
+    return future.result()
+  File "/usr/lib/python3.5/asyncio/futures.py", line 274, in result
+    raise self._exception
+  File "/usr/lib/python3.5/asyncio/tasks.py", line 239, in _step
+    result = coro.send(None)
+  File "/home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py", line 231, in wrapper
+    raise ex
+  File "/home/lovesh/dev/evernym/plenum-priv/plenum/common/looper.py", line 219, in wrapper
+    results.append(await coro)
+  File "/home/lovesh/dev/evernym/plenum-priv/plenum/test/eventually.py", line 74, in eventuallyAll
+    verbose=False)
+  File "/usr/lib/python3.5/asyncio/coroutines.py", line 105, in __next__
+    return self.gen.send(None)
+  File "/home/lovesh/dev/evernym/plenum-priv/plenum/test/eventually.py", line 157, in eventually
+    raise ex
+  File "/home/lovesh/dev/evernym/plenum-priv/plenum/test/eventually.py", line 135, in eventually
+    res = coroFunc(*args)
+  File "gen_load_ratcheting", line 219, in checkIfConnectedToAll
+    raise Exception("Not connected to any")
+Exception: Not connected to any
+2016-11-03 22:24:16,324 | DEBUG    | base_events.py       (410) | close | Close <_UnixSelectorEventLoop running=False closed=False debug=True>

@@ -43,8 +43,6 @@ def prompt_is(prompt):
     return x
 
 
-
-
 @pytest.fixture(scope="module")
 def poolNodesStarted(be, do, poolCLI):
     be(poolCLI)
