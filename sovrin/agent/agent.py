@@ -29,9 +29,10 @@ class Agent(Motor, AgentNet):
                  name: str,
                  basedirpath: str,
                  client: Client=None,
-                 port: int=None):
+                 port: int=None,
+                 loop=None):
         Motor.__init__(self)
-        self.loop = asyncio.get_event_loop()
+        self.loop = loop or asyncio.get_event_loop()
         self._eventListeners = {}   # Dict[str, set(Callable)]
         self._name = name
 
@@ -157,14 +158,15 @@ class WalletedAgent(Walleted, Agent, Caching):
                  basedirpath: str,
                  client: Client=None,
                  wallet: Wallet=None,
-                 port: int=None):
-        Agent.__init__(self, name, basedirpath, client, port)
+                 port: int=None,
+                 loop=None):
+        Agent.__init__(self, name, basedirpath, client, port, loop)
         self._wallet = wallet or Wallet(name)
         Walleted.__init__(self)
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=False):
+             startRunning=True, bootstrap=False, loop=None):
     config = getConfig()
 
     if not wallet:
@@ -182,12 +184,13 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
     agent = agentClass(basedirpath=basedirpath,
                        client=client,
                        wallet=wallet,
-                       port=port)
+                       port=port,
+                       loop=loop)
     if bootstrap:
         agent.bootstrap()
 
     if startRunning:
-        with Looper(debug=True) as looper:
+        with Looper(debug=True, loop=loop) as looper:
             looper.add(agent)
             logger.debug("Running {} now (port: {})".format(name, port))
             looper.run()

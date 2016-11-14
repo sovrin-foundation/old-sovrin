@@ -54,7 +54,6 @@ class Walleted:
         # TODO Why are we syncing the client here?
         if self.client:
             self.syncClient()
-        self.loop = asyncio.get_event_loop()
         self.rcvdMsgStore = {}  # type: Dict[reqId, [reqMsg]]
         self.msgHandlers = {
             ERROR: self._handleError,

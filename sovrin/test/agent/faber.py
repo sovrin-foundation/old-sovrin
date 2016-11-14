@@ -25,7 +25,8 @@ class FaberAgent(TestWalletedAgent):
                  basedirpath: str,
                  client: Client=None,
                  wallet: Wallet=None,
-                 port: int=None):
+                 port: int=None,
+                 loop=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -33,7 +34,7 @@ class FaberAgent(TestWalletedAgent):
         portParam, = self.getPassedArgs()
 
         super().__init__('Faber College', basedirpath, client, wallet,
-                         portParam or port)
+                         portParam or port, loop=loop)
 
         self.availableClaims = []
 
