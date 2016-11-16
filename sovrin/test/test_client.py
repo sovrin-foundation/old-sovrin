@@ -284,8 +284,8 @@ def testClientGetsResponseWithoutConsensusForUsedReqId(nodeSet, looper, steward,
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
-def checkGetAttr(reqId, sponsor, attrName, attrValue):
-    reply, status = sponsor.getReply(reqId)
+def checkGetAttr(reqKey, sponsor, attrName, attrValue):
+    reply, status = sponsor.getReply(*reqKey)
     assert reply
     data = json.loads(reply.get(DATA))
     assert status == "CONFIRMED" and \
@@ -301,7 +301,7 @@ def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeName,
     req = sponsorWallet.requestAttribute(attrib,
                                          sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
-    looper.run(eventually(checkGetAttr, req.reqId, sponsor,
+    looper.run(eventually(checkGetAttr, req.key, sponsor,
                           attributeName, attributeValue, retryWait=1,
                           timeout=20))
 

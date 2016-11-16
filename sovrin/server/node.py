@@ -210,7 +210,7 @@ class Node(PlenumNode):
         return TxnBasedAuthNr(self.graphStore)
 
     def processGetNymReq(self, request: Request, frm: str):
-        self.transmitToClient(RequestAck(request.reqId), frm)
+        self.transmitToClient(RequestAck(*request.key), frm)
         nym = request.operation[TARGET_NYM]
         txn = self.graphStore.getAddNymTxn(nym)
         txnId = self.genTxnId(request.identifier, request.reqId)
@@ -230,9 +230,9 @@ class Node(PlenumNode):
         if nym != origin:
             # TODO not sure this is correct; why does it matter?
             msg = "You can only receive transactions for yourself"
-            self.transmitToClient(RequestNack(request.reqId, msg), frm)
+            self.transmitToClient(RequestNack(*request.key, msg), frm)
         else:
-            self.transmitToClient(RequestAck(request.reqId), frm)
+            self.transmitToClient(RequestAck(*request.key), frm)
             data = request.operation.get(DATA)
             addNymTxn = self.graphStore.getAddNymTxn(origin)
             txnIds = [addNymTxn[TXN_ID], ] + self.graphStore. \
@@ -283,7 +283,7 @@ class Node(PlenumNode):
         self.transmitToClient(Reply(result), frm)
 
     def processGetAttrsReq(self, request: Request, frm: str):
-        self.transmitToClient(RequestAck(request.reqId), frm)
+        self.transmitToClient(RequestAck(*request.key), frm)
         attrName = request.operation[RAW]
         nym = request.operation[TARGET_NYM]
         attrWithSeqNo = self.graphStore.getRawAttrs(nym, attrName)
@@ -303,7 +303,7 @@ class Node(PlenumNode):
         self.transmitToClient(Reply(result), frm)
 
     def processGetIssuerKeyReq(self, request: Request, frm: str):
-        self.transmitToClient(RequestAck(request.reqId), frm)
+        self.transmitToClient(RequestAck(*request.key), frm)
         keys = self.graphStore.getIssuerKeys(request.operation[ORIGIN],
                                              request.operation[REF])
         result = {
@@ -427,7 +427,7 @@ class Node(PlenumNode):
                 self.graphStore.hasNym(req.operation[TARGET_NYM]):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
             if req.key in self.requestSender:
-                self.transmitToClient(RequestNack(req.reqId, reason),
+                self.transmitToClient(RequestNack(*req.key, reason),
                                       self.requestSender.pop(req.key))
         else:
             reply = self.generateReply(int(ppTime), req)

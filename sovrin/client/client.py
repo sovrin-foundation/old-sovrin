@@ -109,8 +109,8 @@ class Client(PlenumClient):
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
 
-    def postReplyRecvd(self, reqId, frm, result, numReplies):
-        reply = super().postReplyRecvd(reqId, frm, result, numReplies)
+    def postReplyRecvd(self, identifier, reqId, frm, result, numReplies):
+        reply = super().postReplyRecvd(identifier, reqId, frm, result, numReplies)
         if reply:
             for name in self._observers:
                 try:
@@ -118,7 +118,7 @@ class Client(PlenumClient):
                 except Exception as ex:
                     logger.error("Observer threw an exception", exc_info=ex)
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
-                self.reqRepStore.setConsensus(reqId)
+                self.reqRepStore.setConsensus(identifier, reqId)
             if result[TXN_TYPE] == NYM:
                 if self.graphStore:
                     self.addNymToGraph(result)
@@ -154,17 +154,17 @@ class Client(PlenumClient):
             else:
                 logger.debug("Unknown type {}".format(result[TXN_TYPE]))
 
-    def requestConfirmed(self, reqId: int) -> bool:
+    def requestConfirmed(self, identifier: str, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
-            return self.reqRepStore.requestConfirmed(reqId)
+            return self.reqRepStore.requestConfirmed(identifier, reqId)
         else:
-            return self.txnLog.hasTxnWithReqId(reqId)
+            return self.txnLog.hasTxnWithReqId(identifier, reqId)
 
-    def hasConsensus(self, reqId: int) -> Optional[str]:
+    def hasConsensus(self, identifier: str, reqId: int) -> Optional[str]:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
-            return self.reqRepStore.hasConsensus(reqId)
+            return self.reqRepStore.hasConsensus(identifier, reqId)
         else:
-            return super().hasConsensus(reqId)
+            return super().hasConsensus(identifier, reqId)
 
     def addNymToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)

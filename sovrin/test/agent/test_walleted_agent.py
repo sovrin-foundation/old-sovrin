@@ -37,7 +37,7 @@ class TestWalletedAgent(WalletedAgent):
                     clbk()
 
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client,
+                                 req.key, self.client,
                                  dummy, None, None,
                                  chk)
 
@@ -54,6 +54,6 @@ class TestWalletedAgent(WalletedAgent):
             req, = self.wallet.preparePending()
             self.client.submitReqs(req)
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client,
+                                 req.key, self.client,
                                  postClaimDefWritten, (claimDef,), None,
                                  chk)

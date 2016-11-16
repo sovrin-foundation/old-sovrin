@@ -293,7 +293,7 @@ class Walleted:
 
             if postFetchCredDef:
                 self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client, postFetchCredDef)
+                                 req.key, self.client, postFetchCredDef)
 
     def _handlePing(self, msg):
         body, (frm, ha) = msg
@@ -467,7 +467,7 @@ class Walleted:
                 self.notifyMsgListener(
                     "    Identifier is not yet written to Sovrin")
 
-        self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
+        self.loop.call_later(.2, ensureReqCompleted, self.loop, req.key,
                              self.client, getNymReply, (availableClaims, li))
 
     def _reqClaim(self, msg):
@@ -667,7 +667,7 @@ class Walleted:
 
     def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
-        ensureReqCompleted(self.loop, req.reqId, self.client, clbk, *args)
+        ensureReqCompleted(self.loop, req.key, self.client, clbk, *args)
 
     def _getClaimsAttrsFor(self, internalId, attrNames):
         res = {}
@@ -810,7 +810,7 @@ class Walleted:
             self.loop.call_later(.2,
                                  ensureReqCompleted,
                                  self.loop,
-                                 req.reqId,
+                                 req.key,
                                  self.client,
                                  self._handleSyncResp(link, doneCallback))
 

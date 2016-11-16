@@ -11,7 +11,6 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.txn import getTxnOrderedFields
 from sovrin.persistence.client_req_rep_store import ClientReqRepStore
 
-
 REQ_DATA = "ReqData"
 """
 The attribute data stored by the client differs from that of the node in
@@ -69,107 +68,127 @@ class ClientReqRepStoreOrientDB(ClientReqRepStore):
     @property
     def lastReqId(self):
         result = self.store.client.command("select max({}) as lastId from {}".
-                                     format(f.REQ_ID.nm, REQ_DATA))
+                                           format(f.REQ_ID.nm, REQ_DATA))
         return 0 if not result else result[0].oRecordData['lastId']
 
     def addRequest(self, req: Request):
-        self.store.client.command("insert into {} set {} = {}, {} = '{}',{} = '{}', "
-                            "nacks = {{}}, replies = {{}}".
-                            format(REQ_DATA, f.REQ_ID.nm, req.reqId,
-                                   f.IDENTIFIER.nm, req.identifier,
-                                   TXN_TYPE, req.operation[TXN_TYPE]))
+        self.store.client.command(
+            "insert into {} set {} = {}, {} = '{}',{} = '{}', "
+            "nacks = {{}}, replies = {{}}".
+            format(REQ_DATA, f.REQ_ID.nm, req.reqId,
+                   f.IDENTIFIER.nm, req.identifier,
+                   TXN_TYPE, req.operation[TXN_TYPE]))
 
     def addAck(self, msg: Any, sender: str):
+        identifier = msg[f.IDENTIFIER.nm]
         reqId = msg[f.REQ_ID.nm]
-        self.store.client.command("update {} add acks = '{}' where {} = {}".
-                            format(REQ_DATA, sender, f.REQ_ID.nm, reqId))
+        self.store.client.command(
+            "update {} add acks = '{}' where {} = '{}' and {} = {}".
+            format(REQ_DATA, sender, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm,
+                   reqId))
 
     def addNack(self, msg: Any, sender: str):
+        identifier = msg[f.IDENTIFIER.nm]
         reqId = msg[f.REQ_ID.nm]
         reason = msg[f.REASON.nm]
         reason = reason.replace('"', '\\"').replace("'", "\\'")
-        self.store.client.command("update {} set nacks.{} = '{}' where {} = {}".
-                                  format(REQ_DATA, sender, reason, f.REQ_ID.nm,
-                                         reqId))
+        self.store.client.command(
+            "update {} set nacks.{} = '{}' where {} = '{}' and {} = {}".
+            format(REQ_DATA, sender, reason, f.IDENTIFIER.nm, identifier,
+                   f.REQ_ID.nm,
+                   reqId))
 
-    def addReply(self, reqId: int, sender: str, result: Any) -> \
+    def addReply(self, identifier: str, reqId: int, sender: str, result: Any) -> \
             Sequence[str]:
         txnId = result[TXN_ID]
         txnTime = result.get(TXN_TIME)
         serializedTxn = self.txnSerializer.serialize(result, toBytes=False)
         serializedTxn = serializedTxn.replace('"', '\\"').replace("'", "\\'")
-        res = self.store.client.command("update {} set replies.{} = '{}' return "
-                                  "after @this.replies where {} = {}".
-                                  format(REQ_DATA, sender, serializedTxn,
-                                         f.REQ_ID.nm, reqId))
+        res = self.store.client.command(
+            "update {} set replies.{} = '{}' return "
+            "after @this.replies where {} = '{}' and {} = {}".
+            format(REQ_DATA, sender, serializedTxn, f.IDENTIFIER.nm, identifier,
+                   f.REQ_ID.nm, reqId))
         replies = res[0].oRecordData['value']
         # TODO: Set txnId txnTime, txnType only when got same f+1 replies
         if len(replies) == 1:
-            self.store.client.command("update {} set {} = '{}', {} = {}, {} = '{}' "
-                                "where {} = {}".
-                                format(REQ_DATA, TXN_ID, txnId, TXN_TIME,
-                                       txnTime, TXN_TYPE, result[TXN_TYPE],
-                                       f.REQ_ID.nm, reqId))
+            self.store.client.command(
+                "update {} set {} = '{}', {} = {}, {} = '{}' "
+                "where {} = '{}' and {} = {}".
+                format(REQ_DATA, TXN_ID, txnId, TXN_TIME,
+                       txnTime, TXN_TYPE, result[TXN_TYPE],
+                       f.IDENTIFIER.nm, identifier,
+                       f.REQ_ID.nm, reqId))
         return len(replies)
 
-    def requestConfirmed(self, reqId):
-        result = self.store.client.command("select {} from {} where {} = {}".
-                                     format(TXN_ID, REQ_DATA, f.REQ_ID.nm, reqId))
+    def requestConfirmed(self, identifier, reqId):
+        result = self.store.client.command(
+            "select {} from {} where {} = '{}' and {} = {}".
+            format(TXN_ID, REQ_DATA, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm,
+                   reqId))
         return bool(result[0].oRecordData.get(TXN_ID) if result else False)
 
-    def hasRequest(self, reqId: int):
-        result = self.store.client.command("select from {} where {} = {}".
-                                     format(REQ_DATA, f.REQ_ID.nm, reqId))
+    def hasRequest(self, identifier: str, reqId: int):
+        result = self.store.client.command(
+            "select from {} where {} = '{}' and {} = {}".
+            format(REQ_DATA, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm, reqId))
         return bool(result)
 
-    def getReplies(self, reqId: int):
-        result = self.store.client.command("select replies from {} where {} = {}".
-                                     format(REQ_DATA, f.REQ_ID.nm, reqId))
+    def getReplies(self, identifier: str, reqId: int):
+        result = self.store.client.command(
+            "select replies from {} where {} = '{}' and {} = {}".
+            format(REQ_DATA, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm, reqId))
         if not result:
             return {}
         else:
             return {
                 k: self.txnSerializer.deserialize(v)
                 for k, v in result[0].oRecordData['replies'].items()
-            }
+                }
 
-    def getAcks(self, reqId: int) -> List[str]:
-        result = self.store.client.command("select acks from {} where {} = {}".
-                                     format(REQ_DATA, f.REQ_ID.nm, reqId))
+    def getAcks(self, identifier: str, reqId: int) -> List[str]:
+        result = self.store.client.command(
+            "select acks from {} where {} = '{}' and {} = {}".
+            format(REQ_DATA, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm, reqId))
         if not result:
             return []
         result = result[0].oRecordData.get('acks', [])
         return result
 
-    def getNacks(self, reqId: int) -> dict:
-        result = self.store.client.command("select nacks from {} where {} = {}".
-                                     format(REQ_DATA, f.REQ_ID.nm, reqId))
+    def getNacks(self, identifier: str, reqId: int) -> dict:
+        result = self.store.client.command(
+            "select nacks from {} where {} = '{}' and {} = {}".
+            format(REQ_DATA, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm, reqId))
         return {} if not result else result[0].oRecordData.get('nacks', {})
 
-    def setConsensus(self, reqId: int, value='true'):
-        self.store.client.command("update {} set hasConsensus = {} where {} = {}".
-                            format(REQ_DATA, value, f.REQ_ID.nm, reqId))
+    def setConsensus(self, identifier: str, reqId: int, value='true'):
+        self.store.client.command(
+            "update {} set hasConsensus = {} where {} = '{}' and {} = {}".
+            format(REQ_DATA, value, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm,
+                   reqId))
 
-    def hasConsensus(self, reqId: int):
+    def hasConsensus(self, identifier: str, reqId: int):
         result = self.store.client.command("select hasConsensus from {} where "
-                                     "{} = {}".format(REQ_DATA, f.REQ_ID.nm,
-                                                      reqId))
+                                           "{} = '{}' and {} = {}".format(
+            REQ_DATA, f.IDENTIFIER.nm, identifier, f.REQ_ID.nm,
+            reqId))
         if result and result[0].oRecordData.get('hasConsensus'):
-            replies = self.getReplies(reqId).values()
+            replies = self.getReplies(identifier, reqId).values()
             fVal = getMaxFailures(len(list(replies)))
             return checkIfMoreThanFSameItems(replies, fVal)
         else:
             return False
 
     def setLastTxnForIdentifier(self, identifier, value: str):
-        self.store.client.command("update {} set value = '{}', {} = '{}' upsert "
-                            "where {} = '{}'".
-                            format(LAST_TXN_DATA, value, f.IDENTIFIER.nm,
-                                   identifier, f.IDENTIFIER.nm, identifier))
+        self.store.client.command(
+            "update {} set value = '{}', {} = '{}' upsert "
+            "where {} = '{}'".
+            format(LAST_TXN_DATA, value, f.IDENTIFIER.nm,
+                   identifier, f.IDENTIFIER.nm, identifier))
 
     def getLastTxnForIdentifier(self, identifier):
-        result = self.store.client.command("select value from {} where {} = '{}'".
-                                     format(LAST_TXN_DATA, f.IDENTIFIER.nm,
-                                            identifier))
+        result = self.store.client.command(
+            "select value from {} where {} = '{}'".
+            format(LAST_TXN_DATA, f.IDENTIFIER.nm,
+                   identifier))
         return None if not result else result[0].oRecordData['value']
-
