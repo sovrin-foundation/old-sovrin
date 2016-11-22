@@ -341,8 +341,10 @@ class Node(PlenumNode):
          4. Add the reply to storage so it can be served later if the
          client requests it.
         """
-        txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
-        self.sendReplyToClient(Reply(txnWithMerkleInfo))
+        result = reply.result
+        txnWithMerkleInfo = self.storeTxnInLedger(result)
+        self.sendReplyToClient(Reply(txnWithMerkleInfo),
+                               (result[f.IDENTIFIER.nm], result[f.REQ_ID.nm]))
         reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
         self.storeTxnInGraph(reply.result)
 
@@ -390,16 +392,17 @@ class Node(PlenumNode):
             logger.debug("Got an unknown type {} to process".
                          format(result[TXN_TYPE]))
 
-    def sendReplyToClient(self, reply):
-        identifier = reply.result.get(f.IDENTIFIER.nm)
-        reqId = reply.result.get(f.REQ_ID.nm)
-        # In case of genesis transactions when no identifier is present
-        key = (identifier, reqId)
-        if (identifier, reqId) in self.requestSender:
-            self.transmitToClient(reply, self.requestSender.pop(key))
-        else:
-            logger.debug("Could not find key {} to send reply".
-                         format(key))
+    # # TODO: Need to fix the signature
+    # def sendReplyToClient(self, reply):
+    #     identifier = reply.result.get(f.IDENTIFIER.nm)
+    #     reqId = reply.result.get(f.REQ_ID.nm)
+    #     # In case of genesis transactions when no identifier is present
+    #     key = (identifier, reqId)
+    #     if (identifier, reqId) in self.requestSender:
+    #         self.transmitToClient(reply, self.requestSender.pop(key))
+    #     else:
+    #         logger.debug("Could not find key {} to send reply".
+    #                      format(key))
 
     def addToLedger(self, txn):
         merkleInfo = self.primaryStorage.append(txn)
