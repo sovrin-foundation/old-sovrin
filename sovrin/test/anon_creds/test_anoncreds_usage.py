@@ -32,21 +32,20 @@ def verifier(looper, userClientB, userWalletB):
 def testAnonCreds(issuer, prover, verifier, attrRepo, primes1):
     # 1. Create a Claim Def
     claimDef = issuer.genClaimDef('GVT', '1.0', GVT.attribNames())
-    claimDefId = ID(claimDef.getKey())
+    claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
 
     # 2. Create keys for the Claim Def
     issuer.genKeys(claimDefId, **primes1)
 
     # 3. Issue accumulator
-    issuer.issueAccumulator(id=claimDefId, iA=110, L=5)
+    issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
 
     # 4. set attributes for user1
-    userId = 111
     attrs = GVT.attribs(name='Alex', age=28, height=175, sex='male')
-    attrRepo.addAttributes(claimDef.getKey(), userId, attrs)
+    attrRepo.addAttributes(claimDef.getKey(), prover.id, attrs)
 
     # 5. request Claims
-    prover.requestClaim(claimDefId, SimpleFetcher(issuer))
+    prover.requestClaim(claimDefId, SimpleFetcher(issuer), False)
 
     # 6. proof Claims
     proofInput = ProofInput(
