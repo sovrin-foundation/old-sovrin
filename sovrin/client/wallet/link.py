@@ -177,9 +177,9 @@ class Link:
     def getRemoteEndpoint(self, required=False):
         if not self.remoteEndPoint and required:
             raise RemoteEndpointNotFound
-        # if isinstance(self.remoteEndPoint, tuple):
-        #     return self.remoteEndPoint
-        # else:
-        #     ip, port = self.remoteEndPoint.split(":")
-        #     return ip, int(port)
-        return self.remoteEndPoint
+
+        if isinstance(self.remoteEndPoint, tuple):
+            return self.remoteEndPoint
+        else:
+            ip, port = self.remoteEndPoint.split(":")
+            return ip, int(port)

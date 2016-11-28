@@ -1,6 +1,6 @@
 
 import os
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 
 def writeAnonCredPlugin(baseDir, reloadTestModules:bool=False):

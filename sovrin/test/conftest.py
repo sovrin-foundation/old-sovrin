@@ -20,7 +20,7 @@ from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import genTestClient, createNym, addUser, TestNode, \
     makePendingTxnsRequest, buildStewardClient
@@ -30,7 +30,8 @@ from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
     whitelist, concerningLogLevels, logcapture, tconf, keySharedNodes, \
     startedNodes, tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, \
     poolTxnNodeNames,allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
-    poolTxnStewardData, poolTxnStewardNames, getValueFromModule
+    poolTxnStewardData, poolTxnStewardNames, getValueFromModule, \
+    txnPoolNodesLooper
 
 
 @pytest.fixture(scope="module", autouse=True)

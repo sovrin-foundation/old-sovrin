@@ -1,3 +1,4 @@
+from plenum.common.port_dispenser import genHa
 from plenum.common.signer_did import DidSigner
 from sovrin.common.strict_types import strict_types
 
@@ -21,7 +22,7 @@ from plenum.common.looper import Looper
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
-from plenum.test.helper import genHa, assertFunc
+from plenum.test.helper import assertFunc
 from sovrin.agent.agent import WalletedAgent
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore

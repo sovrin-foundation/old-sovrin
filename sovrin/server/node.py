@@ -26,7 +26,8 @@ from sovrin.common.txn import TXN_TYPE, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
     ISSUER_KEY, GET_ISSUER_KEY, REF
-from sovrin.common.util import getConfig, dateTimeEncoding
+from sovrin.common.util import dateTimeEncoding
+from sovrin.common.config_util import getConfig
 from sovrin.persistence import identity_graph
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -222,7 +223,7 @@ class Node(PlenumNode):
         return TxnBasedAuthNr(self.graphStore)
 
     def processGetNymReq(self, request: Request, frm: str):
-        self.transmitToClient(RequestAck(request.reqId), frm)
+        self.transmitToClient(RequestAck(*request.key), frm)
         nym = request.operation[TARGET_NYM]
         txn = self.graphStore.getAddNymTxn(nym)
         txnId = self.genTxnId(request.identifier, request.reqId)
@@ -242,9 +243,9 @@ class Node(PlenumNode):
         if nym != origin:
             # TODO not sure this is correct; why does it matter?
             msg = "You can only receive transactions for yourself"
-            self.transmitToClient(RequestNack(request.reqId, msg), frm)
+            self.transmitToClient(RequestNack(*request.key, msg), frm)
         else:
-            self.transmitToClient(RequestAck(request.reqId), frm)
+            self.transmitToClient(RequestAck(*request.key), frm)
             data = request.operation.get(DATA)
             addNymTxn = self.graphStore.getAddNymTxn(origin)
             txnIds = [addNymTxn[TXN_ID], ] + self.graphStore. \
@@ -295,7 +296,7 @@ class Node(PlenumNode):
         self.transmitToClient(Reply(result), frm)
 
     def processGetAttrsReq(self, request: Request, frm: str):
-        self.transmitToClient(RequestAck(request.reqId), frm)
+        self.transmitToClient(RequestAck(*request.key), frm)
         attrName = request.operation[RAW]
         nym = request.operation[TARGET_NYM]
         attrWithSeqNo = self.graphStore.getRawAttrs(nym, attrName)
@@ -315,7 +316,7 @@ class Node(PlenumNode):
         self.transmitToClient(Reply(result), frm)
 
     def processGetIssuerKeyReq(self, request: Request, frm: str):
-        self.transmitToClient(RequestAck(request.reqId), frm)
+        self.transmitToClient(RequestAck(*request.key), frm)
         keys = self.graphStore.getIssuerKeys(request.operation[ORIGIN],
                                              request.operation[REF])
         result = {
@@ -353,8 +354,10 @@ class Node(PlenumNode):
          4. Add the reply to storage so it can be served later if the
          client requests it.
         """
-        txnWithMerkleInfo = self.storeTxnInLedger(reply.result)
-        self.sendReplyToClient(Reply(txnWithMerkleInfo))
+        result = reply.result
+        txnWithMerkleInfo = self.storeTxnInLedger(result)
+        self.sendReplyToClient(Reply(txnWithMerkleInfo),
+                               (result[f.IDENTIFIER.nm], result[f.REQ_ID.nm]))
         reply.result[F.seqNo.name] = txnWithMerkleInfo.get(F.seqNo.name)
         self.storeTxnInGraph(reply.result)
 
@@ -400,16 +403,17 @@ class Node(PlenumNode):
             logger.debug("Got an unknown type {} to process".
                          format(result[TXN_TYPE]))
 
-    def sendReplyToClient(self, reply):
-        identifier = reply.result.get(f.IDENTIFIER.nm)
-        reqId = reply.result.get(f.REQ_ID.nm)
-        # In case of genesis transactions when no identifier is present
-        key = (identifier, reqId)
-        if (identifier, reqId) in self.requestSender:
-            self.transmitToClient(reply, self.requestSender.pop(key))
-        else:
-            logger.debug("Could not find key {} to send reply".
-                         format(key))
+    # # TODO: Need to fix the signature
+    # def sendReplyToClient(self, reply):
+    #     identifier = reply.result.get(f.IDENTIFIER.nm)
+    #     reqId = reply.result.get(f.REQ_ID.nm)
+    #     # In case of genesis transactions when no identifier is present
+    #     key = (identifier, reqId)
+    #     if (identifier, reqId) in self.requestSender:
+    #         self.transmitToClient(reply, self.requestSender.pop(key))
+    #     else:
+    #         logger.debug("Could not find key {} to send reply".
+    #                      format(key))
 
     def addToLedger(self, txn):
         merkleInfo = self.primaryStorage.append(txn)
@@ -437,7 +441,7 @@ class Node(PlenumNode):
                 self.canNymRequestBeProcessed(req.identifier, req.operation):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
             if req.key in self.requestSender:
-                self.transmitToClient(RequestNack(req.reqId, reason),
+                self.transmitToClient(RequestNack(*req.key, reason),
                                       self.requestSender.pop(req.key))
         else:
             reply = self.generateReply(int(ppTime), req)
@@ -446,7 +450,7 @@ class Node(PlenumNode):
     def generateReply(self, ppTime: float, req: Request):
         operation = req.operation
         txnId = self.genTxnId(req.identifier, req.reqId)
-        result = {TXN_ID: txnId, TXN_TIME: ppTime}
+        result = {TXN_ID: txnId, TXN_TIME: int(ppTime)}
         result.update(operation)
         result.update({
             f.IDENTIFIER.nm: req.identifier,

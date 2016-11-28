@@ -102,7 +102,7 @@ do
     fi;
 
     if [ "$usesetupfile" != "Y" ]; then
-        echo -e "Reverting back temporary changes to use setup-dev.py file"
+        echo -e "Reverting back temporary changes done to use setup-dev.py file"
         mv setup.py setup-dev.py
         mv setup-st.py setup.py
     fi;

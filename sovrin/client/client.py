@@ -23,7 +23,7 @@ from plenum.persistence.orientdb_store import OrientDbStore
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
     GET_ATTR
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
     ClientReqRepStoreOrientDB
@@ -40,20 +40,22 @@ class Client(PlenumClient):
                  ha: Union[HA, Tuple[str, int]]=None,
                  peerHA: Union[HA, Tuple[str, int]]=None,
                  basedirpath: str=None,
-                 config=None):
+                 config=None,
+                 sighex: str=None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
                          ha,
                          basedirpath,
-                         config)
+                         config,
+                         sighex)
         self.graphStore = self.getGraphStore()
         self.autoDiscloseAttributes = False
         self.requestedPendingTxns = False
         self.hasAnonCreds = bool(peerHA)
         if self.hasAnonCreds:
             self.peerHA = peerHA if isinstance(peerHA, HA) else HA(*peerHA)
-            stackargs = dict(name=name,
+            stackargs = dict(name=self.stackName,
                              ha=peerHA,
                              main=True,
                              auto=AutoMode.always)
@@ -107,8 +109,8 @@ class Client(PlenumClient):
         if OP_FIELD_NAME not in msg:
             logger.error("Op absent in message {}".format(msg))
 
-    def postReplyRecvd(self, reqId, frm, result, numReplies):
-        reply = super().postReplyRecvd(reqId, frm, result, numReplies)
+    def postReplyRecvd(self, identifier, reqId, frm, result, numReplies):
+        reply = super().postReplyRecvd(identifier, reqId, frm, result, numReplies)
         if reply:
             for name in self._observers:
                 try:
@@ -116,7 +118,7 @@ class Client(PlenumClient):
                 except Exception as ex:
                     logger.error("Observer threw an exception", exc_info=ex)
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
-                self.reqRepStore.setConsensus(reqId)
+                self.reqRepStore.setConsensus(identifier, reqId)
             if result[TXN_TYPE] == NYM:
                 if self.graphStore:
                     self.addNymToGraph(result)
@@ -152,17 +154,17 @@ class Client(PlenumClient):
             else:
                 logger.debug("Unknown type {}".format(result[TXN_TYPE]))
 
-    def requestConfirmed(self, reqId: int) -> bool:
+    def requestConfirmed(self, identifier: str, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
-            return self.reqRepStore.requestConfirmed(reqId)
+            return self.reqRepStore.requestConfirmed(identifier, reqId)
         else:
-            return self.txnLog.hasTxnWithReqId(reqId)
+            return self.txnLog.hasTxnWithReqId(identifier, reqId)
 
-    def hasConsensus(self, reqId: int) -> Optional[str]:
+    def hasConsensus(self, identifier: str, reqId: int) -> Optional[str]:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
-            return self.reqRepStore.hasConsensus(reqId)
+            return self.reqRepStore.hasConsensus(identifier, reqId)
         else:
-            return super().hasConsensus(reqId)
+            return super().hasConsensus(identifier, reqId)
 
     def addNymToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
@@ -255,15 +257,15 @@ class Client(PlenumClient):
 
     def start(self, loop):
         super().start(loop)
-        if self.hasAnonCreds and \
-                        self.status is not Status.going():
+        if self.hasAnonCreds and self.status not in Status.going():
             self.peerStack.start()
 
     async def prod(self, limit) -> int:
-        s = await self.nodestack.service(limit)
-        if self.isGoing():
-            await self.nodestack.serviceLifecycle()
-        self.nodestack.flushOutBoxes()
+        # s = await self.nodestack.service(limit)
+        # if self.isGoing():
+        #     await self.nodestack.serviceLifecycle()
+        # self.nodestack.flushOutBoxes()
+        s = await super().prod(limit)
         if self.hasAnonCreds:
             return s + await self.peerStack.service(limit)
         else:

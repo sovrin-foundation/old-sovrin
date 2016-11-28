@@ -9,7 +9,7 @@ from sovrin.agent.agent import runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 from sovrin.test.agent.helper import buildFaberWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
@@ -25,7 +25,8 @@ class FaberAgent(TestWalletedAgent):
                  basedirpath: str,
                  client: Client=None,
                  wallet: Wallet=None,
-                 port: int=None):
+                 port: int=None,
+                 loop=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -33,7 +34,7 @@ class FaberAgent(TestWalletedAgent):
         portParam, = self.getPassedArgs()
 
         super().__init__('Faber College', basedirpath, client, wallet,
-                         portParam or port)
+                         portParam or port, loop=loop)
 
         self.availableClaims = []
 
