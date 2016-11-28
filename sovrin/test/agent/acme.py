@@ -13,6 +13,7 @@ from sovrin.common.config_util import getConfig
 
 from sovrin.test.agent.helper import buildAcmeWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
+from sovrin.test.helper import TestClient
 
 logger = getlogger()
 
@@ -144,7 +145,7 @@ def runAcme(name=None, wallet=None, basedirpath=None, port=None,
 
     return runAgent(AcmeAgent, name or "Acme Corp",
                     wallet or buildAcmeWallet(), basedirpath,
-                    port, startRunning, bootstrap)
+                    port, startRunning, bootstrap, clientClass=TestClient)
 
 if __name__ == "__main__":
     runAcme(port=6666)

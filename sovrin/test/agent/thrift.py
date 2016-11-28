@@ -11,6 +11,7 @@ from sovrin.common.config_util import getConfig
 
 from sovrin.test.agent.helper import buildThriftWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
+from sovrin.test.helper import TestClient
 
 logger = getlogger()
 
@@ -73,7 +74,7 @@ def runThrift(name=None, wallet=None, basedirpath=None, port=None,
 
     return runAgent(ThriftAgent, name or "Thrift Bank",
                     wallet or buildThriftWallet(), basedirpath,
-                    port, startRunning, bootstrap)
+                    port, startRunning, bootstrap, clientClass=TestClient)
 
 
 if __name__ == "__main__":
