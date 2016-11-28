@@ -1,6 +1,7 @@
 from plenum.common.port_dispenser import genHa
 from plenum.common.signer_did import DidSigner
 from sovrin.common.strict_types import strict_types
+from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 strict_types.defaultShouldCheck = True
 
@@ -33,7 +34,7 @@ from sovrin.test.agent.faber import runFaber
 from sovrin.test.agent.helper import ensureAgentsConnected, buildFaberWallet, \
     buildAcmeWallet, buildThriftWallet
 from sovrin.test.agent.thrift import runThrift
-from sovrin.test.helper import addClaimDefAndIssuerKeys
+from sovrin.test.helper import addClaimDefAndIssuerKeys, TestClient
 from sovrin.test.helper import createNym, addAttributeAndCheck
 
 from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
@@ -89,15 +90,15 @@ def agentBuilder(tdirWithPoolTxns):
         basedir = basedir or tdirWithPoolTxns
         _, port = genHa()
         _, clientPort = genHa()
-        client = Client(randomString(6),
-                        ha=("0.0.0.0", clientPort),
-                        basedirpath=basedir)
+        client = TestClient(randomString(6),
+                            ha=("0.0.0.0", clientPort),
+                            basedirpath=basedir)
 
-        agent = WalletedAgent(name=wallet.name,
-                              basedirpath=basedir,
-                              client=client,
-                              wallet=wallet,
-                              port=port)
+        agent = TestWalletedAgent(name=wallet.name,
+                                  basedirpath=basedir,
+                                  client=client,
+                                  wallet=wallet,
+                                  port=port)
 
         return agent
     return _

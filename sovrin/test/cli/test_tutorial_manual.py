@@ -30,6 +30,7 @@ from sovrin.test.cli.test_tutorial import poolNodesStarted, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent, \
     jobCertClaimRequested, bankBasicClaimSent, bankKYCClaimSent, \
     setPromptAndKeyring
+from sovrin.test.helper import TestClient
 
 concerningLogLevels = [logging.WARNING,
                        logging.ERROR,
@@ -186,7 +187,7 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
             agentParams:
         agentCls.getPassedArgs = lambda _: (agentPort,)
         agent = runAgent(agentCls, agentName, buildAgentWalletFunc(), tdir,
-                         agentPort, False, True)
+                         agentPort, False, True, clientClass=TestClient)
         philCLI.looper.add(agent)
 
     for p in philCLI.looper.prodables:

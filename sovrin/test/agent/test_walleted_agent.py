@@ -5,6 +5,7 @@ from sovrin.common.exceptions import LinkNotFound
 
 from ledger.util import F
 from plenum.common.log import getlogger
+from plenum.test.testable import Spyable
 from sovrin.agent.agent import WalletedAgent
 from sovrin.common.util import ensureReqCompleted
 from sovrin.test.agent.helper import getAgentCmdLineParams
@@ -16,6 +17,8 @@ from plenum.common.types import f
 logger = getlogger()
 
 
+@Spyable(
+    methods=[WalletedAgent._handlePing, WalletedAgent._handlePong])
 class TestWalletedAgent(WalletedAgent):
 
     def getLinkForMsg(self, msg):

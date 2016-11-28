@@ -166,7 +166,7 @@ class WalletedAgent(Walleted, Agent, Caching):
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=False, loop=None):
+             startRunning=True, bootstrap=False, loop=None, clientClass=Client):
     config = getConfig()
 
     if not wallet:
@@ -177,9 +177,9 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
         _, port = genHa()
 
     _, clientPort = genHa()
-    client = Client(randomString(6),
-                    ha=("0.0.0.0", clientPort),
-                    basedirpath=basedirpath)
+    client = clientClass(randomString(6),
+                         ha=("0.0.0.0", clientPort),
+                         basedirpath=basedirpath)
 
     agent = agentClass(basedirpath=basedirpath,
                        client=client,

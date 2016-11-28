@@ -304,7 +304,9 @@ class TestClientStorage:
         self.baseDir = baseDir
 
     def cleanupDataLocation(self):
-        loc = os.path.join(self.baseDir, "data/clients")
+        loc = os.path.join(self.baseDir, "data/clients", self.name)
+        logger.debug('Cleaning up location {} of test client {}'.
+                     format(loc, self.name))
         try:
             shutil.rmtree(loc)
         except Exception as ex:
@@ -350,7 +352,7 @@ def genTestClient(nodes: TestNodeSet = None,
                   peerHA: Union[HA, Tuple[str, int]] = None,
                   testClientClass=TestClient,
                   usePoolLedger=False,
-                  name: str=None) -> TestClient:
+                  name: str=None) -> (TestClient, Wallet):
     testClient, wallet = genPlenumTestClient(nodes,
                                              nodeReg,
                                              tmpdir,
