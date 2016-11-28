@@ -1,19 +1,15 @@
 import pytest
 from anoncreds.protocol.fetcher import SimpleFetcher
-from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from anoncreds.protocol.types import ID, ProofInput, PredicateGE
-from anoncreds.protocol.verifier import Verifier
-from anoncreds.protocol.wallet.prover_wallet import ProverWalletInMemory
 
 from sovrin.anon_creds.sovrin_issuer import SovrinIssuer
 from sovrin.anon_creds.sovrin_prover import SovrinProver
 from sovrin.anon_creds.verifier_prover import SovrinVerifier
 from sovrin.test.anon_creds.conftest import GVT
 
-from anoncreds.test.conftest import primes
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def attrRepo():
     return AttributeRepoInMemory()
 
@@ -33,7 +29,7 @@ def verifier(looper, userClientB, userWalletB):
     return SovrinVerifier(looper, userClientB, userWalletB)
 
 
-def testAnonCreds(issuer, prover, verifier, primes1):
+def testAnonCreds(issuer, prover, verifier, attrRepo, primes1):
     # 1. Create a Claim Def
     claimDef = issuer.genClaimDef('GVT', '1.0', GVT.attribNames())
     claimDefId = ID(claimDef.getKey())
@@ -41,7 +37,7 @@ def testAnonCreds(issuer, prover, verifier, primes1):
     # 2. Create keys for the Claim Def
     issuer.genKeys(claimDefId, **primes1)
 
-    # 4. Issue accumulator
+    # 3. Issue accumulator
     issuer.issueAccumulator(id=claimDefId, iA=110, L=5)
 
     # 4. set attributes for user1

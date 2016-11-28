@@ -60,7 +60,7 @@ class SovrinPublicRepo(PublicRepo):
         op = {
             TXN_TYPE: GET_ISSUER_KEY,
             REF: id.claimDefId,
-            ORIGIN: self.wallet.defaultId
+            ORIGIN: id.claimDefKey.issuerId
         }
         data, seqNo = self._sendGetReq(op)
         data = data[DATA]
@@ -96,8 +96,9 @@ class SovrinPublicRepo(PublicRepo):
             }
         }
 
-        data, seqNo  = self._sendSubmitReq(op)
+        data, seqNo = self._sendSubmitReq(op)
         claimDef.id = seqNo
+        claimDef.issuerId = self.wallet.defaultId
         return claimDef
 
     def submitPublicKeys(self, id: ID, pk: PublicKey, pkR: RevocationPublicKey = None):
