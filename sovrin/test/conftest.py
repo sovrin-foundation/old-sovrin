@@ -201,6 +201,14 @@ def userClientA(nodeSet, userWalletA, looper, tdir):
     makePendingTxnsRequest(u, userWalletA)
     return u
 
+@pytest.fixture(scope="module")
+def userClientB (nodeSet, userWalletB, looper, tdir):
+    u, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
+    u.registerObserver(userWalletB.handleIncomingReply)
+    looper.add(u)
+    looper.run(u.ensureConnectedToNodes())
+    makePendingTxnsRequest(u, userWalletB)
+    return u
 
 def pytest_assertrepr_compare(op, left, right):
     if isinstance(left, str) and isinstance(right, str):

@@ -7,20 +7,17 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
+from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
+from anoncreds.protocol.verifier import Verifier
+from anoncreds.protocol.wallet.wallet import WalletInMemory
 from plenum.common.constants import ENVS
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
-import sovrin.anon_creds.cred_def as CredDefModule
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.globals import KEYS
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.types import SerFmt
+from anoncreds.protocol.types import SerFmt, AttribType, AttribDef, ClaimDefinition
 from anoncreds.protocol.utils import strToCryptoInteger
-from anoncreds.test.conftest import staticPrimes
-from anoncreds.test.cred_def_test_store import MemoryCredDefStore
-from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
 from ledger.util import F
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
@@ -34,17 +31,12 @@ from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, \
     CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
-from sovrin.anon_creds.issuer import AttribDef, AttribType
-from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
-from sovrin.anon_creds.proof_builder import ProofBuilder
-from sovrin.anon_creds.verifier import Verifier
+from sovrin.anon_creds.sovrin_public_repo import SovrinPublicRepo
 from sovrin.cli.helper import getNewClientGrams, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
-from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
@@ -94,8 +86,7 @@ class SovrinCli(PlenumCli):
         # LH: Shouldn't the Cli have a `Verifier` so it can act as a Verifier
         # entity too?
         # TODO: Confirm this decision
-        self.verifier = Verifier(randomString(), MemoryCredDefStore(),
-                                 MemoryIssuerKeyStore())
+        self.verifier = Verifier(WalletInMemory(randomString(), SovrinPublicRepo()))
         _, port = self.nextAvailableClientAddr()
         self.curContext = (None, None, {})  # Current Link, Current Claim Req,
         # set attributes
@@ -548,7 +539,7 @@ class SovrinCli(PlenumCli):
 
     def _initAttrRepoAction(self, matchedVars):
         if matchedVars.get('init_attr_repo') == 'initialize mock attribute repo':
-            self.attributeRepo = InMemoryAttrRepo()
+            self.attributeRepo = AttributeRepoInMemory()
             self.print("attribute repo initialized", Token.BoldBlue)
             return True
 
@@ -1205,7 +1196,7 @@ class SovrinCli(PlenumCli):
         return matchingLinksWithClaimReq[0]
 
     def _getOneLinkAndAvailableClaim(self, claimName, printMsgs:bool=True) -> \
-            (Link, ClaimDef):
+            (Link, ClaimDefinition):
         matchingLinksWithAvailableClaim = self.activeWallet.\
             getMatchingLinksWithAvailableClaim(claimName)
 

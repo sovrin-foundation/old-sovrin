@@ -4,26 +4,28 @@ import uuid
 from collections import deque
 from typing import Dict, Union, Tuple, Optional, Callable
 
-from base58 import b58decode, b58encode
 import pyorient
-
-from raet.raeting import AutoMode
-
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
+from base58 import b58decode, b58encode
+from plenum.client.client import Client as PlenumClient
 from plenum.common.error import fault
 from plenum.common.log import getlogger
-from plenum.client.client import Client as PlenumClient
-from plenum.server.router import Router
-from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
+from plenum.common.startable import Status
 from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK, REQNACK, \
     TXN_ID, TARGET_NYM, NONCE
 from plenum.common.types import OP_FIELD_NAME, f, HA
 from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
-from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
-    GET_ATTR
+from plenum.server.router import Router
+from raet.raeting import AutoMode
+
 from sovrin.common.config_util import getConfig
+from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO, \
+    GET_ATTR
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
     ClientReqRepStoreOrientDB
@@ -36,12 +38,15 @@ logger = getlogger()
 class Client(PlenumClient):
     def __init__(self,
                  name: str,
-                 nodeReg: Dict[str, HA]=None,
-                 ha: Union[HA, Tuple[str, int]]=None,
-                 peerHA: Union[HA, Tuple[str, int]]=None,
-                 basedirpath: str=None,
+                 nodeReg: Dict[str, HA] = None,
+                 ha: Union[HA, Tuple[str, int]] = None,
+                 peerHA: Union[HA, Tuple[str, int]] = None,
+                 basedirpath: str = None,
                  config=None,
-                 sighex: str=None):
+                 sighex: str = None,
+                 issuer: Issuer = None,
+                 prover: Prover = None,
+                 verifier: Verifier = None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
@@ -67,6 +72,9 @@ class Client(PlenumClient):
             self.peerInbox = deque()
         self._observers = {}  # type Dict[str, Callable]
         self._observerSet = set()  # makes it easier to guard against duplicates
+        self.issuer = issuer
+        self.prover = prover
+        self.verifier = verifier
 
     def handlePeerMessage(self, msg):
         """
@@ -151,8 +159,8 @@ class Client(PlenumClient):
             elif result[TXN_TYPE] == ISSUER_KEY:
                 if self.graphStore:
                     self.graphStore.addIssuerKeyTxnToGraph(result)
-            else:
-                logger.debug("Unknown type {}".format(result[TXN_TYPE]))
+                    # else:
+                    #    logger.debug("Unknown type {}".format(result[TXN_TYPE]))
 
     def requestConfirmed(self, identifier: str, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
@@ -185,7 +193,7 @@ class Client(PlenumClient):
             # TODO: Add support for fetching reply by transaction id
             # serTxn = self.reqRepStore.getResultForTxnId(txnId)
             pass
-        # TODO Add merkleInfo as well
+            # TODO Add merkleInfo as well
 
     def getTxnsByNym(self, nym: str):
         raise NotImplementedError
@@ -233,7 +241,6 @@ class Client(PlenumClient):
             DATA: json.dumps({"name": attrName})
         }
         self.submit(op, identifier=identifier)
-
 
     @staticmethod
     def _getDecryptedData(encData, key):

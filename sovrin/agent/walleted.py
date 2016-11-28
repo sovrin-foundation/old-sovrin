@@ -6,10 +6,9 @@ from datetime import datetime
 from typing import Dict, Any
 
 import time
+
 from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.utils import strToCryptoInteger
+from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.verifier import Verifier
 from plenum.common.log import getlogger
 from plenum.common.signer_did import DidSigner
@@ -27,8 +26,6 @@ from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
     AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
 from sovrin.anon_creds.constant import CRED_A, CRED_E, V_PRIME_PRIME
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
@@ -50,7 +47,13 @@ class Walleted:
     case, the agent holds a wallet.
     """
 
-    def __init__(self):
+    def __init__(self,
+                 issuer: Issuer=None,
+                 prover: Prover=None,
+                 verifier: Verifier=None):
+        self.issuer = issuer
+        self.prover = prover
+        self.verifier = verifier
         # TODO Why are we syncing the client here?
         if self.client:
             self.syncClient()
@@ -284,17 +287,6 @@ class Walleted:
         self.notifyMsgListener("Error ({}) occurred while processing this "
                                "msg: {}".format(body[DATA], body[REQ_MSG]))
 
-    def _sendGetClaimDefRequests(self, availableClaims, postFetchCredDef=None):
-        for name, version, origin in availableClaims:
-            req = self.wallet.requestClaimDef((name, version, origin),
-                                              sender=self.wallet.defaultId)
-
-            self.client.submitReqs(req)
-
-            if postFetchCredDef:
-                self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.key, self.client, postFetchCredDef)
-
     def _handlePing(self, msg):
         body, (frm, ha) = msg
         self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
@@ -311,6 +303,17 @@ class Walleted:
 
     def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
                                          postAllFetched):
+
+        for name, version, origin in newAvailableClaims:
+
+            req = self.wallet.requestClaimDef((name, version, origin),
+                                              sender=self.wallet.defaultId)
+
+            self.client.submitReqs(req)
+
+            if postFetchCredDef:
+                self.loop.call_later(.2, ensureReqCompleted, self.loop,
+                                 req.key, self.client, postFetchCredDef)
 
         fetchedCount = 0
 
@@ -483,6 +486,9 @@ class Walleted:
 
             version = body[VERSION]
             origin = body[ORIGIN]
+
+
+
             # TODO: Need to do validation
             uValue = strToCryptoInteger(body['U'])
             claimDef = self.wallet.getClaimDef(key=(name, version, origin))
@@ -535,7 +541,7 @@ class Walleted:
                 if fetchedClaimDefs < len(claimDefKeys):
                     return
 
-                proof = ProofBuilder.prepareProofFromDict(proof)
+                #proof = ProofBuilder.prepareProofFromDict(proof)
                 issuerPks = {}
                 for issuerId, claimDefKey in claimDefKeys.items():
                     # name, version, origin = claimDefKey
@@ -546,13 +552,9 @@ class Walleted:
 
                 claimName = body[NAME]
 
-                # REMOVE-LOG: Remove the next log
-                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
-                             "{} {} {} {} {}".
-                             format(issuerPks, proof, nonce, encodedAttrs,
-                                    revealedAttrs))
 
-                result = Verifier.verifyProof(issuerPks, proof, nonce,
+                result = self.verifier.verify()
+                Verifier.verifyProof(issuerPks, proof, nonce,
                                               encodedAttrs,
                                               revealedAttrs)
 
