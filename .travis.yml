@@ -21,7 +21,7 @@ install:
     - pip install -U -e .
 
 script:
-    - python -m pytest sovrin
+    - python -m sovrin.test
 
 before_cache:
     - rm -f /opt/orientdb/log/*
