@@ -29,10 +29,14 @@ def submittedClaimDefGvt(publicRepo, claimDefGvt):
 
 
 @pytest.fixture(scope="module")
-def submittedPublicKey(submittedClaimDefGvt, publicRepo, claimDefGvt, issuerGvt, primes1):
-    id = ID(claimDefKey=claimDefGvt.getKey(), claimDefId=claimDefGvt.id)
-    pk, sk = issuerGvt._primaryIssuer.genKeys(id, **primes1)
-    publicRepo.submitPublicKeys(id=id, pk=pk)
+def submittedClaimDefGvtID(submittedClaimDefGvt):
+    return ID(claimDefKey=submittedClaimDefGvt.getKey(), claimDefId=submittedClaimDefGvt.id)
+
+
+@pytest.fixture(scope="module")
+def submittedPublicKey(submittedClaimDefGvtID, publicRepo, issuerGvt, primes1):
+    pk, sk = issuerGvt._primaryIssuer.genKeys(submittedClaimDefGvtID, **primes1)
+    publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk)
 
 
 def testSubmitClaimDef(submittedClaimDefGvt, stewardWallet):
@@ -45,11 +49,11 @@ def testSubmitClaimDef(submittedClaimDefGvt, stewardWallet):
     assert submittedClaimDefGvt.attrNames == ['name', 'age', 'height', 'sex']
 
 
-def testGetClaimDef(claimDefGvt, submittedClaimDefGvt, publicRepo, stewardWallet):
-    claimDef = publicRepo.getClaimDef(ID(claimDefGvt.getKey()))
+def testGetClaimDef(claimDefGvt, publicRepo, stewardWallet):
+    claimDef = publicRepo.getClaimDef(ID(claimDefKey=claimDefGvt.getKey()))
     assert claimDef
     assert claimDef.id
-    assert submittedClaimDefGvt.issuerId == stewardWallet.defaultId
+    assert claimDef.issuerId == stewardWallet.defaultId
     assert claimDef.name == 'GVT'
     assert claimDef.version == '1.0'
     assert claimDef.type == 'CL'
@@ -60,7 +64,6 @@ def testSubmitPublicKey(submittedPublicKey):
     pass
 
 
-def testGetPublicKey(claimDefGvt, submittedPublicKey, publicRepo):
-    id = ID(claimDefKey=claimDefGvt.getKey(), claimDefId=claimDefGvt.id)
-    pk = publicRepo.getPublicKey(id=id)
+def testGetPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo):
+    pk = publicRepo.getPublicKey(id=submittedClaimDefGvtID)
     assert pk

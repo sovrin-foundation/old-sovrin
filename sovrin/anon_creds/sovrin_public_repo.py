@@ -64,12 +64,7 @@ class SovrinPublicRepo(PublicRepo):
         }
         data, seqNo = self._sendGetReq(op)
         data = data[DATA]
-        return PublicKey(N=strToCryptoInteger(data["N"]),
-                         Rms=strToCryptoInteger(data["Rm1"]),
-                         Rctxt=strToCryptoInteger(data["Rm2"]),
-                         R=stringDictToCharmDict(data["R"]),
-                         S=strToCryptoInteger(data["S"]),
-                         Z=strToCryptoInteger(data["Z"]))
+        return PublicKey.fromStrDict(data)
 
     def getPublicKeyRevocation(self, id: ID) -> RevocationPublicKey:
         pass
@@ -97,20 +92,12 @@ class SovrinPublicRepo(PublicRepo):
         }
 
         data, seqNo = self._sendSubmitReq(op)
-        claimDef.id = seqNo
-        claimDef.issuerId = self.wallet.defaultId
+        claimDef = ClaimDefinition(name=claimDef.name, version=claimDef.version, attrNames=claimDef.attrNames,
+                                   type=claimDef.type, issuerId=self.wallet.defaultId, id=seqNo)
         return claimDef
 
     def submitPublicKeys(self, id: ID, pk: PublicKey, pkR: RevocationPublicKey = None):
-        data = {
-            "N": str(pk.N),
-            "R": {k: str(v) for k, v in pk.R.items()},
-            "Rm1": str(pk.Rms),
-            "Rm2": str(pk.Rctxt),
-            "S": str(pk.S),
-            "Z": str(pk.Z),
-
-        }
+        data = pk.toStrDict()
         op = {
             TXN_TYPE: ISSUER_KEY,
             REF: id.claimDefId,
@@ -128,10 +115,8 @@ class SovrinPublicRepo(PublicRepo):
     def _sendSubmitReq(self, op):
         return self._sendReq(op, _submitData)
 
-
     def _sendGetReq(self, op):
         return self._sendReq(op, _getData)
-
 
     def _sendReq(self, op, clbk):
         req = Request(identifier=self.wallet.defaultId, operation=op)

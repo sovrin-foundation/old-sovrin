@@ -1,11 +1,10 @@
 import pytest
-from anoncreds.protocol.fetcher import SimpleFetcher
 from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from anoncreds.protocol.types import ID, ProofInput, PredicateGE
 
 from sovrin.anon_creds.sovrin_issuer import SovrinIssuer
 from sovrin.anon_creds.sovrin_prover import SovrinProver
-from sovrin.anon_creds.verifier_prover import SovrinVerifier
+from sovrin.anon_creds.sovrin_verifier import SovrinVerifier
 from sovrin.test.anon_creds.conftest import GVT
 
 
@@ -45,7 +44,9 @@ def testAnonCreds(issuer, prover, verifier, attrRepo, primes1):
     attrRepo.addAttributes(claimDef.getKey(), prover.id, attrs)
 
     # 5. request Claims
-    prover.requestClaim(claimDefId, SimpleFetcher(issuer), False)
+    claimsReq = prover.createClaimRequest(claimDefId, False)
+    claims = issuer.issueClaim(claimDefId, claimsReq)
+    prover.processClaim(claimDefId, claims)
 
     # 6. proof Claims
     proofInput = ProofInput(
