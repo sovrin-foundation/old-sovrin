@@ -782,7 +782,10 @@ class Walleted:
         self.notifyMsgListener("Generating Identifier and Signing key.")
         # TODO: Would we always have a trust anchor corresponding ot a link?
 
+        localIdentifier, _ = self.wallet.addIdentifier(alias=linkInvitationName)
+
         li = Link(name=linkInvitationName,
+                  localIdentifier=localIdentifier,
                   trustAnchor=linkInvitationName,
                   remoteIdentifier=remoteIdentifier,
                   remoteEndPoint=remoteEndPoint,
