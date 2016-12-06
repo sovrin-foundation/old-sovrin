@@ -2,6 +2,7 @@ from functools import partial
 
 from ledger.util import F
 from plenum.common.log import getlogger
+from plenum.test.testable import Spyable
 from sovrin.agent.agent import WalletedAgent
 from sovrin.common.util import ensureReqCompleted
 from sovrin.test.agent.helper import getAgentCmdLineParams
@@ -9,6 +10,8 @@ from sovrin.test.agent.helper import getAgentCmdLineParams
 logger = getlogger()
 
 
+@Spyable(
+    methods=[WalletedAgent._handlePing, WalletedAgent._handlePong])
 class TestWalletedAgent(WalletedAgent):
     @staticmethod
     def getPassedArgs():
@@ -37,7 +40,7 @@ class TestWalletedAgent(WalletedAgent):
                     clbk()
 
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client,
+                                 req.key, self.client,
                                  dummy, None, None,
                                  chk)
 
@@ -54,6 +57,6 @@ class TestWalletedAgent(WalletedAgent):
             req, = self.wallet.preparePending()
             self.client.submitReqs(req)
             self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client,
+                                 req.key, self.client,
                                  postClaimDefWritten, (claimDef,), None,
                                  chk)

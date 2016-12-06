@@ -17,7 +17,7 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
     TARGET_NYM, ORIGIN, ATTRIBUTES
 from plenum.common.types import f
-from plenum.common.util import getTimeBasedId, getCryptonym, get_size, \
+from plenum.common.util import getTimeBasedId, getCryptonym, \
     isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
@@ -26,10 +26,8 @@ from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
     AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
 from sovrin.anon_creds.constant import CRED_A, CRED_E, V_PRIME_PRIME
-from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.credential import Credential
 from sovrin.client.wallet.link import Link, constant
 from sovrin.client.wallet.wallet import Wallet
@@ -56,7 +54,6 @@ class Walleted:
         # TODO Why are we syncing the client here?
         if self.client:
             self.syncClient()
-        self.loop = asyncio.get_event_loop()
         self.rcvdMsgStore = {}  # type: Dict[reqId, [reqMsg]]
         self.msgHandlers = {
             ERROR: self._handleError,
@@ -296,7 +293,7 @@ class Walleted:
 
             if postFetchCredDef:
                 self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.reqId, self.client, postFetchCredDef)
+                                 req.key, self.client, postFetchCredDef)
 
     def _handlePing(self, msg):
         body, (frm, ha) = msg
@@ -470,7 +467,7 @@ class Walleted:
                 self.notifyMsgListener(
                     "    Identifier is not yet written to Sovrin")
 
-        self.loop.call_later(.2, ensureReqCompleted, self.loop, req.reqId,
+        self.loop.call_later(.2, ensureReqCompleted, self.loop, req.key,
                              self.client, getNymReply, (availableClaims, li))
 
     def _reqClaim(self, msg):
@@ -670,7 +667,7 @@ class Walleted:
 
     def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
-        ensureReqCompleted(self.loop, req.reqId, self.client, clbk, *args)
+        ensureReqCompleted(self.loop, req.key, self.client, clbk, *args)
 
     def _getClaimsAttrsFor(self, internalId, attrNames):
         res = {}
@@ -813,7 +810,7 @@ class Walleted:
             self.loop.call_later(.2,
                                  ensureReqCompleted,
                                  self.loop,
-                                 req.reqId,
+                                 req.key,
                                  self.client,
                                  self._handleSyncResp(link, doneCallback))
 

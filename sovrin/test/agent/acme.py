@@ -9,10 +9,11 @@ from sovrin.agent.agent import runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 
 from sovrin.test.agent.helper import buildAcmeWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
+from sovrin.test.helper import TestClient
 
 logger = getlogger()
 
@@ -26,7 +27,8 @@ class AcmeAgent(TestWalletedAgent):
                  basedirpath: str,
                  client: Client=None,
                  wallet: Wallet=None,
-                 port: int=None):
+                 port: int=None,
+                 loop=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -34,7 +36,7 @@ class AcmeAgent(TestWalletedAgent):
         portParam, = self.getPassedArgs()
 
         super().__init__('Acme Corp', basedirpath, client, wallet,
-                         portParam or port)
+                         portParam or port, loop=loop)
 
         self.availableClaims = []
 
@@ -143,7 +145,7 @@ def runAcme(name=None, wallet=None, basedirpath=None, port=None,
 
     return runAgent(AcmeAgent, name or "Acme Corp",
                     wallet or buildAcmeWallet(), basedirpath,
-                    port, startRunning, bootstrap)
+                    port, startRunning, bootstrap, clientClass=TestClient)
 
 if __name__ == "__main__":
     runAcme(port=6666)

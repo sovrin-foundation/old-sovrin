@@ -18,7 +18,7 @@ from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
 from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
-from sovrin.common.util import getConfig
+from sovrin.common.config_util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
@@ -197,7 +197,7 @@ def commonAcceptInvitationMsgs():
 
 @pytest.fixture(scope="module")
 def acceptUnSyncedWhenNotConnected(commonAcceptInvitationMsgs,
-                                       canNotSyncMsg, connectUsage):
+                                   canNotSyncMsg, connectUsage):
     return commonAcceptInvitationMsgs + \
             ["Invitation acceptance aborted."] + \
             canNotSyncMsg + connectUsage

@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 from sovrin.cli.constants import \
     CLIENT_GRAMS_CLIENT_WITH_IDENTIFIER_FORMATTED_REG_EX, \
     CLIENT_GRAMS_CLIENT_ADD_FORMATTED_REG_EX, SEND_NYM_FORMATTED_REG_EX, \
@@ -60,11 +58,6 @@ def getNewClientGrams():
         SEND_CLAIM_FORMATTED_REG_EX
     ]
 
-
-Environment = NamedTuple("Environment", [
-    ("poolLedger", str),
-    ("domainLedger", str)
-])
 
 NEXT_COMMANDS_TO_TRY_TEXT = "Try Next:"
 USAGE_TEXT = "Usage:"

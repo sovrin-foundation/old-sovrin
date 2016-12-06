@@ -1,25 +1,20 @@
 import datetime
-import random
-from base58 import b58decode
-
-import importlib
-import importlib.util
 import json
-import os
+import random
 from functools import partial
 from typing import Tuple, Union
 
 import libnacl.secret
-from ledger.util import F
-
-from anoncreds.protocol.types import AttribType, AttribDef
-from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
+from base58 import b58decode
 from plenum.common.signing import serializeMsg
 from plenum.common.txn import KEYS, DATA, ORIGIN
 from plenum.common.types import f
-from plenum.common.util import isHex, error, getConfig as PlenumConfig, \
-    cryptonymToHex
+from plenum.common.util import isHex, error, cryptonymToHex
 from raet.nacling import Verifier
+
+from anoncreds.protocol.types import AttribType, AttribDef
+from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
+from ledger.util import F
 
 
 def getMsgWithoutSig(msg, sigFieldName=f.SIG.nm):
@@ -75,34 +70,6 @@ def getSymmetricallyDecryptedVal(val, secretKey: Union[str, bytes]) -> str:
         secretKey = secretKey.encode()
     box = libnacl.secret.SecretBox(secretKey)
     return box.decrypt(val).decode()
-
-
-def getInstalledConfig(installDir, configFile):
-    configPath = os.path.join(installDir, configFile)
-    if os.path.exists(configPath):
-        spec = importlib.util.spec_from_file_location(configFile, configPath)
-        config = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(config)
-        return config
-    else:
-        raise FileNotFoundError("No file found at location {}".
-                                format(configPath))
-
-
-def getConfig(homeDir=None):
-    plenumConfig = PlenumConfig(homeDir)
-    sovrinConfig = importlib.import_module("sovrin.config")
-    refConfig = plenumConfig
-    refConfig.__dict__.update(sovrinConfig.__dict__)
-    try:
-        homeDir = os.path.expanduser(homeDir or "~")
-        configDir = os.path.join(homeDir, ".sovrin")
-        config = getInstalledConfig(configDir, "sovrin_config.py")
-        refConfig.__dict__.update(config.__dict__)
-    except FileNotFoundError:
-        pass
-    refConfig.baseDir = os.path.expanduser(refConfig.baseDir)
-    return refConfig
 
 
 def dateTimeEncoding(obj):
@@ -167,10 +134,10 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
         if displayer:
             displayer("Getting Keys for the Claim Definition from Sovrin")
         if pargs is not None:
-            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+            loop.call_later(.2, ensureReqCompleted, loop, req.key, client,
                                     clbk, pargs, None, chk)
         else:
-            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+            loop.call_later(.2, ensureReqCompleted, loop, req.key, client,
                             clbk, None, None, chk)
     else:
         # Since reply and error will be none
@@ -203,7 +170,7 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
         client.submitReqs(req)
         displayer("Getting Claim Definition from Sovrin: {} {}"
                   .format(claimDefKey[0], claimDefKey[1]))
-        loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+        loop.call_later(.2, ensureReqCompleted, loop, req.key, client,
                         _getKey, None, None, chk)
     else:
         claimDef = wallet.getClaimDef(key=claimDefKey)
@@ -212,12 +179,12 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
 
 
 # TODO: Should have a timeout, should not have kwargs
-def ensureReqCompleted(loop, reqId, client, clbk=None, pargs=None, kwargs=None,
+def ensureReqCompleted(loop, reqKey, client, clbk=None, pargs=None, kwargs=None,
                        cond=None):
-    reply, err = client.replyIfConsensus(reqId)
+    reply, err = client.replyIfConsensus(*reqKey)
     if reply is None and (cond is None or not cond()):
         loop.call_later(.2, ensureReqCompleted, loop,
-                             reqId, client, clbk, pargs, kwargs, cond)
+                        reqKey, client, clbk, pargs, kwargs, cond)
     elif clbk:
         # TODO: Do something which makes reply and error optional in the
         # callback.

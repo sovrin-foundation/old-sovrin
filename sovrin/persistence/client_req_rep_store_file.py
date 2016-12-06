@@ -26,6 +26,7 @@ class ClientReqRepStoreFile(PClientReqRepStoreFile):
             data = f.read().strip()
             data = json.loads(data) if data else {}
             data[identifier] = value
+            f.seek(0)
             f.write(json.dumps(data))
 
     def getLastTxnForIdentifier(self, identifier):

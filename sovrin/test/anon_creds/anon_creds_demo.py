@@ -28,7 +28,8 @@ from sovrin.test.helper import genTestClient, submitAndCheck, createNym, \
     TestNodeSet, _newWallet, makePendingTxnsRequest
 from sovrin.common.txn import CRED_DEF, SPONSOR, getTxnOrderedFields
 from sovrin.test.conftest import genesisTxns
-from sovrin.common.util import getCredDefTxnData, getConfig
+from sovrin.common.util import getCredDefTxnData
+from sovrin.common.config_util import getConfig
 import sovrin.anon_creds.issuer as IssuerModule
 import sovrin.anon_creds.prover as ProverModule
 import sovrin.anon_creds.verifier as VerifierModule

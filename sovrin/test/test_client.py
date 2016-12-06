@@ -4,13 +4,13 @@ from contextlib import contextmanager
 import base58
 import libnacl.public
 import pytest
-
 from plenum.common.log import getlogger
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import REQNACK, ENC, DATA
+from plenum.common.txn import REQNACK, ENC, DATA, REPLY, TXN_TIME
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict
 from plenum.test.eventually import eventually
+
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
@@ -19,7 +19,7 @@ from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
     SPONSOR, TXN_ID, NONCE, SKEY
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
-    makeAttribRequest, makeGetNymRequest, addAttributeAndCheck
+    makeAttribRequest, makeGetNymRequest, addAttributeAndCheck, TestNode
 
 logger = getlogger()
 
@@ -55,14 +55,23 @@ def submitAndCheckNacks(looper, client, wallet, op, identifier,
 
 
 @pytest.fixture(scope="module")
-def attributeData():
-    return json.dumps({'name': 'Mario'})
+def attributeName():
+    return 'name'
+
+
+@pytest.fixture(scope="module")
+def attributeValue():
+    return 'Mario'
+
+
+@pytest.fixture(scope="module")
+def attributeData(attributeName, attributeValue):
+    return json.dumps({attributeName: attributeValue})
 
 
 @pytest.fixture(scope="module")
 def addedRawAttribute(userWalletA: Wallet, sponsor: Client,
-                      sponsorWallet: Wallet,
-                      attributeData, looper):
+                      sponsorWallet: Wallet, attributeData, looper):
     attrib = Attribute(name='test attribute',
                        origin=sponsorWallet.defaultId,
                        value=attributeData,
@@ -224,36 +233,88 @@ def testSponsorAddsAttributeForUser(addedRawAttribute):
     pass
 
 
-def checkGetAttr(reqId, sponsor, attrName, attrValue):
-    reply, status = sponsor.getReply(reqId)
+def testClientGetsResponseWithoutConsensusForUsedReqId(nodeSet, looper, steward,
+                                                       addedSponsor, sponsor,
+                                                       userWalletA,
+                                                       attributeName,
+                                                       attributeData,
+                                                       addedRawAttribute):
+    lastReqId = None
+    replies = {}
+    for msg, sender in reversed(sponsor.inBox):
+        if msg[OP_FIELD_NAME] == REPLY:
+            if not lastReqId:
+                lastReqId = msg[f.RESULT.nm][f.REQ_ID.nm]
+            if msg.get(f.RESULT.nm, {}).get(f.REQ_ID.nm) == lastReqId:
+                replies[sender] = msg
+            if len(replies) == len(nodeSet):
+                break
+
+    sponsorWallet = addedSponsor
+    attrib = Attribute(name=attributeName,
+                       origin=sponsorWallet.defaultId,
+                       value=attributeData,
+                       dest=userWalletA.defaultId,
+                       ledgerStore=LedgerStore.RAW)
+    sponsorWallet.addAttribute(attrib)
+    req = sponsorWallet.preparePending()[0]
+    _, key = sponsorWallet._prepared.pop((req.identifier, req.reqId))
+    req.reqId = lastReqId
+    req.signature = sponsorWallet.signMsg(msg=req.getSigningState(),
+                                          identifier=req.identifier)
+    sponsorWallet._prepared[req.identifier, req.reqId] = req, key
+    sponsor.submitReqs(req)
+
+    def chk():
+        nonlocal sponsor, lastReqId, replies
+        for node in nodeSet:
+            last = node.spylog.getLast(TestNode.getReplyFor.__name__)
+            assert last
+            result = last.result
+            assert result is not None
+
+            # TODO: Time is not equal as some precision is lost while storing
+            # in oientdb, using seconds may be an option, need to think of a
+            # use cases where time in milliseconds is required
+            replies[node.clientstack.name][f.RESULT.nm].pop(TXN_TIME, None)
+            result.result.pop(TXN_TIME, None)
+
+            assert replies[node.clientstack.name][f.RESULT.nm] == result.result
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+
+
+def checkGetAttr(reqKey, sponsor, attrName, attrValue):
+    reply, status = sponsor.getReply(*reqKey)
     assert reply
     data = json.loads(reply.get(DATA))
     assert status == "CONFIRMED" and \
            (data is not None and data.get(attrName) == attrValue)
 
 
-def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeData):
-    attrName = list(json.loads(attributeData).keys())[0]
-    attrValue = list(json.loads(attributeData).values())[0]
-    attrib = Attribute(name=attrName,
+def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeName,
+                 attributeValue):
+    attrib = Attribute(name=attributeName,
                        value=None,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     req = sponsorWallet.requestAttribute(attrib,
                                          sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
-    looper.run(eventually(checkGetAttr, req.reqId, sponsor,
-                          attrName, attrValue, retryWait=1, timeout=20))
+    looper.run(eventually(checkGetAttr, req.key, sponsor,
+                          attributeName, attributeValue, retryWait=1,
+                          timeout=20))
 
 
 @pytest.fixture(scope="module")
-def checkAddAttribute(userWalletA, sponsor, sponsorWallet, attributeData,
-                      addedRawAttribute, looper):
+def checkAddAttribute(userWalletA, sponsor, sponsorWallet, attributeName,
+                      attributeValue, addedRawAttribute, looper):
     getAttribute(looper=looper,
                  sponsor=sponsor,
                  sponsorWallet=sponsorWallet,
                  userIdA=userWalletA.defaultId,
-                 attributeData=attributeData)
+                 attributeName=attributeName,
+                 attributeValue=attributeValue)
 
 
 def testSponsorGetAttrsForUser(checkAddAttribute):

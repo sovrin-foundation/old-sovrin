@@ -43,8 +43,6 @@ def prompt_is(prompt):
     return x
 
 
-
-
 @pytest.fixture(scope="module")
 def poolNodesStarted(be, do, poolCLI):
     be(poolCLI)
@@ -972,6 +970,12 @@ def thriftInviteLoadedByAlice(be, do, aliceCli, loadInviteOut, thriftMap,
 
 def testAliceLoadedThriftLoanApplication(thriftInviteLoadedByAlice):
     pass
+
+
+def testPingThriftBeforeSync(be, do, aliceCli, thriftMap,
+                             thriftInviteLoadedByAlice):
+    be(aliceCli)
+    do('ping {inviter}',            expect=['Ping sent.'], mapper=thriftMap)
 
 
 @pytest.fixture(scope="module")

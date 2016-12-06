@@ -7,6 +7,7 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
+from plenum.common.constants import ENVS
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
@@ -37,7 +38,7 @@ from sovrin.anon_creds.issuer import AttribDef, AttribType
 from sovrin.anon_creds.issuer import InMemoryAttrRepo, Issuer
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
-from sovrin.cli.helper import getNewClientGrams, Environment, \
+from sovrin.cli.helper import getNewClientGrams, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
@@ -51,8 +52,9 @@ from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
-from sovrin.common.util import getConfig, getEncodedAttrs, ensureReqCompleted, \
+from sovrin.common.util import getEncodedAttrs, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict, getNonceForProof
+from sovrin.common.config_util import getConfig
 from sovrin.server.node import Node
 
 """
@@ -83,12 +85,7 @@ class SovrinCli(PlenumCli):
         self.sponsors = set()
         self.users = set()
         # Available environments
-        self.envs = {
-            "test": Environment("pool_transactions_sandbox",
-                                "transactions_sandbox"),
-            "live": Environment("pool_transactions_live",
-                                "transactions_live")
-        }
+        self.envs = ENVS
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
         super().__init__(*args, **kwargs)
@@ -423,7 +420,7 @@ class SovrinCli(PlenumCli):
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                    req.reqId, self.activeClient, getNymReply)
+                                    req.key, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
         idy = Identity(nym, role=role)
@@ -449,7 +446,7 @@ class SovrinCli(PlenumCli):
                 self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.reqId, self.activeClient, out)
+                                        req.key, self.activeClient, out)
         else:
             self._printRequestAlreadyMade(extra=" Request made to add {}".
                                           format(nym))
@@ -484,7 +481,7 @@ class SovrinCli(PlenumCli):
                        Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                    req.reqId, self.activeClient, chk)
+                                    req.key, self.activeClient, chk)
 
     # DEPR: moved to issuer_wallet as createClaimDef
     # def _buildCredDef(self, matchedVars):
@@ -681,7 +678,7 @@ class SovrinCli(PlenumCli):
                            Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient,
+                                        reqs[0].key, self.activeClient,
                                         published)
             return True
 
@@ -708,7 +705,7 @@ class SovrinCli(PlenumCli):
                            Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient,
+                                        reqs[0].key, self.activeClient,
                                         published)
             return True
 
@@ -1004,6 +1001,8 @@ class SovrinCli(PlenumCli):
         else:
             self.print("Remote endpoint not found, "
                        "can not connect to {}\n".format(link.name))
+            self.logger.debug("{} has remote endpoint {}".
+                              format(link, link.remoteEndPoint))
 
     def _acceptLinkInvitation(self, linkName):
         li = self._getOneLinkForFurtherProcessing(linkName)
@@ -1584,9 +1583,9 @@ class SovrinCli(PlenumCli):
             self.looper.loop.call_later(.2, self.ensureAgentConnected,
                                         otherAgentHa, clbk, *args)
 
-    def _ensureReqCompleted(self, reqId, client, clbk=None, pargs=None,
+    def _ensureReqCompleted(self, reqKey, client, clbk=None, pargs=None,
                             kwargs=None, cond=None):
-        ensureReqCompleted(self.looper.loop, reqId, client, clbk, pargs=pargs,
+        ensureReqCompleted(self.looper.loop, reqKey, client, clbk, pargs=pargs,
                            kwargs=kwargs, cond=cond)
 
     def addAlias(self, reply, err, client, alias, signer):
