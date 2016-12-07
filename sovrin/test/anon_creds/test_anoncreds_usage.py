@@ -54,6 +54,5 @@ def testAnonCreds(issuer, prover, verifier, attrRepo, primes1):
         [PredicateGE('age', 18)])
 
     nonce = verifier.generateNonce()
-    proof = prover.presentProof(proofInput, nonce)
-    revealedAttrs = attrRepo.getRevealedAttributesForProver(prover, proofInput.revealedAttrs).encoded()
+    proof, revealedAttrs = prover.presentProof(proofInput, nonce)
     assert verifier.verify(proofInput, proof, revealedAttrs, nonce)

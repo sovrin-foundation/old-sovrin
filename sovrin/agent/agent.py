@@ -2,6 +2,8 @@ from typing import Dict
 from typing import Tuple, Callable
 
 import asyncio
+
+from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.log import getlogger
@@ -14,6 +16,9 @@ from plenum.common.util import randomString
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.caching import Caching
 from sovrin.agent.walleted import Walleted
+from sovrin.anon_creds.sovrin_issuer import SovrinIssuer
+from sovrin.anon_creds.sovrin_prover import SovrinProver
+from sovrin.anon_creds.sovrin_verifier import SovrinVerifier
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.identity import Identity
@@ -159,14 +164,24 @@ class WalletedAgent(Walleted, Agent, Caching):
                  client: Client=None,
                  wallet: Wallet=None,
                  port: int=None,
-                 loop=None):
-        Agent.__init__(self, name, basedirpath, client, port, loop)
+                 looper=None,
+                 issuer =None,
+                 prover=None,
+                 verifier=None,
+                 attrRepo=None):
+        Agent.__init__(self, name, basedirpath, client, port, looper.loop)
         self._wallet = wallet or Wallet(name)
-        Walleted.__init__(self)
+
+        attrRepo = attrRepo or AttributeRepoInMemory()
+        issuer = issuer or SovrinIssuer(looper=looper, client=self.client, wallet=self._wallet, attrRepo=attrRepo)
+        prover = prover or SovrinProver(looper, looper=looper, client=self.client, wallet=self._wallet)
+        verifier = verifier or SovrinVerifier(looper, looper=looper, client=self.client, wallet=self._wallet)
+
+        Walleted.__init__(self, issuer=issuer, prover=prover, verifier=verifier)
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=False, loop=None):
+             startRunning=True, bootstrap=False, looper=None):
     config = getConfig()
 
     if not wallet:
@@ -185,12 +200,12 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
                        client=client,
                        wallet=wallet,
                        port=port,
-                       loop=loop)
+                       looper=looper)
     if bootstrap:
         agent.bootstrap()
 
     if startRunning:
-        with Looper(debug=True, loop=loop) as looper:
+        with looper:
             looper.add(agent)
             logger.debug("Running {} now (port: {})".format(name, port))
             looper.run()
