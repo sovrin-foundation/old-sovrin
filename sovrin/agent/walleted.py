@@ -1,4 +1,3 @@
-import asyncio
 import collections
 import json
 from abc import abstractmethod
@@ -95,7 +94,7 @@ class Walleted:
     def lockedMsgs(self):
         # Msgs for which signature verification is required
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING, PONG
+               CLAIM, AVAIL_CLAIM_LIST, EVENT, PONG
 
     def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
@@ -324,8 +323,10 @@ class Walleted:
 
     def _handlePing(self, msg):
         body, (frm, ha) = msg
-        self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
-                         origReqId=body.get(f.REQ_ID.nm))
+        link = self.wallet.getLinkByNonce(body.get(NONCE))
+        if link:
+            self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
+                             origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
         body, (frm, ha) = msg
@@ -750,7 +751,18 @@ class Walleted:
             self.signAndSend(resp, link.localIdentifier, frm)
 
     def sendPing(self, linkName):
-        reqId = self.signAndSend({TYPE: 'ping'}, None, None, linkName)
+        link = self.wallet.getLink(linkName, required=True)
+        self.connectTo(linkName)
+        ha = link.getRemoteEndpoint(required=True)
+        params = dict(ha=ha)
+        msg = {
+            TYPE: 'ping',
+            NONCE: link.invitationNonce,
+            f.REQ_ID.nm: getTimeBasedId(),
+            f.IDENTIFIER.nm: link.localIdentifier
+        }
+        reqId = self.sendMessage(msg, **params)
+
         self.notifyMsgListener("    Ping sent.")
         return reqId
 
@@ -782,10 +794,7 @@ class Walleted:
         self.notifyMsgListener("Generating Identifier and Signing key.")
         # TODO: Would we always have a trust anchor corresponding ot a link?
 
-        localIdentifier, _ = self.wallet.addIdentifier(alias=linkInvitationName)
-
         li = Link(name=linkInvitationName,
-                  localIdentifier=localIdentifier,
                   trustAnchor=linkInvitationName,
                   remoteIdentifier=remoteIdentifier,
                   remoteEndPoint=remoteEndPoint,
