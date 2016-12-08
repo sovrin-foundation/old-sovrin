@@ -13,6 +13,7 @@ Abbreviated verkey tests
 """
 from plenum.common.signer_did import DidSigner
 from plenum.test.eventually import eventually
+from plenum.test.helper import assertLength, assertEquality
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
 from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
@@ -34,7 +35,7 @@ def didAddedWithAbbrvVerkey(addedSponsor, looper, sponsor, sponsorWallet,
 def newAbbrvKey(wallet, abbrevIdr):
     newSigner = DidSigner(identifier=abbrevIdr)
     wallet.updateSigner(abbrevIdr, newSigner)
-    assert newSigner.verkey == wallet.getVerkey(abbrevIdr)
+    assertEquality(newSigner.verkey, wallet.getVerkey(abbrevIdr))
     return newSigner.verkey
 
 
@@ -60,11 +61,11 @@ def newVerkeyFetched(didAddedWithAbbrvVerkey, looper, sponsor, sponsorWallet,
 
 
 def testNewIdentifierInWalletIsDid(abbrevIdr):
-    assert len(abbrevIdr) == 22
+    assertLength(abbrevIdr, 22)
 
 
 def testDefaultVerkeyIsAbbreviated(abbrevVerkey):
-    assert len(abbrevVerkey) == 23
+    assertLength(abbrevVerkey, 23)
     assert abbrevVerkey[0] == '~'
 
 
@@ -82,8 +83,8 @@ def testRetrieveAbbrvVerkey(didAddedWithAbbrvVerkey, looper, sponsor,
 
     def chk():
         retrievedVerkey = sponsorWallet.getIdentity(abbrevIdr).verkey
-        assert retrievedVerkey == wallet.getVerkey(abbrevIdr)
-        assert len(retrievedVerkey) == 23
+        assertEquality(retrievedVerkey, wallet.getVerkey(abbrevIdr))
+        assertLength(retrievedVerkey, 23)
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
     chkVerifyForRetrievedIdentity(wallet, sponsorWallet, abbrevIdr)

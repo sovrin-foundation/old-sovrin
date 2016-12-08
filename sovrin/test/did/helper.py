@@ -2,6 +2,7 @@ import base58
 from plenum.common.signer_did import DidSigner
 from plenum.common.verifier import DidVerifier
 from plenum.test.eventually import eventually
+from plenum.test.helper import assertLength, assertEquality
 from sovrin.common.identity import Identity
 
 MsgForSigning = {'sender': 'Mario', 'msg': 'Lorem ipsum'}
@@ -25,8 +26,8 @@ def chkVerifyForRetrievedIdentity(signerWallet, verifierWallet, idr):
 def updateWalletIdrWithFullKeySigner(wallet, idr):
     newSigner = DidSigner(identifier=idr)
     wallet.updateSigner(idr, newSigner)
-    assert newSigner.verkey == wallet.getVerkey(idr)
-    assert len(wallet.getVerkey(idr)) == 44
+    assertEquality(newSigner.verkey, wallet.getVerkey(idr))
+    assertLength(wallet.getVerkey(idr), 44)
     return newSigner.verkey
 
 
@@ -54,7 +55,7 @@ def fetchFullVerkeyFromSovrin(looper, senderWallet, senderClient, ownerWallet,
 
     def chk():
         retrievedVerkey = senderWallet.getIdentity(idr).verkey
-        assert retrievedVerkey == ownerWallet.getVerkey(idr)
-        assert len(retrievedVerkey) == 44
+        assertEquality(retrievedVerkey, ownerWallet.getVerkey(idr))
+        assertLength(retrievedVerkey, 44)
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
