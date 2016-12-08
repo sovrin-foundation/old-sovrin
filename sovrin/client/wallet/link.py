@@ -119,12 +119,12 @@ class Link:
                                                                                                                                       'Verification key: ' + verKey + '\n' \
                                                                                                                                                                       'Signing key: <hidden>' '\n' \
                                                                                                                                                                       'Target: ' + (
-            self.remoteIdentifier or
-            constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
-                                                 'Target Verification key: ' + targetVerKey + '\n' \
-                                                                                              'Target endpoint: ' + targetEndPoint + '\n' \
-                                                                                                                                     'Invitation nonce: ' + self.invitationNonce + '\n' \
-                                                                                                                                                                                   'Invitation status: ' + linkStatus + '\n'
+                self.remoteIdentifier or
+                constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
+                                                     'Target Verification key: ' + targetVerKey + '\n' \
+                                                                                                  'Target endpoint: ' + targetEndPoint + '\n' \
+                                                                                                                                         'Invitation nonce: ' + self.invitationNonce + '\n' \
+                                                                                                                                                                                       'Invitation status: ' + linkStatus + '\n'
         # except Exception as ex:
         #     print(ex)
         #     print(targetEndPoint, linkStatus, )
@@ -179,10 +179,11 @@ class Link:
 
 
 class ClaimProofRequest:
-    def __init__(self, name, version, attributes):
+    def __init__(self, name, version, attributes, verifiableAttributes):
         self.name = name
         self.version = version
         self.attributes = attributes
+        self.verifiableAttributes = verifiableAttributes
 
     @property
     def toDict(self):
@@ -198,7 +199,12 @@ class ClaimProofRequest:
             'Attributes:' + '\n    ' + \
             format("\n    ".join(
                 ['{}: {}'.format(k, v)
-                 for k, v in self.attributes.items()]))
+                 for k, v in self.attributes.items()])) + '\n'
+
+    @property
+    def verifiableAttributeValues(self):
+        return \
+            'Verifiable Attributes:' + str(self.verifiableAttributes) + '\n    '
 
     def __str__(self):
         fixedInfo = \
@@ -206,4 +212,4 @@ class ClaimProofRequest:
                                   'Name: ' + self.name + '\n' \
                                                          'Version: ' + self.version + '\n'
 
-        return fixedInfo + self.attributeValues
+        return fixedInfo + self.attributeValues + self.verifiableAttributeValues

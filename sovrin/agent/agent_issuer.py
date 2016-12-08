@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.types import ClaimDefinitionKey, ID
 from anoncreds.protocol.types import ClaimRequest
@@ -32,15 +34,21 @@ class AgentIssuer:
         claimDef = self.issuer.wallet.getClaimDef(ID(claimDefKey))
         claimDefId = ID(claimDefKey=claimDefKey, claimDefId=claimDef.id)
 
+        self._addAtrribute(claimDefKey=claimDefKey, proverId=claimReq.userId, link=link)
+
         claim = self.issuer.issueClaim(claimDefId, claimReq)
 
         claimDetails = {
             NAME: claimDef.name,
             VERSION: claimDef.version,
             'claim': claim.toStrDict(),
-            f.IDENTIFIER.nm: claimDef.origin
+            f.IDENTIFIER.nm: claimDef.issuerId
         }
 
         resp = self.getCommonMsg(CLAIM, claimDetails)
         self.signAndSend(resp, link.localIdentifier, frm,
                          origReqId=body.get(f.REQ_ID.nm))
+
+    @abstractmethod
+    def _addAtrribute(self, claimDefKey, proverId, link):
+        raise NotImplementedError

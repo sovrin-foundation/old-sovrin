@@ -169,13 +169,15 @@ class WalletedAgent(Walleted, Agent, Caching):
                  prover=None,
                  verifier=None,
                  attrRepo=None):
-        Agent.__init__(self, name, basedirpath, client, port, looper.loop)
+        looper = looper if looper else Looper(debug=True)
+        Agent.__init__(self, name, basedirpath, client, port, loop = looper.loop)
         self._wallet = wallet or Wallet(name)
 
         attrRepo = attrRepo or AttributeRepoInMemory()
+
         issuer = issuer or SovrinIssuer(looper=looper, client=self.client, wallet=self._wallet, attrRepo=attrRepo)
-        prover = prover or SovrinProver(looper, looper=looper, client=self.client, wallet=self._wallet)
-        verifier = verifier or SovrinVerifier(looper, looper=looper, client=self.client, wallet=self._wallet)
+        prover = prover or SovrinProver(looper=looper, client=self.client, wallet=self._wallet)
+        verifier = verifier or SovrinVerifier(looper=looper, client=self.client, wallet=self._wallet)
 
         Walleted.__init__(self, issuer=issuer, prover=prover, verifier=verifier)
 

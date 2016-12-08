@@ -26,8 +26,7 @@ from sovrin.agent.exception import NonceNotFound, SignatureRejected
 from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
     AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.link import Link, constant
+from sovrin.client.wallet.link import Link, constant, ClaimProofRequest
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
     NotConnectedToNetwork
@@ -171,7 +170,7 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
     def getInternalIdByInvitedNonce(self, nonce):
         raise NotImplementedError
 
-    def signAndSend(self, msg, signingIdr, toRaetStackName,
+    def signAndSend(self, msg, signingIdr=None, toRaetStackName=None,
                     linkName=None, origReqId=None):
 
         if linkName:
@@ -353,9 +352,14 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
                 li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                self._processNewAvailableClaimsData(
-                    li, body[DATA][CLAIMS_LIST_FIELD],
-                    self._syncLinkPostAvailableClaimsRcvd)
+
+                rcvdAvailableClaims = body[DATA][CLAIMS_LIST_FIELD]
+                newAvailableClaims = self._getNewAvailableClaims(
+                    li, rcvdAvailableClaims)
+                if newAvailableClaims:
+                    li.availableClaims.extend(newAvailableClaims)
+                    self._syncLinkPostAvailableClaimsRcvd(li, newAvailableClaims)
+
         else:
             self.notifyMsgListener("No matching link found")
 
@@ -482,17 +486,6 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         self.client.submitReqs(req)
         ensureReqCompleted(self.loop, req.key, self.client, clbk, *args)
 
-    def _getClaimsAttrsFor(self, internalId, attrNames):
-        res = {}
-        attributes = self.getAttributes(internalId)
-        if attributes:
-            for nm in attrNames:
-                res[nm] = attributes.get(nm)
-        return res
-
-    def getAttributes(self, nonce):
-        raise NotImplementedError
-
     def newAvailableClaimsPostClaimVerif(self, claimName):
         raise NotImplementedError
 
@@ -524,7 +517,7 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         if claimProofRequestsJson:
             for cr in claimProofRequestsJson:
                 claimProofRequests.append(
-                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES]))
+                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES], cr['verifiableAttributes']))
 
         self.notifyMsgListener("1 link invitation found for {}.".
                                format(linkInvitationName))

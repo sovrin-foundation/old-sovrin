@@ -26,7 +26,6 @@ from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
     thriftAgent
 
-from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
 

@@ -20,7 +20,7 @@ class AgentProver:
         name, version, origin = claimDefKey
         claimDefKey = ClaimDefinitionKey(name, version, origin)
 
-        claimReq = self.prover.createClaimRequest(id=ID(claimDefKey), reqNonRevoc=False)
+        claimReq = self.prover.createClaimRequest(id=ID(claimDefKey), proverId=link.invitationNonce, reqNonRevoc=False)
 
         op = {
             NONCE: link.invitationNonce,
@@ -57,13 +57,10 @@ class AgentProver:
 
     def sendProof(self, link: Link, claimPrfReq: ClaimProofRequest):
         nonce = getNonceForProof(link.invitationNonce)
-        self.logger.debug("Building proof using {} for {}".
-                          format(claimPrfReq, link))
 
-        revealedAttrNames = list(claimPrfReq.attributes.keys())
+        revealedAttrNames = claimPrfReq.verifiableAttributes
         proofInput = ProofInput(revealedAttrs=revealedAttrNames)
         proof, revealedAttrs = self.prover.presentProof(proofInput, nonce)
-        self.logger.debug("Prepared proof {}".format(proof))
 
         op = {
             NAME: claimPrfReq.name,

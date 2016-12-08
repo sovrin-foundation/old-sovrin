@@ -8,7 +8,6 @@ from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
-
 from sovrin.test.agent.helper import buildThriftWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
@@ -18,9 +17,9 @@ logger = getlogger()
 class ThriftAgent(TestWalletedAgent):
     def __init__(self,
                  basedirpath: str,
-                 client: Client=None,
-                 wallet: Wallet=None,
-                 port: int=None,
+                 client: Client = None,
+                 wallet: Wallet = None,
+                 port: int = None,
                  looper=None):
         if not basedirpath:
             config = getConfig()
@@ -30,8 +29,6 @@ class ThriftAgent(TestWalletedAgent):
 
         super().__init__('Thrift Bank', basedirpath, client, wallet,
                          portParam or port, looper=looper)
-
-        self._attributes = {}
 
         # maps invitation nonces to internal ids
         self._invites = {
@@ -50,6 +47,9 @@ class ThriftAgent(TestWalletedAgent):
     def getAvailableClaimList(self):
         return []
 
+    def _addAtrribute(self, claimDefKey, proverId, link):
+        pass
+
     def postClaimVerif(self, claimName, link, frm):
         if claimName == "Loan-Application-Basic":
             self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
@@ -58,22 +58,15 @@ class ThriftAgent(TestWalletedAgent):
                                       "'Loan-Application-KYC'\n",
                                       self.wallet.defaultId, frm)
 
-    def addClaimDefsToWallet(self):
-        pass
-
-    def getAttributes(self, nonce):
-        pass
-
     def bootstrap(self):
-        self.addClaimDefsToWallet()
+        pass
 
 
 def runThrift(name=None, wallet=None, basedirpath=None, port=None,
-              startRunning=True, bootstrap=True):
-
+              startRunning=True, bootstrap=True, looper=None):
     return runAgent(ThriftAgent, name or "Thrift Bank",
                     wallet or buildThriftWallet(), basedirpath,
-                    port, startRunning, bootstrap)
+                    port, startRunning, bootstrap, looper)
 
 
 if __name__ == "__main__":

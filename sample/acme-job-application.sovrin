@@ -15,7 +15,8 @@
         "degree": "string",
         "status": "string",
         "ssn": "string"
-    }
+    },
+    "verifiableAttributes": ["degree", "status", "ssn"]
   }],
   "sig": "oeGeMdt5HRjRsbaXybGpRmkkijhHrGT82syxofEJQbkjTCLW63tM3jMn1boaf62vCSEEDyTaVJZnrpfDXAHtLZ9"
 }
