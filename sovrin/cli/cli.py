@@ -7,8 +7,6 @@ from typing import Dict, Any, Tuple, Callable
 
 from anoncreds.protocol.globals import KEYS
 from anoncreds.protocol.types import ClaimDefinition, ID
-from anoncreds.protocol.verifier import Verifier
-from anoncreds.protocol.wallet.wallet import WalletInMemory
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.common.constants import ENVS
@@ -25,7 +23,6 @@ from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
 from sovrin.agent.msg_types import ACCEPT_INVITE
 from sovrin.anon_creds.constant import NONCE
-from sovrin.anon_creds.sovrin_public_repo import SovrinPublicRepo
 from sovrin.cli.helper import getNewClientGrams, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
@@ -73,12 +70,6 @@ class SovrinCli(PlenumCli):
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
         super().__init__(*args, **kwargs)
-        self.attributeRepo = None  # type: AttrRepo
-        # DEPR JAL removed following because it doesn't seem right, testing now
-        # LH: Shouldn't the Cli have a `Verifier` so it can act as a Verifier
-        # entity too?
-        # TODO: Confirm this decision
-        self.verifier = Verifier(WalletInMemory(randomString(), SovrinPublicRepo()))
         _, port = self.nextAvailableClientAddr()
         self.curContext = (None, None, {})  # Current Link, Current Claim Req,
         # set attributes

@@ -1,14 +1,8 @@
 import json
 import logging
-
 import re
-import uuid
 
 import pytest
-
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from plenum.common.looper import Looper
 from plenum.common.util import adict
 from plenum.test.eventually import eventually
 
@@ -21,13 +15,9 @@ from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet, \
     buildThriftWallet
 from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap, \
-    jobCertificateClaimMap, reqClaimOut1, thriftMap
+    thriftMap
 from sovrin.test.cli.helper import newCLI
-
-# noinspection PyUnresolvedReferences
-from sovrin.test.cli.test_tutorial import poolNodesStarted, \
-    faberCli as createFaberCli, aliceCli as createAliceCli, \
-    acmeCli as createAcmeCli, syncInvite, acceptInvitation, \
+from sovrin.test.cli.test_tutorial import syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent, \
     jobCertClaimRequested, bankBasicClaimSent, bankKYCClaimSent, \
     setPromptAndKeyring
@@ -98,51 +88,12 @@ def dangerousPrimes():
     return primes
 
 
-# TODO: Remove this, dont need this anymore
-@pytest.fixture(scope="module")
-def forceSecrets(dangerousPrimes):
-
-    dp = dangerousPrimes
-
-    for k in dp.keys():
-        dp[k].used = False
-
-    pubkeys = {}
-
-    def _generateIssuerSecretKey_INSECURE(self, claimDef):
-        # if self.name not in dp:
-        #     raise BlowUp("A test key pair for {} has not been created.".
-        #                  format(self.name))
-        # pair = dp[self.name]
-        # if pair.used:
-        #     raise BlowUp("A test key pair for {} has already been used.".
-        #                  format(self.name))
-        # pair = next(iter(dp.values()))
-        pair = dp['Faber']
-        csk = CredDefSecretKey(pair.p, pair.q)
-        pair.used = True
-
-        # TODO we shouldn't be storing claimdefsk, we are already storing
-        # IssuerSecretKey which holds the ClaimDefSK
-        sid = self.addClaimDefSk(str(csk))
-        # TODO why are we using a uuid here? The uid should be the seqNo of
-        # the pubkey in Sovrin
-        isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()),
-                              pubkey=pubkeys.get(claimDef.key))
-        if not pubkeys.get(claimDef.key):
-            pubkeys[claimDef.key] = isk.pubkey
-        return isk
-
-    # IssuerWallet._generateIssuerSecretKey = _generateIssuerSecretKey_INSECURE
-
-
 def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philCLI,
                connectedToTest, nymAddedOut, attrAddedOut,
                credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
                tdir, syncLinkOutWithEndpoint, jobCertificateClaimMap,
                syncedInviteAcceptedOutWithoutClaims, transcriptClaimMap,
                reqClaimOut, reqClaimOut1, susanCLI, susanMap):
-
     eventually.slowFactor = 3
 
     # Create steward and add nyms and endpoint atttributes of all agents
@@ -176,12 +127,12 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
 
     agentParams = [
         (FaberAgent, "Faber College", faberAgentPort,
-            buildFaberWallet),
+         buildFaberWallet),
         (AcmeAgent, "Acme Corp", acmeAgentPort,
-            buildAcmeWallet),
+         buildAcmeWallet),
         (ThriftAgent, "Thrift Bank", thriftAgentPort,
-            buildThriftWallet)
-     ]
+         buildThriftWallet)
+    ]
 
     for agentCls, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
@@ -246,7 +197,7 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
         transKey = ('Transcript', '1.2', faberId)
         faberIssuerKey = faberAgent.wallet.getIssuerPublicKeyForClaimDef(
             faberId, claimDefKey=transKey)
-        userIssuerKeyForTrans = userCLI.activeWallet.\
+        userIssuerKeyForTrans = userCLI.activeWallet. \
             getIssuerPublicKeyForClaimDef(faberId, claimDefKey=transKey)
         assert faberIssuerKey == userIssuerKeyForTrans
 
@@ -297,7 +248,7 @@ def testManual(forceSecrets, do, be, poolNodesStarted, poolTxnStewardData, philC
                          syncedInviteAcceptedOutWithoutClaims)
         # Send claims
         bankBasicClaimSent(be, do, userCLI, tMap, None)
-        assert acmeIssuerKey == thriftAgent.wallet.\
+        assert acmeIssuerKey == thriftAgent.wallet. \
             getIssuerPublicKeyForClaimDef(acmeId, claimDefKey=certKey)
         passed = False
         try:

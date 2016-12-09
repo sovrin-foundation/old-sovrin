@@ -41,10 +41,11 @@ def testAnonCreds(issuer, prover, verifier, attrRepo, primes1):
 
     # 4. set attributes for user1
     attrs = GVT.attribs(name='Alex', age=28, height=175, sex='male')
-    attrRepo.addAttributes(claimDef.getKey(), prover.id, attrs)
+    proverId = str(prover.id)
+    attrRepo.addAttributes(claimDef.getKey(), proverId, attrs)
 
     # 5. request Claims
-    claimsReq = prover.createClaimRequest(claimDefId, False)
+    claimsReq = prover.createClaimRequest(claimDefId, proverId, False)
     claims = issuer.issueClaim(claimDefId, claimsReq)
     prover.processClaim(claimDefId, claims)
 
