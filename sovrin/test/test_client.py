@@ -481,3 +481,6 @@ def testUserAddAttrsForHerSelf(nodeSet, looper, userClientA, userWalletA,
                        dest=userIdA,
                        ledgerStore=LedgerStore.RAW)
     addAttributeAndCheck(looper, userClientA, userWalletA, attrib)
+
+def testPipeline():
+	  assert False
