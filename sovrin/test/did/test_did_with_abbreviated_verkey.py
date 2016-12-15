@@ -60,7 +60,11 @@ def testNewIdentifierInWalletIsDid(abbrevIdr):
 
 
 def testDefaultVerkeyIsAbbreviated(abbrevVerkey):
-    assert len(abbrevVerkey) == 23
+    verkeySize = len(abbrevVerkey)
+    # A base58 encoding of 32 bytes string can be either 44 bytes or 43 bytes,
+    # since the did takes first 22 bytes,  abbreviated verkey will take
+    # remaining 22 or 21 characters
+    assert verkeySize == 23 or verkeySize == 22
     assert abbrevVerkey[0] == '~'
 
 
