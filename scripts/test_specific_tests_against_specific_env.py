@@ -9,7 +9,7 @@ import shutil
 
 
 # default/common monkeypatching required for any env
-def testDefaultMonkeyPatching(config, monkeypatch):
+def performDefaultMonkeyPatching(config, monkeypatch):
     @pytest.fixture(scope="module")
     def mockedFaberAgentPort():
         return config.get("faberAgentPort")
@@ -56,15 +56,15 @@ def testDefaultMonkeyPatching(config, monkeypatch):
 
 
 # define test specific monkey patching
-def testTutorialMonkeyPatching(config, monkeypatch):
+def tutorialMonkeyPatching(config, monkeypatch):
     pass
 
 
-# define specific env test config
+# define env specific test config
 sandboxConfig = {
     "poolTxnFilePath": "/home/rkalaria/.sovrin/pool_transactions_sandbox",
     "testModulePaths": {
-        'cli/test_tutorial.py': testTutorialMonkeyPatching
+        'cli/test_tutorial.py': tutorialMonkeyPatching
     },
     "faberAgentPort": "5555",
     "acmeAgentPort": "6666",
@@ -72,7 +72,8 @@ sandboxConfig = {
 }
 
 
-# add all different env configs to this one config which will be used
+# add all different env configs to this one config against which
+# you want to run specific tests
 envConfigs = {
     "sandbox": sandboxConfig
 }
@@ -84,10 +85,11 @@ def testSpecificModTest(monkeypatch):
 
     for ename, econf in envConfigs.items():
         testModulePaths = econf.get("testModulePaths")
-        testDefaultMonkeyPatching(econf, monkeypatch)
+        performDefaultMonkeyPatching(econf, monkeypatch)
         exitCodes = {}
         for testModName, testMonkeyPatchFunc in testModulePaths.items():
-            testModulePath = os.path.join(curDirPath, '../sovrin/test', testModName)
+            testModulePath = os.path.join(
+                curDirPath, '../sovrin/test', testModName)
             if testMonkeyPatchFunc:
                 testMonkeyPatchFunc(econf, monkeypatch)
             exitCodes[testModName] = pytest.main(['-s', testModulePath])

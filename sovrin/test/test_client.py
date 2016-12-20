@@ -273,19 +273,19 @@ def testClientGetsResponseWithoutConsensusForUsedReqId(nodeSet, looper, steward,
             result = last.result
             assert result is not None
 
-            # TODO: Time is not equal as some precesion is lost while storing
+            # TODO: Time is not equal as some precision is lost while storing
             # in oientdb, using seconds may be an option, need to think of a
             # use cases where time in milliseconds is required
-            replies[node.clientstack.name][f.RESULT.nm].pop(TXN_TIME)
-            result.result.pop(TXN_TIME)
+            replies[node.clientstack.name][f.RESULT.nm].pop(TXN_TIME, None)
+            result.result.pop(TXN_TIME, None)
 
             assert replies[node.clientstack.name][f.RESULT.nm] == result.result
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
-def checkGetAttr(reqId, sponsor, attrName, attrValue):
-    reply, status = sponsor.getReply(reqId)
+def checkGetAttr(reqKey, sponsor, attrName, attrValue):
+    reply, status = sponsor.getReply(*reqKey)
     assert reply
     data = json.loads(reply.get(DATA))
     assert status == "CONFIRMED" and \
@@ -301,7 +301,7 @@ def getAttribute(looper, sponsor, sponsorWallet, userIdA, attributeName,
     req = sponsorWallet.requestAttribute(attrib,
                                          sender=sponsorWallet.defaultId)
     sponsor.submitReqs(req)
-    looper.run(eventually(checkGetAttr, req.reqId, sponsor,
+    looper.run(eventually(checkGetAttr, req.key, sponsor,
                           attributeName, attributeValue, retryWait=1,
                           timeout=20))
 

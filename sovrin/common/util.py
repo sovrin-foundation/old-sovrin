@@ -134,10 +134,10 @@ def getIssuerKeyAndExecuteClbk(wallet, client, displayer, loop, origin,
         if displayer:
             displayer("Getting Keys for the Claim Definition from Sovrin")
         if pargs is not None:
-            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+            loop.call_later(.2, ensureReqCompleted, loop, req.key, client,
                                     clbk, pargs, None, chk)
         else:
-            loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+            loop.call_later(.2, ensureReqCompleted, loop, req.key, client,
                             clbk, None, None, chk)
     else:
         # Since reply and error will be none
@@ -170,7 +170,7 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
         client.submitReqs(req)
         displayer("Getting Claim Definition from Sovrin: {} {}"
                   .format(claimDefKey[0], claimDefKey[1]))
-        loop.call_later(.2, ensureReqCompleted, loop, req.reqId, client,
+        loop.call_later(.2, ensureReqCompleted, loop, req.key, client,
                         _getKey, None, None, chk)
     else:
         claimDef = wallet.getClaimDef(key=claimDefKey)
@@ -179,12 +179,12 @@ def getCredDefIsrKeyAndExecuteCallback(wallet, client, displayer,
 
 
 # TODO: Should have a timeout, should not have kwargs
-def ensureReqCompleted(loop, reqId, client, clbk=None, pargs=None, kwargs=None,
+def ensureReqCompleted(loop, reqKey, client, clbk=None, pargs=None, kwargs=None,
                        cond=None):
-    reply, err = client.replyIfConsensus(reqId)
+    reply, err = client.replyIfConsensus(*reqKey)
     if reply is None and (cond is None or not cond()):
         loop.call_later(.2, ensureReqCompleted, loop,
-                             reqId, client, clbk, pargs, kwargs, cond)
+                        reqKey, client, clbk, pargs, kwargs, cond)
     elif clbk:
         # TODO: Do something which makes reply and error optional in the
         # callback.

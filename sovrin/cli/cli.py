@@ -420,7 +420,7 @@ class SovrinCli(PlenumCli):
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                    req.reqId, self.activeClient, getNymReply)
+                                    req.key, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, other_client_name=None):
         idy = Identity(nym, role=role)
@@ -446,7 +446,7 @@ class SovrinCli(PlenumCli):
                 self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.reqId, self.activeClient, out)
+                                        req.key, self.activeClient, out)
         else:
             self._printRequestAlreadyMade(extra=" Request made to add {}".
                                           format(nym))
@@ -481,7 +481,7 @@ class SovrinCli(PlenumCli):
                        Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                    req.reqId, self.activeClient, chk)
+                                    req.key, self.activeClient, chk)
 
     # DEPR: moved to issuer_wallet as createClaimDef
     # def _buildCredDef(self, matchedVars):
@@ -678,7 +678,7 @@ class SovrinCli(PlenumCli):
                            Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient,
+                                        reqs[0].key, self.activeClient,
                                         published)
             return True
 
@@ -705,7 +705,7 @@ class SovrinCli(PlenumCli):
                            Token.BoldBlue)
 
             self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        reqs[0].reqId, self.activeClient,
+                                        reqs[0].key, self.activeClient,
                                         published)
             return True
 
@@ -1583,9 +1583,9 @@ class SovrinCli(PlenumCli):
             self.looper.loop.call_later(.2, self.ensureAgentConnected,
                                         otherAgentHa, clbk, *args)
 
-    def _ensureReqCompleted(self, reqId, client, clbk=None, pargs=None,
+    def _ensureReqCompleted(self, reqKey, client, clbk=None, pargs=None,
                             kwargs=None, cond=None):
-        ensureReqCompleted(self.looper.loop, reqId, client, clbk, pargs=pargs,
+        ensureReqCompleted(self.looper.loop, reqKey, client, clbk, pargs=pargs,
                            kwargs=kwargs, cond=cond)
 
     def addAlias(self, reply, err, client, alias, signer):

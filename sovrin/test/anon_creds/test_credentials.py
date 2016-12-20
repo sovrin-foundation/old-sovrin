@@ -55,7 +55,7 @@ def testProverGetsCredDef(claimDefinitionAdded, userWalletA, tdir,
     looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
                           req.reqId, f,
                           retryWait=1, timeout=5))
-    reply, status = curiousClient.getReply(req.reqId)
+    reply, status = curiousClient.getReply(*req.key)
     assert status == "CONFIRMED"
     recvdCredDef = json.loads(reply[DATA])
     assert recvdCredDef[NAME] == definition[NAME]
@@ -76,7 +76,7 @@ def testGetIssuerKey(claimDefinitionAdded, userWalletA, tdir,
     looper.run(eventually(checkSufficientRepliesRecvd, curiousClient.inBox,
                           req.reqId, f,
                           retryWait=1, timeout=5))
-    reply, status = curiousClient.getReply(req.reqId)
+    reply, status = curiousClient.getReply(*req.key)
     assert status == "CONFIRMED"
     assert userWalletA.getIssuerPublicKey(key).seqNo
     # TODO: Confirm that issuer key retrieved from ledger is same as the one
