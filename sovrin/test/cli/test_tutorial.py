@@ -207,7 +207,7 @@ def checkWalletStates(userCli,
                       totalCredDefs,
                       totalClaimsRcvd,
                       within=None):
-    def check():
+    async def check():
         assert totalLinks == len(userCli.activeWallet._links)
 
         tac = 0
@@ -215,10 +215,9 @@ def checkWalletStates(userCli,
             tac += len(li.availableClaims)
         assert totalAvailableClaims == tac
 
-        assert totalCredDefs == len(userCli.agent.prover.wallet.getAllClaimDef())
+        assert totalCredDefs == len(await userCli.agent.prover.wallet.getAllClaimDef())
 
-        assert totalClaimsRcvd == \
-               len(userCli.agent.prover.wallet.getAllClaims().keys())
+        assert totalClaimsRcvd == len((await userCli.agent.prover.wallet.getAllClaims()).keys())
 
     if within:
         userCli.looper.run(eventually(check, timeout=within))
@@ -552,21 +551,6 @@ def aliceRequestedTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
 
 def testAliceReqClaim(aliceRequestedTranscriptClaim):
     pass
-
-
-def testReqTranscriptClaimWithClaimDefNotInWallet(be, do, aliceCli,
-                                                  transcriptClaimMap, reqClaimOut1, faberIsRunning,
-                                                  aliceAcceptedFaberInvitation):
-    be(aliceCli)
-    inviter = transcriptClaimMap["inviter"]
-    links = aliceCli.activeWallet.getMatchingLinks(inviter)
-    assert len(links) == 1
-    faberId = links[0].remoteIdentifier
-    name, version = transcriptClaimMap["name"], transcriptClaimMap["version"]
-    aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
-    do("request claim {name}", within=5,
-       expect=reqClaimOut1,
-       mapper=transcriptClaimMap)
 
 
 def testShowFaberClaimPostReqClaim(be, do, aliceCli,

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Dict, Any
 
 from plenum.common.txn import NAME, VERSION, ORIGIN
 from plenum.common.types import f
@@ -50,5 +51,5 @@ class AgentIssuer:
                          origReqId=body.get(f.REQ_ID.nm))
 
     @abstractmethod
-    def _addAtrribute(self, claimDefKey, proverId, link):
+    def _addAtrribute(self, claimDefKey, proverId, link) -> Dict[str, Any]:
         raise NotImplementedError

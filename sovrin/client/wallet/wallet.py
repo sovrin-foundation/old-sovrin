@@ -5,9 +5,6 @@ from collections import deque
 from typing import Dict
 from typing import Optional
 
-from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
-from anoncreds.protocol.wallet.prover_wallet import ProverWallet
-from anoncreds.protocol.wallet.wallet import Wallet as AnoncredsWallet
 from ledger.util import F
 from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
@@ -16,6 +13,9 @@ from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
     IDENTIFIER, NYM, ROLE
 from plenum.common.types import Identifier, f
 
+from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
+from anoncreds.protocol.wallet.prover_wallet import ProverWallet
+from anoncreds.protocol.wallet.wallet import Wallet as AnoncredsWallet
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.sponsoring import Sponsoring
@@ -36,9 +36,9 @@ class Wallet(PWallet, Sponsoring):
     def __init__(self,
                  name: str,
                  supportedDidMethods: DidMethods = None,
-                 issuerWallet: IssuerWallet=None,
-                 proverWallet: ProverWallet=None,
-                 verifierWallet: AnoncredsWallet=None):
+                 issuerWallet: IssuerWallet = None,
+                 proverWallet: ProverWallet = None,
+                 verifierWallet: AnoncredsWallet = None):
         PWallet.__init__(self,
                          name,
                          supportedDidMethods or DefaultDidMethods)
@@ -77,68 +77,19 @@ class Wallet(PWallet, Sponsoring):
     def _isMatchingName(needle, haystack):
         return needle.lower() in haystack.lower()
 
-    def getClaimAttrs(self, claimDefKey) -> Dict:
-        # TODO: The issuer can be different than the author of the claim
-        # definition. But assuming that issuer is the author of the claim
-        # definition for now
-        issuerId = claimDefKey[2]
-        claimDef = self.getClaimDef(key=claimDefKey)
-        if claimDef and claimDef.attrNames and issuerId in self.attributesFrom:
-            return {nm: self.attributesFrom[issuerId].get(nm) for nm
-                    in claimDef.attrNames}
-        return {}
-
-    def getMatchingRcvdClaims(self, attributes):
-        matchingLinkAndRcvdClaim = []
-        matched = set()
-        attrNames = set(attributes.keys())
-        for li in self._links.values():
-            issuedAttributes = self.attributesFrom.get(li.remoteIdentifier)
-            if issuedAttributes:
-                commonAttrs = (attrNames.difference(matched).intersection(
-                    set(issuedAttributes.keys())))
-                if commonAttrs:
-                    for nm, ver, origin in li.availableClaims:
-                        cd = self.getClaimDef(key=(nm, ver, origin))
-                        if cd and cd.seqNo and set(cd.attrNames).intersection(
-                                commonAttrs):
-                            matchingLinkAndRcvdClaim.append((li,
-                                                             (nm, ver, origin),
-                                                             commonAttrs,
-                                                             issuedAttributes))
-                            matched.update(commonAttrs)
-                            break
-        return matchingLinkAndRcvdClaim
-
     # TODO: The names getMatchingLinksWithAvailableClaim and
     # getMatchingLinksWithReceivedClaim should be fixed. Difference between
     # `AvailableClaim` and `ReceivedClaim` is that for ReceivedClaim we
     # have attribute values from issuer.
 
     # TODO: Few of the below methods have duplicate code, need to refactor it
-    def getMatchingLinksWithAvailableClaim(self, claimName):
+    def getMatchingLinksWithAvailableClaim(self, claimName=None):
         matchingLinkAndAvailableClaim = []
         for k, li in self._links.items():
             for cl in li.availableClaims:
-                if Wallet._isMatchingName(claimName, cl[0]):
+                if not claimName or Wallet._isMatchingName(claimName, cl[0]):
                     matchingLinkAndAvailableClaim.append((li, cl))
         return matchingLinkAndAvailableClaim
-
-    def getMatchingLinksWithReceivedClaim(self, claimName):
-        matchingLinkAndReceivedClaim = []
-        for k, li in self._links.items():
-            for cl in li.availableClaims:
-                if Wallet._isMatchingName(claimName, cl[0]):
-                    claimDef = self.getClaimDef(key=cl)
-                    issuedAttributes = self.attributesFrom.get(
-                        li.remoteIdentifier)
-                    if issuedAttributes:
-                        claimAttrs = set(claimDef.attrNames)
-                        if claimAttrs.intersection(issuedAttributes.keys()):
-                            matchingLinkAndReceivedClaim.append(
-                                (li, cl, {k: issuedAttributes[k] for k in
-                                          claimAttrs}))
-        return matchingLinkAndReceivedClaim
 
     def getMatchingLinksWithClaimReq(self, claimReqName, linkName=None):
         matchingLinkAndClaimReq = []
@@ -175,12 +126,6 @@ class Wallet(PWallet, Sponsoring):
 
     def getAttributesForNym(self, idr: Identifier):
         return [a for a in self._attributes.values() if a.dest == idr]
-
-    def addAttrFrom(self, frm, attrs):
-        assert isinstance(attrs, dict)
-        if frm not in self.attributesFrom:
-            self.attributesFrom[frm] = {}
-        self.attributesFrom[frm].update(attrs)
 
     def addLink(self, link: Link):
         self._links[link.key] = link

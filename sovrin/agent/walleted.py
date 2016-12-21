@@ -362,7 +362,11 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
                     li, rcvdAvailableClaims)
                 if newAvailableClaims:
                     li.availableClaims.extend(newAvailableClaims)
-                    self._syncLinkPostAvailableClaimsRcvd(li, newAvailableClaims)
+                    self.notifyMsgListener("    Available Claim(s): {}".
+                        format(",".join(
+                        [n for n, _, _ in newAvailableClaims])))
+
+                self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
 
         else:
             self.notifyMsgListener("No matching link found")
@@ -382,13 +386,6 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
 
     def _getLinkByTarget(self, target) -> Link:
         return self.wallet.getLinkInvitationByTarget(target)
-
-    def _syncLinkPostAvailableClaimsRcvd(self, li, newAvailableClaims):
-        if newAvailableClaims:
-            self.notifyMsgListener("    Available Claim(s): {}".
-                format(",".join(
-                [n for n, _, _ in newAvailableClaims])))
-        self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
 
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link, availableClaims):
         req = self.getIdentity(li.verkey)

@@ -5,8 +5,6 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
-from anoncreds.protocol.globals import KEYS
-from anoncreds.protocol.types import ClaimDefinition, ID
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.common.constants import ENVS
@@ -19,6 +17,8 @@ from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
+from anoncreds.protocol.globals import KEYS
+from anoncreds.protocol.types import ClaimDefinition, ID
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
 from sovrin.agent.msg_types import ACCEPT_INVITE
@@ -312,8 +312,7 @@ class SovrinCli(PlenumCli):
                                         basedirpath=self.basedirpath,
                                         client=self.activeClient if self.activeEnv else None,
                                         wallet=self.activeWallet,
-                                        port=port,
-                                        looper=self.looper)
+                                        port=port)
             self._agent.registerEventListener(EVENT_NOTIFY_MSG, self._printMsg)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
                                               self._printSuggestionPostAcceptLink)
@@ -879,8 +878,7 @@ class SovrinCli(PlenumCli):
 
     def _getOneLinkAndReceivedClaim(self, claimName, printMsgs: bool = True) -> \
             (Link, Tuple, Dict):
-        matchingLinksWithRcvdClaim = self.activeWallet. \
-            getMatchingLinksWithReceivedClaim(claimName)
+        matchingLinksWithRcvdClaim = self.agent.getMatchingLinksWithReceivedClaim(claimName)
 
         if len(matchingLinksWithRcvdClaim) == 0:
             if printMsgs:
@@ -952,79 +950,49 @@ class SovrinCli(PlenumCli):
             return True
 
     def _showReceivedOrAvailableClaim(self, claimName):
-        self._showReceivedClaimIfExists(claimName) or \
-        self._showAvailableClaimIfExists(claimName)
-
-    def _printRequestClaimMsg(self, claimName):
-        self.printSuggestion(self._getReqClaimUsage(claimName))
-
-    def _showReceivedClaimIfExists(self, claimName):
         matchingLink, rcvdClaim, attributes = \
-            self._getOneLinkAndReceivedClaim(claimName, printMsgs=False)
+            self._getOneLinkAndReceivedClaim(claimName)
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
 
             # TODO: Figure out how to get time of issuance
-            self.print("Status: {}".format(datetime.datetime.now()))
-            self.print('Name: {}\nVersion: {}'.format(claimName, rcvdClaim[1]))
-            self.print("Attributes:")
-            for n, v in attributes.items():
-                self.print('    {}: {}'.format(n, v))
-            self.print("")
-            return rcvdClaim
+            issued = None not in attributes.values()
 
-    def _showAvailableClaimIfExists(self, claimName):
-        matchingLink, ac = \
-            self._getOneLinkAndAvailableClaim(claimName, printMsgs=False)
-        if matchingLink:
-            self.print("Found claim {} in link {}".
-                       format(claimName, matchingLink.name))
-            name, version, origin = ac
-            claimDef = self.activeWallet.getClaimDef(key=ac)
-            claimAttr = self.activeWallet.getClaimAttrs(ac)
-            if claimAttr:
-                # TODO: Figure out how to get time of issuance
-                # self.print("Status: {}".format(ca.dateOfIssue))
+            if issued:
                 self.print("Status: {}".format(datetime.datetime.now()))
             else:
                 self.print("Status: available (not yet issued)")
 
-            if claimDef:
-                self.print('Name: {}\nVersion: {}'.format(name, version))
+            self.print('Name: {}\nVersion: {}'.format(claimName, rcvdClaim[1]))
+            self.print("Attributes:")
+            for n, v in attributes.items():
+                if v:
+                    self.print('    {}: {}'.format(n, v))
+                else:
+                    self.print('    {}'.format(n))
 
-            if not (claimAttr or claimDef):
-                raise NotImplementedError
-            else:
-                self.print("Attributes:")
-
-            attrs = []
-            if not claimAttr:
-                if claimDef:
-                    attrs = [(n, '') for n in claimDef.attrNames]
-            else:
-                attrs = [(n, ': {}'.format(v)) for n, v in claimAttr.items()]
-            if attrs:
-                for n, v in attrs:
-                    self.print('    {}{}'.format(n, v))
-
-            if not claimAttr:
+            if not issued:
                 self._printRequestClaimMsg(claimName)
-            return ac
+            else:
+                self.print("")
+            return rcvdClaim
         else:
             self.print("No matching claim(s) found "
                        "in any links in current keyring")
 
+    def _printRequestClaimMsg(self, claimName):
+        self.printSuggestion(self._getReqClaimUsage(claimName))
+
     def _showMatchingClaimProof(self, claimProofReq: ClaimProofRequest,
                                 selfAttestedAttrs):
-        matchingLinkAndRcvdClaims = \
-            self.activeWallet.getMatchingRcvdClaims(claimProofReq.attributes)
+        matchingLinkAndReceivedClaim = self.agent.getMatchingRcvdClaims(claimProofReq.attributes)
 
         attributesWithValue = claimProofReq.attributes
         for k, v in claimProofReq.attributes.items():
-            for ml, _, commonAttrs, allAttrs in matchingLinkAndRcvdClaims:
-                if k in commonAttrs:
-                    attributesWithValue[k] = allAttrs[k]
+            for li, cl, issuedAttrs in matchingLinkAndReceivedClaim:
+                if k in issuedAttrs:
+                    attributesWithValue[k] = issuedAttrs[k]
                 else:
                     defaultValue = attributesWithValue[k] or v
                     attributesWithValue[k] = selfAttestedAttrs.get(k, defaultValue)
@@ -1032,10 +1000,10 @@ class SovrinCli(PlenumCli):
         claimProofReq.attributes = attributesWithValue
         self.print(str(claimProofReq))
 
-        for ml, (name, ver, _), commonAttrs, allAttrs in matchingLinkAndRcvdClaims:
+        for li, (name, ver, _), issuedAttrs in matchingLinkAndReceivedClaim:
             self.print('\n    Claim proof ({} v{} from {})'.format(
-                name, ver, ml.name))
-            for k, v in allAttrs.items():
+                name, ver, li.name))
+            for k, v in issuedAttrs.items():
                 self.print('        ' + k + ': ' + v + ' (verifiable)')
 
     def _showClaimReq(self, matchedVars):

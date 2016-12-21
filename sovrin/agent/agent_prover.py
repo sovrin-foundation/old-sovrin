@@ -95,3 +95,40 @@ class AgentProver:
         li = self._getLinkByTarget(getCryptonym(identifier))
         self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
         self.notifyMsgListener(data)
+
+    def getMatchingLinksWithReceivedClaim(self, claimName=None):
+        return self.loop.run_until_complete(self.getMatchingLinksWithReceivedClaimAsync(claimName))
+
+    async def getMatchingLinksWithReceivedClaimAsync(self, claimName=None):
+        matchingLinkAndAvailableClaim = self.wallet.getMatchingLinksWithAvailableClaim(claimName)
+        matchingLinkAndReceivedClaim = []
+        for li, cl in matchingLinkAndAvailableClaim:
+            name, version, origin = cl
+            claimDefKeyId = ID(ClaimDefinitionKey(name=name, version=version, issuerId=origin))
+            claimDef = await self.prover.wallet.getClaimDef(claimDefKeyId)
+            claimAttrs = set(claimDef.attrNames)
+            claim = None
+            try:
+                claim = await self.prover.wallet.getClaims(claimDefKeyId)
+            except ValueError:
+                pass  # it means no claim was issued
+            attrs = {k: None for k in claimAttrs}
+            if claim:
+                issuedAttributes = claim.primaryClaim.attrs
+                if claimAttrs.intersection(issuedAttributes.keys()):
+                    attrs = {k: issuedAttributes[k] for k in claimAttrs}
+            matchingLinkAndReceivedClaim.append((li, cl, attrs))
+        return matchingLinkAndReceivedClaim
+
+    def getMatchingRcvdClaims(self, attributes):
+        return self.loop.run_until_complete(self.getMatchingRcvdClaimsAsync(attributes))
+
+    async def getMatchingRcvdClaimsAsync(self, attributes):
+        linksAndReceivedClaim = await self.getMatchingLinksWithReceivedClaimAsync()
+        attributes = set(attributes)
+
+        matchingLinkAndRcvdClaim = []
+        for li, cl, issuedAttrs in linksAndReceivedClaim:
+            if attributes.intersection(issuedAttrs.keys()):
+                matchingLinkAndRcvdClaim.append((li, cl, issuedAttrs))
+        return matchingLinkAndRcvdClaim

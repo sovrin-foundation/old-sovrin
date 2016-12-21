@@ -165,20 +165,24 @@ class WalletedAgent(Walleted, Agent, Caching):
                  wallet: Wallet = None,
                  port: int = None,
                  loop=None,
-                 issuer=None,
-                 prover=None,
-                 verifier=None,
                  attrRepo=None):
         Agent.__init__(self, name, basedirpath, client, port, loop=loop)
         self._wallet = wallet or Wallet(name)
+        self._attrRepo = attrRepo or AttributeRepoInMemory()
+        Walleted.__init__(self)
+        if self.client:
+            self._initIssuerProverVerifier()
 
-        attrRepo = attrRepo or AttributeRepoInMemory()
+    def _initIssuerProverVerifier(self):
+        self.issuer = SovrinIssuer(client=self.client, wallet=self._wallet, attrRepo=self._attrRepo)
+        self.prover = SovrinProver(client=self.client, wallet=self._wallet)
+        self.verifier = SovrinVerifier(client=self.client, wallet=self._wallet)
 
-        issuer = issuer or SovrinIssuer(client=self.client, wallet=self._wallet, attrRepo=attrRepo)
-        prover = prover or SovrinProver(client=self.client, wallet=self._wallet)
-        verifier = verifier or SovrinVerifier(client=self.client, wallet=self._wallet)
-
-        Walleted.__init__(self, issuer=issuer, prover=prover, verifier=verifier)
+    @Agent.client.setter
+    def client(self, client):
+        Agent.client.fset(self, client)
+        if self.client:
+            self._initIssuerProverVerifier()
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,

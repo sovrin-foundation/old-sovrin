@@ -507,8 +507,7 @@ def jobCertificateClaimMap():
 @pytest.fixture(scope="module")
 def reqClaimOut():
     return ["Found claim {name} in link {inviter}",
-            "Requesting claim {name} from {inviter}...",
-            "Getting Keys for the Claim Definition from Sovrin"]
+            "Requesting claim {name} from {inviter}..."]
 
 
 # TODO Change name
