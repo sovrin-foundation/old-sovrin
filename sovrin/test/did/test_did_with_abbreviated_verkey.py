@@ -18,7 +18,7 @@ from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
 from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
     updateWalletIdrWithFullKeySigner, updateSovrinIdrWithFullKey, \
-    fetchFullVerkeyFromSovrin
+    fetchFullVerkeyFromSovrin, checkAbbrVerkeySize
 from sovrin.test.helper import createNym
 
 
@@ -65,7 +65,10 @@ def testNewIdentifierInWalletIsDid(abbrevIdr):
 
 
 def testDefaultVerkeyIsAbbreviated(abbrevVerkey):
-    assertLength(abbrevVerkey, 23)
+    # A base58 encoding of 32 bytes string can be either 44 bytes or 43 bytes,
+    # since the did takes first 22 bytes,  abbreviated verkey will take
+    # remaining 22 or 21 characters
+    checkAbbrVerkeySize(abbrevVerkey)
     assert abbrevVerkey[0] == '~'
 
 
@@ -84,8 +87,7 @@ def testRetrieveAbbrvVerkey(didAddedWithAbbrvVerkey, looper, sponsor,
     def chk():
         retrievedVerkey = sponsorWallet.getIdentity(abbrevIdr).verkey
         assertEquality(retrievedVerkey, wallet.getVerkey(abbrevIdr))
-        assertLength(retrievedVerkey, 23)
-
+        checkAbbrVerkeySize(retrievedVerkey)
     looper.run(eventually(chk, retryWait=1, timeout=5))
     chkVerifyForRetrievedIdentity(wallet, sponsorWallet, abbrevIdr)
 

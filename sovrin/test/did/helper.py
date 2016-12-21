@@ -27,7 +27,7 @@ def updateWalletIdrWithFullKeySigner(wallet, idr):
     newSigner = DidSigner(identifier=idr)
     wallet.updateSigner(idr, newSigner)
     assertEquality(newSigner.verkey, wallet.getVerkey(idr))
-    assertLength(wallet.getVerkey(idr), 44)
+    checkFullVerkeySize(wallet.getVerkey(idr))
     return newSigner.verkey
 
 
@@ -56,6 +56,17 @@ def fetchFullVerkeyFromSovrin(looper, senderWallet, senderClient, ownerWallet,
     def chk():
         retrievedVerkey = senderWallet.getIdentity(idr).verkey
         assertEquality(retrievedVerkey, ownerWallet.getVerkey(idr))
-        assertLength(retrievedVerkey, 44)
-
+        checkFullVerkeySize(retrievedVerkey)
     looper.run(eventually(chk, retryWait=1, timeout=5))
+
+
+def checkAbbrVerkeySize(verkey):
+    # A base58 encoding of 32 bytes string can be either 44 bytes or 43 bytes,
+    # since the did takes first 22 bytes,  abbreviated verkey will take
+    # remaining 22 or 21 characters
+    assert len(verkey) == 23 or len(verkey) == 22
+
+
+def checkFullVerkeySize(verkey):
+    # A base58 encoding of 32 bytes string can be either 44 bytes or 43 bytes.
+    assert len(verkey) == 44 or len(verkey) == 43

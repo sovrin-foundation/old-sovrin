@@ -17,7 +17,7 @@ from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
 from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
     updateWalletIdrWithFullKeySigner, updateSovrinIdrWithFullKey, \
-    fetchFullVerkeyFromSovrin
+    fetchFullVerkeyFromSovrin, checkFullVerkeySize
 from sovrin.test.helper import createNym
 
 
@@ -66,7 +66,7 @@ def testRetrieveFullVerkey(didAddedWithFullVerkey, looper, sponsor,
     def chk():
         retrievedVerkey = sponsorWallet.getIdentity(fullKeyIdr).verkey
         assert retrievedVerkey == wallet.getVerkey(fullKeyIdr)
-        assert len(retrievedVerkey) == 44
+        checkFullVerkeySize(retrievedVerkey)
 
     looper.run(eventually(chk, retryWait=1, timeout=5))
     chkVerifyForRetrievedIdentity(wallet, sponsorWallet, fullKeyIdr)
