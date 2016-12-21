@@ -20,7 +20,7 @@ class ThriftAgent(TestWalletedAgent):
                  client: Client = None,
                  wallet: Wallet = None,
                  port: int = None,
-                 looper=None):
+                 loop=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -28,7 +28,7 @@ class ThriftAgent(TestWalletedAgent):
         portParam, = self.getPassedArgs()
 
         super().__init__('Thrift Bank', basedirpath, client, wallet,
-                         portParam or port, looper=looper)
+                         portParam or port, loop=loop)
 
         # maps invitation nonces to internal ids
         self._invites = {
@@ -63,10 +63,10 @@ class ThriftAgent(TestWalletedAgent):
 
 
 def runThrift(name=None, wallet=None, basedirpath=None, port=None,
-              startRunning=True, bootstrap=True, looper=None):
+              startRunning=True, bootstrap=True):
     return runAgent(ThriftAgent, name or "Thrift Bank",
                     wallet or buildThriftWallet(), basedirpath,
-                    port, startRunning, bootstrap, looper)
+                    port, startRunning, bootstrap)
 
 
 if __name__ == "__main__":

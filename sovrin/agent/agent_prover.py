@@ -1,12 +1,13 @@
+import asyncio
 from typing import Any
 
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.types import ClaimDefinitionKey, ID, Claims, ProofInput
-from anoncreds.protocol.utils import toDictWithStrValues
 from plenum.common.txn import NONCE, TYPE, NAME, VERSION, ORIGIN, IDENTIFIER, DATA
 from plenum.common.types import f
 from plenum.common.util import getCryptonym
 
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.types import ClaimDefinitionKey, ID, Claims, ProofInput
+from anoncreds.protocol.utils import toDictWithStrValues
 from sovrin.agent.msg_types import REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.client.wallet.link import ClaimProofRequest, Link
 from sovrin.common.util import getNonceForProof
@@ -17,10 +18,17 @@ class AgentProver:
         self.prover = prover
 
     def sendReqClaim(self, link: Link, claimDefKey):
+        if self.loop.is_running():
+            self.loop.call_soon(asyncio.ensure_future, self.sendReqClaimAsync(link, claimDefKey))
+        else:
+            self.loop.run_until_complete(self.sendReqClaimAsync(link, claimDefKey))
+
+    async def sendReqClaimAsync(self, link: Link, claimDefKey):
         name, version, origin = claimDefKey
         claimDefKey = ClaimDefinitionKey(name, version, origin)
 
-        claimReq = self.prover.createClaimRequest(id=ID(claimDefKey), proverId=link.invitationNonce, reqNonRevoc=False)
+        claimReq = await self.prover.createClaimRequest(id=ID(claimDefKey), proverId=link.invitationNonce,
+                                                        reqNonRevoc=False)
 
         op = {
             NONCE: link.invitationNonce,
@@ -33,7 +41,7 @@ class AgentProver:
 
         self.signAndSend(msg=op, linkName=link.name)
 
-    def handleReqClaimResponse(self, msg):
+    async def handleReqClaimResponse(self, msg):
         body, _ = msg
         issuerId = body.get(IDENTIFIER)
         claim = body[DATA]
@@ -46,21 +54,27 @@ class AgentProver:
                 claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
 
             claimDefKey = ClaimDefinitionKey(name, version, claimAuthor)
-            claimDef = self.prover.wallet.getClaimDef(ID(claimDefKey))
+            claimDef = await self.prover.wallet.getClaimDef(ID(claimDefKey))
             claimDefId = ID(claimDefKey=claimDefKey, claimDefId=claimDef.id)
 
             claim = Claims.fromStrDict(claim['claim'])
 
-            self.prover.processClaim(claimDefId, claim)
+            await self.prover.processClaim(claimDefId, claim)
         else:
             self.notifyMsgListener("No matching link found")
 
     def sendProof(self, link: Link, claimPrfReq: ClaimProofRequest):
+        if self.loop.is_running():
+            self.loop.call_soon(asyncio.ensure_future, self.sendProofAsync(link, claimPrfReq))
+        else:
+            self.loop.run_until_complete(self.sendProofAsync(link, claimPrfReq))
+
+    async def sendProofAsync(self, link: Link, claimPrfReq: ClaimProofRequest):
         nonce = getNonceForProof(link.invitationNonce)
 
         revealedAttrNames = claimPrfReq.verifiableAttributes
         proofInput = ProofInput(revealedAttrs=revealedAttrNames)
-        proof, revealedAttrs = self.prover.presentProof(proofInput, nonce)
+        proof, revealedAttrs = await self.prover.presentProof(proofInput, nonce)
 
         op = {
             NAME: claimPrfReq.name,

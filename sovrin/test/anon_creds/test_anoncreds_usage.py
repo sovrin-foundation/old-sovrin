@@ -1,7 +1,7 @@
 import pytest
+
 from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from anoncreds.protocol.types import ID, ProofInput, PredicateGE
-
 from sovrin.anon_creds.sovrin_issuer import SovrinIssuer
 from sovrin.anon_creds.sovrin_prover import SovrinProver
 from sovrin.anon_creds.sovrin_verifier import SovrinVerifier
@@ -28,32 +28,35 @@ def verifier(looper, userClientB, userWalletB):
     return SovrinVerifier(looper, userClientB, userWalletB)
 
 
-def testAnonCreds(issuer, prover, verifier, attrRepo, primes1):
-    # 1. Create a Claim Def
-    claimDef = issuer.genClaimDef('GVT', '1.0', GVT.attribNames())
-    claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
+def testAnonCredsPrimaryOnly(issuer, prover, verifier, attrRepo, primes1, looper):
+    async def doTestAnonCredsPrimaryOnly():
+        # 1. Create a Claim Def
+        claimDef = await issuer.genClaimDef('GVT', '1.0', GVT.attribNames())
+        claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
 
-    # 2. Create keys for the Claim Def
-    issuer.genKeys(claimDefId, **primes1)
+        # 2. Create keys for the Claim Def
+        await issuer.genKeys(claimDefId, **primes1)
 
-    # 3. Issue accumulator
-    issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
+        # 3. Issue accumulator
+        await issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
 
-    # 4. set attributes for user1
-    attrs = GVT.attribs(name='Alex', age=28, height=175, sex='male')
-    proverId = str(prover.id)
-    attrRepo.addAttributes(claimDef.getKey(), proverId, attrs)
+        # 4. set attributes for user1
+        attrs = GVT.attribs(name='Alex', age=28, height=175, sex='male')
+        proverId = str(prover.id)
+        attrRepo.addAttributes(claimDef.getKey(), proverId, attrs)
 
-    # 5. request Claims
-    claimsReq = prover.createClaimRequest(claimDefId, proverId, False)
-    claims = issuer.issueClaim(claimDefId, claimsReq)
-    prover.processClaim(claimDefId, claims)
+        # 5. request Claims
+        claimsReq = await prover.createClaimRequest(claimDefId, proverId, False)
+        claims = await issuer.issueClaim(claimDefId, claimsReq)
+        await prover.processClaim(claimDefId, claims)
 
-    # 6. proof Claims
-    proofInput = ProofInput(
-        ['name'],
-        [PredicateGE('age', 18)])
+        # 6. proof Claims
+        proofInput = ProofInput(
+            ['name'],
+            [PredicateGE('age', 18)])
 
-    nonce = verifier.generateNonce()
-    proof, revealedAttrs = prover.presentProof(proofInput, nonce)
-    assert verifier.verify(proofInput, proof, revealedAttrs, nonce)
+        nonce = verifier.generateNonce()
+        proof, revealedAttrs = await prover.presentProof(proofInput, nonce)
+        assert await verifier.verify(proofInput, proof, revealedAttrs, nonce)
+
+    looper.run(doTestAnonCredsPrimaryOnly)

@@ -1,11 +1,11 @@
 from abc import abstractmethod
 
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.types import ClaimDefinitionKey, ID
-from anoncreds.protocol.types import ClaimRequest
 from plenum.common.txn import NAME, VERSION, ORIGIN
 from plenum.common.types import f
 
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.types import ClaimDefinitionKey, ID
+from anoncreds.protocol.types import ClaimRequest
 from sovrin.agent.constants import EVENT_NOTIFY_MSG
 from sovrin.agent.msg_types import CLAIM
 
@@ -14,7 +14,7 @@ class AgentIssuer:
     def __init__(self, issuer: Issuer):
         self.issuer = issuer
 
-    def processReqClaim(self, msg):
+    async def processReqClaim(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if not link:
@@ -31,12 +31,12 @@ class AgentIssuer:
         claimReq = ClaimRequest.fromStrDict(body['claimReq'])
 
         claimDefKey = ClaimDefinitionKey(name, version, origin)
-        claimDef = self.issuer.wallet.getClaimDef(ID(claimDefKey))
+        claimDef = await self.issuer.wallet.getClaimDef(ID(claimDefKey))
         claimDefId = ID(claimDefKey=claimDefKey, claimDefId=claimDef.id)
 
         self._addAtrribute(claimDefKey=claimDefKey, proverId=claimReq.userId, link=link)
 
-        claim = self.issuer.issueClaim(claimDefId, claimReq)
+        claim = await self.issuer.issueClaim(claimDefId, claimReq)
 
         claimDetails = {
             NAME: claimDef.name,

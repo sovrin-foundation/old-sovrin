@@ -1,9 +1,9 @@
 import pytest
+
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from anoncreds.protocol.types import ClaimDefinition, ID
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWalletInMemory
-
 from sovrin.anon_creds.sovrin_public_repo import SovrinPublicRepo
 from sovrin.test.anon_creds.conftest import GVT
 
@@ -24,8 +24,8 @@ def claimDefGvt(stewardWallet):
 
 
 @pytest.fixture(scope="module")
-def submittedClaimDefGvt(publicRepo, claimDefGvt):
-    return publicRepo.submitClaimDef(claimDefGvt)
+def submittedClaimDefGvt(publicRepo, claimDefGvt, looper):
+    return looper.run(publicRepo.submitClaimDef(claimDefGvt))
 
 
 @pytest.fixture(scope="module")
@@ -34,36 +34,39 @@ def submittedClaimDefGvtID(submittedClaimDefGvt):
 
 
 @pytest.fixture(scope="module")
-def submittedPublicKey(submittedClaimDefGvtID, publicRepo, issuerGvt, primes1):
-    pk, sk = issuerGvt._primaryIssuer.genKeys(submittedClaimDefGvtID, **primes1)
-    publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk)
+def publicSecretKey(submittedClaimDefGvtID, issuerGvt, primes1, looper):
+    return looper.run(issuerGvt._primaryIssuer.genKeys(submittedClaimDefGvtID, **primes1))
 
 
-def testSubmitClaimDef(submittedClaimDefGvt, stewardWallet):
+@pytest.fixture(scope="module")
+def publicKey(publicSecretKey):
+    return publicSecretKey[0]
+
+
+@pytest.fixture(scope="module")
+def submittedPublicKey(submittedClaimDefGvtID, publicRepo, publicSecretKey, looper):
+    pk, sk = publicSecretKey
+    looper.run(publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk))
+
+
+def testSubmitClaimDef(submittedClaimDefGvt, claimDefGvt):
     assert submittedClaimDefGvt
-    assert submittedClaimDefGvt.id
-    assert submittedClaimDefGvt.issuerId == stewardWallet.defaultId
-    assert submittedClaimDefGvt.name == 'GVT'
-    assert submittedClaimDefGvt.version == '1.0'
-    assert submittedClaimDefGvt.type == 'CL'
-    assert submittedClaimDefGvt.attrNames == ['name', 'age', 'height', 'sex']
+    assert submittedClaimDefGvt.name == claimDefGvt.name
+    assert submittedClaimDefGvt.version == claimDefGvt.version
+    assert submittedClaimDefGvt.attrNames == claimDefGvt.attrNames
+    assert submittedClaimDefGvt.type == claimDefGvt.type
+    assert submittedClaimDefGvt.issuerId == claimDefGvt.issuerId
 
 
-def testGetClaimDef(claimDefGvt, publicRepo, stewardWallet):
-    claimDef = publicRepo.getClaimDef(ID(claimDefKey=claimDefGvt.getKey()))
-    assert claimDef
-    assert claimDef.id
-    assert claimDef.issuerId == stewardWallet.defaultId
-    assert claimDef.name == 'GVT'
-    assert claimDef.version == '1.0'
-    assert claimDef.type == 'CL'
-    assert claimDef.attrNames == ['name', 'age', 'height', 'sex']
+def testGetClaimDef(submittedClaimDefGvt, publicRepo, looper):
+    claimDef = looper.run(publicRepo.getClaimDef(ID(claimDefKey=submittedClaimDefGvt.getKey())))
+    assert claimDef == submittedClaimDefGvt
 
 
 def testSubmitPublicKey(submittedPublicKey):
     pass
 
 
-def testGetPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo):
-    pk = publicRepo.getPublicKey(id=submittedClaimDefGvtID)
-    assert pk
+def testGetPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo, publicKey, looper):
+    pk = looper.run(publicRepo.getPublicKey(id=submittedClaimDefGvtID))
+    assert pk == publicKey

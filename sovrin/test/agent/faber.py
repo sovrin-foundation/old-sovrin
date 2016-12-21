@@ -22,7 +22,7 @@ class FaberAgent(TestWalletedAgent):
                  client: Client = None,
                  wallet: Wallet = None,
                  port: int = None,
-                 looper=None):
+                 loop=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -30,7 +30,7 @@ class FaberAgent(TestWalletedAgent):
         portParam, = self.getPassedArgs()
 
         super().__init__('Faber College', basedirpath, client, wallet,
-                         portParam or port, looper=looper)
+                         portParam or port, loop=loop)
 
         self.availableClaims = []
 
@@ -94,8 +94,8 @@ class FaberAgent(TestWalletedAgent):
     def postClaimVerif(self, claimName, link, frm):
         pass
 
-    def initAvailableClaimList(self):
-        claimDef = self.issuer.wallet.getClaimDef(ID(self._claimDefKey))
+    async def initAvailableClaimList(self):
+        claimDef = await self.issuer.wallet.getClaimDef(ID(self._claimDefKey))
         self.availableClaims.append({
             NAME: claimDef.name,
             VERSION: claimDef.version,
@@ -108,26 +108,26 @@ class FaberAgent(TestWalletedAgent):
                                             userId=proverId,
                                             attributes=attr)
 
-    def addClaimDefsToWallet(self):
-        claimDef = self.issuer.genClaimDef(self._claimDefKey.name,
+    async def addClaimDefsToWallet(self):
+        claimDef = await self.issuer.genClaimDef(self._claimDefKey.name,
                                            self._claimDefKey.version,
                                            self._attrDef.attribNames(),
                                            'CL')
         claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
         p_prime, q_prime = primes["prime2"]
-        self.issuer.genKeys(claimDefId, p_prime=p_prime, q_prime=q_prime)
-        self.issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
-        self.initAvailableClaimList()
+        await self.issuer.genKeys(claimDefId, p_prime=p_prime, q_prime=q_prime)
+        await self.issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
+        await self.initAvailableClaimList()
 
-    def bootstrap(self):
-        self.addClaimDefsToWallet()
+    async def bootstrap(self):
+        await self.addClaimDefsToWallet()
 
 
 def runFaber(name=None, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=True, looper=None):
+             startRunning=True, bootstrap=True):
     return runAgent(FaberAgent, name or "Faber College",
                     wallet or buildFaberWallet(), basedirpath,
-                    port, startRunning, bootstrap, looper)
+                    port, startRunning, bootstrap)
 
 
 if __name__ == "__main__":

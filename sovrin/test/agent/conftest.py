@@ -80,7 +80,7 @@ def thriftWallet():
 
 
 @pytest.fixture(scope="module")
-def agentBuilder(tdirWithPoolTxns, emptyLooper):
+def agentBuilder(tdirWithPoolTxns):
     def _(wallet, basedir=None):
         basedir = basedir or tdirWithPoolTxns
         _, port = genHa()
@@ -93,8 +93,7 @@ def agentBuilder(tdirWithPoolTxns, emptyLooper):
                               basedirpath=basedir,
                               client=client,
                               wallet=wallet,
-                              port=port,
-                              looper=emptyLooper)
+                              port=port)
 
         return agent
 
@@ -140,12 +139,11 @@ def thriftAgentPort():
 
 
 @pytest.fixture(scope="module")
-def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet, emptyLooper):
+def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet):
     agent = runFaber(faberWallet.name, faberWallet,
                      basedirpath=tdirWithPoolTxns,
                      port=faberAgentPort,
-                     startRunning=False, bootstrap=False,
-                     looper=emptyLooper)
+                     startRunning=False, bootstrap=False)
     return agent
 
 
@@ -174,18 +172,17 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
     faber.client.submitReqs(*prepared)
     emptyLooper.add(faber)
 
-    faber.bootstrap()
+    emptyLooper.run(faber.bootstrap())
 
     return faber, faberWallet
 
 
 @pytest.fixture(scope="module")
-def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet, emptyLooper):
+def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet):
     agent = runAcme(acmeWallet.name, acmeWallet,
                     basedirpath=tdirWithPoolTxns,
                     port=acmeAgentPort,
-                    startRunning=False, bootstrap=False,
-                    looper=emptyLooper)
+                    startRunning=False, bootstrap=False)
     return agent
 
 
@@ -214,18 +211,17 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet, acmeAgent,
     acme.client.submitReqs(*prepared)
     emptyLooper.add(acme)
 
-    acme.bootstrap()
+    emptyLooper.run(acme.bootstrap())
 
     return acme, acmeWallet
 
 
 @pytest.fixture(scope="module")
-def thriftAgent(tdirWithPoolTxns, thriftAgentPort, thriftWallet, emptyLooper):
+def thriftAgent(tdirWithPoolTxns, thriftAgentPort, thriftWallet):
     agent = runThrift(thriftWallet.name, thriftWallet,
                       basedirpath=tdirWithPoolTxns,
                       port=thriftAgentPort,
-                      startRunning=False, bootstrap=False,
-                      looper=emptyLooper)
+                      startRunning=False, bootstrap=False)
     return agent
 
 

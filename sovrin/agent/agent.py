@@ -1,9 +1,7 @@
-from typing import Dict
-from typing import Tuple, Callable
-
 import asyncio
+from typing import Dict
+from typing import Tuple
 
-from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.log import getlogger
@@ -13,6 +11,8 @@ from plenum.common.port_dispenser import genHa
 from plenum.common.startable import Status
 from plenum.common.types import Identifier
 from plenum.common.util import randomString
+
+from anoncreds.protocol.repo.attributes_repo import AttributeRepoInMemory
 from sovrin.agent.agent_net import AgentNet
 from sovrin.agent.caching import Caching
 from sovrin.agent.walleted import Walleted
@@ -21,9 +21,9 @@ from sovrin.anon_creds.sovrin_prover import SovrinProver
 from sovrin.anon_creds.sovrin_verifier import SovrinVerifier
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.config_util import getConfig
 from sovrin.common.identity import Identity
 from sovrin.common.strict_types import strict_types, decClassMethods
-from sovrin.common.config_util import getConfig
 
 logger = getlogger()
 
@@ -33,12 +33,12 @@ class Agent(Motor, AgentNet):
     def __init__(self,
                  name: str,
                  basedirpath: str,
-                 client: Client=None,
-                 port: int=None,
+                 client: Client = None,
+                 port: int = None,
                  loop=None):
         Motor.__init__(self)
         self.loop = loop or asyncio.get_event_loop()
-        self._eventListeners = {}   # Dict[str, set(Callable)]
+        self._eventListeners = {}  # Dict[str, set(Callable)]
         self._name = name
 
         AgentNet.__init__(self,
@@ -123,9 +123,9 @@ class Agent(Motor, AgentNet):
                 clbk(*args)
         else:
             self.loop.call_later(.2, self.ensureConnectedToDest,
-                                        destHa, clbk, *args)
+                                 destHa, clbk, *args)
 
-    def sendMessage(self, msg, name: str=None, ha: Tuple=None):
+    def sendMessage(self, msg, name: str = None, ha: Tuple = None):
         try:
             remote = self.endpoint.getRemote(name=name, ha=ha)
         except RemoteNotFound as ex:
@@ -161,29 +161,28 @@ class WalletedAgent(Walleted, Agent, Caching):
     def __init__(self,
                  name: str,
                  basedirpath: str,
-                 client: Client=None,
-                 wallet: Wallet=None,
-                 port: int=None,
-                 looper=None,
-                 issuer =None,
+                 client: Client = None,
+                 wallet: Wallet = None,
+                 port: int = None,
+                 loop=None,
+                 issuer=None,
                  prover=None,
                  verifier=None,
                  attrRepo=None):
-        looper = looper if looper else Looper(debug=True)
-        Agent.__init__(self, name, basedirpath, client, port, loop = looper.loop)
+        Agent.__init__(self, name, basedirpath, client, port, loop=loop)
         self._wallet = wallet or Wallet(name)
 
         attrRepo = attrRepo or AttributeRepoInMemory()
 
-        issuer = issuer or SovrinIssuer(looper=looper, client=self.client, wallet=self._wallet, attrRepo=attrRepo)
-        prover = prover or SovrinProver(looper=looper, client=self.client, wallet=self._wallet)
-        verifier = verifier or SovrinVerifier(looper=looper, client=self.client, wallet=self._wallet)
+        issuer = issuer or SovrinIssuer(client=self.client, wallet=self._wallet, attrRepo=attrRepo)
+        prover = prover or SovrinProver(client=self.client, wallet=self._wallet)
+        verifier = verifier or SovrinVerifier(client=self.client, wallet=self._wallet)
 
         Walleted.__init__(self, issuer=issuer, prover=prover, verifier=verifier)
 
 
 def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=False, looper=None):
+             startRunning=True, bootstrap=False, loop=None):
     config = getConfig()
 
     if not wallet:
@@ -202,15 +201,14 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
                        client=client,
                        wallet=wallet,
                        port=port,
-                       looper=looper)
+                       loop=loop)
     if bootstrap:
         agent.bootstrap()
 
     if startRunning:
-        with looper:
+        with Looper(debug=True, loop=loop) as looper:
             looper.add(agent)
             logger.debug("Running {} now (port: {})".format(name, port))
             looper.run()
     else:
         return agent
-

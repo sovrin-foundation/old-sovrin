@@ -15,19 +15,19 @@ class AgentVerifier(Verifier):
     def __init__(self, verifier: Verifier):
         self.verifier = verifier
 
-    def verifyClaimProof(self, msg: Any):
+    async def verifyClaimProof(self, msg: Any):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         if not link:
             raise NotImplementedError
 
         claimName = body[NAME]
-        nonce = nonce = getNonceForProof(body[NONCE])
+        nonce = getNonceForProof(body[NONCE])
         proof = FullProof.fromStrDict(body['proof'])
         proofInput = ProofInput.fromStrDict(body['proofInput'])
         revealedAttrs = fromDictWithStrValues(body['revealedAttrs'])
 
-        result = self.verifier.verify(proofInput, proof, revealedAttrs, nonce)
+        result = await self.verifier.verify(proofInput, proof, revealedAttrs, nonce)
 
         status = 'verified' if result else 'failed verification'
         resp = {

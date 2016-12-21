@@ -1,13 +1,12 @@
+import asyncio
 import collections
+import inspect
 import json
 import time
 from abc import abstractmethod
 from datetime import datetime
 from typing import Dict
 
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.verifier import Verifier
 from plenum.common.log import getlogger
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
@@ -16,6 +15,9 @@ from plenum.common.types import f
 from plenum.common.util import getTimeBasedId, getCryptonym, \
     isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
 
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
 from sovrin.agent.agent_issuer import AgentIssuer
 from sovrin.agent.agent_prover import AgentProver
 from sovrin.agent.agent_verifier import AgentVerifier
@@ -281,7 +283,9 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         if handler:
             # TODO we should verify signature here
             frmHa = self.endpoint.getRemote(frm).ha
-            handler((body, (frm, frmHa)))
+            res = handler((body, (frm, frmHa)))
+            if inspect.isawaitable(res):
+                self.loop.call_soon(asyncio.ensure_future, res)
         else:
             raise NotImplementedError("No type handle found for {} message".
                                       format(typ))

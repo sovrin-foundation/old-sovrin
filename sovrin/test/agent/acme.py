@@ -22,7 +22,7 @@ class AcmeAgent(TestWalletedAgent):
                  client: Client = None,
                  wallet: Wallet = None,
                  port: int = None,
-                 looper=None):
+                 loop=None):
         if not basedirpath:
             config = getConfig()
             basedirpath = basedirpath or os.path.expanduser(config.baseDir)
@@ -30,7 +30,7 @@ class AcmeAgent(TestWalletedAgent):
         portParam, = self.getPassedArgs()
 
         super().__init__('Acme Corp', basedirpath, client, wallet,
-                         portParam or port, looper=looper)
+                         portParam or port, loop=loop)
 
         self.availableClaims = []
 
@@ -123,25 +123,25 @@ class AcmeAgent(TestWalletedAgent):
             "claimDefSeqNo": claimDef.id
         }]
 
-    def addClaimDefsToWallet(self):
-        claimDefJobCert = self.issuer.genClaimDef(self._claimDefJobCertKey.name,
+    async def addClaimDefsToWallet(self):
+        claimDefJobCert = await self.issuer.genClaimDef(self._claimDefJobCertKey.name,
                                                   self._claimDefJobCertKey.version,
                                                   self._attrDefJobCert.attribNames(),
                                                   'CL')
         claimDefJobCertId = ID(claimDefKey=claimDefJobCert.getKey(), claimDefId=claimDefJobCert.id)
         p_prime, q_prime = primes["prime1"]
-        self.issuer.genKeys(claimDefJobCertId, p_prime=p_prime, q_prime=q_prime)
-        self.issuer.issueAccumulator(id=claimDefJobCertId, iA='110', L=5)
+        await self.issuer.genKeys(claimDefJobCertId, p_prime=p_prime, q_prime=q_prime)
+        await self.issuer.issueAccumulator(id=claimDefJobCertId, iA='110', L=5)
 
-    def bootstrap(self):
-        self.addClaimDefsToWallet()
+    async def bootstrap(self):
+        await self.addClaimDefsToWallet()
 
 
 def runAcme(name=None, wallet=None, basedirpath=None, port=None,
-            startRunning=True, bootstrap=True, looper=None):
+            startRunning=True, bootstrap=True):
     return runAgent(AcmeAgent, name or "Acme Corp",
                     wallet or buildAcmeWallet(), basedirpath,
-                    port, startRunning, bootstrap, looper)
+                    port, startRunning, bootstrap)
 
 
 if __name__ == "__main__":

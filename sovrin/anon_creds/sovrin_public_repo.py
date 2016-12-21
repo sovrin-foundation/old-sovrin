@@ -1,16 +1,14 @@
 import json
 
-from anoncreds.protocol.repo.public_repo import PublicRepo
-from anoncreds.protocol.types import ClaimDefinition, ID, PublicKey, RevocationPublicKey, AccumulatorPublicKey, \
-    Accumulator, TailsType, TimestampType
-from anoncreds.protocol.utils import strToCryptoInteger
 from ledger.util import F
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, DATA, NAME, VERSION, TYPE, ORIGIN
 from plenum.test.eventually import eventually
 
+from anoncreds.protocol.repo.public_repo import PublicRepo
+from anoncreds.protocol.types import ClaimDefinition, ID, PublicKey, RevocationPublicKey, AccumulatorPublicKey, \
+    Accumulator, TailsType, TimestampType
 from sovrin.common.txn import GET_CRED_DEF, CRED_DEF, ATTR_NAMES, GET_ISSUER_KEY, REF, ISSUER_KEY
 from sovrin.common.types import Request
-from sovrin.common.util import stringDictToCharmDict
 
 
 def _ensureReqCompleted(reqKey, client, clbk):
@@ -33,13 +31,12 @@ def _submitData(result, error):
 
 
 class SovrinPublicRepo(PublicRepo):
-    def __init__(self, looper, client, wallet):
-        self.looper = looper
+    def __init__(self, client, wallet):
         self.client = client
         self.wallet = wallet
         self.displayer = print
 
-    def getClaimDef(self, id: ID) -> ClaimDefinition:
+    async def getClaimDef(self, id: ID) -> ClaimDefinition:
         op = {
             TARGET_NYM: id.claimDefKey.issuerId,
             TXN_TYPE: GET_CRED_DEF,
@@ -48,7 +45,7 @@ class SovrinPublicRepo(PublicRepo):
                 VERSION: id.claimDefKey.version,
             }
         }
-        data, seqNo = self._sendGetReq(op)
+        data, seqNo = await self._sendGetReq(op)
         return ClaimDefinition(name=data[NAME],
                                version=data[VERSION],
                                type=data[TYPE],
@@ -56,31 +53,31 @@ class SovrinPublicRepo(PublicRepo):
                                issuerId=data[ORIGIN],
                                id=seqNo)
 
-    def getPublicKey(self, id: ID) -> PublicKey:
+    async def getPublicKey(self, id: ID) -> PublicKey:
         op = {
             TXN_TYPE: GET_ISSUER_KEY,
             REF: id.claimDefId,
             ORIGIN: id.claimDefKey.issuerId
         }
-        data, seqNo = self._sendGetReq(op)
+        data, seqNo = await self._sendGetReq(op)
         data = data[DATA]
         return PublicKey.fromStrDict(data)
 
-    def getPublicKeyRevocation(self, id: ID) -> RevocationPublicKey:
+    async def getPublicKeyRevocation(self, id: ID) -> RevocationPublicKey:
         pass
 
-    def getPublicKeyAccumulator(self, id: ID) -> AccumulatorPublicKey:
+    async def getPublicKeyAccumulator(self, id: ID) -> AccumulatorPublicKey:
         pass
 
-    def getAccumulator(self, id: ID) -> Accumulator:
+    async def getAccumulator(self, id: ID) -> Accumulator:
         pass
 
-    def getTails(self, id: ID) -> TailsType:
+    async def getTails(self, id: ID) -> TailsType:
         pass
 
     # SUBMIT
 
-    def submitClaimDef(self, claimDef: ClaimDefinition):
+    async def submitClaimDef(self, claimDef: ClaimDefinition):
         op = {
             TXN_TYPE: CRED_DEF,
             DATA: {
@@ -91,12 +88,12 @@ class SovrinPublicRepo(PublicRepo):
             }
         }
 
-        data, seqNo = self._sendSubmitReq(op)
+        data, seqNo = await self._sendSubmitReq(op)
         claimDef = ClaimDefinition(name=claimDef.name, version=claimDef.version, attrNames=claimDef.attrNames,
                                    type=claimDef.type, issuerId=self.wallet.defaultId, id=seqNo)
         return claimDef
 
-    def submitPublicKeys(self, id: ID, pk: PublicKey, pkR: RevocationPublicKey = None):
+    async def submitPublicKeys(self, id: ID, pk: PublicKey, pkR: RevocationPublicKey = None):
         data = pk.toStrDict()
         op = {
             TXN_TYPE: ISSUER_KEY,
@@ -104,26 +101,25 @@ class SovrinPublicRepo(PublicRepo):
             DATA: data
         }
 
-        self._sendSubmitReq(op)
+        await self._sendSubmitReq(op)
 
-    def submitAccumulator(self, id: ID, accumPK: AccumulatorPublicKey, accum: Accumulator, tails: TailsType):
+    async def submitAccumulator(self, id: ID, accumPK: AccumulatorPublicKey, accum: Accumulator, tails: TailsType):
         pass
 
-    def submitAccumUpdate(self, id: ID, accum: Accumulator, timestampMs: TimestampType):
+    async def submitAccumUpdate(self, id: ID, accum: Accumulator, timestampMs: TimestampType):
         pass
 
-    def _sendSubmitReq(self, op):
-        return self._sendReq(op, _submitData)
+    async def _sendSubmitReq(self, op):
+        return await self._sendReq(op, _submitData)
 
-    def _sendGetReq(self, op):
-        return self._sendReq(op, _getData)
+    async def _sendGetReq(self, op):
+        return await self._sendReq(op, _getData)
 
-    def _sendReq(self, op, clbk):
+    async def _sendReq(self, op, clbk):
         req = Request(identifier=self.wallet.defaultId, operation=op)
         req = self.wallet.prepReq(req)
         self.client.submitReqs(req)
 
-        return self.looper.run(eventually(_ensureReqCompleted,
-                                          req.key, self.client, clbk,
-                                          timeout=20,
-                                          ratchetSteps=10))
+        return await eventually(_ensureReqCompleted,
+                                req.key, self.client, clbk,
+                                timeout=20, retryWait=0.5)

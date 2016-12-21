@@ -1,20 +1,19 @@
-import asyncio
-from anoncreds.protocol.types import ClaimDefinitionKey, ID
 from plenum.test.eventually import eventually
 
+from anoncreds.protocol.types import ClaimDefinitionKey, ID
 
-def testAnonCreds(aliceAgent, aliceAcceptedFaber, faberAgent, aliceAcceptedAcme, acmeAgent, emptyLooper):
+
+def testAnonCreds(aliceAgent, aliceAcceptedFaber, aliceAcceptedAcme, acmeAgent, emptyLooper):
     # 1. request Claims from Faber
     faberLink = aliceAgent.wallet.getLink('Faber College')
     name, version, origin = faberLink.availableClaims[0]
     claimDefKey = ClaimDefinitionKey(name, version, origin)
-    cd = acmeAgent.verifier._wallet.getClaimDef(ID(claimDefKey))
-    pk = acmeAgent.verifier._wallet.getPublicKey(ID(claimDefKey))
     aliceAgent.sendReqClaim(faberLink, claimDefKey)
 
     # 2. check that claim is received from Faber
-    def chkClaims():
-        assert aliceAgent.prover.wallet.getClaims(ID(claimDefKey))
+    async def chkClaims():
+        claim = await aliceAgent.prover.wallet.getClaims(ID(claimDefKey))
+        assert claim.primaryClaim
 
     emptyLooper.run(eventually(chkClaims, timeout=20))
 
@@ -26,6 +25,6 @@ def testAnonCreds(aliceAgent, aliceAcceptedFaber, faberAgent, aliceAcceptedAcme,
     def chkProof():
         internalId = acmeAgent.getInternalIdByInvitedNonce(acmeLink.invitationNonce)
         link = acmeAgent.wallet.getLinkByInternalId(internalId)
-        assert len(link.verifiedClaimProofs) >= 1
+        assert "Job-Application" in link.verifiedClaimProofs
 
     emptyLooper.run(eventually(chkProof, timeout=20))
