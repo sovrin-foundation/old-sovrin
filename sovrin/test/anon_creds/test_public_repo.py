@@ -9,8 +9,8 @@ from sovrin.test.anon_creds.conftest import GVT
 
 
 @pytest.fixture(scope="module")
-def publicRepo(looper, steward, stewardWallet):
-    return SovrinPublicRepo(looper, steward, stewardWallet)
+def publicRepo(steward, stewardWallet):
+    return SovrinPublicRepo(steward, stewardWallet)
 
 
 @pytest.fixture(scope="module")

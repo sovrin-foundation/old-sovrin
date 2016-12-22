@@ -14,18 +14,18 @@ def attrRepo():
 
 
 @pytest.fixture(scope="module")
-def issuer(looper, steward, stewardWallet, attrRepo):
-    return SovrinIssuer(looper, steward, stewardWallet, attrRepo)
+def issuer(steward, stewardWallet, attrRepo):
+    return SovrinIssuer(steward, stewardWallet, attrRepo)
 
 
 @pytest.fixture(scope="module")
-def prover(looper, userClientA, userWalletA):
-    return SovrinProver(looper, userClientA, userWalletA)
+def prover(userClientA, userWalletA):
+    return SovrinProver(userClientA, userWalletA)
 
 
 @pytest.fixture(scope="module")
-def verifier(looper, userClientB, userWalletB):
-    return SovrinVerifier(looper, userClientB, userWalletB)
+def verifier(userClientB, userWalletB):
+    return SovrinVerifier(userClientB, userWalletB)
 
 
 def testAnonCredsPrimaryOnly(issuer, prover, verifier, attrRepo, primes1, looper):
