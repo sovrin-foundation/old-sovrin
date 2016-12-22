@@ -1,10 +1,10 @@
 import os
 
-from anoncreds.protocol.types import AttribType, AttribDef, ClaimDefinitionKey, ID
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
-from sovrin.agent.agent import runAgent
+from anoncreds.protocol.types import AttribType, AttribDef, ClaimDefinitionKey, ID
+from sovrin.agent.agent import createAndRunAgent, createAgent, runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
@@ -107,16 +107,16 @@ class AcmeAgent(TestWalletedAgent):
     def getAvailableClaimList(self):
         return self.availableClaims
 
-    def postClaimVerif(self, claimName, link, frm):
-        nac = self.newAvailableClaimsPostClaimVerif(claimName)
+    async def postClaimVerif(self, claimName, link, frm):
+        nac = await self.newAvailableClaimsPostClaimVerif(claimName)
         self.sendNewAvailableClaimsData(nac, frm, link)
 
-    def newAvailableClaimsPostClaimVerif(self, claimName):
+    async def newAvailableClaimsPostClaimVerif(self, claimName):
         if claimName == "Job-Application":
-            return self.getJobCertAvailableClaimList()
+            return await self.getJobCertAvailableClaimList()
 
-    def getJobCertAvailableClaimList(self):
-        claimDef = self.issuer.wallet.getClaimDef(ID(self._claimDefJobCertKey))
+    async def getJobCertAvailableClaimList(self):
+        claimDef = await self.issuer.wallet.getClaimDef(ID(self._claimDefJobCertKey))
         return [{
             NAME: claimDef.name,
             VERSION: claimDef.version,
@@ -125,9 +125,9 @@ class AcmeAgent(TestWalletedAgent):
 
     async def addClaimDefsToWallet(self):
         claimDefJobCert = await self.issuer.genClaimDef(self._claimDefJobCertKey.name,
-                                                  self._claimDefJobCertKey.version,
-                                                  self._attrDefJobCert.attribNames(),
-                                                  'CL')
+                                                        self._claimDefJobCertKey.version,
+                                                        self._attrDefJobCert.attribNames(),
+                                                        'CL')
         claimDefJobCertId = ID(claimDefKey=claimDefJobCert.getKey(), claimDefId=claimDefJobCert.id)
         p_prime, q_prime = primes["prime1"]
         await self.issuer.genKeys(claimDefJobCertId, p_prime=p_prime, q_prime=q_prime)
@@ -137,12 +137,20 @@ class AcmeAgent(TestWalletedAgent):
         await self.addClaimDefsToWallet()
 
 
-def runAcme(name=None, wallet=None, basedirpath=None, port=None,
-            startRunning=True, bootstrap=True):
-    return runAgent(AcmeAgent, name or "Acme Corp",
-                    wallet or buildAcmeWallet(), basedirpath,
-                    port, startRunning, bootstrap)
+def createAcme(name=None, wallet=None, basedirpath=None, port=None):
+    return createAgent(AcmeAgent, name or "Acme Corp",
+                             wallet or buildAcmeWallet(),
+                             basedirpath, port)
+
+def runAcme(looper=None,
+            name=None, wallet=None, basedirpath=None, port=None,
+            bootstrap=True):
+    return createAndRunAgent(AcmeAgent, name or "Acme Corp",
+                             wallet or buildAcmeWallet(),
+                             basedirpath, port,
+                             looper, bootstrap)
 
 
 if __name__ == "__main__":
-    runAcme(port=6666)
+    acme = createAcme(port=6666)
+    runAgent(acme)

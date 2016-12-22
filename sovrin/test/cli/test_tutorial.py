@@ -1,5 +1,3 @@
-import time
-
 import pytest
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
 from plenum.common.types import f
@@ -792,46 +790,6 @@ def sendClaim(be, do, userCli, agentMap, newAvailableClaims, extraMsgs=None):
        mapper=mapping)
 
 
-def testReqUnavailableClaim(be, do, aliceCli,
-                            acmeMap,
-                            reqClaimOut1,
-                            acmeIsRunning,
-                            aliceAcceptedAcmeJobInvitation):
-    acme, _ = acmeIsRunning
-    be(aliceCli)
-
-    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
-                      totalCredDefs=1, totalClaimsRcvd=1)
-
-    link = aliceCli.activeWallet._links[acmeMap.get('inviter')]
-    oldAvailableClaims = []
-    oldCredDefs = {}
-    for ac in link.availableClaims:
-        oldAvailableClaims.append(ac)
-
-    for cd in aliceCli.activeWallet._claimDefs.values():
-        oldCredDefs[cd.key] = cd
-
-    newAvailableClaims = acme.getJobCertAvailableClaimList()
-
-    def dummyPostCredDef(li, nac):
-        pass
-
-    aliceCli.agent._processNewAvailableClaimsData(
-        link, newAvailableClaims, dummyPostCredDef)
-
-    time.sleep(3)
-
-    do("request claim Job-Certificate",
-       within=7,
-       expect=["This claim is not yet available"])
-
-    link.availableClaims = oldAvailableClaims
-    aliceCli.activeWallet._claimDefs = oldCredDefs
-    checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
-                      totalCredDefs=1, totalClaimsRcvd=1)
-
-
 @pytest.fixture(scope="module")
 def jobApplicationClaimSent(be, do, aliceCli, acmeMap,
                             aliceAcceptedAcmeJobInvitation,
@@ -895,7 +853,7 @@ def jobCertClaimRequested(be, do, aliceCli,
         aliceCli.activeWallet._claimDefs.pop((name, version, faberId))
 
     # Removing claim def to check if it fetches the claim def again or not
-    removeClaimDef()
+    # removeClaimDef()
 
     be(aliceCli)
 

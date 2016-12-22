@@ -12,12 +12,10 @@ from ledger.ledger import Ledger
 from ledger.serializers.compact_serializer import CompactSerializer
 
 from plenum.common.looper import Looper
-from plenum.common.plugin_helper import loadPlugins
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import VERKEY
 from plenum.test.plugin.helper import getPluginPath
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
@@ -59,12 +57,6 @@ from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
     poolTxnNodeNames, allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
     poolTxnStewardData, poolTxnStewardNames, getValueFromModule, \
     txnPoolNodesLooper
-
-
-@pytest.fixture(scope="module", autouse=True)
-def anonCredPluginFileCreated(tdir):
-    writeAnonCredPlugin(tdir, reloadTestModules=True)
-    loadPlugins(tdir)
 
 
 @pytest.fixture(scope="module")

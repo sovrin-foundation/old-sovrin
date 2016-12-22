@@ -102,15 +102,15 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
                CLAIM, AVAIL_CLAIM_LIST, EVENT, PING, PONG
 
-    def postClaimVerif(self, claimName, link, frm):
+    async def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
 
     def isClaimAvailable(self, link, claimName):
         raise NotImplementedError
 
-    def _postClaimVerif(self, claimName, link, frm):
+    async def _postClaimVerif(self, claimName, link, frm):
         link.verifiedClaimProofs.append(claimName)
-        self.postClaimVerif(claimName, link, frm)
+        await self.postClaimVerif(claimName, link, frm)
 
     def getAvailableClaimList(self):
         raise NotImplementedError

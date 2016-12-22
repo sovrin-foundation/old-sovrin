@@ -515,7 +515,6 @@ def reqClaimOut():
 def reqClaimOut1():
     return ["Found claim {name} in link {inviter}",
             "Requesting claim {name} from {inviter}...",
-            "Getting Claim Definition from Sovrin",
             "Signature accepted.",
             'Received claim "{name}".']
 

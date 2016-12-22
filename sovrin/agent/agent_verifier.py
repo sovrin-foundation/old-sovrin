@@ -39,4 +39,4 @@ class AgentVerifier(Verifier):
                          origReqId=body.get(f.REQ_ID.nm))
 
         if result:
-            self._postClaimVerif(claimName, link, frm)
+            await self._postClaimVerif(claimName, link, frm)

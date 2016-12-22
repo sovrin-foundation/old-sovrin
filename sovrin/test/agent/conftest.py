@@ -23,16 +23,16 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import assertFunc
-from sovrin.agent.agent import WalletedAgent
+from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT
-from sovrin.test.agent.acme import runAcme
-from sovrin.test.agent.faber import runFaber
+from sovrin.test.agent.acme import createAcme
+from sovrin.test.agent.faber import createFaber
 from sovrin.test.agent.helper import ensureAgentsConnected, buildFaberWallet, \
     buildAcmeWallet, buildThriftWallet
-from sovrin.test.agent.thrift import runThrift
+from sovrin.test.agent.thrift import createThrift
 from sovrin.test.helper import createNym, addAttributeAndCheck
 
 # noinspection PyUnresolvedReferences
@@ -140,11 +140,9 @@ def thriftAgentPort():
 
 @pytest.fixture(scope="module")
 def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet):
-    agent = runFaber(faberWallet.name, faberWallet,
-                     basedirpath=tdirWithPoolTxns,
-                     port=faberAgentPort,
-                     startRunning=False, bootstrap=False)
-    return agent
+    return createFaber(faberWallet.name, faberWallet,
+                       basedirpath=tdirWithPoolTxns,
+                       port=faberAgentPort)
 
 
 @pytest.fixture(scope="module")
@@ -170,20 +168,17 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
     faberWallet.pendSyncRequests()
     prepared = faberWallet.preparePending()
     faber.client.submitReqs(*prepared)
-    emptyLooper.add(faber)
 
-    emptyLooper.run(faber.bootstrap())
+    runAgent(faber, emptyLooper)
 
     return faber, faberWallet
 
 
 @pytest.fixture(scope="module")
 def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet):
-    agent = runAcme(acmeWallet.name, acmeWallet,
-                    basedirpath=tdirWithPoolTxns,
-                    port=acmeAgentPort,
-                    startRunning=False, bootstrap=False)
-    return agent
+    return createAcme(acmeWallet.name, acmeWallet,
+                      basedirpath=tdirWithPoolTxns,
+                      port=acmeAgentPort)
 
 
 @pytest.fixture(scope="module")
@@ -209,20 +204,17 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet, acmeAgent,
     acmeWallet.pendSyncRequests()
     prepared = acmeWallet.preparePending()
     acme.client.submitReqs(*prepared)
-    emptyLooper.add(acme)
 
-    emptyLooper.run(acme.bootstrap())
+    runAgent(acme, emptyLooper)
 
     return acme, acmeWallet
 
 
 @pytest.fixture(scope="module")
 def thriftAgent(tdirWithPoolTxns, thriftAgentPort, thriftWallet):
-    agent = runThrift(thriftWallet.name, thriftWallet,
-                      basedirpath=tdirWithPoolTxns,
-                      port=thriftAgentPort,
-                      startRunning=False, bootstrap=False)
-    return agent
+    return createThrift(thriftWallet.name, thriftWallet,
+                        basedirpath=tdirWithPoolTxns,
+                        port=thriftAgentPort)
 
 
 @pytest.fixture(scope="module")
@@ -232,9 +224,8 @@ def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
     thriftWallet.pendSyncRequests()
     prepared = thriftWallet.preparePending()
     thrift.client.submitReqs(*prepared)
-    emptyLooper.add(thrift)
 
-    thrift.bootstrap()
+    runAgent(thrift, emptyLooper)
 
     return thrift, thriftWallet
 

@@ -1,10 +1,10 @@
 import os
 
-from anoncreds.protocol.types import AttribType, AttribDef, ID, ClaimDefinitionKey
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
-from sovrin.agent.agent import runAgent
+from anoncreds.protocol.types import AttribType, AttribDef, ID, ClaimDefinitionKey
+from sovrin.agent.agent import createAgent, runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
@@ -91,7 +91,7 @@ class FaberAgent(TestWalletedAgent):
     def getAvailableClaimList(self):
         return self.availableClaims
 
-    def postClaimVerif(self, claimName, link, frm):
+    async def postClaimVerif(self, claimName, link, frm):
         pass
 
     async def initAvailableClaimList(self):
@@ -110,9 +110,9 @@ class FaberAgent(TestWalletedAgent):
 
     async def addClaimDefsToWallet(self):
         claimDef = await self.issuer.genClaimDef(self._claimDefKey.name,
-                                           self._claimDefKey.version,
-                                           self._attrDef.attribNames(),
-                                           'CL')
+                                                 self._claimDefKey.version,
+                                                 self._attrDef.attribNames(),
+                                                 'CL')
         claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
         p_prime, q_prime = primes["prime2"]
         await self.issuer.genKeys(claimDefId, p_prime=p_prime, q_prime=q_prime)
@@ -123,12 +123,12 @@ class FaberAgent(TestWalletedAgent):
         await self.addClaimDefsToWallet()
 
 
-def runFaber(name=None, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=True):
-    return runAgent(FaberAgent, name or "Faber College",
-                    wallet or buildFaberWallet(), basedirpath,
-                    port, startRunning, bootstrap)
+def createFaber(name=None, wallet=None, basedirpath=None, port=None):
+    return createAgent(FaberAgent, name or "Faber College",
+                       wallet or buildFaberWallet(),
+                       basedirpath, port)
 
 
 if __name__ == "__main__":
-    runFaber(port=5555)
+    faber = createFaber(port=5555)
+    runAgent(faber)

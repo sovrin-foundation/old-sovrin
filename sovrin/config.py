@@ -69,4 +69,4 @@ RAETLogFilePathCli = None
 RAETMessageTimeout = 30
 
 
-PluginsToLoad = ["anoncreds"]
+PluginsToLoad = []

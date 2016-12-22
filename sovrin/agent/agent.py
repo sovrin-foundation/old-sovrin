@@ -40,6 +40,7 @@ class Agent(Motor, AgentNet):
         self.loop = loop or asyncio.get_event_loop()
         self._eventListeners = {}  # Dict[str, set(Callable)]
         self._name = name
+        self._port = port
 
         AgentNet.__init__(self,
                           name=self._name.replace(" ", ""),
@@ -64,6 +65,10 @@ class Agent(Motor, AgentNet):
     @property
     def name(self):
         return self._name
+
+    @property
+    def port(self):
+        return self._port
 
     async def prod(self, limit) -> int:
         c = 0
@@ -185,8 +190,7 @@ class WalletedAgent(Walleted, Agent, Caching):
             self._initIssuerProverVerifier()
 
 
-def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
-             startRunning=True, bootstrap=False, loop=None):
+def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None, loop=None):
     config = getConfig()
 
     if not wallet:
@@ -201,18 +205,31 @@ def runAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
                     ha=("0.0.0.0", clientPort),
                     basedirpath=basedirpath)
 
-    agent = agentClass(basedirpath=basedirpath,
-                       client=client,
-                       wallet=wallet,
-                       port=port,
-                       loop=loop)
-    if bootstrap:
-        agent.bootstrap()
+    return agentClass(basedirpath=basedirpath,
+                      client=client,
+                      wallet=wallet,
+                      port=port,
+                      loop=loop)
 
-    if startRunning:
-        with Looper(debug=True, loop=loop) as looper:
-            looper.add(agent)
-            logger.debug("Running {} now (port: {})".format(name, port))
-            looper.run()
+
+def runAgent(agent, looper=None, bootstrap=True, ):
+    def doRun(looper):
+        looper.add(agent)
+        logger.debug("Running {} now (port: {})".format(agent.name, agent.port))
+        if bootstrap:
+            looper.run(agent.bootstrap())
+
+    if looper:
+        doRun(looper)
     else:
-        return agent
+        with Looper(debug=True, loop=agent.loop) as looper:
+            doRun(looper)
+            looper.run()
+
+
+def createAndRunAgent(agentClass: object, name: object, wallet: object = None, basedirpath: object = None,
+                      port: object = None, looper: object = None, bootstrap: object = True) -> object:
+    loop = looper.loop if looper else None
+    agent = createAgent(agentClass, name, wallet, basedirpath, port, loop)
+    runAgent(agent, looper, bootstrap)
+    return agent
