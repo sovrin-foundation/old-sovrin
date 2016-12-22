@@ -4,6 +4,7 @@ from typing import Dict
 
 from ledger.stores.directory_store import DirectoryStore
 from plenum.common.txn import NAME, TYPE, IP, PORT, KEYS, VERSION, TARGET_NYM
+
 from sovrin.persistence.credential_def_store import CredDefStore
 
 

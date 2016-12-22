@@ -1,13 +1,13 @@
 from typing import Any
 
+from plenum.common.txn import NAME, NONCE, TYPE, DATA, VERSION
+from plenum.common.types import f
+
 from anoncreds.protocol.types import FullProof
 from anoncreds.protocol.types import ProofInput
 from anoncreds.protocol.utils import fromDictWithStrValues
 from anoncreds.protocol.verifier import Verifier
-from plenum.common.txn import NAME, NONCE, TYPE, DATA, VERSION
-from plenum.common.types import f
-
-from sovrin.agent.msg_types import CLAIM_PROOF_STATUS
+from sovrin.agent.msg_constants import CLAIM_PROOF_STATUS
 from sovrin.common.util import getNonceForProof
 
 

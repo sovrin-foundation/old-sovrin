@@ -4,6 +4,7 @@ from ledger.util import F
 from plenum.common.log import getlogger
 from plenum.common.types import f
 from plenum.test.testable import Spyable
+
 from sovrin.agent.agent import WalletedAgent
 from sovrin.common.exceptions import LinkNotFound
 from sovrin.common.txn import NONCE

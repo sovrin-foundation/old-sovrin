@@ -5,8 +5,6 @@ from functools import partial
 from typing import Tuple, Union
 
 import libnacl.secret
-from anoncreds.protocol.types import AttribType, AttribDef
-from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
 from base58 import b58decode
 from ledger.util import F
 from plenum.common.signing import serializeMsg
@@ -14,6 +12,9 @@ from plenum.common.txn import KEYS, DATA, ORIGIN
 from plenum.common.types import f
 from plenum.common.util import isHex, error, cryptonymToHex
 from raet.nacling import Verifier
+
+from anoncreds.protocol.types import AttribType, AttribDef
+from anoncreds.protocol.utils import strToCryptoInteger, isCryptoInteger
 
 
 def getMsgWithoutSig(msg, sigFieldName=f.SIG.nm):

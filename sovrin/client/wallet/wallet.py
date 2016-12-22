@@ -10,12 +10,9 @@ from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NAME, VERSION, TYPE, NYM, ROLE, ORIGIN, VERKEY
+    IDENTIFIER, NYM, ROLE, VERKEY
 from plenum.common.types import Identifier, f
 
-from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
-from anoncreds.protocol.wallet.prover_wallet import ProverWallet
-from anoncreds.protocol.wallet.wallet import Wallet as AnoncredsWallet
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.sponsoring import Sponsoring

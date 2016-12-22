@@ -1,5 +1,6 @@
 from plenum.common.port_dispenser import genHa
 from plenum.common.signer_did import DidSigner
+
 from sovrin.common.strict_types import strict_types
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
@@ -23,8 +24,7 @@ from plenum.common.looper import Looper
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import assertFunc
-from sovrin.agent.agent import WalletedAgent, runAgent
-from sovrin.client.client import Client
+from sovrin.agent.agent import runAgent
 from sovrin.agent.agent import WalletedAgent
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
@@ -34,7 +34,7 @@ from sovrin.test.agent.faber import createFaber
 from sovrin.test.agent.helper import ensureAgentsConnected, buildFaberWallet, \
     buildAcmeWallet, buildThriftWallet
 from sovrin.test.agent.thrift import createThrift
-from sovrin.test.helper import createNym, addAttributeAndCheck
+from sovrin.test.helper import createNym, addAttributeAndCheck, TestClient
 
 # noinspection PyUnresolvedReferences
 from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \

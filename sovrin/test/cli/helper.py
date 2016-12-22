@@ -9,7 +9,6 @@ from plenum.test.testable import Spyable
 
 from sovrin.cli.cli import SovrinCli
 from sovrin.client.wallet.link import Link
-from sovrin.client.wallet.link import Link
 from sovrin.test.helper import TestNode, TestClient
 
 

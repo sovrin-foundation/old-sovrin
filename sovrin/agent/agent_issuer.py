@@ -8,7 +8,7 @@ from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.types import ClaimDefinitionKey, ID
 from anoncreds.protocol.types import ClaimRequest
 from sovrin.agent.constants import EVENT_NOTIFY_MSG
-from sovrin.agent.msg_types import CLAIM
+from sovrin.agent.msg_constants import CLAIM
 
 
 class AgentIssuer:

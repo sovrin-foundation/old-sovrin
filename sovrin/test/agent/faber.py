@@ -12,6 +12,7 @@ from sovrin.common.config_util import getConfig
 from sovrin.test.agent.helper import buildFaberWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 from sovrin.test.conftest import primes
+from sovrin.test.helper import TestClient
 
 logger = getlogger()
 
@@ -126,7 +127,7 @@ class FaberAgent(TestWalletedAgent):
 def createFaber(name=None, wallet=None, basedirpath=None, port=None):
     return createAgent(FaberAgent, name or "Faber College",
                        wallet or buildFaberWallet(),
-                       basedirpath, port)
+                       basedirpath, port, clientClass=TestClient)
 
 
 if __name__ == "__main__":

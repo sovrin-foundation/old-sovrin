@@ -11,8 +11,7 @@ from plenum.common.constants import ENVS
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import NAME, VERSION, TYPE
 from plenum.common.txn_util import createGenesisTxnFile
-from plenum.common.types import f
-from plenum.common.util import randomString, getTimeBasedId
+from plenum.common.util import randomString
 from prompt_toolkit.contrib.completers import WordCompleter
 from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
@@ -21,8 +20,6 @@ from anoncreds.protocol.globals import KEYS
 from anoncreds.protocol.types import ClaimDefinition, ID
 from sovrin.agent.agent import WalletedAgent
 from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
-from sovrin.agent.msg_types import ACCEPT_INVITE
-from sovrin.anon_creds.constant import NONCE
 from sovrin.cli.helper import getNewClientGrams, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
@@ -607,6 +604,10 @@ class SovrinCli(PlenumCli):
         self._printShowAndAcceptLinkUsage(link.name)
 
     def _getTargetEndpoint(self, li, postSync):
+        if not self.activeWallet.identifiers:
+            self.print("No key present in keyring for making request on Sovrin,"
+                       " so adding one")
+            self._newSigner(wallet=self.activeWallet)
         if self._isConnectedToAnyEnv():
             self.print("\nSynchronizing...")
             doneCallback = partial(self._syncLinkPostEndPointRetrieval,
@@ -636,19 +637,8 @@ class SovrinCli(PlenumCli):
             self.print('Expanding {} to "{}"'.format(linkName, li.name))
         return li
 
-    def _sendReqToTargetEndpoint(self, op, link: Link):
-        op[f.IDENTIFIER.nm] = link.verkey
-        op[NONCE] = link.invitationNonce
-        op[f.REQ_ID.nm] = getTimeBasedId()
-        signature = self.activeWallet.signMsg(op, link.verkey)
-        op[f.SIG.nm] = signature
-        self.sendToAgent(op, link)
-
     def _sendAcceptInviteToTargetEndpoint(self, link: Link):
-        op = {
-            TYPE: ACCEPT_INVITE
-        }
-        self._sendReqToTargetEndpoint(op, link)
+        self.agent.acceptInvitation(link)
 
     def _acceptLinkPostSync(self, link: Link):
         if link.isRemoteEndpointAvailable:

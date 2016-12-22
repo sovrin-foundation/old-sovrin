@@ -4,6 +4,7 @@ import os
 from plenum.common.util import updateFieldsWithSeqNo
 from plenum.persistence.client_req_rep_store_file import ClientReqRepStoreFile \
     as PClientReqRepStoreFile
+
 from sovrin.common.txn import getTxnOrderedFields
 
 

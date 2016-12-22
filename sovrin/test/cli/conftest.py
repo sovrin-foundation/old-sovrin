@@ -5,6 +5,7 @@ import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
+
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.common.txn import SPONSOR, ENDPOINT
 from sovrin.test.helper import createNym, buildStewardClient
@@ -22,7 +23,6 @@ from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
     acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
     thriftAgent
-
 
 config = getConfig()
 

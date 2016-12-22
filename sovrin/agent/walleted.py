@@ -1,21 +1,22 @@
+import asyncio
 import collections
 import inspect
 import json
 import time
 from abc import abstractmethod
 from datetime import datetime
-from typing import Dict
-from typing import Dict, Any, Union
+from typing import Dict, Union
 
+from base58 import b58decode
 from plenum.common.log import getlogger
-from plenum.common.signer_simple import SimpleSigner
 from plenum.common.signer_did import DidSigner
 from plenum.common.signing import serializeMsg
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
-    TARGET_NYM, ATTRIBUTES
+    TARGET_NYM, ATTRIBUTES, VERKEY
 from plenum.common.types import f
 from plenum.common.util import getTimeBasedId, getCryptonym, \
     isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
+from plenum.common.verifier import DidVerifier
 
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.prover import Prover
@@ -23,13 +24,12 @@ from anoncreds.protocol.verifier import Verifier
 from sovrin.agent.agent_issuer import AgentIssuer
 from sovrin.agent.agent_prover import AgentProver
 from sovrin.agent.agent_verifier import AgentVerifier
-from plenum.common.verifier import DidVerifier
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-    AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
+from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
+    AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS, REF_REQUEST_ID
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.link import Link, constant, ClaimProofRequest
 from sovrin.client.wallet.wallet import Wallet
@@ -37,7 +37,7 @@ from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
     NotConnectedToNetwork, LinkNotReady
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ENDPOINT
-from sovrin.common.util import verifySig, ensureReqCompleted
+from sovrin.common.util import ensureReqCompleted
 
 logger = getlogger()
 
@@ -484,7 +484,7 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         self.notifyMsgListener("\nResponse from {}{}:".format(linkName,
                                                               responseTime))
 
-    def notifyToRemoteCaller(self, event, msg, signingIdr, frm, origReqId=None):
+    def notifyToRemoteCaller(self, event, msg, signingIdr, to, origReqId=None):
         resp = {
             TYPE: EVENT,
             EVENT_NAME: event,

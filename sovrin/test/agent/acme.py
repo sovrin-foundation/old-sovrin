@@ -4,7 +4,7 @@ from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
 from anoncreds.protocol.types import AttribType, AttribDef, ClaimDefinitionKey, ID
-from sovrin.agent.agent import createAndRunAgent, createAgent, runAgent
+from sovrin.agent.agent import createAgent, runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
@@ -12,6 +12,7 @@ from sovrin.common.config_util import getConfig
 from sovrin.test.agent.helper import buildAcmeWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 from sovrin.test.conftest import primes
+from sovrin.test.helper import TestClient
 
 logger = getlogger()
 
@@ -139,16 +140,8 @@ class AcmeAgent(TestWalletedAgent):
 
 def createAcme(name=None, wallet=None, basedirpath=None, port=None):
     return createAgent(AcmeAgent, name or "Acme Corp",
-                             wallet or buildAcmeWallet(),
-                             basedirpath, port)
-
-def runAcme(looper=None,
-            name=None, wallet=None, basedirpath=None, port=None,
-            bootstrap=True):
-    return createAndRunAgent(AcmeAgent, name or "Acme Corp",
-                             wallet or buildAcmeWallet(),
-                             basedirpath, port,
-                             looper, bootstrap)
+                       wallet or buildAcmeWallet(),
+                       basedirpath, port, clientClass=TestClient)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-from typing import Dict
-
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
 from plenum.common.util import prettyDateDifference

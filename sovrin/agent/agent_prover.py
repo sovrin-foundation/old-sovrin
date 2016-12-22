@@ -8,7 +8,7 @@ from plenum.common.util import getCryptonym
 from anoncreds.protocol.prover import Prover
 from anoncreds.protocol.types import ClaimDefinitionKey, ID, Claims, ProofInput
 from anoncreds.protocol.utils import toDictWithStrValues
-from sovrin.agent.msg_types import REQUEST_CLAIM, CLAIM_PROOF
+from sovrin.agent.msg_constants import REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.client.wallet.link import ClaimProofRequest, Link
 from sovrin.common.util import getNonceForProof
 

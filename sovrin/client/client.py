@@ -18,6 +18,7 @@ from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.router import Router
 from raet.raeting import AutoMode
+
 from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\

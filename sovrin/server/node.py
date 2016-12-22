@@ -18,6 +18,7 @@ from plenum.common.types import Reply, RequestAck, RequestNack, f, \
 from plenum.common.util import error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
+
 from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
