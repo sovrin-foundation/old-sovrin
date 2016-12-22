@@ -1,15 +1,10 @@
 import pytest
 import re
-
-import sovrin.anon_creds.cred_def as cred_def
-
-from plenum.common.looper import Looper
-from plenum.common.txn import NAME, VERSION, ORIGIN
-from plenum.test.cli.helper import newKeyPair, checkCmdValid, \
-    checkClientConnected
+from plenum.common.txn import NAME, VERSION
+from plenum.test.cli.helper import newKeyPair, checkCmdValid
 from plenum.test.eventually import eventually
-from sovrin.common.txn import SPONSOR, USER, CRED_DEF, ISSUER_KEY, REF
-from sovrin.test.cli.helper import newCLI, ensureConnectedToTestEnv, \
+from sovrin.common.txn import SPONSOR, USER, CRED_DEF
+from sovrin.test.cli.helper import ensureConnectedToTestEnv, \
     ensureNymAdded
 
 """

@@ -5,7 +5,8 @@ from plenum.test.eventually import eventually
 from sovrin.client.wallet.link import Link
 
 from sovrin.common.plugin_helper import writeAnonCredPlugin
-from sovrin.test.helper import TestNode, TestClient
+from sovrin.test.helper import TestNode
+from sovrin.test.helper import TestClient
 
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \
     assertAllNodesCreated, checkAllNodesStarted, initDirWithGenesisTxns

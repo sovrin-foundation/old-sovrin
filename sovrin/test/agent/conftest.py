@@ -37,10 +37,6 @@ from sovrin.test.agent.thrift import runThrift
 from sovrin.test.helper import addClaimDefAndIssuerKeys, TestClient
 from sovrin.test.helper import createNym, addAttributeAndCheck
 
-from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
-    tdirWithDomainTxns, genesisTxns
-from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
-
 # noinspection PyUnresolvedReferences
 from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
     genesisTxns

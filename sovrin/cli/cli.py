@@ -2,7 +2,6 @@ import ast
 import datetime
 import json
 import os
-import uuid
 from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
@@ -13,12 +12,9 @@ from prompt_toolkit.layout.lexers import SimpleLexer
 from pygments.token import Token
 
 import sovrin.anon_creds.cred_def as CredDefModule
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.globals import KEYS
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
 from anoncreds.protocol.utils import strToCryptoInteger
-from anoncreds.test.conftest import staticPrimes
 from anoncreds.test.cred_def_test_store import MemoryCredDefStore
 from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
 from ledger.util import F
@@ -31,7 +27,7 @@ from plenum.common.types import f
 from plenum.common.util import randomString, getTimeBasedId
 from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF
+from sovrin.agent.msg_constants import REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, \
     CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
 from sovrin.anon_creds.issuer import AttribDef, AttribType
@@ -43,7 +39,7 @@ from sovrin.cli.helper import getNewClientGrams, \
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
+from sovrin.client.wallet.claim_def import ClaimDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
@@ -55,7 +51,6 @@ from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
 from sovrin.common.util import getEncodedAttrs, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict, getNonceForProof
 from sovrin.common.config_util import getConfig
-from sovrin.server.node import Node
 
 """
 Objective
@@ -76,7 +71,6 @@ class SovrinCli(PlenumCli):
     properName = 'Sovrin'
     fullName = 'Sovrin Identity platform'
 
-    NodeClass = Node
     ClientClass = Client
     _genesisTransactions = []
 
