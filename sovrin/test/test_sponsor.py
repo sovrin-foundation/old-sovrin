@@ -2,7 +2,6 @@ from typing import Tuple
 
 import libnacl.secret
 import pytest
-
 from plenum.common.util import randomString
 from sovrin.common.txn import NYM, IDPROOF, newTxn
 from sovrin.test.helper import Scenario

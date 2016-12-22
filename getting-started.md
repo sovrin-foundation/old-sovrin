@@ -4,8 +4,6 @@
 
 ![image alt text](banner.png)
 
-__*Note: This document describes behavior that is targeted for release in the Sovrin Foundation’s code drop on Oct 7. Until then, the tutorial is a preview. Published code already has tests that prove the basic features, but the end-to-end flow won’t be usable until our final QA pass finishes.*__
-
 ## What Sovrin is, and Why it Matters
 
 Sovrin is a software ecosystem for private, secure, and powerful identity. It puts people — not the organizations that traditionally centralize identity — in charge of decisions about their own privacy and disclosure. This enables all kinds of rich innovation: link contracts, revocation, novel payment workflows, asset and document management features, creative forms of escrow, curated reputation, integrations with other cool technologies, and so on.
@@ -51,11 +49,12 @@ $ pip install sovrin
 
 ```
 $ docker run-it sovrinfoundation/sovrin
+pip install -U --no-cache-dir sovrin
 ```
 
 If you get an error, check out the info about [prerequisites](http://bit.ly/2d1o7we); there are a few dominoes you might have to line up.
 
-The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do. (Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the [Sovrin roadmap](http://bit.ly/2cwrabV).)
+The install puts some python modules on your system.Most importantly, it gives you a command - line interface(CLI) to Sovrin. We are going to use that CLI to explore what Sovrin can do. (Sovrin also has a programmatic API, but it is not yet fully formalized, and this version of the guide doesn’t document it. See the [Sovrin roadmap](https://github.com/sovrin-foundation/sovrin/wiki/Roadmap).)
 
 **Run the Sovrin CLI**
 
@@ -79,7 +78,7 @@ We’re going to be playing the role of multiple **_identity owners_** (a person
 sovrin> prompt ALICE
 ALICE> 
 ```
-The status comm and gives general information about the state of theCLI. Alice tries it:
+The status command gives general information about the state of the CLI. Alice tries it:
 
 ```
 ALICE> status
@@ -93,7 +92,7 @@ Alice might also try the help command to explore what’s available.
 
 ## Evaluate the Invitation
 
-To make this guide more convenient, the sovrin CLI package installs a sample Faber College invitation to < CLI ROOT > / scripts / sample / faber - invitation.sovrin. We’re going to use this file as if we had downloaded it from Faber. (Remember, in normal usage, Alice’s Sovrin app would be doing a lot of these steps automatically.)
+To make this guide more convenient, the sovrin CLI package installs a sample Faber College invitation to CLI ROOT/scripts/sample/faber-invitation.sovrin. We’re going to use this file as if we had downloaded it from Faber. (Remember, in normal usage, Alice’s Sovrin app would be doing a lot of these steps automatically.)
 
 ```
 ALICE> show sample/faber-invitation.sovrin
@@ -313,7 +312,7 @@ Alice can see now that the target verification key and target endpoint are updat
 
 ## Test Secure Interaction
 
-At this point Alice is connected to Faber College, and can interact in a secure way. The Sovrin CLI supports a ping command to test secure pairwise interactions.(This command is not yet implemented.)
+At this point Alice is connected to Faber College, and can interact in a secure way. The Sovrin CLI supports a ping command to test secure pairwise interactions. (This command is partly implemented today, and partly still a stub.)
 
 ```
 ALICE> ping Faber
@@ -344,7 +343,7 @@ because (1) she connects to the current endpoint, (2) no replay - attack is poss
 
 ## Inspect the Claim
 
-Notice that when Alice last showed the Faber link, there was a new line: Available Claim(s): Transcript. A **_claim_** is a piece of information about an identity - -a name, an age, a credit score… It is information claimed to be true. In this case, the claim is named "Transcript."
+Notice that when Alice last showed the Faber link, there was a new line: ```Available Claim(s): Transcript```. A **_claim_** is a piece of information about an identity - -a name, an age, a credit score… It is information claimed to be true. In this case, the claim is named "Transcript."
 
 Claims are offered by an **_issuer_**. An issuer may be any identity owner known to Sovrin, and any issuer may issue a claim about any identity owner it can identify. The usefulness and reliability of a claim are tied to the reputation of the issuer, with respect to the claim at hand. For Alice to self-issue a claim that she likes chocolate ice cream may be perfectly reasonable, but for her to self-issue a claim that she graduated from Faber College should not impress anyone. The value of this transcript is that it is provably issued by Faber College. Alice wants to use that claim. She asks for more information:
 
@@ -631,7 +630,7 @@ Response from Acme Corp (55.17 ms):
     Received claim "Job-Certificate".
 ```
 
-The Job - Certificate has been issued, and she now has it in her possession.
+The Job-Certificate has been issued, and she now has it in her possession.
 
 ```
 ALICE> show claim Job-Certificate
@@ -644,19 +643,19 @@ Attributes:
     last_name: Garcia
     employement_status: Permanent
     experience: 3 years
-    salary_bracket: between $50, 000 to $100, 000
+    salary_bracket: between $50,000 to $100,000
 ```
 
 She can use it when she applies for her loan, in much the same way that she used her transcript when applying for a job.
 
-There is a disadvantage in this approach to data sharing, though - -it may disclose more data than what is strictly necessary. If all Alice needs to do is provide proof of employment, this can be done with an anonymous credential instead. Anonymous credentials may prove certain predicates without disclosing actual values (e.g., Alice is employed full-time, with a salary greater than X--but how much her salary is, and what her hire date is, remain hidden).
+There is a disadvantage in this approach to data sharing, though--it may disclose more data than what is strictly necessary. If all Alice needs to do is provide proof of employment, this can be done with an anonymous credential instead. Anonymous credentials may prove certain predicates without disclosing actual values (e.g., Alice is employed full-time, with a salary greater than X--but how much her salary is, and what her hire date is, remain hidden).
 
 Support
-for anonymous credentials is at a late alpha stage on Sovrin right now.We’ll
+for anonymous credentials is at a late alpha stage on Sovrin right now. We’ll
 circle back and update this guide when we reach beta.
 
 
-Alice, now loads Thrift Bank's loan application link
+Alice now loads Thrift Bank's loan application link:
 ```
 ALICE@test> load sample/thrift-loan-application.sovrin
 1 link invitation found for Thrift Bank.
@@ -668,7 +667,7 @@ Try Next:
     accept invitation from "Thrift Bank"
 ```
 
-Alice, accepted the loan application link
+Alice accepts the loan application link:
 
 ```
 ALICE@test> accept invitation from thrift
@@ -697,7 +696,7 @@ Try Next:
     show claim request "<claim-request-name>"
 ```
 
-Alice checks to see what the claim "Loan-Application-Basic" request looks like
+Alice checks to see what the claim "Loan-Application-Basic" request looks like:
 ```
 ALICE@test> show claim request Loan-Application-Basic
 Found claim request "Loan-Application-Basic" in link "Thrift Bank"
@@ -720,8 +719,9 @@ Try Next:
     send claim Loan-Application-Basic to Thrift Bank
 ```
 
-Alice, before sharing her personal details, only sends "Loan-Application-Basic"
-claim to bank.
+Alice sends just the "Loan-Application-Basic"
+claim to the bank. This allows her to minimize the PII that she has to share
+when all she's trying to do right now is prove basic eligibility.
 
 ```
 ALICE@test> send claim Loan-Application-Basic to Thrift Bank
@@ -767,7 +767,7 @@ Try Next:
     send claim Loan-Application-KYC to Thrift Bank
 ```
 
-Alice, now sends "Loan-Application-KYC" claim to bank 
+Alice now sends "Loan-Application-KYC" claim to the bank: 
 ```
 ALICE@test> send claim Loan-Application-KYC to Thrift Bank
 

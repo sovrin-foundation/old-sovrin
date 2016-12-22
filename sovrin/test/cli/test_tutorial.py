@@ -1,10 +1,11 @@
+import time
+
 import pytest
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
 from plenum.common.types import f
 from plenum.common.util import getTimeBasedId
 from plenum.test.eventually import eventually
-
-from sovrin.agent.msg_types import ACCEPT_INVITE
+from sovrin.agent.msg_constants import ACCEPT_INVITE
 from sovrin.client.wallet.link import Link, constant
 from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT
@@ -39,7 +40,6 @@ def getSampleLinkInvitation():
 def prompt_is(prompt):
     def x(cli):
         assert cli.currPromptText == prompt
-
     return x
 
 
@@ -61,40 +61,6 @@ def poolNodesStarted(be, do, poolCLI):
                'Delta now connected to Beta',
                'Delta now connected to Gamma'])
     return poolCLI
-
-
-@pytest.fixture(scope="module")
-def faberCli(be, do, faberCLI):
-    be(faberCLI)
-
-    do('prompt FABER', expect=prompt_is('FABER'))
-
-    do('new keyring Faber', expect=['New keyring Faber created',
-                                    'Active keyring set to "Faber"'])
-    seed = 'Faber000000000000000000000000000'
-    idr = 'FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB'
-
-    do('new key with seed ' + seed, expect=['Key created in keyring Faber',
-                                            'Identifier for key is ' + idr,
-                                            'Current identifier set to ' + idr])
-    return faberCLI
-
-
-@pytest.fixture(scope="module")
-def acmeCli(be, do, acmeCLI):
-    be(acmeCLI)
-
-    do('prompt Acme', expect=prompt_is('Acme'))
-
-    do('new keyring Acme', expect=['New keyring Acme created',
-                                   'Active keyring set to "Acme"'])
-    seed = 'Acme0000000000000000000000000000'
-    idr = '7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21'
-
-    do('new key with seed ' + seed, expect=['Key created in keyring Acme',
-                                            'Identifier for key is ' + idr,
-                                            'Current identifier set to ' + idr])
-    return acmeCLI
 
 
 @pytest.fixture(scope="module")

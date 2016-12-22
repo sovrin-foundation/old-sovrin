@@ -1,6 +1,7 @@
 from plenum.common.port_dispenser import genHa
-
+from plenum.common.signer_did import DidSigner
 from sovrin.common.strict_types import strict_types
+from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
 strict_types.defaultShouldCheck = True
 
@@ -19,12 +20,12 @@ import pytest
 
 import sample
 from plenum.common.looper import Looper
-from plenum.common.signer_simple import SimpleSigner
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import assertFunc
 from sovrin.agent.agent import WalletedAgent, runAgent
 from sovrin.client.client import Client
+from sovrin.agent.agent import WalletedAgent
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT
@@ -45,7 +46,7 @@ from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 @pytest.fixture(scope="module")
 def emptyLooper():
-    with Looper(debug=True) as l:
+    with Looper() as l:
         yield l
 
 
@@ -53,9 +54,8 @@ def emptyLooper():
 def walletBuilder():
     def _(name):
         wallet = Wallet(name)
-        wallet.addIdentifier(signer=SimpleSigner())
+        wallet.addIdentifier(signer=DidSigner())
         return wallet
-
     return _
 
 
@@ -85,18 +85,17 @@ def agentBuilder(tdirWithPoolTxns):
         basedir = basedir or tdirWithPoolTxns
         _, port = genHa()
         _, clientPort = genHa()
-        client = Client(randomString(6),
-                        ha=("0.0.0.0", clientPort),
-                        basedirpath=basedir)
+        client = TestClient(randomString(6),
+                            ha=("0.0.0.0", clientPort),
+                            basedirpath=basedir)
 
-        agent = WalletedAgent(name=wallet.name,
-                              basedirpath=basedir,
-                              client=client,
-                              wallet=wallet,
-                              port=port)
+        agent = TestWalletedAgent(name=wallet.name,
+                                  basedirpath=basedir,
+                                  client=client,
+                                  wallet=wallet,
+                                  port=port)
 
         return agent
-
     return _
 
 
@@ -292,9 +291,9 @@ def aliceFaberInvitationLinkSynced(aliceFaberInvitationLoaded,
                                    aliceAgentConnected,
                                    aliceAgent: WalletedAgent,
                                    emptyLooper,
-                                   faberAdded
-                                   ):
-    agentInvitationLinkSynced(aliceAgent, aliceFaberInvitationLoaded.name,
+                                   faberAdded):
+    agentInvitationLinkSynced(aliceAgent,
+                              aliceFaberInvitationLoaded.name,
                               emptyLooper)
 
 
@@ -334,29 +333,33 @@ def aliceAcceptedAcme(acmeIsRunning, acmeNonceForAlice, acmeAdded,
 
 def checkAcceptInvitation(emptyLooper,
                           nonce,
-                          userAgent: WalletedAgent,
-                          agentIsRunning,
+                          inviteeAgent: WalletedAgent,
+                          inviterAgentAndWallet,
                           linkName):
     """
     Assumes link identified by linkName is already created
     """
     assert nonce
-    agent, awallet = agentIsRunning
-    a = agent  # type: WalletedAgent
+    inviterAgent, inviterWallet = inviterAgentAndWallet # type: WalletedAgent, Wallet
 
-    userAgent.connectTo(linkName)
-    ensureAgentsConnected(emptyLooper, userAgent, agent)
+    inviteeWallet = inviteeAgent.wallet
+    inviteeAgent.connectTo(linkName)
+    ensureAgentsConnected(emptyLooper, inviteeAgent, inviterAgent)
 
-    userAgent.acceptInvitation(linkName)
-
-    internalId = a.getInternalIdByInvitedNonce(nonce)
+    inviteeAgent.acceptInvitation(linkName)
+    inviteeAcceptanceId = inviteeWallet.getLink(linkName,
+                                                required=True).localIdentifier
+    internalId = inviterAgent.getInternalIdByInvitedNonce(nonce)
 
     def chk():
-        link = a.wallet.getLinkByInternalId(internalId)
+        link = inviterWallet.getLinkByInternalId(internalId)
         assert link
-        linkAtUser = userAgent.wallet.getLinkInvitationByTarget(link.localIdentifier)
-        assert link.remoteIdentifier == linkAtUser.verkey
-        assert link.remoteEndPoint[1] == userAgent.endpoint.ha[1]
+        # if not link:
+        #     raise RuntimeError("Link not found for internal ID {}".
+        #                        format(internalId))
+        # TODO: Get link from invitee wallet to check.
+        assert link.remoteIdentifier == inviteeAcceptanceId
+        assert link.remoteEndPoint[1] == inviteeAgent.endpoint.ha[1]
 
     emptyLooper.run(eventually(chk))
 
@@ -387,8 +390,8 @@ def getInvitationFile(fileName):
     return os.path.join(sampleDir, fileName)
 
 
-def agentInvitationLoaded(agent, invitaition):
-    link = agent.loadInvitationFile(invitaition)
+def agentInvitationLoaded(agent, invitation):
+    link = agent.loadInvitationFile(invitation)
     assert link
     return link
 
@@ -405,7 +408,7 @@ def agentInvitationLinkSynced(agent,
         done = True
 
     def checkDone():
-        assert done
+        assert done, 'never got reply for agent link sync'
 
     agent.sync(linkName, cb)
     looper.run(eventually(checkDone))

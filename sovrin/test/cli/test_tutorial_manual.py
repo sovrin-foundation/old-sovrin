@@ -1,10 +1,14 @@
 import json
 import logging
 import re
+import uuid
 
 import pytest
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from plenum.common.util import adict
 from plenum.test.eventually import eventually
+from sovrin.agent.agent import runAgent
 
 from anoncreds.protocol.types import ClaimDefinitionKey, ID
 from sovrin.agent.agent import createAndRunAgent
@@ -18,10 +22,12 @@ from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap, \
     thriftMap
 from sovrin.test.cli.helper import newCLI
-from sovrin.test.cli.test_tutorial import syncInvite, acceptInvitation, \
+from sovrin.test.cli.test_tutorial import poolNodesStarted, \
+    aliceCli as createAliceCli, syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent, \
     jobCertClaimRequested, bankBasicClaimSent, bankKYCClaimSent, \
-    setPromptAndKeyring, poolNodesStarted
+    setPromptAndKeyring
+from sovrin.test.helper import TestClient
 
 concerningLogLevels = [logging.WARNING,
                        logging.ERROR,
@@ -98,7 +104,7 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     for agentCls, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
         agentCls.getPassedArgs = lambda _: (agentPort,)
-        createAndRunAgent(agentCls, agentName, buildAgentWalletFunc(), tdir, agentPort, philCLI.looper)
+        createAndRunAgent(agentCls, agentName, buildAgentWalletFunc(), tdir, agentPort, philCLI.looper, TestClient)
 
     for p in philCLI.looper.prodables:
         if p.name == 'Faber College':

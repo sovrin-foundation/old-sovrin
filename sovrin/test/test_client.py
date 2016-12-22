@@ -10,7 +10,6 @@ from plenum.common.txn import REQNACK, ENC, DATA, REPLY, TXN_TIME
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict
 from plenum.test.eventually import eventually
-
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
@@ -225,6 +224,7 @@ def nymsAddedInQuickSuccession(nodeSet, addedSponsor, looper,
     assert(count == len(nodeSet))
 
 
+@pytest.mark.skipif(True, reason="NYM transaction now used to update too")
 def testAddNymsInQuickSuccession(nymsAddedInQuickSuccession):
     pass
 

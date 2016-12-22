@@ -13,6 +13,7 @@ from plenum.test.test_stack import StackedTester, TestStack
 
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
+from plenum.common.signer_did import DidSigner
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import REQACK, NAME, VERSION, TYPE
 from plenum.common.types import HA, Identifier
@@ -25,15 +26,17 @@ from plenum.test.helper import checkSufficientRepliesRecvd, \
     checkLastClientReqForNode, buildCompletedTxnFromReply
 from plenum.test.test_client import genTestClient as genPlenumTestClient, \
     genTestClientProvider as genPlenumTestClientProvider
-from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
+from plenum.test.test_node import checkNodesAreReady, TestNodeCore
+from plenum.test.test_node import checkNodesConnected
+from plenum.test.test_stack import StackedTester, TestStack
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.config_util import getConfig
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM, \
     ATTR_NAMES
-from sovrin.common.config_util import getConfig
 from sovrin.server.node import Node
 
 logger = getlogger()
@@ -299,7 +302,9 @@ class TestClientStorage:
         self.baseDir = baseDir
 
     def cleanupDataLocation(self):
-        loc = os.path.join(self.baseDir, "data/clients")
+        loc = os.path.join(self.baseDir, "data/clients", self.name)
+        logger.debug('Cleaning up location {} of test client {}'.
+                     format(loc, self.name))
         try:
             shutil.rmtree(loc)
         except Exception as ex:
@@ -345,7 +350,7 @@ def genTestClient(nodes: TestNodeSet = None,
                   peerHA: Union[HA, Tuple[str, int]] = None,
                   testClientClass=TestClient,
                   usePoolLedger=False,
-                  name: str=None) -> TestClient:
+                  name: str=None) -> (TestClient, Wallet):
     testClient, wallet = genPlenumTestClient(nodes,
                                              nodeReg,
                                              tmpdir,
@@ -404,10 +409,12 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
     looper.run(eventually(check, timeout=4))
 
 
-def addUser(looper, creatorClient, creatorWallet, name):
+def addUser(looper, creatorClient, creatorWallet, name, useDid=True,
+            addVerkey=True):
     wallet = Wallet(name)
-    idr, _ = wallet.addIdentifier()
-    verkey = wallet.getVerkey(idr)
+    signer = DidSigner() if useDid else SimpleSigner()
+    idr, _ = wallet.addIdentifier(signer=signer)
+    verkey = wallet.getVerkey(idr) if addVerkey else None
     createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
     return wallet
 

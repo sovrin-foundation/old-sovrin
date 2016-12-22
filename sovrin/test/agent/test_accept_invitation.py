@@ -1,5 +1,15 @@
+import logging
+
 import pytest
 from sovrin.test.agent.conftest import checkAcceptInvitation
+
+concerningLogLevels = [logging.WARNING,
+                       logging.ERROR,
+                       logging.CRITICAL]
+
+# TODO need to solve the root cause of this warning, which is agents
+# presuming an identifier is already created on startup
+whitelist = ['discarding message.*GET_TXNS.*UnknownIdentifier']
 
 
 def testFaberCreateLink(faberLinkAdded):
@@ -30,17 +40,17 @@ def testAliceAcceptAcmeInvitation(aliceAcceptedAcme):
     pass
 
 
-@pytest.mark.skip("Not yet implemented")
+@pytest.mark.skipif(True, reason="Not yet implemented")
 def testAddClaimDef():
     raise NotImplementedError
 
 
-@pytest.mark.skip("Not yet implemented")
+@pytest.mark.skipif(True, reason="Not yet implemented")
 def testAddIssuerKeys():
     raise NotImplementedError
 
 
-@pytest.mark.skip("Incomplete implementation")
+@pytest.mark.skipif(True, reason="Incomplete implementation")
 def testMultipleAcceptance(aliceAcceptedFaber,
                            faberIsRunning,
                            faberLinkAdded,
@@ -61,8 +71,8 @@ def testMultipleAcceptance(aliceAcceptedFaber,
 
     checkAcceptInvitation(emptyLooper,
                           nonce=faberNonceForAlice,
-                          userAgent=otherAgent,
-                          agentIsRunning=faberIsRunning, linkName=link.name)
+                          inviteeAgent=otherAgent,
+                          inviterAgentAndWallet=faberIsRunning, linkName=link.name)
 
     assert len(faberAgent.wallet._links) == 2
 

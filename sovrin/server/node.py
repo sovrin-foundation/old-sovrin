@@ -8,26 +8,25 @@ import pyorient
 from ledger.compact_merkle_tree import CompactMerkleTree
 from ledger.ledger import Ledger
 from ledger.serializers.compact_serializer import CompactSerializer
-
 from ledger.util import F
 from plenum.common.exceptions import InvalidClientRequest, \
     UnauthorizedClientRequest
 from plenum.common.log import getlogger
 from plenum.common.txn import RAW, ENC, HASH, NAME, VERSION, ORIGIN
-from sovrin.common.types import Request
 from plenum.common.types import Reply, RequestAck, RequestNack, f, \
     NODE_PRIMARY_STORAGE_SUFFIX, OPERATION
 from plenum.common.util import error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
+from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
     getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
     ISSUER_KEY, GET_ISSUER_KEY, REF
+from sovrin.common.types import Request
 from sovrin.common.util import dateTimeEncoding
-from sovrin.common.config_util import getConfig
 from sovrin.persistence import identity_graph
 from sovrin.persistence.secondary_storage import SecondaryStorage
 from sovrin.server.client_authn import TxnBasedAuthNr
@@ -150,7 +149,7 @@ class Node(PlenumNode):
                                                'JSON'.format(msg[RAW]))
 
             if not (not msg.get(TARGET_NYM) or
-                        self.graphStore.hasNym(msg[TARGET_NYM])):
+                    self.graphStore.hasNym(msg[TARGET_NYM])):
                 raise InvalidClientRequest(identifier, reqId,
                                            '{} should be added before adding '
                                            'attribute for it'.
@@ -158,14 +157,20 @@ class Node(PlenumNode):
 
         if msg[TXN_TYPE] == NYM:
             role = msg.get(ROLE) or USER
+            nym = msg.get(TARGET_NYM)
+            if not nym:
+                raise InvalidClientRequest(identifier, reqId,
+                                           "{} needs to be present".
+                                           format(TARGET_NYM))
             if not isValidRole(role):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} not a valid role".
                                            format(role))
-            if self.graphStore.hasNym(msg[TARGET_NYM]):
+            # Only
+            if not self.canNymRequestBeProcessed(identifier, msg):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} is already present".
-                                           format(msg[TARGET_NYM]))
+                                           format(nym))
 
     def checkRequestAuthorized(self, request: Request):
         op = request.operation
@@ -205,6 +210,13 @@ class Node(PlenumNode):
             pass
         else:
             return super().checkRequestAuthorized(request)
+
+    def canNymRequestBeProcessed(self, identifier, msg):
+        nym = msg.get(TARGET_NYM)
+        if self.graphStore.hasNym(nym) and \
+                self.graphStore.getSponsorFor(nym) != identifier:
+            return False
+        return True
 
     def defaultAuthNr(self):
         return TxnBasedAuthNr(self.graphStore)
@@ -351,9 +363,7 @@ class Node(PlenumNode):
     def storeTxnInLedger(self, result):
         if result[TXN_TYPE] == ATTRIB:
             result = self.hashAttribTxn(result)
-            merkleInfo = self.addToLedger(result)
-        else:
-            merkleInfo = self.addToLedger(result)
+        merkleInfo = self.addToLedger(result)
         result.update(merkleInfo)
         return result
 
@@ -426,8 +436,8 @@ class Node(PlenumNode):
         :param ppTime: the time at which PRE-PREPARE was sent
         :param req: the client REQUEST
         """
-        if req.operation[TXN_TYPE] == NYM and \
-                self.graphStore.hasNym(req.operation[TARGET_NYM]):
+        if req.operation[TXN_TYPE] == NYM and not \
+                self.canNymRequestBeProcessed(req.identifier, req.operation):
             reason = "nym {} is already added".format(req.operation[TARGET_NYM])
             if req.key in self.requestSender:
                 self.transmitToClient(RequestNack(*req.key, reason),

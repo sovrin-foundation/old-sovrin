@@ -1,9 +1,7 @@
 import glob
 import os
-
-from shutil import copyfile
-
 import shutil
+from shutil import copyfile
 
 import data
 import sample

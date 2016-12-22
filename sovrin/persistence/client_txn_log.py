@@ -3,7 +3,6 @@ from typing import List
 from plenum.common.txn import TXN_TYPE
 from plenum.common.util import updateFieldsWithSeqNo
 from plenum.persistence.client_txn_log import ClientTxnLog as PClientTxnLog
-
 from sovrin.common.txn import getTxnOrderedFields
 
 

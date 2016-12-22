@@ -10,7 +10,7 @@ from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NYM, ROLE
+    IDENTIFIER, NAME, VERSION, TYPE, NYM, ROLE, ORIGIN, VERKEY
 from plenum.common.types import Identifier, f
 
 from anoncreds.protocol.wallet.issuer_wallet import IssuerWallet
@@ -35,10 +35,7 @@ class Wallet(PWallet, Sponsoring):
 
     def __init__(self,
                  name: str,
-                 supportedDidMethods: DidMethods = None,
-                 issuerWallet: IssuerWallet = None,
-                 proverWallet: ProverWallet = None,
-                 verifierWallet: AnoncredsWallet = None):
+                 supportedDidMethods: DidMethods=None):
         PWallet.__init__(self,
                          name,
                          supportedDidMethods or DefaultDidMethods)
@@ -56,10 +53,6 @@ class Wallet(PWallet, Sponsoring):
         # pending transactions that have been prepared (probably submitted)
         self._prepared = {}  # type: Dict[(Identifier, int), Request]
         self.lastKnownSeqs = {}  # type: Dict[str, int]
-
-        self.issuerWallet = issuerWallet
-        self.proverWallet = proverWallet
-        self.verifierWallet = verifierWallet
 
         self.replyHandler = {
             ATTRIB: self._attribReply,
@@ -230,6 +223,7 @@ class Wallet(PWallet, Sponsoring):
                 idy.role = data.get(ROLE)
                 idy.sponsor = data.get(f.IDENTIFIER.nm)
                 idy.last_synced = datetime.datetime.utcnow()
+                idy.verkey = data.get(VERKEY)
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
         else:
@@ -282,12 +276,18 @@ class Wallet(PWallet, Sponsoring):
         return self.preparePending()[0]
 
     # DEPR
-    # def getLinkByNonce(self, nonce) -> Optional[Link]:
-    #     for _, li in self._links.items():
-    #         if li.nonce == nonce:
-    #             return li
+    # Why shouldn't we fetch link by nonce
+    def getLinkByNonce(self, nonce) -> Optional[Link]:
+        for _, li in self._links.items():
+            if li.invitationNonce == nonce:
+                return li
 
     def getLinkByInternalId(self, internalId) -> Optional[Link]:
         for _, li in self._links.items():
             if li.internalId == internalId:
                 return li
+
+    def getIdentity(self, idr):
+        # TODO, Question: Should it consider self owned identities too or
+        # should it just have identities that are retrieved from the DL
+        return self.knownIds.get(idr)

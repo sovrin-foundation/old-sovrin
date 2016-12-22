@@ -14,11 +14,11 @@ $ sovrin "new nodes all"
 """
 
 # Do not remove this import
-import plenum.cli.ensure_logging_not_setup
 
+import logging
 import os
 import sys
-import logging
+
 logging.root.handlers = []
 logger = logging.getLogger()
 logger.propagate = False

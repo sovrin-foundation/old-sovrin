@@ -190,7 +190,7 @@ class WalletedAgent(Walleted, Agent, Caching):
             self._initIssuerProverVerifier()
 
 
-def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None, loop=None):
+def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None, loop=None, clientClass=Client):
     config = getConfig()
 
     if not wallet:
@@ -201,9 +201,9 @@ def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None, loop
         _, port = genHa()
 
     _, clientPort = genHa()
-    client = Client(randomString(6),
-                    ha=("0.0.0.0", clientPort),
-                    basedirpath=basedirpath)
+    client = clientClass(randomString(6),
+                         ha=("0.0.0.0", clientPort),
+                         basedirpath=basedirpath)
 
     return agentClass(basedirpath=basedirpath,
                       client=client,
@@ -227,9 +227,9 @@ def runAgent(agent, looper=None, bootstrap=True, ):
             looper.run()
 
 
-def createAndRunAgent(agentClass: object, name: object, wallet: object = None, basedirpath: object = None,
-                      port: object = None, looper: object = None, bootstrap: object = True) -> object:
+def createAndRunAgent(agentClass, name, wallet=None, basedirpath=None,
+                      port=None, looper=None, clientClass=Client, bootstrap=True):
     loop = looper.loop if looper else None
-    agent = createAgent(agentClass, name, wallet, basedirpath, port, loop)
+    agent = createAgent(agentClass, name, wallet, basedirpath, port, loop, clientClass)
     runAgent(agent, looper, bootstrap)
     return agent

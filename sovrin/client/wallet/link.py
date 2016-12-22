@@ -36,21 +36,25 @@ class constant:
 
     NOT_AVAILABLE = "Not Available"
 
+    NOT_ASSIGNED = "Not Assigned yet"
+
 
 class Link:
-    def __init__(self, name, localIdentifier, trustAnchor=None,
-                 remoteIdentifier=None, remoteEndPoint=None, invitationNonce=None,
-                 claimProofRequests=None, invitationData: Dict = None,
+    def __init__(self,
+                 name,
+                 localIdentifier=None,
+                 trustAnchor=None,
+                 remoteIdentifier=None,
+                 remoteEndPoint=None,
+                 invitationNonce=None,
+                 claimProofRequests=None,
                  internalId=None):
         self.name = name
         self.localIdentifier = localIdentifier
-        self.verkey = self.localIdentifier.split(":")[-1]
-
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
         self.invitationNonce = invitationNonce
-        self.invitationData = invitationData
 
         # for optionally storing a reference to an identifier in another system
         # for example, a college may already have a student ID for a particular
@@ -82,6 +86,8 @@ class Link:
         return self.linkStatus == constant.LINK_STATUS_ACCEPTED
 
     def __str__(self):
+        localIdr = self.localIdentifier if self.localIdentifier \
+            else constant.NOT_ASSIGNED
         trustAnchor = self.trustAnchor or ""
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
@@ -104,6 +110,8 @@ class Link:
 
         # TODO: The verkey would be same as the local identifier until we
         # support key rotation
+        # TODO: This should be set as verkey in case of DID but need it from
+        # wallet
         verKey = constant.SIGNER_VER_KEY_SAME_AS_ID
         fixedLinkHeading = "Link "
         if not self.isAccepted:
@@ -114,17 +122,16 @@ class Link:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
-                                   'Identifier: ' + self.localIdentifier + '\n' \
-                                                                           'Trust anchor: ' + trustAnchor + ' ' + trustAnchorStatus + '\n' \
-                                                                                                                                      'Verification key: ' + verKey + '\n' \
-                                                                                                                                                                      'Signing key: <hidden>' '\n' \
-                                                                                                                                                                      'Target: ' + (
-                self.remoteIdentifier or
-                constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
-                                                     'Target Verification key: ' + targetVerKey + '\n' \
-                                                                                                  'Target endpoint: ' + targetEndPoint + '\n' \
-                                                                                                                                         'Invitation nonce: ' + self.invitationNonce + '\n' \
-                                                                                                                                                                                       'Invitation status: ' + linkStatus + '\n'
+            'Identifier: ' + localIdr + '\n' \
+            'Trust anchor: ' + trustAnchor + ' ' + trustAnchorStatus + '\n' \
+            'Verification key: ' + verKey + '\n' \
+            'Signing key: <hidden>' '\n' \
+            'Target: ' + (self.remoteIdentifier or
+                          constant.UNKNOWN_WAITING_FOR_SYNC) + '\n' \
+            'Target Verification key: ' + targetVerKey + '\n' \
+            'Target endpoint: ' + targetEndPoint + '\n' \
+            'Invitation nonce: ' + self.invitationNonce + '\n' \
+            'Invitation status: ' + linkStatus + '\n'
         # except Exception as ex:
         #     print(ex)
         #     print(targetEndPoint, linkStatus, )

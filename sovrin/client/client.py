@@ -5,9 +5,6 @@ from collections import deque
 from typing import Dict, Union, Tuple, Optional, Callable
 
 import pyorient
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.verifier import Verifier
 from base58 import b58decode, b58encode
 from plenum.client.client import Client as PlenumClient
 from plenum.common.error import fault
@@ -21,10 +18,9 @@ from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.router import Router
 from raet.raeting import AutoMode
-
 from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO, \
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
     GET_ATTR
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
@@ -43,10 +39,7 @@ class Client(PlenumClient):
                  peerHA: Union[HA, Tuple[str, int]] = None,
                  basedirpath: str = None,
                  config=None,
-                 sighex: str = None,
-                 issuer: Issuer = None,
-                 prover: Prover = None,
-                 verifier: Verifier = None):
+                 sighex: str = None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
@@ -72,9 +65,6 @@ class Client(PlenumClient):
             self.peerInbox = deque()
         self._observers = {}  # type Dict[str, Callable]
         self._observerSet = set()  # makes it easier to guard against duplicates
-        self.issuer = issuer
-        self.prover = prover
-        self.verifier = verifier
 
     def handlePeerMessage(self, msg):
         """
