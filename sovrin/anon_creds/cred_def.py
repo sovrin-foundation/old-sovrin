@@ -1,5 +1,4 @@
 from abc import abstractmethod, abstractproperty
-from enum import Enum
 
 
 class CredDefPublicKey:

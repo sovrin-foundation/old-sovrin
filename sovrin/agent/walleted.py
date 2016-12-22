@@ -1,16 +1,15 @@
 import collections
 import json
+import time
 from abc import abstractmethod
 from datetime import datetime
 from typing import Dict, Any, Union
 
-import time
 from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.utils import strToCryptoInteger
 from anoncreds.protocol.verifier import Verifier
 from base58 import b58decode
-
 from plenum.common.log import getlogger
 from plenum.common.signer_did import DidSigner
 from plenum.common.signing import serializeMsg
@@ -19,6 +18,7 @@ from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
 from plenum.common.types import f
 from plenum.common.util import getTimeBasedId, getCryptonym, \
     isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
+from plenum.common.verifier import DidVerifier
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
@@ -35,11 +35,9 @@ from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
     NotConnectedToNetwork, LinkNotReady
 from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTR_NAMES, ENDPOINT
-from sovrin.common.util import verifySig, ensureReqCompleted, getEncodedAttrs, \
-    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback, getNonceForProof
-
-from plenum.common.verifier import DidVerifier
+from sovrin.common.txn import ENDPOINT
+from sovrin.common.util import ensureReqCompleted, getEncodedAttrs, \
+    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback
 
 logger = getlogger()
 

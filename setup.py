@@ -1,17 +1,10 @@
-import glob
-import shutil
-import sys
 import os
-
-import data
-from setuptools import setup, find_packages, __version__
-from setuptools.command.install import install
-from setuptools.command.develop import develop
-from pip.req import parse_requirements
-from shutil import copyfile
 import subprocess
+import sys
 
-import sample
+from setuptools import setup, find_packages, __version__
+from setuptools.command.develop import develop
+from setuptools.command.install import install
 
 v = sys.version_info
 if sys.version_info < (3, 5):

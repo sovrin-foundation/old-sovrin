@@ -1,12 +1,11 @@
-import pytest
 import time
-from plenum.common.types import f
 
+import pytest
 from plenum.common.txn import TYPE, NONCE, IDENTIFIER
+from plenum.common.types import f
 from plenum.common.util import getTimeBasedId
 from plenum.test.eventually import eventually
-from sovrin.agent.msg_constants import ACCEPT_INVITE, AVAIL_CLAIM_LIST
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.agent.msg_constants import ACCEPT_INVITE
 from sovrin.client.wallet.link import Link, constant
 from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT

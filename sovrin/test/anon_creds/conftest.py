@@ -2,20 +2,16 @@ import uuid
 
 import pytest
 import sovrin.anon_creds.cred_def as CredDefModule
-from plenum.common.port_dispenser import genHa
-
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
 from anoncreds.protocol.types import SerFmt
-from plenum.common.txn import NAME, VERSION, TYPE, IP, PORT, KEYS
-from plenum.common.util import randomString
+from anoncreds.test.conftest import staticPrimes
+from plenum.common.port_dispenser import genHa
+from plenum.common.txn import NAME, VERSION, TYPE
 from plenum.test.eventually import eventually
 from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.common.config_util import getConfig
 from sovrin.test.helper import createNym, _newWallet
-
-# noinspection PyUnresolvedReferences
-from anoncreds.test.conftest import staticPrimes
 
 # TODO Make a fixture for creating a client with a anon-creds features
 #  enabled.

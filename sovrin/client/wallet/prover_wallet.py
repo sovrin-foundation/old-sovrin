@@ -2,7 +2,7 @@ from typing import Dict, Tuple, Iterable, Optional
 
 from anoncreds.protocol.proof_builder import ProofBuilder
 from anoncreds.protocol.prover import Prover
-from anoncreds.protocol.utils import generateMasterSecret, generateVPrime
+from anoncreds.protocol.utils import generateMasterSecret
 from plenum.common.log import getlogger
 from sovrin.client.wallet.claim import ClaimProofRequest
 from sovrin.client.wallet.credential import Credential

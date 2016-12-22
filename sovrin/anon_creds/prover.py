@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from sovrin.anon_creds.cred_def import CredDefPublicKey, CredDef
+from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.proof_builder import ProofBuilder
 
 

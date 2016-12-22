@@ -1,9 +1,8 @@
 import json
 
 import pytest
-from ledger.util import F
-
 from anoncreds.protocol.types import SerFmt
+from ledger.util import F
 from plenum.common.txn import NAME, VERSION, DATA
 from plenum.common.util import getMaxFailures
 from plenum.test.eventually import eventually

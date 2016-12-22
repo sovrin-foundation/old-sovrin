@@ -1,5 +1,6 @@
-import pytest
 import re
+
+import pytest
 from plenum.common.txn import NAME, VERSION
 from plenum.test.cli.helper import newKeyPair, checkCmdValid
 from plenum.test.eventually import eventually

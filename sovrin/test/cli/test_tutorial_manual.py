@@ -1,17 +1,13 @@
 import json
 import logging
-
 import re
 import uuid
 
 import pytest
-
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from plenum.common.looper import Looper
 from plenum.common.util import adict
 from plenum.test.eventually import eventually
-
 from sovrin.agent.agent import runAgent
 from sovrin.common.setup_util import Setup
 from sovrin.common.txn import ENDPOINT
@@ -21,10 +17,8 @@ from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet, \
     buildThriftWallet
 from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap, \
-    jobCertificateClaimMap, reqClaimOut1, thriftMap
+    thriftMap
 from sovrin.test.cli.helper import newCLI
-
-# noinspection PyUnresolvedReferences
 from sovrin.test.cli.test_tutorial import poolNodesStarted, \
     aliceCli as createAliceCli, syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent, \

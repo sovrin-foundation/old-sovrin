@@ -1,14 +1,12 @@
 # The following setup of logging needs to happen before everything else
 import pytest
-
+from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.test.conftest import staticPrimes
 from plenum.common.log import DISPLAY_LOG_LEVEL, setupLogging, \
     DemoHandler, getlogger
 from plenum.common.port_dispenser import genHa
 from plenum.test.eventually import eventually
 from sovrin.client.wallet.claim_def import ClaimDef
-
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.test.conftest import staticPrimes
 
 
 def out(logger, record, extra_cli_value=None):
@@ -32,10 +30,7 @@ import sovrin.anon_creds.prover as ProverModule
 import sovrin.anon_creds.proof_builder as ProofBuilderModule
 import sovrin.anon_creds.verifier as VerifierModule
 
-from plenum.common.txn import DATA, TXN_TYPE
-from sovrin.common.txn import CRED_DEF
-from sovrin.common.util import getCredDefTxnData
-from sovrin.test.helper import submitAndCheck, makePendingTxnsRequest
+from sovrin.test.helper import makePendingTxnsRequest
 
 from sovrin.client.wallet.wallet import Wallet
 

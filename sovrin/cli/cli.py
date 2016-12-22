@@ -6,11 +6,6 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
-from plenum.common.constants import ENVS
-from prompt_toolkit.contrib.completers import WordCompleter
-from prompt_toolkit.layout.lexers import SimpleLexer
-from pygments.token import Token
-
 import sovrin.anon_creds.cred_def as CredDefModule
 from anoncreds.protocol.globals import KEYS
 from anoncreds.protocol.types import SerFmt
@@ -20,13 +15,17 @@ from anoncreds.test.issuer_key_test_store import MemoryIssuerKeyStore
 from ledger.util import F
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
+from plenum.common.constants import ENVS
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import NAME, VERSION, TYPE, ORIGIN
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.types import f
 from plenum.common.util import randomString, getTimeBasedId
-from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
+from prompt_toolkit.contrib.completers import WordCompleter
+from prompt_toolkit.layout.lexers import SimpleLexer
+from pygments.token import Token
 from sovrin.agent.agent import WalletedAgent
+from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
 from sovrin.agent.msg_constants import REQUEST_CLAIM, CLAIM_PROOF
 from sovrin.anon_creds.constant import V_PRIME_PRIME, ISSUER, \
     CRED_E, CRED_A, NONCE, ATTRS, PROOF, REVEALED_ATTRS
@@ -43,6 +42,7 @@ from sovrin.client.wallet.claim_def import ClaimDef
 from sovrin.client.wallet.credential import Credential as WalletCredential
 from sovrin.client.wallet.link import Link
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.config_util import getConfig
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
     LinkNotFound, NotConnectedToNetwork, ClaimDefNotFound
 from sovrin.common.identity import Identity
@@ -50,7 +50,6 @@ from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
 from sovrin.common.util import getEncodedAttrs, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict, getNonceForProof
-from sovrin.common.config_util import getConfig
 
 """
 Objective

@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Any
 
 from sovrin.anon_creds.cred_def import CredDef
 

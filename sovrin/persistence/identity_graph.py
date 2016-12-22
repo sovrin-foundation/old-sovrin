@@ -1,8 +1,8 @@
-import json
-from itertools import chain
 import datetime
+import json
 import time
 from functools import reduce
+from itertools import chain
 from typing import Dict, Optional
 
 import pyorient
@@ -15,11 +15,9 @@ from plenum.common.types import f
 from plenum.common.util import error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from plenum.server.node import Node
-
 from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
     STEWARD, ROLE, REF, TXN_TIME, ATTRIB, CRED_DEF, isValidRole, \
     ATTR_NAMES, ISSUER_KEY
-
 
 logger = getlogger()
 

@@ -1,7 +1,7 @@
-from typing import Dict
-from typing import Tuple, Callable
-
 import asyncio
+from typing import Dict
+from typing import Tuple
+
 from plenum.common.error import fault
 from plenum.common.exceptions import RemoteNotFound
 from plenum.common.log import getlogger
@@ -16,9 +16,9 @@ from sovrin.agent.caching import Caching
 from sovrin.agent.walleted import Walleted
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
+from sovrin.common.config_util import getConfig
 from sovrin.common.identity import Identity
 from sovrin.common.strict_types import strict_types, decClassMethods
-from sovrin.common.config_util import getConfig
 
 logger = getlogger()
 

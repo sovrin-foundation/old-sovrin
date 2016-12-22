@@ -1,18 +1,16 @@
 import json
-
 import os
-from plenum.test.eventually import eventually
-from sovrin.client.wallet.link import Link
 
-from sovrin.common.plugin_helper import writeAnonCredPlugin
-from sovrin.test.helper import TestNode
-from sovrin.test.helper import TestClient
-
+from plenum.common.txn import TARGET_NYM, ROLE
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \
     assertAllNodesCreated, checkAllNodesStarted, initDirWithGenesisTxns
+from plenum.test.eventually import eventually
 from plenum.test.testable import Spyable
-from plenum.common.txn import TARGET_NYM, ROLE
 from sovrin.cli.cli import SovrinCli
+from sovrin.client.wallet.link import Link
+from sovrin.common.plugin_helper import writeAnonCredPlugin
+from sovrin.test.helper import TestClient
+from sovrin.test.helper import TestNode
 
 
 @Spyable(methods=[SovrinCli.print, SovrinCli.printTokens])

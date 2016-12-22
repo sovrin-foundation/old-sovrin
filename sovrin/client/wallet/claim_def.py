@@ -1,7 +1,7 @@
 from typing import Optional
 
-from anoncreds.protocol.issuer_key import IssuerKey
 from anoncreds.protocol.credential_definition import CredentialDefinition
+from anoncreds.protocol.issuer_key import IssuerKey
 from plenum.common.txn import TXN_TYPE, DATA, NAME, VERSION, TARGET_NYM, TYPE,\
     ORIGIN
 from plenum.common.types import Identifier

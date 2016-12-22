@@ -1,5 +1,5 @@
-
 import os
+
 from sovrin.common.config_util import getConfig
 
 

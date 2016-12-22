@@ -1,13 +1,12 @@
 import glob
+import os
 import shutil
 import sys
-import os
-from setuptools import setup, find_packages, __version__
-from pip.req import parse_requirements
 from shutil import copyfile
+
 import data
 import sample
-
+from setuptools import setup, find_packages, __version__
 
 v = sys.version_info
 if sys.version_info < (3, 5):

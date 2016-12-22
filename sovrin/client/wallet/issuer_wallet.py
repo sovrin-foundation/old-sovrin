@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Tuple, Iterable, Optional
+from typing import Dict, Optional
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
 from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
@@ -7,7 +7,6 @@ from plenum.common.log import getlogger
 from sovrin.client.wallet.claim_def import IssuerPubKey, ClaimDef
 from sovrin.client.wallet.credential import Credential
 from sovrin.common.exceptions import ClaimDefNotFound
-
 
 logger = getlogger()
 

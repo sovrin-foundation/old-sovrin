@@ -4,14 +4,12 @@ import pprint
 import shutil
 import tempfile
 
-# The following setup of logging needs to happen before everything else
 from plenum.common.log import getlogger
+from plenum.common.txn_util import createGenesisTxnFile
 from sovrin.anon_creds.cred_def import CredDef
 from sovrin.anon_creds.issuer import InMemoryAttrRepo
 from sovrin.anon_creds.proof_builder import ProofBuilder
 from sovrin.anon_creds.verifier import Verifier
-
-from plenum.common.txn_util import createGenesisTxnFile
 
 logging.root.handlers = []
 # setupLogging(DISPLAY_LOG_LEVEL,

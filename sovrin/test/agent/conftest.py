@@ -20,12 +20,10 @@ import pytest
 
 import sample
 from plenum.common.looper import Looper
-from plenum.common.signer_simple import SimpleSigner
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import assertFunc
 from sovrin.agent.agent import WalletedAgent
-from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT

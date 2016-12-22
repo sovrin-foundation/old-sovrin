@@ -1,11 +1,8 @@
-from typing import Dict
-
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
 from plenum.common.util import prettyDateDifference
 from sovrin.common.exceptions import InvalidLinkException, \
     RemoteEndpointNotFound
-from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
 
 
 class constant:

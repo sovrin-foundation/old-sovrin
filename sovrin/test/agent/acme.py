@@ -1,16 +1,14 @@
 import os
 
 from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
+from anoncreds.protocol.types import AttribType, AttribDef
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
-
-from anoncreds.protocol.types import AttribType, AttribDef
 from sovrin.agent.agent import runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
-
 from sovrin.test.agent.helper import buildAcmeWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 from sovrin.test.helper import TestClient

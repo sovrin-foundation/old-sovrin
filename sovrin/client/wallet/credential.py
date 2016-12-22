@@ -1,7 +1,5 @@
-from typing import Dict
-
-from anoncreds.protocol.utils import strToCryptoInteger
 from anoncreds.protocol.types import Credential as CredType
+from anoncreds.protocol.utils import strToCryptoInteger
 
 
 # A credential object is issued by an issuer to a prover for a particular

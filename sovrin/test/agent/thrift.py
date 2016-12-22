@@ -1,14 +1,12 @@
 import os
 
 from plenum.common.log import getlogger
-
 from sovrin.agent.agent import runAgent
 from sovrin.agent.constants import EVENT_NOTIFY_MSG
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
-
 from sovrin.test.agent.helper import buildThriftWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 from sovrin.test.helper import TestClient

@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME, \
-    RAW, ENC, HASH, NAME, VERSION, TYPE, KEYS, IP, PORT, POOL_TXN_TYPES, ALIAS, \
+    RAW, ENC, HASH, NAME, VERSION, TYPE, POOL_TXN_TYPES, ALIAS, \
     STEWARD, NYM, VERKEY
 from plenum.common.types import f
 

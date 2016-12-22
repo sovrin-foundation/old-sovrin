@@ -4,26 +4,24 @@ import uuid
 from collections import deque
 from typing import Dict, Union, Tuple, Optional, Callable
 
-from base58 import b58decode, b58encode
 import pyorient
-
-from raet.raeting import AutoMode
-
+from base58 import b58decode, b58encode
+from plenum.client.client import Client as PlenumClient
 from plenum.common.error import fault
 from plenum.common.log import getlogger
-from plenum.client.client import Client as PlenumClient
-from plenum.server.router import Router
-from plenum.common.startable import Status
 from plenum.common.stacked import SimpleStack
+from plenum.common.startable import Status
 from plenum.common.txn import REPLY, STEWARD, NAME, VERSION, REQACK, REQNACK, \
     TXN_ID, TARGET_NYM, NONCE
 from plenum.common.types import OP_FIELD_NAME, f, HA
 from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
+from plenum.server.router import Router
+from raet.raeting import AutoMode
+from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
     SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
     GET_ATTR
-from sovrin.common.config_util import getConfig
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
     ClientReqRepStoreOrientDB

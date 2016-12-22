@@ -1,12 +1,10 @@
 import json
 import traceback
-import uuid
 
 import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.test.eventually import eventually
-
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.common.txn import SPONSOR, ENDPOINT
 from sovrin.test.helper import createNym, buildStewardClient
@@ -16,7 +14,6 @@ plenum.common.util.loggingConfigured = False
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
-from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.config_util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation

@@ -1,5 +1,4 @@
 import argparse
-
 import sys
 
 from plenum.common.signer_simple import SimpleSigner

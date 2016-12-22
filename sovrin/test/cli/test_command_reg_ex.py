@@ -1,8 +1,8 @@
 import pytest
+from plenum.cli.helper import getClientGrams
 from plenum.test.cli.helper import assertCliTokens
-from prompt_toolkit.contrib.regular_languages.compiler import compile
-from plenum.cli.helper import getUtilGrams, getNodeGrams, getClientGrams, getAllGrams
 from plenum.test.cli.test_command_reg_ex import getMatchedVariables
+from prompt_toolkit.contrib.regular_languages.compiler import compile
 from sovrin.cli.helper import getNewClientGrams
 
 
