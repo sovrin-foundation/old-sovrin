@@ -50,6 +50,7 @@ from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
 from sovrin.common.util import getEncodedAttrs, ensureReqCompleted, \
     getCredDefIsrKeyAndExecuteCallback, charmDictToStringDict, getNonceForProof
+from sovrin.server.node import Node
 
 """
 Objective
@@ -69,7 +70,7 @@ class SovrinCli(PlenumCli):
     name = 'sovrin'
     properName = 'Sovrin'
     fullName = 'Sovrin Identity platform'
-
+    NodeClass = Node
     ClientClass = Client
     _genesisTransactions = []
 
