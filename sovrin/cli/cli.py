@@ -5,6 +5,7 @@ from functools import partial
 from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
+import asyncio
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.common.constants import ENVS
@@ -866,9 +867,9 @@ class SovrinCli(PlenumCli):
 
         return matchingLinksWithAvailableClaim[0]
 
-    def _getOneLinkAndReceivedClaim(self, claimName, printMsgs: bool = True) -> \
+    async def _getOneLinkAndReceivedClaim(self, claimName, printMsgs: bool = True) -> \
             (Link, Tuple, Dict):
-        matchingLinksWithRcvdClaim = self.agent.getMatchingLinksWithReceivedClaim(claimName)
+        matchingLinksWithRcvdClaim = await self.agent.getMatchingLinksWithReceivedClaimAsync(claimName)
 
         if len(matchingLinksWithRcvdClaim) == 0:
             if printMsgs:
@@ -939,9 +940,9 @@ class SovrinCli(PlenumCli):
 
             return True
 
-    def _showReceivedOrAvailableClaim(self, claimName):
+    async def _showReceivedOrAvailableClaim(self, claimName):
         matchingLink, rcvdClaim, attributes = \
-            self._getOneLinkAndReceivedClaim(claimName)
+            await self._getOneLinkAndReceivedClaim(claimName)
         if matchingLink:
             self.print("Found claim {} in link {}".
                        format(claimName, matchingLink.name))
@@ -974,9 +975,9 @@ class SovrinCli(PlenumCli):
     def _printRequestClaimMsg(self, claimName):
         self.printSuggestion(self._getReqClaimUsage(claimName))
 
-    def _showMatchingClaimProof(self, claimProofReq: ClaimProofRequest,
-                                selfAttestedAttrs):
-        matchingLinkAndReceivedClaim = self.agent.getMatchingRcvdClaims(claimProofReq.attributes)
+    async def _showMatchingClaimProof(self, claimProofReq: ClaimProofRequest,
+                                selfAttestedAttrs, matchingLink):
+        matchingLinkAndReceivedClaim = await self.agent.getMatchingRcvdClaimsAsync(claimProofReq.attributes)
 
         attributesWithValue = claimProofReq.attributes
         for k, v in claimProofReq.attributes.items():
@@ -996,6 +997,9 @@ class SovrinCli(PlenumCli):
             for k, v in issuedAttrs.items():
                 self.print('        ' + k + ': ' + v + ' (verifiable)')
 
+        self._printPostShowClaimReqSuggestion(claimProofReq.name,
+                                              matchingLink.name)
+
     def _showClaimReq(self, matchedVars):
         if matchedVars.get('show_claim_req') == 'show claim request':
             claimReqName = SovrinCli.removeSpecialChars(
@@ -1010,16 +1014,16 @@ class SovrinCli(PlenumCli):
                     self.curContext = matchingLink, claimReq, attributes
                 self.print('Found claim request "{}" in link "{}"'.
                            format(claimReq.name, matchingLink.name))
-                self._showMatchingClaimProof(claimReq, attributes)
-                self._printPostShowClaimReqSuggestion(claimReq.name,
-                                                      matchingLink.name)
+
+                self.agent.loop.call_soon(asyncio.ensure_future,
+                                          self._showMatchingClaimProof(claimReq, attributes, matchingLink))
             return True
 
     def _showClaim(self, matchedVars):
         if matchedVars.get('show_claim') == 'show claim':
             claimName = SovrinCli.removeSpecialChars(
                 matchedVars.get('claim_name'))
-            self._showReceivedOrAvailableClaim(claimName)
+            self.agent.loop.call_soon(asyncio.ensure_future, self._showReceivedOrAvailableClaim(claimName))
 
             return True
 

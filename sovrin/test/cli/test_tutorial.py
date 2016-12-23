@@ -474,7 +474,8 @@ def testShowClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
 
     do("show claim claim-to-show-not-exists",
        expect=showClaimNotFoundOut,
-       mapper=faberMap)
+       mapper=faberMap,
+       within=3)
 
 
 def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
@@ -484,7 +485,8 @@ def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
 
     do("show claim {name}",
        expect=showTranscriptClaimOut,
-       mapper=transcriptClaimMap)
+       mapper=transcriptClaimMap,
+       within=3)
 
 
 def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
@@ -523,7 +525,8 @@ def testShowFaberClaimPostReqClaim(be, do, aliceCli,
     be(aliceCli)
     do("show claim {name}",
        expect=rcvdTranscriptClaimOut,
-       mapper=transcriptClaimValueMap)
+       mapper=transcriptClaimValueMap,
+       within=3)
 
 
 def testShowAcmeInvite(be, do, aliceCli, acmeMap):
@@ -606,7 +609,8 @@ def testShowClaimReqNotExists(be, do, aliceCli, acmeMap, claimReqNotExists):
     be(aliceCli)
     do("show claim request claim-req-to-show-not-exists",
        expect=claimReqNotExists,
-       mapper=acmeMap)
+       mapper=acmeMap,
+       within=3)
 
 
 def claimReqShown(be, do, userCli, agentMap,
@@ -625,7 +629,8 @@ def claimReqShown(be, do, userCli, agentMap,
     mapping.update(claimAttrValueMap)
     do("show claim request {claim-req-to-show}",
        expect=claimReqOut,
-       mapper=mapping)
+       mapper=mapping,
+       within=3)
 
 
 def testShowJobAppClaimReqWithShortName(be, do, aliceCli, acmeMap,
@@ -672,7 +677,8 @@ def aliceSelfAttestsAttributes(be, do, aliceCli, acmeMap,
     mapping.update(transcriptClaimAttrValueMap)
     do("show claim request {claim-req-to-show}",
        expect=showJobAppClaimReqOut,
-       mapper=mapping)
+       mapper=mapping,
+       within=3)
     do("set first_name to Alice")
     do("set last_name to Garcia")
     do("set phone_number to 123-555-1212")
@@ -690,7 +696,8 @@ def testShowJobApplicationClaimReqAfterSetAttr(be, do, aliceCli,
     be(aliceCli)
     do("show claim request {claim-req-to-show}",
        expect=showJobAppClaimReqOut,
-       mapper=aliceSelfAttestsAttributes)
+       mapper=aliceSelfAttestsAttributes,
+       within=3)
 
 
 def testInvalidSigErrorResponse(be, do, aliceCli, faberMap,
@@ -843,7 +850,8 @@ def testShowAcmeClaimPostReqClaim(be, do, aliceCli,
     be(aliceCli)
     do("show claim {name}",
        expect=rcvdJobCertClaimOut,
-       mapper=jobCertificateClaimValueMap)
+       mapper=jobCertificateClaimValueMap,
+       within=3)
 
 
 @pytest.fixture(scope="module")

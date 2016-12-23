@@ -96,9 +96,6 @@ class AgentProver:
         self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
         self.notifyMsgListener(data)
 
-    def getMatchingLinksWithReceivedClaim(self, claimName=None):
-        return self.loop.run_until_complete(self.getMatchingLinksWithReceivedClaimAsync(claimName))
-
     async def getMatchingLinksWithReceivedClaimAsync(self, claimName=None):
         matchingLinkAndAvailableClaim = self.wallet.getMatchingLinksWithAvailableClaim(claimName)
         matchingLinkAndReceivedClaim = []
@@ -119,9 +116,6 @@ class AgentProver:
                     attrs = {k: issuedAttributes[k] for k in claimAttrs}
             matchingLinkAndReceivedClaim.append((li, cl, attrs))
         return matchingLinkAndReceivedClaim
-
-    def getMatchingRcvdClaims(self, attributes):
-        return self.loop.run_until_complete(self.getMatchingRcvdClaimsAsync(attributes))
 
     async def getMatchingRcvdClaimsAsync(self, attributes):
         linksAndReceivedClaim = await self.getMatchingLinksWithReceivedClaimAsync()
