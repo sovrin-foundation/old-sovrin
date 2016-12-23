@@ -21,7 +21,7 @@
             "last_name": "string",
             "ssn": "string"
       },
-      "verifiableAttributes": ["ssn"]
+      "verifiableAttributes": ["first_name", "last_name", "ssn"]
     }],
   "sig": "D1vU5fbtJbqWKdCoVJgqHBLLhh5CYspikuEXdnBVVyCnLHiYC9ZsZrDWpz3GkFFGvfC4RQ4kuB64vUFLo3F7Xk6"
 }

@@ -209,7 +209,10 @@ class ClaimProofRequest:
     @property
     def verifiableAttributeValues(self):
         return \
-            'Verifiable Attributes:' + str(self.verifiableAttributes) + '\n    '
+            'Verifiable Attributes:' + '\n    ' + \
+            format("\n    ".join(
+                ['{}'.format(v)
+                 for v in self.verifiableAttributes])) + '\n'
 
     def __str__(self):
         fixedInfo = \
