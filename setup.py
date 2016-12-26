@@ -44,14 +44,14 @@ def post_install():
 
 
 class PostInstall(install):
-    def run(self):
-        install.run(self)
+    def do_egg_install(self):
+        install.do_egg_install(self)
         post_install()
 
 
 class PostInstallDev(develop):
-    def run(self):
-        develop.run(self)
+    def do_egg_install(self):
+        develop.do_egg_install(self)
         post_install()
 
 
