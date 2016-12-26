@@ -7,7 +7,7 @@ from plenum.test.eventually import eventually
 from anoncreds.protocol.repo.public_repo import PublicRepo
 from anoncreds.protocol.types import ClaimDefinition, ID, PublicKey, RevocationPublicKey, AccumulatorPublicKey, \
     Accumulator, TailsType, TimestampType
-from sovrin.common.txn import GET_CLAIM_DEF, CLAIM_DEF, ATTR_NAMES, GET_ISSUER_KEY, REF, ISSUER_KEY
+from sovrin.common.txn import GET_CLAIM_DEF, CLAIM_DEF, ATTR_NAMES, GET_ISSUER_KEY, REF, ISSUER_KEY, PRIMARY, REVOCATION
 from sovrin.common.types import Request
 
 
@@ -60,11 +60,22 @@ class SovrinPublicRepo(PublicRepo):
             ORIGIN: id.claimDefKey.issuerId
         }
         data, seqNo = await self._sendGetReq(op)
-        data = data[DATA]
+        if not data:
+            return None
+        data = data[DATA][PRIMARY]
         return PublicKey.fromStrDict(data)
 
     async def getPublicKeyRevocation(self, id: ID) -> RevocationPublicKey:
-        pass
+        op = {
+            TXN_TYPE: GET_ISSUER_KEY,
+            REF: id.claimDefId,
+            ORIGIN: id.claimDefKey.issuerId
+        }
+        data, seqNo = await self._sendGetReq(op)
+        if not data:
+            return None
+        data = data[DATA][REVOCATION]
+        return RevocationPublicKey.fromStrDict(data)
 
     async def getPublicKeyAccumulator(self, id: ID) -> AccumulatorPublicKey:
         pass
@@ -94,11 +105,12 @@ class SovrinPublicRepo(PublicRepo):
         return claimDef
 
     async def submitPublicKeys(self, id: ID, pk: PublicKey, pkR: RevocationPublicKey = None):
-        data = pk.toStrDict()
+        pkData = pk.toStrDict()
+        pkRData = pkR.toStrDict()
         op = {
             TXN_TYPE: ISSUER_KEY,
             REF: id.claimDefId,
-            DATA: data
+            DATA: {PRIMARY: pkData, REVOCATION: pkRData}
         }
 
         await self._sendSubmitReq(op)

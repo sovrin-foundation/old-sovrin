@@ -17,6 +17,8 @@ TXNS = "Txns"
 ENC_TYPE = "encType"
 SKEY = "secretKey"
 REF = "ref"
+PRIMARY = "primary"
+REVOCATION = "revocation"
 
 allOpKeys = (TXN_TYPE, TARGET_NYM, VERKEY, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
              ENC, HASH, ALIAS)

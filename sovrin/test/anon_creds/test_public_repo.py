@@ -39,14 +39,25 @@ def publicSecretKey(submittedClaimDefGvtID, issuerGvt, primes1, looper):
 
 
 @pytest.fixture(scope="module")
+def publicSecretRevocationKey(issuerGvt, looper):
+    return looper.run(issuerGvt._nonRevocationIssuer.genRevocationKeys())
+
+
+@pytest.fixture(scope="module")
 def publicKey(publicSecretKey):
     return publicSecretKey[0]
 
 
 @pytest.fixture(scope="module")
-def submittedPublicKey(submittedClaimDefGvtID, publicRepo, publicSecretKey, looper):
+def publicRevocationKey(publicSecretRevocationKey):
+    return publicSecretRevocationKey[0]
+
+
+@pytest.fixture(scope="module")
+def submittedPublicKey(submittedClaimDefGvtID, publicRepo, publicSecretKey, publicSecretRevocationKey, looper):
     pk, sk = publicSecretKey
-    looper.run(publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk))
+    pkR, skR = publicSecretRevocationKey
+    looper.run(publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk, pkR=pkR))
 
 
 def testSubmitClaimDef(submittedClaimDefGvt, claimDefGvt):
@@ -67,6 +78,11 @@ def testSubmitPublicKey(submittedPublicKey):
     pass
 
 
-def testGetPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo, publicKey, looper):
+def testGetPrimaryPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo, publicKey, looper):
     pk = looper.run(publicRepo.getPublicKey(id=submittedClaimDefGvtID))
     assert pk == publicKey
+
+
+def testGetRevocationPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo, publicRevocationKey, looper):
+    pk = looper.run(publicRepo.getPublicKeyRevocation(id=submittedClaimDefGvtID))
+    assert pk == publicRevocationKey
