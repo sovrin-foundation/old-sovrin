@@ -1,5 +1,5 @@
 import json
-from _sha256 import sha256
+from hashlib import sha256
 from copy import deepcopy
 from operator import itemgetter
 from typing import Iterable, Any

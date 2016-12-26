@@ -1,5 +1,7 @@
 import ast
 import datetime
+import importlib
+import json
 import os
 from functools import partial
 from hashlib import sha256
@@ -34,7 +36,12 @@ from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
 from sovrin.common.util import ensureReqCompleted
-from sovrin.server.node import Node
+
+try:
+    nodeMod = importlib.import_module('sovrin.server.node')
+    nodeClass = nodeMod.Node
+except ImportError:
+    nodeClass = None
 
 """
 Objective
@@ -54,8 +61,7 @@ class SovrinCli(PlenumCli):
     name = 'sovrin'
     properName = 'Sovrin'
     fullName = 'Sovrin Identity platform'
-
-    NodeClass = Node
+    NodeClass = nodeClass
     ClientClass = Client
     _genesisTransactions = []
 
