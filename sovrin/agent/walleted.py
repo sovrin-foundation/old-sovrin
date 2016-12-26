@@ -28,8 +28,10 @@ from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
-from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-    AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS, REF_REQUEST_ID
+from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, \
+    CLAIM_PROOF, \
+    AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS, \
+    REF_REQUEST_ID
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.link import Link, constant, ClaimProofRequest
 from sovrin.client.wallet.wallet import Wallet
@@ -359,14 +361,10 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
             else:
                 self.notifyMsgListener("No matching link found")
 
-    def _getNewAvailableClaims(self, li, rcvdAvailableClaims):
-        availableClaims = []
-        for cl in rcvdAvailableClaims:
-            name, version = cl[NAME], cl[VERSION]
-            availableClaims.append((name, version,
-                                    li.remoteIdentifier))
-
-        return availableClaims
+    @staticmethod
+    def _getNewAvailableClaims(li, rcvdAvailableClaims):
+        return [(cl[NAME], cl[VERSION], li.remoteIdentifier) for cl in
+                rcvdAvailableClaims]
 
     def _handleAcceptInviteResponse(self, msg):
         body, _ = msg
@@ -394,7 +392,8 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
                         format(",".join(
                         [n for n, _, _ in newAvailableClaims])))
 
-                self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
+                self._checkIfLinkIdentifierWrittenToSovrin(li,
+                                                           newAvailableClaims)
 
         else:
             self.notifyMsgListener("No matching link found")
@@ -472,10 +471,12 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         if reqId:
             # TODO: This logic assumes that the req id is time based
             curTimeBasedId = getTimeBasedId()
-            timeTakenInMillis = convertTimeBasedReqIdToMillis(curTimeBasedId - reqId)
+            timeTakenInMillis = convertTimeBasedReqIdToMillis(
+                curTimeBasedId - reqId)
 
             if timeTakenInMillis >= 1000:
-                responseTime = ' ({} sec)'.format(round(timeTakenInMillis / 1000, 2))
+                responseTime = ' ({} sec)'.format(
+                    round(timeTakenInMillis / 1000, 2))
             else:
                 responseTime = ' ({} ms)'.format(round(timeTakenInMillis, 2))
         else:
@@ -591,7 +592,8 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
         if claimProofRequestsJson:
             for cr in claimProofRequestsJson:
                 claimProofRequests.append(
-                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES], cr['verifiableAttributes']))
+                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES],
+                                      cr['verifiableAttributes']))
 
         self.notifyMsgListener("1 link invitation found for {}.".
                                format(linkInvitationName))

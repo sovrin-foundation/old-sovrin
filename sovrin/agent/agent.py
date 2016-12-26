@@ -212,7 +212,7 @@ def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None, loop
                       loop=loop)
 
 
-def runAgent(agent, looper=None, bootstrap=True, ):
+def runAgent(agent, looper=None, bootstrap=True):
     def doRun(looper):
         looper.add(agent)
         logger.debug("Running {} now (port: {})".format(agent.name, agent.port))
