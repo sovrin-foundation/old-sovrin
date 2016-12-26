@@ -15,12 +15,14 @@ def publicRepo(steward, stewardWallet):
 
 @pytest.fixture(scope="module")
 def issuerGvt(publicRepo):
-    return Issuer(IssuerWalletInMemory('issuer1', publicRepo), AttributeRepoInMemory())
+    return Issuer(IssuerWalletInMemory('issuer1', publicRepo),
+                  AttributeRepoInMemory())
 
 
 @pytest.fixture(scope="module")
 def claimDefGvt(stewardWallet):
-    return ClaimDefinition('GVT', '1.0', GVT.attribNames(), 'CL', stewardWallet.defaultId)
+    return ClaimDefinition('GVT', '1.0', GVT.attribNames(), 'CL',
+                           stewardWallet.defaultId)
 
 
 @pytest.fixture(scope="module")
@@ -30,12 +32,14 @@ def submittedClaimDefGvt(publicRepo, claimDefGvt, looper):
 
 @pytest.fixture(scope="module")
 def submittedClaimDefGvtID(submittedClaimDefGvt):
-    return ID(claimDefKey=submittedClaimDefGvt.getKey(), claimDefId=submittedClaimDefGvt.id)
+    return ID(claimDefKey=submittedClaimDefGvt.getKey(),
+              claimDefId=submittedClaimDefGvt.seqId)
 
 
 @pytest.fixture(scope="module")
 def publicSecretKey(submittedClaimDefGvtID, issuerGvt, primes1, looper):
-    return looper.run(issuerGvt._primaryIssuer.genKeys(submittedClaimDefGvtID, **primes1))
+    return looper.run(
+        issuerGvt._primaryIssuer.genKeys(submittedClaimDefGvtID, **primes1))
 
 
 @pytest.fixture(scope="module")
@@ -54,35 +58,51 @@ def publicRevocationKey(publicSecretRevocationKey):
 
 
 @pytest.fixture(scope="module")
-def submittedPublicKey(submittedClaimDefGvtID, publicRepo, publicSecretKey, publicSecretRevocationKey, looper):
+def submittedPublicKeys(submittedClaimDefGvtID, publicRepo, publicSecretKey,
+                        publicSecretRevocationKey, looper):
     pk, sk = publicSecretKey
     pkR, skR = publicSecretRevocationKey
-    looper.run(publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk, pkR=pkR))
+    return looper.run(
+        publicRepo.submitPublicKeys(id=submittedClaimDefGvtID, pk=pk, pkR=pkR))
+
+
+@pytest.fixture(scope="module")
+def submittedPublicKey(submittedPublicKeys):
+    return submittedPublicKeys[0]
+
+
+@pytest.fixture(scope="module")
+def submittedPublicRevocationKey(submittedPublicKeys):
+    return submittedPublicKeys[1]
 
 
 def testSubmitClaimDef(submittedClaimDefGvt, claimDefGvt):
     assert submittedClaimDefGvt
-    assert submittedClaimDefGvt.name == claimDefGvt.name
-    assert submittedClaimDefGvt.version == claimDefGvt.version
-    assert submittedClaimDefGvt.attrNames == claimDefGvt.attrNames
-    assert submittedClaimDefGvt.type == claimDefGvt.type
-    assert submittedClaimDefGvt.issuerId == claimDefGvt.issuerId
+    assert submittedClaimDefGvt.seqId
+    submittedClaimDefGvt = submittedClaimDefGvt._replace(
+        seqId=None)  # initial claim def didn't have seqNo
+    assert submittedClaimDefGvt == claimDefGvt
 
 
 def testGetClaimDef(submittedClaimDefGvt, publicRepo, looper):
-    claimDef = looper.run(publicRepo.getClaimDef(ID(claimDefKey=submittedClaimDefGvt.getKey())))
+    claimDef = looper.run(
+        publicRepo.getClaimDef(ID(claimDefKey=submittedClaimDefGvt.getKey())))
     assert claimDef == submittedClaimDefGvt
 
 
-def testSubmitPublicKey(submittedPublicKey):
-    pass
+def testSubmitPublicKey(submittedPublicKeys):
+    assert submittedPublicKeys
 
 
-def testGetPrimaryPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo, publicKey, looper):
+def testGetPrimaryPublicKey(submittedClaimDefGvtID, submittedPublicKey,
+                            publicRepo, looper):
     pk = looper.run(publicRepo.getPublicKey(id=submittedClaimDefGvtID))
-    assert pk == publicKey
+    assert pk == submittedPublicKey
 
 
-def testGetRevocationPublicKey(submittedClaimDefGvtID, submittedPublicKey, publicRepo, publicRevocationKey, looper):
-    pk = looper.run(publicRepo.getPublicKeyRevocation(id=submittedClaimDefGvtID))
-    assert pk == publicRevocationKey
+def testGetRevocationPublicKey(submittedClaimDefGvtID,
+                               submittedPublicRevocationKey,
+                               publicRepo, looper):
+    pk = looper.run(
+        publicRepo.getPublicKeyRevocation(id=submittedClaimDefGvtID))
+    assert pk == submittedPublicRevocationKey

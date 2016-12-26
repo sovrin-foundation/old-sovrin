@@ -8,7 +8,7 @@ from anoncreds.protocol.issuer import Issuer
 from anoncreds.protocol.types import ClaimDefinitionKey, ID
 from anoncreds.protocol.types import ClaimRequest
 from sovrin.agent.constants import EVENT_NOTIFY_MSG
-from sovrin.agent.msg_constants import CLAIM
+from sovrin.agent.msg_constants import CLAIM, CLAIM_REQ_FIELD, CLAIM_FIELD
 
 
 class AgentIssuer:
@@ -24,25 +24,27 @@ class AgentIssuer:
         if not self.isClaimAvailable(link, name):
             self.notifyToRemoteCaller(
                 EVENT_NOTIFY_MSG, "This claim is not yet available",
-                self.issuer.wallet.defaultId, frm, origReqId=body.get(f.REQ_ID.nm))
+                self.issuer.wallet.defaultId, frm,
+                origReqId=body.get(f.REQ_ID.nm))
             return
 
         version = body[VERSION]
         origin = body[ORIGIN]
-        claimReq = ClaimRequest.fromStrDict(body['claimReq'])
+        claimReq = ClaimRequest.fromStrDict(body[CLAIM_REQ_FIELD])
 
         claimDefKey = ClaimDefinitionKey(name, version, origin)
         claimDef = await self.issuer.wallet.getClaimDef(ID(claimDefKey))
-        claimDefId = ID(claimDefKey=claimDefKey, claimDefId=claimDef.id)
+        claimDefId = ID(claimDefKey=claimDefKey, claimDefId=claimDef.seqId)
 
-        self._addAtrribute(claimDefKey=claimDefKey, proverId=claimReq.userId, link=link)
+        self._addAtrribute(claimDefKey=claimDefKey, proverId=claimReq.userId,
+                           link=link)
 
         claim = await self.issuer.issueClaim(claimDefId, claimReq)
 
         claimDetails = {
             NAME: claimDef.name,
             VERSION: claimDef.version,
-            'claim': claim.toStrDict(),
+            CLAIM_FIELD: claim.toStrDict(),
             f.IDENTIFIER.nm: claimDef.issuerId
         }
 

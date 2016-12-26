@@ -100,7 +100,7 @@ class FaberAgent(TestWalletedAgent):
         self.availableClaims.append({
             NAME: claimDef.name,
             VERSION: claimDef.version,
-            "claimDefSeqNo": claimDef.id
+            "claimDefSeqNo": claimDef.seqId
         })
 
     def _addAtrribute(self, claimDefKey, proverId, link):
@@ -114,10 +114,10 @@ class FaberAgent(TestWalletedAgent):
                                                  self._claimDefKey.version,
                                                  self._attrDef.attribNames(),
                                                  'CL')
-        claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
+        claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.seqId)
         p_prime, q_prime = primes["prime2"]
         await self.issuer.genKeys(claimDefId, p_prime=p_prime, q_prime=q_prime)
-        await self.issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
+        await self.issuer.issueAccumulator(claimDefId=claimDefId, iA='110', L=5)
         await self.initAvailableClaimList()
 
     async def bootstrap(self):

@@ -3,7 +3,8 @@ import os
 from plenum.common.log import getlogger
 from plenum.common.txn import NAME, VERSION
 
-from anoncreds.protocol.types import AttribType, AttribDef, ClaimDefinitionKey, ID
+from anoncreds.protocol.types import AttribType, AttribDef, ClaimDefinitionKey, \
+    ID
 from sovrin.agent.agent import createAgent, runAgent
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
@@ -46,14 +47,17 @@ class AcmeAgent(TestWalletedAgent):
         self._attrDefJobCert = AttribDef('Acme Job Certificat',
                                          [AttribType('first_name', encode=True),
                                           AttribType('last_name', encode=True),
-                                          AttribType('employee_status', encode=True),
+                                          AttribType('employee_status',
+                                                     encode=True),
                                           AttribType('experience', encode=True),
-                                          AttribType('salary_bracket', encode=True)])
+                                          AttribType('salary_bracket',
+                                                     encode=True)])
 
         self._attrDefJobApp = AttribDef('Acme Job Application',
                                         [AttribType('first_name', encode=True),
                                          AttribType('last_name', encode=True),
-                                         AttribType('phone_number', encode=True),
+                                         AttribType('phone_number',
+                                                    encode=True),
                                          AttribType('degree', encode=True),
                                          AttribType('status', encode=True),
                                          AttribType('ssn', encode=True)])
@@ -86,8 +90,10 @@ class AcmeAgent(TestWalletedAgent):
                 salary_bracket="between $50,000 to $70,000")
         }
 
-        self._claimDefJobCertKey = ClaimDefinitionKey("Job-Certificate", "0.2", self.wallet.defaultId)
-        self._claimDefJobAppKey = ClaimDefinitionKey("Job-Application", "0.2", self.wallet.defaultId)
+        self._claimDefJobCertKey = ClaimDefinitionKey("Job-Certificate", "0.2",
+                                                      self.wallet.defaultId)
+        self._claimDefJobAppKey = ClaimDefinitionKey("Job-Application", "0.2",
+                                                     self.wallet.defaultId)
 
     def _addAtrribute(self, claimDefKey, proverId, link):
         attr = self._attrsJobCert[self.getInternalIdByInvitedNonce(proverId)]
@@ -117,22 +123,26 @@ class AcmeAgent(TestWalletedAgent):
             return await self.getJobCertAvailableClaimList()
 
     async def getJobCertAvailableClaimList(self):
-        claimDef = await self.issuer.wallet.getClaimDef(ID(self._claimDefJobCertKey))
+        claimDef = await self.issuer.wallet.getClaimDef(
+            ID(self._claimDefJobCertKey))
         return [{
             NAME: claimDef.name,
             VERSION: claimDef.version,
-            "claimDefSeqNo": claimDef.id
+            "claimDefSeqNo": claimDef.seqId
         }]
 
     async def addClaimDefsToWallet(self):
-        claimDefJobCert = await self.issuer.genClaimDef(self._claimDefJobCertKey.name,
-                                                        self._claimDefJobCertKey.version,
-                                                        self._attrDefJobCert.attribNames(),
-                                                        'CL')
-        claimDefJobCertId = ID(claimDefKey=claimDefJobCert.getKey(), claimDefId=claimDefJobCert.id)
+        claimDefJobCert = await self.issuer.genClaimDef(
+            self._claimDefJobCertKey.name,
+            self._claimDefJobCertKey.version,
+            self._attrDefJobCert.attribNames(),
+            'CL')
+        claimDefJobCertId = ID(claimDefKey=claimDefJobCert.getKey(),
+                               claimDefId=claimDefJobCert.seqId)
         p_prime, q_prime = primes["prime1"]
-        await self.issuer.genKeys(claimDefJobCertId, p_prime=p_prime, q_prime=q_prime)
-        await self.issuer.issueAccumulator(id=claimDefJobCertId, iA='110', L=5)
+        await self.issuer.genKeys(claimDefJobCertId, p_prime=p_prime,
+                                  q_prime=q_prime)
+        await self.issuer.issueAccumulator(claimDefId=claimDefJobCertId, iA='110', L=5)
 
     async def bootstrap(self):
         await self.addClaimDefsToWallet()

@@ -7,7 +7,8 @@ from anoncreds.protocol.types import FullProof
 from anoncreds.protocol.types import ProofInput
 from anoncreds.protocol.utils import fromDictWithStrValues
 from anoncreds.protocol.verifier import Verifier
-from sovrin.agent.msg_constants import CLAIM_PROOF_STATUS
+from sovrin.agent.msg_constants import CLAIM_PROOF_STATUS, PROOF_FIELD, \
+    PROOF_INPUT_FIELD, REVEALED_ATTRS_FIELD
 from sovrin.common.util import getNonceForProof
 
 
@@ -23,9 +24,9 @@ class AgentVerifier(Verifier):
 
         claimName = body[NAME]
         nonce = getNonceForProof(body[NONCE])
-        proof = FullProof.fromStrDict(body['proof'])
-        proofInput = ProofInput.fromStrDict(body['proofInput'])
-        revealedAttrs = fromDictWithStrValues(body['revealedAttrs'])
+        proof = FullProof.fromStrDict(body[PROOF_FIELD])
+        proofInput = ProofInput.fromStrDict(body[PROOF_INPUT_FIELD])
+        revealedAttrs = fromDictWithStrValues(body[REVEALED_ATTRS_FIELD])
 
         result = await self.verifier.verify(proofInput, proof, revealedAttrs, nonce)
 
