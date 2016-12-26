@@ -113,7 +113,7 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
         claimDefId = ID(ClaimDefinitionKey("Transcript", "1.2", faberId))
         claimDef = await faberAgent.issuer.wallet.getClaimDef(claimDefId)
         assert claimDef
-        assert claimDef.id is not None
+        assert claimDef.seqId
 
         issuerKey = faberAgent.issuer.wallet.getPublicKey(claimDefId)
         assert issuerKey
@@ -123,10 +123,11 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
         claimDefId = ID(ClaimDefinitionKey("Job-Certificate", "0.2", acmeId))
         claimDef = await acmeAgent.issuer.wallet.getClaimDef(claimDefId)
         assert claimDef
-        assert claimDef.id is not None
+        assert claimDef.seqId
 
         issuerKey = await acmeAgent.issuer.wallet.getPublicKey(claimDefId)
         assert issuerKey
+        assert issuerKey.seqId
 
     philCLI.looper.run(eventually(checkTranscriptWritten, timeout=10))
     philCLI.looper.run(eventually(checkJobCertWritten, timeout=10))

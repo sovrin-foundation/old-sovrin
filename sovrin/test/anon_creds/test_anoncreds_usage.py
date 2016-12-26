@@ -32,17 +32,18 @@ def testAnonCredsPrimaryOnly(issuer, prover, verifier, attrRepo, primes1, looper
     async def doTestAnonCredsPrimaryOnly():
         # 1. Create a Claim Def
         claimDef = await issuer.genClaimDef('GVT', '1.0', GVT.attribNames())
-        claimDefId = ID(claimDefKey=claimDef.getKey(), claimDefId=claimDef.id)
+        claimDefId = ID(claimDefKey=claimDef.getKey(),
+                        claimDefId=claimDef.seqId)
 
         # 2. Create keys for the Claim Def
         await issuer.genKeys(claimDefId, **primes1)
 
         # 3. Issue accumulator
-        await issuer.issueAccumulator(id=claimDefId, iA='110', L=5)
+        await issuer.issueAccumulator(claimDefId=claimDefId, iA='110', L=5)
 
         # 4. set attributes for user1
         attrs = GVT.attribs(name='Alex', age=28, height=175, sex='male')
-        proverId = str(prover.id)
+        proverId = str(prover.proverId)
         attrRepo.addAttributes(claimDef.getKey(), proverId, attrs)
 
         # 5. request Claims
