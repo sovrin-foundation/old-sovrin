@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from ledger.stores.directory_store import DirectoryStore
 from plenum.common.txn import ORIGIN, TARGET_NYM, NAME, RAW, ENC, HASH
+
 from sovrin.common.txn import SKEY, ENC_TYPE
 from sovrin.persistence.attribute_store import AttributeStore
 

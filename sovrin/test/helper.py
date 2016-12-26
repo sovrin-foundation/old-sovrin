@@ -2,19 +2,15 @@ import inspect
 import json
 import os
 import shutil
-import uuid
 from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.test.conftest import staticPrimes
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.signer_did import DidSigner
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import REQACK, NAME, VERSION, TYPE
+from plenum.common.txn import REQACK
 from plenum.common.types import HA, Identifier
 from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
@@ -29,14 +25,13 @@ from plenum.test.test_node import checkNodesAreReady, TestNodeCore
 from plenum.test.test_node import checkNodesConnected
 from plenum.test.test_stack import StackedTester, TestStack
 from plenum.test.testable import Spyable
+
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
 from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM, \
-    ATTR_NAMES
+from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM
 from sovrin.server.node import Node
 
 logger = getlogger()
@@ -511,40 +506,6 @@ def addRawAttribute(looper, client, wallet, name, value, dest=None,
     addAttributeAndCheck(looper, client, wallet, attrib)
 
 
-def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
-    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    sid = agent.wallet.addClaimDefSk(str(csk))
-    claimDef = ClaimDef(seqNo=None,
-                       attrNames=claimDefToBeAdded[ATTR_NAMES],
-                       name=claimDefToBeAdded[NAME],
-                       version=claimDefToBeAdded[VERSION],
-                       origin=agent.wallet.defaultId,
-                       typ=claimDefToBeAdded[TYPE])
-    agent.wallet.addClaimDef(claimDef)
-    reqs = agent.wallet.preparePending()
-    agent.client.submitReqs(*reqs)
-
-    def chk():
-        assert claimDef.seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-
-    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
-    agent.wallet.addIssuerSecretKey(isk)
-    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=claimDef.seqNo,
-                       secretKeyUid=isk.pubkey.uid, origin=agent.wallet.defaultId)
-    agent.wallet.addIssuerPublicKey(ipk)
-    reqs = agent.wallet.preparePending()
-    agent.client.submitReqs(*reqs)
-
-    key = (agent.wallet.defaultId, claimDef.seqNo)
-
-    def chk():
-        assert agent.wallet.getIssuerPublicKey(key).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-    return claimDef.seqNo, ipk.seqNo
 
 
 def buildStewardClient(looper, tdir, stewardWallet):

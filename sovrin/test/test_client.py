@@ -10,6 +10,7 @@ from plenum.common.txn import REQNACK, ENC, DATA, REPLY, TXN_TIME
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict
 from plenum.test.eventually import eventually
+
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet

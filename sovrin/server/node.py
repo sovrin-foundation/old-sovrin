@@ -18,12 +18,13 @@ from plenum.common.types import Reply, RequestAck, RequestNack, f, \
 from plenum.common.util import error
 from plenum.persistence.storage import initStorage
 from plenum.server.node import Node as PlenumNode
+
 from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, \
     TARGET_NYM, allOpKeys, validTxnTypes, ATTRIB, SPONSOR, NYM,\
     ROLE, STEWARD, USER, GET_ATTR, DISCLO, DATA, GET_NYM, \
     TXN_ID, TXN_TIME, reqOpKeys, GET_TXNS, LAST_TXN, TXNS, \
-    getTxnOrderedFields, CRED_DEF, GET_CRED_DEF, isValidRole, openTxns, \
+    getTxnOrderedFields, CLAIM_DEF, GET_CLAIM_DEF, isValidRole, openTxns, \
     ISSUER_KEY, GET_ISSUER_KEY, REF
 from sovrin.common.types import Request
 from sovrin.common.util import dateTimeEncoding
@@ -205,7 +206,7 @@ class Node(PlenumNode):
                         request.reqId,
                         "Only user's sponsor can add attribute for that user")
         # TODO: Just for now. Later do something meaningful here
-        elif typ in [DISCLO, GET_ATTR, CRED_DEF, GET_CRED_DEF, ISSUER_KEY,
+        elif typ in [DISCLO, GET_ATTR, CLAIM_DEF, GET_CLAIM_DEF, ISSUER_KEY,
                      GET_ISSUER_KEY]:
             pass
         else:
@@ -277,17 +278,17 @@ class Node(PlenumNode):
             })
             self.transmitToClient(Reply(result), frm)
 
-    def processGetCredDefReq(self, request: Request, frm: str):
+    def processGetClaimDefReq(self, request: Request, frm: str):
         issuerNym = request.operation[TARGET_NYM]
         name = request.operation[DATA][NAME]
         version = request.operation[DATA][VERSION]
-        credDef = self.graphStore.getCredDef(issuerNym, name, version)
+        claimDef = self.graphStore.getClaimDef(issuerNym, name, version)
         result = {
             TXN_ID: self.genTxnId(
                 request.identifier, request.reqId)
         }
         result.update(request.operation)
-        result[DATA] = json.dumps(credDef, sort_keys=True)
+        result[DATA] = json.dumps(claimDef, sort_keys=True)
         result.update({
             f.IDENTIFIER.nm: request.identifier,
             f.REQ_ID.nm: request.reqId,
@@ -335,8 +336,8 @@ class Node(PlenumNode):
             self.processGetNymReq(request, frm)
         elif request.operation[TXN_TYPE] == GET_TXNS:
             self.processGetTxnReq(request, frm)
-        elif request.operation[TXN_TYPE] == GET_CRED_DEF:
-            self.processGetCredDefReq(request, frm)
+        elif request.operation[TXN_TYPE] == GET_CLAIM_DEF:
+            self.processGetClaimDefReq(request, frm)
         elif request.operation[TXN_TYPE] == GET_ATTR:
             self.processGetAttrsReq(request, frm)
         elif request.operation[TXN_TYPE] == GET_ISSUER_KEY:
@@ -394,8 +395,8 @@ class Node(PlenumNode):
             self.graphStore.addNymTxnToGraph(result)
         elif result[TXN_TYPE] == ATTRIB:
             self.graphStore.addAttribTxnToGraph(result)
-        elif result[TXN_TYPE] == CRED_DEF:
-            self.graphStore.addCredDefTxnToGraph(result)
+        elif result[TXN_TYPE] == CLAIM_DEF:
+            self.graphStore.addClaimDefTxnToGraph(result)
         elif result[TXN_TYPE] == ISSUER_KEY:
             self.graphStore.addIssuerKeyTxnToGraph(result)
         else:

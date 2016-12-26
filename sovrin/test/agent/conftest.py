@@ -1,5 +1,6 @@
 from plenum.common.port_dispenser import genHa
 from plenum.common.signer_did import DidSigner
+
 from sovrin.common.strict_types import strict_types
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 
@@ -23,17 +24,17 @@ from plenum.common.looper import Looper
 from plenum.common.util import randomString
 from plenum.test.eventually import eventually
 from plenum.test.helper import assertFunc
+from sovrin.agent.agent import runAgent
 from sovrin.agent.agent import WalletedAgent
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.txn import SPONSOR, ENDPOINT
-from sovrin.test.agent.acme import runAcme
-from sovrin.test.agent.faber import runFaber
+from sovrin.test.agent.acme import createAcme
+from sovrin.test.agent.faber import createFaber
 from sovrin.test.agent.helper import ensureAgentsConnected, buildFaberWallet, \
     buildAcmeWallet, buildThriftWallet
-from sovrin.test.agent.thrift import runThrift
-from sovrin.test.helper import addClaimDefAndIssuerKeys, TestClient
-from sovrin.test.helper import createNym, addAttributeAndCheck
+from sovrin.test.agent.thrift import createThrift
+from sovrin.test.helper import createNym, addAttributeAndCheck, TestClient
 
 # noinspection PyUnresolvedReferences
 from sovrin.test.conftest import nodeSet, updatedDomainTxnFile, \
@@ -138,11 +139,9 @@ def thriftAgentPort():
 
 @pytest.fixture(scope="module")
 def faberAgent(tdirWithPoolTxns, faberAgentPort, faberWallet):
-    agent = runFaber(faberWallet.name, faberWallet,
-                     basedirpath=tdirWithPoolTxns,
-                     port=faberAgentPort,
-                     startRunning=False, bootstrap=False)
-    return agent
+    return createFaber(faberWallet.name, faberWallet,
+                       basedirpath=tdirWithPoolTxns,
+                       port=faberAgentPort)
 
 
 @pytest.fixture(scope="module")
@@ -152,7 +151,6 @@ def faberAdded(nodeSet,
                emptyLooper,
                faberAgentPort,
                faberAgent):
-
     attrib = createAgentAndAddEndpoint(emptyLooper,
                                        faberAgent.wallet.defaultId,
                                        faberAgent.wallet.getVerkey(),
@@ -169,40 +167,26 @@ def faberIsRunning(emptyLooper, tdirWithPoolTxns, faberWallet,
     faberWallet.pendSyncRequests()
     prepared = faberWallet.preparePending()
     faber.client.submitReqs(*prepared)
-    emptyLooper.add(faber)
-    claimName, claimVersion = "Transcript", "1.2"
-    claimDef = {
-            "name": claimName,
-            "version": claimVersion,
-            "type": "CL",
-            "attr_names": ["student_name", "ssn", "degree", "year", "status"]
-    }
 
-    cdSeqNo, iskSeqNo = addClaimDefAndIssuerKeys(emptyLooper, faber, claimDef)
-    faber._seqNos = {
-        (claimName, claimVersion): (cdSeqNo, iskSeqNo)
-    }
-    faber.initAvailableClaimList()
+    runAgent(faber, emptyLooper)
 
     return faber, faberWallet
 
 
 @pytest.fixture(scope="module")
 def acmeAgent(tdirWithPoolTxns, acmeAgentPort, acmeWallet):
-    agent = runAcme(acmeWallet.name, acmeWallet,
-                     basedirpath=tdirWithPoolTxns,
-                     port=acmeAgentPort,
-                     startRunning=False, bootstrap=False)
-    return agent
+    return createAcme(acmeWallet.name, acmeWallet,
+                      basedirpath=tdirWithPoolTxns,
+                      port=acmeAgentPort)
 
 
 @pytest.fixture(scope="module")
 def acmeAdded(nodeSet,
-               steward,
-               stewardWallet,
-               emptyLooper,
-            acmeAgentPort,
-               acmeAgent):
+              steward,
+              stewardWallet,
+              emptyLooper,
+              acmeAgentPort,
+              acmeAgent):
     attrib = createAgentAndAddEndpoint(emptyLooper,
                                        acmeAgent.wallet.defaultId,
                                        acmeAgent.wallet.getVerkey(),
@@ -219,30 +203,17 @@ def acmeIsRunning(emptyLooper, tdirWithPoolTxns, acmeWallet, acmeAgent,
     acmeWallet.pendSyncRequests()
     prepared = acmeWallet.preparePending()
     acme.client.submitReqs(*prepared)
-    emptyLooper.add(acme)
-    claimName, claimVersion = "Job-Certificate", "0.2"
-    claimDef = {
-        "name": claimName,
-        "version": claimVersion,
-        "type": "CL",
-        "attr_names": ["first_name", "last_name", "employee_status",
-                       "experience", "salary_bracket"]
-    }
 
-    cdSeqNo, iskSeqNo = addClaimDefAndIssuerKeys(emptyLooper, acme, claimDef)
-    acme._seqNos = {
-        (claimName, claimVersion): (cdSeqNo, iskSeqNo)
-    }
+    runAgent(acme, emptyLooper)
+
     return acme, acmeWallet
 
 
 @pytest.fixture(scope="module")
 def thriftAgent(tdirWithPoolTxns, thriftAgentPort, thriftWallet):
-    agent = runThrift(thriftWallet.name, thriftWallet,
-                     basedirpath=tdirWithPoolTxns,
-                     port=thriftAgentPort,
-                     startRunning=False, bootstrap=False)
-    return agent
+    return createThrift(thriftWallet.name, thriftWallet,
+                        basedirpath=tdirWithPoolTxns,
+                        port=thriftAgentPort)
 
 
 @pytest.fixture(scope="module")
@@ -252,7 +223,9 @@ def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
     thriftWallet.pendSyncRequests()
     prepared = thriftWallet.preparePending()
     thrift.client.submitReqs(*prepared)
-    emptyLooper.add(thrift)
+
+    runAgent(thrift, emptyLooper)
+
     return thrift, thriftWallet
 
 
@@ -281,6 +254,7 @@ def acmeNonceForAlice():
 @pytest.fixture(scope="module")
 def aliceAcceptedFaber(faberIsRunning, faberNonceForAlice, faberAdded,
                        aliceIsRunning, emptyLooper,
+                       aliceFaberInvitationLoaded,
                        aliceFaberInvitationLinkSynced):
     """
     Faber creates a Link object, generates a link invitation file.

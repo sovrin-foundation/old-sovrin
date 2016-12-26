@@ -4,6 +4,7 @@ from copy import deepcopy
 from plenum.common.exceptions import UnknownIdentifier
 from plenum.common.txn import TXN_TYPE, RAW, ENC, HASH
 from plenum.server.client_authn import NaclAuthNr
+
 from sovrin.common.txn import ATTRIB
 from sovrin.persistence.identity_graph import IdentityGraph
 

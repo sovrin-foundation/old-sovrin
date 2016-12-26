@@ -1,48 +1,50 @@
+import asyncio
 import collections
+import inspect
 import json
 import time
 from abc import abstractmethod
 from datetime import datetime
-from typing import Dict, Any, Union
+from typing import Dict, Union
 
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.utils import strToCryptoInteger
-from anoncreds.protocol.verifier import Verifier
 from base58 import b58decode
 from plenum.common.log import getlogger
 from plenum.common.signer_did import DidSigner
 from plenum.common.signing import serializeMsg
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
-    TARGET_NYM, ORIGIN, ATTRIBUTES, VERKEY
+    TARGET_NYM, ATTRIBUTES, VERKEY
 from plenum.common.types import f
 from plenum.common.util import getTimeBasedId, getCryptonym, \
     isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
 from plenum.common.verifier import DidVerifier
+
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
+from sovrin.agent.agent_issuer import AgentIssuer
+from sovrin.agent.agent_prover import AgentProver
+from sovrin.agent.agent_verifier import AgentVerifier
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
-from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
+from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, \
+    CLAIM_PROOF, \
     AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS, \
     REF_REQUEST_ID
-from sovrin.anon_creds.constant import CRED_A, CRED_E, V_PRIME_PRIME
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.credential import Credential
-from sovrin.client.wallet.link import Link, constant
+from sovrin.client.wallet.link import Link, constant, ClaimProofRequest
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
     NotConnectedToNetwork, LinkNotReady
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ENDPOINT
-from sovrin.common.util import ensureReqCompleted, getEncodedAttrs, \
-    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback
+from sovrin.common.util import ensureReqCompleted
 
 logger = getlogger()
 
 
-class Walleted:
+class Walleted(AgentIssuer, AgentProver, AgentVerifier):
     """
     An agent with a self-contained wallet.
 
@@ -51,7 +53,15 @@ class Walleted:
     case, the agent holds a wallet.
     """
 
-    def __init__(self):
+    def __init__(self,
+                 issuer: Issuer = None,
+                 prover: Prover = None,
+                 verifier: Verifier = None):
+
+        AgentIssuer.__init__(self, issuer)
+        AgentProver.__init__(self, prover)
+        AgentVerifier.__init__(self, verifier)
+
         # TODO Why are we syncing the client here?
         if self.client:
             self.syncClient()
@@ -62,13 +72,16 @@ class Walleted:
 
             PING: self._handlePing,
             ACCEPT_INVITE: self._handleAcceptance,
-            REQUEST_CLAIM: self._reqClaim,
+
+            REQUEST_CLAIM: self.processReqClaim,
+            CLAIM: self.handleReqClaimResponse,
+
             CLAIM_PROOF: self.verifyClaimProof,
+            CLAIM_PROOF_STATUS: self.handleProofStatusResponse,
 
             PONG: self._handlePong,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
-            CLAIM: self._handleReqClaimResponse,
-            CLAIM_PROOF_STATUS: self.handleClaimProofStatus,
+
             NEW_AVAILABLE_CLAIMS: self._handleNewAvailableClaimsDataResponse
         }
 
@@ -94,15 +107,15 @@ class Walleted:
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
                CLAIM, AVAIL_CLAIM_LIST, EVENT, PONG
 
-    def postClaimVerif(self, claimName, link, frm):
+    async def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
 
     def isClaimAvailable(self, link, claimName):
         raise NotImplementedError
 
-    def _postClaimVerif(self, claimName, link, frm):
+    async def _postClaimVerif(self, claimName, link, frm):
         link.verifiedClaimProofs.append(claimName)
-        self.postClaimVerif(claimName, link, frm)
+        await self.postClaimVerif(claimName, link, frm)
 
     def getAvailableClaimList(self):
         raise NotImplementedError
@@ -298,7 +311,9 @@ class Walleted:
         if handler:
             # TODO we should verify signature here
             frmHa = self.endpoint.getRemote(frm).ha
-            handler((body, (frm, frmHa)))
+            res = handler((body, (frm, frmHa)))
+            if inspect.isawaitable(res):
+                self.loop.call_soon(asyncio.ensure_future, res)
         else:
             raise NotImplementedError("No type handle found for {} message".
                                       format(typ))
@@ -307,17 +322,6 @@ class Walleted:
         body, _ = msg
         self.notifyMsgListener("Error ({}) occurred while processing this "
                                "msg: {}".format(body[DATA], body[REQ_MSG]))
-
-    def _sendGetClaimDefRequests(self, availableClaims, postFetchCredDef=None):
-        for name, version, origin in availableClaims:
-            req = self.wallet.requestClaimDef((name, version, origin),
-                                              sender=self.wallet.defaultId)
-
-            self.client.submitReqs(req)
-
-            if postFetchCredDef:
-                self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                     req.key, self.client, postFetchCredDef)
 
     def _handlePing(self, msg):
         body, (frm, ha) = msg
@@ -335,25 +339,6 @@ class Walleted:
         else:
             self.notifyMsgListener("    Pong received from unknown endpoint")
 
-    def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
-                                         postAllFetched):
-
-        fetchedCount = 0
-
-        def postEachCredDefFetch(reply, err):
-            nonlocal fetchedCount
-            fetchedCount += 1
-            postAllCreDefFetched()
-
-        self._sendGetClaimDefRequests(newAvailableClaims, postEachCredDefFetch)
-
-        # TODO: Find a better name
-        def postAllCreDefFetched():
-            if fetchedCount == len(newAvailableClaims):
-                postAllFetched(li, newAvailableClaims)
-
-        postAllCreDefFetched()
-
     def _handleNewAvailableClaimsDataResponse(self, msg):
         body, _ = msg
         isVerified = self.verifySignature(body)
@@ -363,42 +348,23 @@ class Walleted:
             if li:
                 self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
 
-                def postAllFetched(li, newAvailableClaims):
-                    if newAvailableClaims:
-                        claimNames = ", ".join(
-                            [n for n, _, _ in newAvailableClaims])
-                        self.notifyMsgListener(
-                            "    Available Claim(s): {}\n".format(claimNames))
+                rcvdAvailableClaims = body[DATA][CLAIMS_LIST_FIELD]
+                newAvailableClaims = self._getNewAvailableClaims(
+                    li, rcvdAvailableClaims)
+                if newAvailableClaims:
+                    li.availableClaims.extend(newAvailableClaims)
+                    claimNames = ", ".join(
+                        [n for n, _, _ in newAvailableClaims])
+                    self.notifyMsgListener(
+                        "    Available Claim(s): {}\n".format(claimNames))
 
-                self._processNewAvailableClaimsData(
-                    li, body[DATA][CLAIMS_LIST_FIELD], postAllFetched)
             else:
                 self.notifyMsgListener("No matching link found")
 
-    def _getNewAvailableClaims(self, li, rcvdAvailableClaims):
-        availableClaims = []
-        for cl in rcvdAvailableClaims:
-            if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
-                name, version = cl[NAME], cl[VERSION]
-                availableClaims.append((name, version,
-                                        li.remoteIdentifier))
-
-        return availableClaims
-
-    def _processNewAvailableClaimsData(self, li, rcvdAvailableClaims,
-                                       postAllFetched):
-        newAvailableClaims = self._getNewAvailableClaims(
-            li, rcvdAvailableClaims)
-
-        # TODO: Handle case where agent can send claims in batches.
-        # So consider a scenario where first time an accept invite is
-        # sent, agent sends 2 claims and the second time accept
-        # invite is sent, agent sends 3 claims.
-        if newAvailableClaims:
-            li.availableClaims.extend(newAvailableClaims)
-
-        self._fetchAllAvailableClaimsInWallet(li, newAvailableClaims,
-                                              postAllFetched)
+    @staticmethod
+    def _getNewAvailableClaims(li, rcvdAvailableClaims):
+        return [(cl[NAME], cl[VERSION], li.remoteIdentifier) for cl in
+                rcvdAvailableClaims]
 
     def _handleAcceptInviteResponse(self, msg):
         body, _ = msg
@@ -416,39 +382,19 @@ class Walleted:
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
                 # li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                self._processNewAvailableClaimsData(
-                    li, body[DATA][CLAIMS_LIST_FIELD],
-                    self._syncLinkPostAvailableClaimsRcvd)
-        else:
-            self.notifyMsgListener("No matching link found")
 
-    def _handleReqClaimResponse(self, msg):
-        body, _ = msg
-        issuerId = body.get(IDENTIFIER)
-        claim = body[DATA]
-        li = self._getLinkByTarget(getCryptonym(issuerId))
-        if li:
-            self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
-            self.notifyMsgListener('    Received claim "{}".\n'.format(
-                claim[NAME]))
-            name, version, claimAuthor = \
-                claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
-            claimDefKey = (name, version, claimAuthor)
-            attributes = claim['attributes']
-            self.wallet.addAttrFrom(issuerId, attributes)
-            issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
-                issuerId=issuerId, claimDefKey=claimDefKey)
-            if not issuerKey:
-                raise RuntimeError("Issuer key not available for claim def {}".
-                                   format(claimDefKey))
-            vprime = next(iter(self.wallet.getVPrimes(issuerId).values()))
-            credential = Credential.buildFromIssuerProvidedCred(
-                issuerKey.seqNo, A=claim[CRED_A], e=claim[CRED_E],
-                v=claim[V_PRIME_PRIME],
-                vprime=vprime)
-            self.wallet.addCredential("{} {} {}".
-                                      format(li.name, name, version),
-                                      credential)
+                rcvdAvailableClaims = body[DATA][CLAIMS_LIST_FIELD]
+                newAvailableClaims = self._getNewAvailableClaims(
+                    li, rcvdAvailableClaims)
+                if newAvailableClaims:
+                    li.availableClaims.extend(newAvailableClaims)
+                    self.notifyMsgListener("    Available Claim(s): {}".
+                        format(",".join(
+                        [n for n, _, _ in newAvailableClaims])))
+
+                self._checkIfLinkIdentifierWrittenToSovrin(li,
+                                                           newAvailableClaims)
+
         else:
             self.notifyMsgListener("No matching link found")
 
@@ -500,13 +446,6 @@ class Walleted:
     def _getLinkByTarget(self, target) -> Link:
         return self.wallet.getLinkInvitationByTarget(target)
 
-    def _syncLinkPostAvailableClaimsRcvd(self, li, newAvailableClaims):
-        if newAvailableClaims:
-            self.notifyMsgListener("    Available Claim(s): {}".
-                format(",".join(
-                [n for n, _, _ in newAvailableClaims])))
-        self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
-
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link, availableClaims):
         req = self.getIdentity(li.localIdentifier)
         self.notifyMsgListener("\nSynchronizing...")
@@ -528,126 +467,16 @@ class Walleted:
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.key,
                              self.client, getNymReply, (availableClaims, li))
 
-    def _reqClaim(self, msg):
-        body, (frm, ha) = msg
-        link = self.verifyAndGetLink(msg)
-        if link:
-            name = body[NAME]
-            if not self.isClaimAvailable(link, name):
-                self.notifyToRemoteCaller(
-                    EVENT_NOTIFY_MSG, "This claim is not yet available",
-                    self.wallet.defaultId, frm, origReqId=body.get(f.REQ_ID.nm))
-                return
-
-            version = body[VERSION]
-            origin = body[ORIGIN]
-            # TODO: Need to do validation
-            uValue = strToCryptoInteger(body['U'])
-            claimDef = self.wallet.getClaimDef(key=(name, version, origin))
-            attributes = self._getClaimsAttrsFor(link.internalId,
-                                                 claimDef.attrNames)
-            encodedAttrs = next(iter(getEncodedAttrs(link.localIdentifier,
-                                                attributes).values()))
-            pk = self.wallet.getIssuerPublicKeyForClaimDef(link.localIdentifier,
-                                                           claimDef.seqNo)
-            sk = self.wallet.getClaimDefSk(claimDefSeqNo=claimDef.seqNo)
-            cred = Issuer.generateCredential(uValue, encodedAttrs, pk, sk)
-            claimDetails = {
-                NAME: claimDef.name,
-                VERSION: claimDef.version,
-                'attributes': attributes,
-                # TODO: the name should not be identifier but origin
-                f.IDENTIFIER.nm: claimDef.origin,
-                'A': str(cred[0]),
-                'e': str(cred[1]),
-                'vprimeprime': str(cred[2])
-            }
-            resp = self.createClaimMsg(claimDetails)
-            self.signAndSend(resp, link.localIdentifier, frm,
-                             origReqId=body.get(f.REQ_ID.nm))
-        else:
-            raise NotImplementedError
-
-    def verifyClaimProof(self, msg: Any):
-        body, (frm, ha) = msg
-        link = self.verifyAndGetLink(msg)
-        if link:
-            proof = body['proof']
-            encodedAttrs = body['encodedAttrs']
-            for iid, attrs in encodedAttrs.items():
-                encodedAttrs[iid] = stringDictToCharmDict(attrs)
-            revealedAttrs = body['revealedAttrs']
-            nonce = int(body[NONCE], 16)
-            claimDefKeys = {iid: tuple(_) for iid, _ in
-                            body['claimDefKeys'].items()}
-
-            fetchedClaimDefs = 0
-
-            def verify(r, e):
-                # ASSUMPTION: This assumes that author of claimDef is same
-                # as the author of issuerPublicKey
-                # TODO: Do json validation
-                nonlocal proof, nonce, body, claimDefKeys, fetchedClaimDefs
-                # TODO: This is not thread safe, can lead to race condition
-                fetchedClaimDefs += 1
-                if fetchedClaimDefs < len(claimDefKeys):
-                    return
-
-                proof = ProofBuilder.prepareProofFromDict(proof)
-                issuerPks = {}
-                for issuerId, claimDefKey in claimDefKeys.items():
-                    # name, version, origin = claimDefKey
-                    claimDef = self.wallet.getClaimDef(key=claimDefKey)
-                    issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
-                        issuerId=issuerId, seqNo=claimDef.seqNo)
-                    issuerPks[issuerId] = issuerKey
-
-                claimName = body[NAME]
-
-                # REMOVE-LOG: Remove the next log
-                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
-                             "{} {} {} {} {}".
-                             format(issuerPks, proof, nonce, encodedAttrs,
-                                    revealedAttrs))
-
-                result = Verifier.verifyProof(issuerPks, proof, nonce,
-                                              encodedAttrs,
-                                              revealedAttrs)
-
-                if result:
-                    logger.info("proof {} verified".format(claimName))
-                else:
-                    logger.warning("proof {} failed verification".
-                                   format(claimName))
-
-                status = 'verified' if result else 'failed verification'
-                resp = {
-                    TYPE: CLAIM_PROOF_STATUS,
-                    DATA: '    Your claim {} {} was received and {}\n'.
-                          format(body[NAME], body[VERSION], status),
-                }
-                self.signAndSend(resp, link.localIdentifier, frm,
-                                 origReqId=body.get(f.REQ_ID.nm))
-
-                if result:
-                    self._postClaimVerif(claimName, link, frm)
-
-            for claimDefKey in claimDefKeys.values():
-                getCredDefIsrKeyAndExecuteCallback(self.wallet,
-                                                   self.client,
-                                                   print,
-                                                   self.loop,
-                                                   claimDefKey,
-                                                   verify)
-
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:
             # TODO: This logic assumes that the req id is time based
             curTimeBasedId = getTimeBasedId()
-            timeTakenInMillis = convertTimeBasedReqIdToMillis(curTimeBasedId - reqId)
+            timeTakenInMillis = convertTimeBasedReqIdToMillis(
+                curTimeBasedId - reqId)
 
             if timeTakenInMillis >= 1000:
-                responseTime = ' ({} sec)'.format(round(timeTakenInMillis/1000, 2))
+                responseTime = ' ({} sec)'.format(
+                    round(timeTakenInMillis / 1000, 2))
             else:
                 responseTime = ' ({} ms)'.format(round(timeTakenInMillis, 2))
         else:
@@ -655,14 +484,6 @@ class Walleted:
 
         self.notifyMsgListener("\nResponse from {}{}:".format(linkName,
                                                               responseTime))
-
-    def handleClaimProofStatus(self, msg: Any):
-        body, _ = msg
-        data = body.get(DATA)
-        identifier = body.get(IDENTIFIER)
-        li = self._getLinkByTarget(getCryptonym(identifier))
-        self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
-        self.notifyMsgListener(data)
 
     def notifyToRemoteCaller(self, event, msg, signingIdr, to, origReqId=None):
         resp = {
@@ -719,26 +540,15 @@ class Walleted:
             logger.debug("sending to sovrin {}".format(reqs[0]))
             self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
-        # TODO: If I have the below exception thrown, somehow the
-        # error msg which is sent in verifyAndGetLink is not being received
-        # on the other end, so for now, commented, need to come back to this
-        # else:
-        #     raise NotImplementedError
+            # TODO: If I have the below exception thrown, somehow the
+            # error msg which is sent in verifyAndGetLink is not being received
+            # on the other end, so for now, commented, need to come back to this
+            # else:
+            #     raise NotImplementedError
 
     def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
         ensureReqCompleted(self.loop, req.key, self.client, clbk, *args)
-
-    def _getClaimsAttrsFor(self, internalId, attrNames):
-        res = {}
-        attributes = self.getAttributes(internalId)
-        if attributes:
-            for nm in attrNames:
-                res[nm] = attributes.get(nm)
-        return res
-
-    def getAttributes(self, nonce):
-        raise NotImplementedError
 
     def newAvailableClaimsPostClaimVerif(self, claimName):
         raise NotImplementedError
@@ -782,7 +592,8 @@ class Walleted:
         if claimProofRequestsJson:
             for cr in claimProofRequestsJson:
                 claimProofRequests.append(
-                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES]))
+                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES],
+                                      cr['verifiableAttributes']))
 
         self.notifyMsgListener("1 link invitation found for {}.".
                                format(linkInvitationName))
@@ -810,7 +621,7 @@ class Walleted:
             if not linkInvitation:
                 raise LinkNotFound
             linkName = linkInvitation["name"]
-            existingLinkInvites = self.wallet.\
+            existingLinkInvites = self.wallet. \
                 getMatchingLinks(linkName)
             if len(existingLinkInvites) >= 1:
                 raise LinkAlreadyExists
@@ -854,6 +665,7 @@ class Walleted:
                                      additionalCallback, reply, err)
             else:
                 additionalCallback(reply, err)
+
         return _
 
     def _updateLinkWithLatestInfo(self, link: Link, reply):
@@ -902,9 +714,9 @@ class Walleted:
                                 checkIfLinkExists, clbk, *args):
 
         if isMaxCheckTimeExpired(startTime, maxCheckForMillis):
-           clbk(None, "No response received within specified time ({} mills). "
-                      "Retry the command and see if that works.\n".
-                format(maxCheckForMillis))
+            clbk(None, "No response received within specified time ({} mills). "
+                       "Retry the command and see if that works.\n".
+                 format(maxCheckForMillis))
         else:
             found = False
             rcvdResponses = self.rcvdMsgStore.get(reqId)
@@ -929,4 +741,3 @@ class Walleted:
                 loop.call_later(.2, self.executeWhenResponseRcvd,
                                 startTime, maxCheckForMillis, loop,
                                 reqId, respType, checkIfLinkExists, clbk, *args)
-

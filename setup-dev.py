@@ -4,9 +4,10 @@ import shutil
 import sys
 from shutil import copyfile
 
+from setuptools import setup, find_packages, __version__
+
 import data
 import sample
-from setuptools import setup, find_packages, __version__
 
 v = sys.version_info
 if sys.version_info < (3, 5):

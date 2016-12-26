@@ -2,6 +2,7 @@ from typing import Dict
 
 from plenum.common.txn import STEWARD
 from plenum.common.types import Identifier
+
 from sovrin.common.identity import Identity
 from sovrin.common.txn import SPONSOR
 

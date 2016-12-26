@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+
 from sovrin.test.agent.conftest import checkAcceptInvitation
 
 concerningLogLevels = [logging.WARNING,

@@ -18,9 +18,10 @@ from plenum.common.util import libnacl
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.server.router import Router
 from raet.raeting import AutoMode
+
 from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CLAIM_DEF, ISSUER_KEY, SKEY, DISCLO,\
     GET_ATTR
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
@@ -34,12 +35,12 @@ logger = getlogger()
 class Client(PlenumClient):
     def __init__(self,
                  name: str,
-                 nodeReg: Dict[str, HA]=None,
-                 ha: Union[HA, Tuple[str, int]]=None,
-                 peerHA: Union[HA, Tuple[str, int]]=None,
-                 basedirpath: str=None,
+                 nodeReg: Dict[str, HA] = None,
+                 ha: Union[HA, Tuple[str, int]] = None,
+                 peerHA: Union[HA, Tuple[str, int]] = None,
+                 basedirpath: str = None,
                  config=None,
-                 sighex: str=None):
+                 sighex: str = None):
         config = config or getConfig()
         super().__init__(name,
                          nodeReg,
@@ -143,14 +144,14 @@ class Client(PlenumClient):
                                     fault(ex, "An exception was raised while "
                                               "adding attribute")
 
-            elif result[TXN_TYPE] == CRED_DEF:
+            elif result[TXN_TYPE] == CLAIM_DEF:
                 if self.graphStore:
-                    self.graphStore.addCredDefTxnToGraph(result)
+                    self.graphStore.addClaimDefTxnToGraph(result)
             elif result[TXN_TYPE] == ISSUER_KEY:
                 if self.graphStore:
                     self.graphStore.addIssuerKeyTxnToGraph(result)
-            else:
-                logger.debug("Unknown type {}".format(result[TXN_TYPE]))
+                    # else:
+                    #    logger.debug("Unknown type {}".format(result[TXN_TYPE]))
 
     def requestConfirmed(self, identifier: str, reqId: int) -> bool:
         if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
@@ -183,7 +184,7 @@ class Client(PlenumClient):
             # TODO: Add support for fetching reply by transaction id
             # serTxn = self.reqRepStore.getResultForTxnId(txnId)
             pass
-        # TODO Add merkleInfo as well
+            # TODO Add merkleInfo as well
 
     def getTxnsByNym(self, nym: str):
         raise NotImplementedError
@@ -200,7 +201,7 @@ class Client(PlenumClient):
         else:
             txns = self.txnLog.getTxnsByType(txnType)
             # TODO: Fix ASAP
-            if txnType == CRED_DEF:
+            if txnType == CLAIM_DEF:
                 for txn in txns:
                     txn[DATA] = json.loads(txn[DATA].replace("\'", '"')
                                            .replace('"{', '{')
@@ -231,7 +232,6 @@ class Client(PlenumClient):
             DATA: json.dumps({"name": attrName})
         }
         self.submit(op, identifier=identifier)
-
 
     @staticmethod
     def _getDecryptedData(encData, key):

@@ -1,5 +1,6 @@
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, STEWARD, VERKEY
 from plenum.common.types import Identifier
+
 from sovrin.common.generates_request import GeneratesRequest
 from sovrin.common.txn import SPONSOR, GET_NYM
 from sovrin.common.types import Request

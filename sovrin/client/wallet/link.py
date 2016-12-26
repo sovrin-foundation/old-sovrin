@@ -1,6 +1,7 @@
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
 from plenum.common.util import prettyDateDifference
+
 from sovrin.common.exceptions import InvalidLinkException, \
     RemoteEndpointNotFound
 
@@ -60,7 +61,7 @@ class Link:
 
         self.claimProofRequests = claimProofRequests or []
         self.verifiedClaimProofs = []
-        self.availableClaims = []      # type: List[tupe(name, version, origin)]
+        self.availableClaims = []  # type: List[tupe(name, version, origin)]
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
@@ -136,13 +137,13 @@ class Link:
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
             optionalLinkItems += "Claim Request(s): {}". \
-                format(", ".join([cr.name for cr in self.claimProofRequests])) \
+                                     format(", ".join([cr.name for cr in self.claimProofRequests])) \
                                  + '\n'
 
         if self.availableClaims:
-            optionalLinkItems += "Available Claim(s): {}".\
-                format(", ".join([name
-                                 for name, _, _ in self.availableClaims])) \
+            optionalLinkItems += "Available Claim(s): {}". \
+                                     format(", ".join([name
+                                                       for name, _, _ in self.availableClaims])) \
                                  + '\n'
 
         if self.linkLastSyncNo:
@@ -180,3 +181,43 @@ class Link:
         else:
             ip, port = self.remoteEndPoint.split(":")
             return ip, int(port)
+
+
+class ClaimProofRequest:
+    def __init__(self, name, version, attributes, verifiableAttributes):
+        self.name = name
+        self.version = version
+        self.attributes = attributes
+        self.verifiableAttributes = verifiableAttributes
+
+    @property
+    def toDict(self):
+        return {
+            "name": self.name,
+            "version": self.version,
+            "attributes": self.attributes
+        }
+
+    @property
+    def attributeValues(self):
+        return \
+            'Attributes:' + '\n    ' + \
+            format("\n    ".join(
+                ['{}: {}'.format(k, v)
+                 for k, v in self.attributes.items()])) + '\n'
+
+    @property
+    def verifiableAttributeValues(self):
+        return \
+            'Verifiable Attributes:' + '\n    ' + \
+            format("\n    ".join(
+                ['{}'.format(v)
+                 for v in self.verifiableAttributes])) + '\n'
+
+    def __str__(self):
+        fixedInfo = \
+            'Status: Requested' + '\n' \
+                                  'Name: ' + self.name + '\n' \
+                                                         'Version: ' + self.version + '\n'
+
+        return fixedInfo + self.attributeValues + self.verifiableAttributeValues
