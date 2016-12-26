@@ -32,7 +32,7 @@ ADD_ATTRIB_REG_EX = \
     "\s+ dest=\s*(?P<dest_id>[A-Za-z0-9+=/]+) " \
     "\s+ raw=(?P<raw>\{\s*.*\}) \s*) "
 
-SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)" \
+SEND_CLAIM_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CLAIM_DEF)" \
                        "\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)" \
                        "\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)" \
                        "\s*(?P<type_key>type=)\s*(?P<type>[A-Z0-9]+)" \
@@ -139,7 +139,7 @@ SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) ' \
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
 ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
-SEND_CRED_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_DEF_REG_EX)
+SEND_CLAIM_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_DEF_REG_EX)
 SEND_ISSUER_KEY_FORMATTED_REG_EX = getPipedRegEx(SEND_ISSUER_KEY_REG_EX)
 REQ_CRED_FORMATTED_REG_EX = getPipedRegEx(REQ_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)

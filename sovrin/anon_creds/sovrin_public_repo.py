@@ -7,7 +7,7 @@ from plenum.test.eventually import eventually
 from anoncreds.protocol.repo.public_repo import PublicRepo
 from anoncreds.protocol.types import ClaimDefinition, ID, PublicKey, RevocationPublicKey, AccumulatorPublicKey, \
     Accumulator, TailsType, TimestampType
-from sovrin.common.txn import GET_CRED_DEF, CRED_DEF, ATTR_NAMES, GET_ISSUER_KEY, REF, ISSUER_KEY
+from sovrin.common.txn import GET_CLAIM_DEF, CLAIM_DEF, ATTR_NAMES, GET_ISSUER_KEY, REF, ISSUER_KEY
 from sovrin.common.types import Request
 
 
@@ -39,7 +39,7 @@ class SovrinPublicRepo(PublicRepo):
     async def getClaimDef(self, id: ID) -> ClaimDefinition:
         op = {
             TARGET_NYM: id.claimDefKey.issuerId,
-            TXN_TYPE: GET_CRED_DEF,
+            TXN_TYPE: GET_CLAIM_DEF,
             DATA: {
                 NAME: id.claimDefKey.name,
                 VERSION: id.claimDefKey.version,
@@ -79,7 +79,7 @@ class SovrinPublicRepo(PublicRepo):
 
     async def submitClaimDef(self, claimDef: ClaimDefinition):
         op = {
-            TXN_TYPE: CRED_DEF,
+            TXN_TYPE: CLAIM_DEF,
             DATA: {
                 NAME: claimDef.name,
                 VERSION: claimDef.version,

@@ -107,7 +107,7 @@ class SovrinCli(PlenumCli):
         completers["send_nym"] = WordCompleter(["send", "NYM"])
         completers["send_get_nym"] = WordCompleter(["send", "GET_NYM"])
         completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
-        completers["send_cred_def"] = WordCompleter(["send", "CRED_DEF"])
+        completers["send_cred_def"] = WordCompleter(["send", "CLAIM_DEF"])
         completers["send_isr_key"] = WordCompleter(["send", "ISSUER_KEY"])
         completers["add_genesis"] = WordCompleter(
             ["add", "genesis", "transaction"])
@@ -140,7 +140,7 @@ class SovrinCli(PlenumCli):
         actions.extend([self._sendNymAction,
                         self._sendGetNymAction,
                         self._sendAttribAction,
-                        self._sendCredDefAction,
+                        self._sendClaimDefAction,
                         self._sendIssuerKeyAction,
                         self._addGenesisAction,
                         self._showFile,
@@ -462,8 +462,8 @@ class SovrinCli(PlenumCli):
             self._addAttribToNym(nym, raw, enc, hsh)
             return True
 
-    def _sendCredDefAction(self, matchedVars):
-        if matchedVars.get('send_cred_def') == 'send CRED_DEF':
+    def _sendClaimDefAction(self, matchedVars):
+        if matchedVars.get('send_cred_def') == 'send CLAIM_DEF':
             if not self.canMakeSovrinRequest:
                 return True
 

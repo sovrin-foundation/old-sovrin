@@ -21,7 +21,7 @@ from raet.raeting import AutoMode
 
 from sovrin.common.config_util import getConfig
 from sovrin.common.txn import TXN_TYPE, ATTRIB, DATA, GET_NYM, ROLE, \
-    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CRED_DEF, ISSUER_KEY, SKEY, DISCLO,\
+    SPONSOR, NYM, GET_TXNS, LAST_TXN, TXNS, CLAIM_DEF, ISSUER_KEY, SKEY, DISCLO,\
     GET_ATTR
 from sovrin.persistence.client_req_rep_store_file import ClientReqRepStoreFile
 from sovrin.persistence.client_req_rep_store_orientdb import \
@@ -144,9 +144,9 @@ class Client(PlenumClient):
                                     fault(ex, "An exception was raised while "
                                               "adding attribute")
 
-            elif result[TXN_TYPE] == CRED_DEF:
+            elif result[TXN_TYPE] == CLAIM_DEF:
                 if self.graphStore:
-                    self.graphStore.addCredDefTxnToGraph(result)
+                    self.graphStore.addClaimDefTxnToGraph(result)
             elif result[TXN_TYPE] == ISSUER_KEY:
                 if self.graphStore:
                     self.graphStore.addIssuerKeyTxnToGraph(result)
@@ -201,7 +201,7 @@ class Client(PlenumClient):
         else:
             txns = self.txnLog.getTxnsByType(txnType)
             # TODO: Fix ASAP
-            if txnType == CRED_DEF:
+            if txnType == CLAIM_DEF:
                 for txn in txns:
                     txn[DATA] = json.loads(txn[DATA].replace("\'", '"')
                                            .replace('"{', '{')

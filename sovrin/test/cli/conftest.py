@@ -806,7 +806,7 @@ def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
 
 
 @pytest.fixture(scope="module")
-def credDefAdded():
+def claimDefAdded():
     return ["credential definition is published"]
 
 

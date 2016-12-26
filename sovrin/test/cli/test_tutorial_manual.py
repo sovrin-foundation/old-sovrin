@@ -51,7 +51,7 @@ def testGettingStartedTutorialAgainstSandbox(newGuyCLI, be, do):
 
 def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
                connectedToTest, nymAddedOut, attrAddedOut,
-               credDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
+               claimDefAdded, issuerKeyAdded, aliceCLI, newKeyringOut, aliceMap,
                tdir, syncLinkOutWithEndpoint, jobCertificateClaimMap,
                syncedInviteAcceptedOutWithoutClaims, transcriptClaimMap,
                reqClaimOut, reqClaimOut1, susanCLI, susanMap):
