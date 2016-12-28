@@ -208,7 +208,7 @@ class Wallet(PWallet, Sponsoring):
             idy.seqNo = result[F.seqNo.name]
         else:
             logger.error("Target {} not found in sponsored".format(target))
-            raise NotImplementedError
+            raise KeyError
 
     def _getNymReply(self, result, preparedReq):
         jsonData = result.get(DATA)
@@ -224,7 +224,7 @@ class Wallet(PWallet, Sponsoring):
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
         else:
-            raise NotImplementedError("'DATA' in reply was None")
+            raise ValueError("'DATA' in reply was None")
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO

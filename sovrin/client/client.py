@@ -115,6 +115,12 @@ class Client(PlenumClient):
                 try:
                     self._observers[name](name, reqId, frm, result, numReplies)
                 except Exception as ex:
+                    # TODO: All errors should not be shown on CLI, or maybe we
+                    # show errors with different color according to the
+                    # severity. Like an error occurring due to node sending
+                    # a malformed message should not result in an error message
+                    # being shown on the cli since the clients would anyway
+                    # collect enough replies from other nodes.
                     logger.error("Observer threw an exception", exc_info=ex)
             if isinstance(self.reqRepStore, ClientReqRepStoreOrientDB):
                 self.reqRepStore.setConsensus(identifier, reqId)

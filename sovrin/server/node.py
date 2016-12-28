@@ -87,7 +87,8 @@ class Node(PlenumNode):
             return Ledger(CompactMerkleTree(hashStore=self.hashStore),
                           dataDir=self.dataLocation,
                           serializer=CompactSerializer(fields=fields),
-                          fileName=self.config.domainTransactionsFile)
+                          fileName=self.config.domainTransactionsFile,
+                          ensureDurability=self.config.EnsureLedgerDurability)
         else:
             return initStorage(self.config.primaryStorage,
                                name=self.name + NODE_PRIMARY_STORAGE_SUFFIX,
