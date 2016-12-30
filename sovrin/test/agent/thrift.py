@@ -2,13 +2,12 @@ import os
 
 from plenum.common.log import getlogger
 
-from sovrin.agent.agent import runAgent
+from sovrin.agent.agent import createAgent, runAgent
 from sovrin.agent.constants import EVENT_NOTIFY_MSG
 from sovrin.agent.exception import NonceNotFound
 from sovrin.client.client import Client
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
-
 from sovrin.test.agent.helper import buildThriftWallet
 from sovrin.test.agent.test_walleted_agent import TestWalletedAgent
 from sovrin.test.helper import TestClient
@@ -19,9 +18,9 @@ logger = getlogger()
 class ThriftAgent(TestWalletedAgent):
     def __init__(self,
                  basedirpath: str,
-                 client: Client=None,
-                 wallet: Wallet=None,
-                 port: int=None,
+                 client: Client = None,
+                 wallet: Wallet = None,
+                 port: int = None,
                  loop=None):
         if not basedirpath:
             config = getConfig()
@@ -31,8 +30,6 @@ class ThriftAgent(TestWalletedAgent):
 
         super().__init__('Thrift Bank', basedirpath, client, wallet,
                          portParam or port, loop=loop)
-
-        self._attributes = {}
 
         # maps invitation nonces to internal ids
         self._invites = {
@@ -51,7 +48,10 @@ class ThriftAgent(TestWalletedAgent):
     def getAvailableClaimList(self):
         return []
 
-    def postClaimVerif(self, claimName, link, frm):
+    def _addAtrribute(self, claimDefKey, proverId, link):
+        pass
+
+    async def postClaimVerif(self, claimName, link, frm):
         if claimName == "Loan-Application-Basic":
             self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
                                       "    Loan eligibility criteria satisfied,"
@@ -59,23 +59,16 @@ class ThriftAgent(TestWalletedAgent):
                                       "'Loan-Application-KYC'\n",
                                       self.wallet.defaultId, frm)
 
-    def addClaimDefsToWallet(self):
+    async def bootstrap(self):
         pass
 
-    def getAttributes(self, nonce):
-        pass
 
-    def bootstrap(self):
-        self.addClaimDefsToWallet()
-
-
-def runThrift(name=None, wallet=None, basedirpath=None, port=None,
-              startRunning=True, bootstrap=True):
-
-    return runAgent(ThriftAgent, name or "Thrift Bank",
-                    wallet or buildThriftWallet(), basedirpath,
-                    port, startRunning, bootstrap, clientClass=TestClient)
+def createThrift(name=None, wallet=None, basedirpath=None, port=None):
+    return createAgent(ThriftAgent, name or "Thrift Bank",
+                       wallet or buildThriftWallet(),
+                       basedirpath, port, clientClass=TestClient)
 
 
 if __name__ == "__main__":
-    runThrift(port=7777)
+    thrift = createThrift(port=7777)
+    runAgent(thrift)

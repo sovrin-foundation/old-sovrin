@@ -10,30 +10,6 @@ Empty verkey tests
         { type: GET_NYM, dest: <id1> }
     Verify a signature from this identifier with the new verkey
 
-Full verkey tests
-    Add a nym (16 byte, base58) with a full verkey (32 byte, base58) (Form 1)
-        { type: NYM, dest: <id2>, verkey: <32byte key> }
-    Retrieve the verkey.
-        { type: GET_NYM, dest: <id2> }
-    Verify a signature from this identifier
-    Change a verkey for a nym with a full verkey.
-        { type: NYM, dest: <id2>, verkey: <32byte ED25519 key> }
-    Retrieve new verkey
-        { type: GET_NYM, dest: <id2> }
-    Verify a signature from this identifier with the new verkey
-
-Abbreviated verkey tests
-    Add a nym (16 byte, base58) with an abbreviated verkey (‘~’ with 16 bytes, base58) (Form 3)
-        { type: NYM, dest: <id3>, verkey: ~<16byte abbreviated key> }
-    Retrieve the verkey.
-        { type: GET_NYM, dest: <id3> }
-    Verify a signature from this identifier
-    Change a verkey for a nym with a full verkey.
-        { type: NYM, dest: <id3>, verkey: <32byte ED25519 key> }
-    Retrieve new verkey
-        { type: GET_NYM, dest: <id3> }
-    Verify a signature from this identifier with the new verkey
-
 DID Objects tests
     Store a DID object
     Retrieve a DID object
@@ -51,40 +27,76 @@ DID forms tests
     Any other forms are rejected.
 """
 
-import pytest
-from sovrin.test.helper import addUser
+from plenum.test.eventually import eventually
 
-ni = pytest.mark.skip("Not yet implemented")
-
-
-@ni
-def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
-    assert wallet.getverkey(noKeyIdr) is None
+from sovrin.common.identity import Identity
+from sovrin.test.did.conftest import pf
+from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
+    updateSovrinIdrWithFullKey
+from sovrin.test.helper import createNym
 
 
-def testAddDidWithoutAVerkey(addedSponsor, looper, sponsor, sponsorWallet):
+@pf
+def didAddedWithoutVerkey(addedSponsor, looper, sponsor, sponsorWallet,
+                          wallet, noKeyIdr):
     """{ type: NYM, dest: <id1> }"""
-    addUser(looper, sponsor, sponsorWallet, 'userA')
+    createNym(looper, noKeyIdr, sponsor, sponsorWallet)
+    return wallet
 
-
-@ni
-def testRetrieveEmptyVerkey():
-    """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
-
-
-@ni
-def testChangeEmptyVerkeyToNewVerkey():
+@pf
+def didUpdatedWithVerkey(didAddedWithoutVerkey, looper, sponsor,
+                            sponsorWallet, noKeyIdr, wallet):
     """{ type: NYM, dest: <id1>, verkey: <vk1> }"""
-    raise NotImplementedError
+    updateSovrinIdrWithFullKey(looper, sponsorWallet, sponsor, wallet,
+                               noKeyIdr, wallet.getVerkey(noKeyIdr))
 
 
-@ni
-def testRetrieveChangedVerkey():
+@pf
+def verkeyFetched(didUpdatedWithVerkey, looper, sponsor, sponsorWallet,
+                  noKeyIdr, wallet):
     """{ type: GET_NYM, dest: <id1> }"""
-    raise NotImplementedError
+    identity = Identity(identifier=noKeyIdr)
+    req = sponsorWallet.requestIdentity(identity,
+                                        sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
+
+    def chk():
+        assert sponsorWallet.getIdentity(noKeyIdr).verkey == wallet.getVerkey(
+            noKeyIdr)
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
-@ni
-def testVerifySigWithChangedVerkey():
-    raise NotImplementedError
+def testWalletCanProvideAnIdentifierWithoutAKey(wallet, noKeyIdr):
+    # TODO, Question: Why would `getVerkey` return `None` for a DID?.
+    assert wallet.getVerkey(noKeyIdr)
+
+
+def testAddDidWithoutAVerkey(didAddedWithoutVerkey):
+    pass
+
+
+def testRetrieveEmptyVerkey(didAddedWithoutVerkey, looper, sponsor,
+                            sponsorWallet, noKeyIdr):
+    """{ type: GET_NYM, dest: <id1> }"""
+    identity = Identity(identifier=noKeyIdr)
+    req = sponsorWallet.requestIdentity(identity, sender=sponsorWallet.defaultId)
+    sponsor.submitReqs(req)
+
+    def chk():
+        assert sponsorWallet.getIdentity(noKeyIdr).verkey is None
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+
+
+def testChangeEmptyVerkeyToNewVerkey(didUpdatedWithVerkey):
+    pass
+
+
+def testRetrieveChangedVerkey(didUpdatedWithVerkey, verkeyFetched):
+    pass
+
+
+def testVerifySigWithChangedVerkey(didUpdatedWithVerkey, verkeyFetched,
+                                   sponsorWallet, noKeyIdr, wallet):
+    chkVerifyForRetrievedIdentity(wallet, sponsorWallet, noKeyIdr)

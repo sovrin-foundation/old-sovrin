@@ -1,47 +1,50 @@
 import asyncio
 import collections
+import inspect
 import json
+import time
 from abc import abstractmethod
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Union
 
-import time
-from anoncreds.protocol.issuer import Issuer
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.protocol.proof_builder import ProofBuilder
-from anoncreds.protocol.utils import strToCryptoInteger
-from anoncreds.protocol.verifier import Verifier
+from base58 import b58decode
 from plenum.common.log import getlogger
 from plenum.common.signer_did import DidSigner
-from plenum.common.signer_simple import SimpleSigner
+from plenum.common.signing import serializeMsg
 from plenum.common.txn import TYPE, DATA, NONCE, IDENTIFIER, NAME, VERSION, \
-    TARGET_NYM, ORIGIN, ATTRIBUTES
+    TARGET_NYM, ATTRIBUTES, VERKEY
 from plenum.common.types import f
 from plenum.common.util import getTimeBasedId, getCryptonym, \
     isMaxCheckTimeExpired, convertTimeBasedReqIdToMillis
+from plenum.common.verifier import DidVerifier
+
+from anoncreds.protocol.issuer import Issuer
+from anoncreds.protocol.prover import Prover
+from anoncreds.protocol.verifier import Verifier
+from sovrin.agent.agent_issuer import AgentIssuer
+from sovrin.agent.agent_prover import AgentProver
+from sovrin.agent.agent_verifier import AgentVerifier
 from sovrin.agent.constants import ALREADY_ACCEPTED_FIELD, CLAIMS_LIST_FIELD, \
     REQ_MSG, PING, ERROR, EVENT, EVENT_NAME, EVENT_NOTIFY_MSG, \
     EVENT_POST_ACCEPT_INVITE, PONG
 from sovrin.agent.exception import NonceNotFound, SignatureRejected
-from sovrin.agent.msg_types import ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-    AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS
-from sovrin.anon_creds.constant import CRED_A, CRED_E, V_PRIME_PRIME
+from sovrin.agent.msg_constants import ACCEPT_INVITE, REQUEST_CLAIM, \
+    CLAIM_PROOF, \
+    AVAIL_CLAIM_LIST, CLAIM, CLAIM_PROOF_STATUS, NEW_AVAILABLE_CLAIMS, \
+    REF_REQUEST_ID
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
-from sovrin.client.wallet.claim import ClaimProofRequest
-from sovrin.client.wallet.credential import Credential
-from sovrin.client.wallet.link import Link, constant
+from sovrin.client.wallet.link import Link, constant, ClaimProofRequest
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import LinkNotFound, LinkAlreadyExists, \
-    NotConnectedToNetwork
+    NotConnectedToNetwork, LinkNotReady
 from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTR_NAMES, ENDPOINT
-from sovrin.common.util import verifySig, ensureReqCompleted, getEncodedAttrs, \
-    stringDictToCharmDict, getCredDefIsrKeyAndExecuteCallback, getNonceForProof
+from sovrin.common.txn import ENDPOINT
+from sovrin.common.util import ensureReqCompleted
 
 logger = getlogger()
 
 
-class Walleted:
+class Walleted(AgentIssuer, AgentProver, AgentVerifier):
     """
     An agent with a self-contained wallet.
 
@@ -50,7 +53,15 @@ class Walleted:
     case, the agent holds a wallet.
     """
 
-    def __init__(self):
+    def __init__(self,
+                 issuer: Issuer = None,
+                 prover: Prover = None,
+                 verifier: Verifier = None):
+
+        AgentIssuer.__init__(self, issuer)
+        AgentProver.__init__(self, prover)
+        AgentVerifier.__init__(self, verifier)
+
         # TODO Why are we syncing the client here?
         if self.client:
             self.syncClient()
@@ -60,14 +71,17 @@ class Walleted:
             EVENT: self._eventHandler,
 
             PING: self._handlePing,
-            ACCEPT_INVITE: self._acceptInvite,
-            REQUEST_CLAIM: self._reqClaim,
+            ACCEPT_INVITE: self._handleAcceptance,
+
+            REQUEST_CLAIM: self.processReqClaim,
+            CLAIM: self.handleReqClaimResponse,
+
             CLAIM_PROOF: self.verifyClaimProof,
+            CLAIM_PROOF_STATUS: self.handleProofStatusResponse,
 
             PONG: self._handlePong,
             AVAIL_CLAIM_LIST: self._handleAcceptInviteResponse,
-            CLAIM: self._handleReqClaimResponse,
-            CLAIM_PROOF_STATUS: self.handleClaimProofStatus,
+
             NEW_AVAILABLE_CLAIMS: self._handleNewAvailableClaimsDataResponse
         }
 
@@ -91,17 +105,17 @@ class Walleted:
     def lockedMsgs(self):
         # Msgs for which signature verification is required
         return ACCEPT_INVITE, REQUEST_CLAIM, CLAIM_PROOF, \
-               CLAIM, AVAIL_CLAIM_LIST, EVENT, PING, PONG
+               CLAIM, AVAIL_CLAIM_LIST, EVENT, PONG
 
-    def postClaimVerif(self, claimName, link, frm):
+    async def postClaimVerif(self, claimName, link, frm):
         raise NotImplementedError
 
     def isClaimAvailable(self, link, claimName):
         raise NotImplementedError
 
-    def _postClaimVerif(self, claimName, link, frm):
+    async def _postClaimVerif(self, claimName, link, frm):
         link.verifiedClaimProofs.append(claimName)
-        self.postClaimVerif(claimName, link, frm)
+        await self.postClaimVerif(claimName, link, frm)
 
     def getAvailableClaimList(self):
         raise NotImplementedError
@@ -119,18 +133,19 @@ class Walleted:
         self.signAndSend(msg=self.getErrorResponse(reqBody, respMsg),
                          signingIdr=self.wallet.defaultId, toRaetStackName=to)
 
-    # TODO: Verification needs to be moved out of it, use `_isVerified` instead
+    # TODO: Verification needs to be moved out of it,
+    # use `verifySignature` instead
     def verifyAndGetLink(self, msg):
         body, (frm, ha) = msg
-        key = body.get(f.IDENTIFIER.nm)
-
-        signature = body.get(f.SIG.nm)
-        verified = verifySig(key, signature, body)
-        if not verified:
-            self.logAndSendErrorResp(frm, body, "Signature Rejected",
-                                     "Signature verification failed for msg: {}"
-                                     .format(str(msg)))
-            return None
+        # key = body.get(f.IDENTIFIER.nm)
+        #
+        # signature = body.get(f.SIG.nm)
+        # verified = verifySig(key, signature, body)
+        # if not self.verifySignature(body):
+        #     self.logAndSendErrorResp(frm, body, "Signature Rejected",
+        #                              "Signature verification failed for msg: {}"
+        #                              .format(str(msg)))
+        #     return None
 
         nonce = body.get(NONCE)
         try:
@@ -147,6 +162,8 @@ class Walleted:
         internalId = self.getInternalIdByInvitedNonce(nonce)
         link = self.wallet.getLinkByInternalId(internalId)
         if not link:
+            # QUESTION: We use wallet.defaultId as the local identifier,
+            # this looks ok for test code, but not production code
             link = Link(str(internalId),
                         self.wallet.defaultId,
                         invitationNonce=nonce,
@@ -163,25 +180,33 @@ class Walleted:
     def getInternalIdByInvitedNonce(self, nonce):
         raise NotImplementedError
 
-    def signAndSend(self, msg, signingIdr, toRaetStackName,
+    def signAndSend(self, msg, signingIdr=None, toRaetStackName=None,
                     linkName=None, origReqId=None):
-
         if linkName:
-            assert not signingIdr
-            assert not toRaetStackName
+            assert not (signingIdr or toRaetStackName)
             self.connectTo(linkName)
             link = self.wallet.getLink(linkName, required=True)
             ha = link.getRemoteEndpoint(required=True)
-            signingIdr = self.wallet._requiredIdr(link.localIdentifier)
+
+            # TODO ensure status is appropriate with code like the following
+            # if link.linkStatus != constant.LINK_STATUS_ACCEPTED:
+            #     raise LinkNotReady('link status is {}'.format(link.linkStatus))
+
+            if not link.localIdentifier:
+                raise LinkNotReady('local identifier not set up yet')
+            signingIdr = link.localIdentifier
             params = dict(ha=ha)
         else:
             params = dict(name=toRaetStackName)
         # origReqId needs to be supplied when you want to respond to request
         # so that on receiving end, response can be matched with request
+        # if origReqId:
+        #     msg[f.REQ_ID.nm] = origReqId
+        # else:
+        #     msg[f.REQ_ID.nm] = getTimeBasedId()
+        msg[f.REQ_ID.nm] = getTimeBasedId()
         if origReqId:
-            msg[f.REQ_ID.nm] = origReqId
-        else:
-            msg[f.REQ_ID.nm] = getTimeBasedId()
+            msg[REF_REQUEST_ID] = origReqId
 
         msg[IDENTIFIER] = signingIdr
         signature = self.wallet.signMsg(msg, signingIdr)
@@ -234,10 +259,10 @@ class Walleted:
     def isSignatureVerifRespRequired(self, typ):
         return typ in self.lockedMsgs and typ not in [EVENT, PING, PONG]
 
-    def sendSigVerifResponseMsg(self, respMsg, to, reqMsgTyp):
+    def sendSigVerifResponseMsg(self, respMsg, to, reqMsgTyp, identifier):
         if self.isSignatureVerifRespRequired(reqMsgTyp):
             self.notifyToRemoteCaller(EVENT_NOTIFY_MSG,
-                                      respMsg, self.wallet.defaultId, to)
+                                      respMsg, identifier, to)
 
     def handleEndpointMessage(self, msg):
         body, frm = msg
@@ -253,12 +278,21 @@ class Walleted:
                 return
 
         typ = body.get(TYPE)
+        link = self.wallet.getLinkInvitationByTarget(body.get(f.IDENTIFIER.nm))
+
+        # If accept invite is coming the first time, then use the default
+        # identifier of the wallet since link wont be created
+        if typ == ACCEPT_INVITE and link is None:
+            localIdr = self.wallet.defaultId
+        else:
+            localIdr = link.localIdentifier
+
         if typ in self.lockedMsgs:
             try:
-                self._isVerified(body)
+                self.verifySignature(body)
             except SignatureRejected:
                 self.sendSigVerifResponseMsg("\nSignature rejected.",
-                                             frm, typ)
+                                             frm, typ, localIdr)
                 return
         reqId = body.get(f.REQ_ID.nm)
 
@@ -268,13 +302,18 @@ class Walleted:
         else:
             self.rcvdMsgStore[reqId] = [msg]
 
-        self.sendSigVerifResponseMsg("\nSignature accepted.", frm, typ)
+        # TODO: Question: Should we sending an acknowledgement for every message?
+        # We are sending, ACKs for "signature accepted" messages too
+        self.sendSigVerifResponseMsg("\nSignature accepted.",
+                                     frm, typ, localIdr)
 
         handler = self.msgHandlers.get(typ)
         if handler:
             # TODO we should verify signature here
             frmHa = self.endpoint.getRemote(frm).ha
-            handler((body, (frm, frmHa)))
+            res = handler((body, (frm, frmHa)))
+            if inspect.isawaitable(res):
+                self.loop.call_soon(asyncio.ensure_future, res)
         else:
             raise NotImplementedError("No type handle found for {} message".
                                       format(typ))
@@ -284,21 +323,12 @@ class Walleted:
         self.notifyMsgListener("Error ({}) occurred while processing this "
                                "msg: {}".format(body[DATA], body[REQ_MSG]))
 
-    def _sendGetClaimDefRequests(self, availableClaims, postFetchCredDef=None):
-        for name, version, origin in availableClaims:
-            req = self.wallet.requestClaimDef((name, version, origin),
-                                              sender=self.wallet.defaultId)
-
-            self.client.submitReqs(req)
-
-            if postFetchCredDef:
-                self.loop.call_later(.2, ensureReqCompleted, self.loop,
-                                 req.key, self.client, postFetchCredDef)
-
     def _handlePing(self, msg):
         body, (frm, ha) = msg
-        self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
-                         origReqId=body.get(f.REQ_ID.nm))
+        link = self.wallet.getLinkByNonce(body.get(NONCE))
+        if link:
+            self.signAndSend({TYPE: 'pong'}, self.wallet.defaultId, frm,
+                             origReqId=body.get(f.REQ_ID.nm))
 
     def _handlePong(self, msg):
         body, (frm, ha) = msg
@@ -309,70 +339,32 @@ class Walleted:
         else:
             self.notifyMsgListener("    Pong received from unknown endpoint")
 
-    def _fetchAllAvailableClaimsInWallet(self, li, newAvailableClaims,
-                                         postAllFetched):
-
-        fetchedCount = 0
-
-        def postEachCredDefFetch(reply, err):
-            nonlocal fetchedCount
-            fetchedCount += 1
-            postAllCreDefFetched()
-
-        self._sendGetClaimDefRequests(newAvailableClaims, postEachCredDefFetch)
-
-        # TODO: Find a better name
-        def postAllCreDefFetched():
-            if fetchedCount == len(newAvailableClaims):
-                postAllFetched(li, newAvailableClaims)
-
-        postAllCreDefFetched()
-
     def _handleNewAvailableClaimsDataResponse(self, msg):
         body, _ = msg
-        isVerified = self._isVerified(body)
+        isVerified = self.verifySignature(body)
         if isVerified:
             identifier = body.get(IDENTIFIER)
             li = self._getLinkByTarget(getCryptonym(identifier))
             if li:
                 self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
 
-                def postAllFetched(li, newAvailableClaims):
-                    if newAvailableClaims:
-                        claimNames = ", ".join(
-                            [n for n, _, _ in newAvailableClaims])
-                        self.notifyMsgListener(
-                            "    Available Claim(s): {}\n".format(claimNames))
+                rcvdAvailableClaims = body[DATA][CLAIMS_LIST_FIELD]
+                newAvailableClaims = self._getNewAvailableClaims(
+                    li, rcvdAvailableClaims)
+                if newAvailableClaims:
+                    li.availableClaims.extend(newAvailableClaims)
+                    claimNames = ", ".join(
+                        [n for n, _, _ in newAvailableClaims])
+                    self.notifyMsgListener(
+                        "    Available Claim(s): {}\n".format(claimNames))
 
-                self._processNewAvailableClaimsData(
-                    li, body[DATA][CLAIMS_LIST_FIELD], postAllFetched)
             else:
                 self.notifyMsgListener("No matching link found")
 
-    def _getNewAvailableClaims(self, li, rcvdAvailableClaims):
-        availableClaims = []
-        for cl in rcvdAvailableClaims:
-            if not self.wallet.getClaimDef(seqNo=cl['claimDefSeqNo']):
-                name, version = cl[NAME], cl[VERSION]
-                availableClaims.append((name, version,
-                                        li.remoteIdentifier))
-
-        return availableClaims
-
-    def _processNewAvailableClaimsData(self, li, rcvdAvailableClaims,
-                                       postAllFetched):
-        newAvailableClaims = self._getNewAvailableClaims(
-            li, rcvdAvailableClaims)
-
-        # TODO: Handle case where agent can send claims in batches.
-        # So consider a scenario where first time an accept invite is
-        # sent, agent sends 2 claims and the second time accept
-        # invite is sent, agent sends 3 claims.
-        if newAvailableClaims:
-            li.availableClaims.extend(newAvailableClaims)
-
-        self._fetchAllAvailableClaimsInWallet(li, newAvailableClaims,
-                                              postAllFetched)
+    @staticmethod
+    def _getNewAvailableClaims(li, rcvdAvailableClaims):
+        return [(cl[NAME], cl[VERSION], li.remoteIdentifier) for cl in
+                rcvdAvailableClaims]
 
     def _handleAcceptInviteResponse(self, msg):
         body, _ = msg
@@ -389,52 +381,64 @@ class Walleted:
                 self.notifyMsgListener("    Identifier created in Sovrin.")
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
-                li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-                self._processNewAvailableClaimsData(
-                    li, body[DATA][CLAIMS_LIST_FIELD],
-                    self._syncLinkPostAvailableClaimsRcvd)
+                # li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
+
+                rcvdAvailableClaims = body[DATA][CLAIMS_LIST_FIELD]
+                newAvailableClaims = self._getNewAvailableClaims(
+                    li, rcvdAvailableClaims)
+                if newAvailableClaims:
+                    li.availableClaims.extend(newAvailableClaims)
+                    self.notifyMsgListener("    Available Claim(s): {}".
+                        format(",".join(
+                        [n for n, _, _ in newAvailableClaims])))
+
+                self._checkIfLinkIdentifierWrittenToSovrin(li,
+                                                           newAvailableClaims)
+
         else:
             self.notifyMsgListener("No matching link found")
 
-    def _handleReqClaimResponse(self, msg):
-        body, _ = msg
-        issuerId = body.get(IDENTIFIER)
-        claim = body[DATA]
-        li = self._getLinkByTarget(getCryptonym(issuerId))
-        if li:
-            self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
-            self.notifyMsgListener('    Received claim "{}".\n'.format(
-                claim[NAME]))
-            name, version, claimAuthor = \
-                claim[NAME], claim[VERSION], claim[f.IDENTIFIER.nm]
-            claimDefKey = (name, version, claimAuthor)
-            attributes = claim['attributes']
-            self.wallet.addAttrFrom(issuerId, attributes)
-            issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
-                issuerId=issuerId, claimDefKey=claimDefKey)
-            if not issuerKey:
-                raise RuntimeError("Issuer key not available for claim def {}".
-                                   format(claimDefKey))
-            vprime = next(iter(self.wallet.getVPrimes(issuerId).values()))
-            credential = Credential.buildFromIssuerProvidedCred(
-                issuerKey.seqNo, A=claim[CRED_A], e=claim[CRED_E],
-                v=claim[V_PRIME_PRIME],
-                vprime=vprime)
-            self.wallet.addCredential("{} {} {}".
-                                      format(li.name, name, version),
-                                      credential)
+    def getVerkeyForLink(self, link):
+        # TODO: Get latest verkey for this link's remote identifier from Sovrin
+        if link.targetVerkey:
+            return link.targetVerkey
         else:
-            self.notifyMsgListener("No matching link found")
+            raise Exception("verkey not set in link")
 
-    def _isVerified(self, msg: Dict[str, str], verifyWithIdr=None):
-        # v = DidVerifier()
+    def getLinkForMsg(self, msg):
+        nonce = msg.get(NONCE)
+        link = self.wallet.getLinkByNonce(nonce)
+        if link:
+            return link
+        else:
+            raise LinkNotFound
+
+    def verifySignature(self, msg: Dict[str, str]):
         signature = msg.get(f.SIG.nm)
-        identifier = verifyWithIdr or msg.get(IDENTIFIER)
-
+        identifier = msg.get(IDENTIFIER)
         msgWithoutSig = {k: v for k, v in msg.items() if k != f.SIG.nm}
         # TODO This assumes the current key is the cryptonym. This is a BAD
         # ASSUMPTION!!! Sovrin needs to provide the current key.
-        if not verifySig(identifier, signature, msgWithoutSig):
+        ser = serializeMsg(msgWithoutSig)
+        signature = b58decode(signature.encode())
+        typ = msg.get(TYPE)
+        # TODO: Maybe keeping ACCEPT_INVITE open is a better option than keeping
+        # an if condition here?
+        if typ == ACCEPT_INVITE:
+            verkey = msg.get(VERKEY)
+        else:
+            try:
+                link = self.getLinkForMsg(msg)
+                verkey = self.getVerkeyForLink(link)
+            except LinkNotFound:
+                # This is for verification of `NOTIFY` events
+                link = self.wallet.getLinkInvitationByTarget(identifier)
+                # TODO: If verkey is None, it should be fetched from Sovrin.
+                # Assuming CID for now.
+                verkey = link.targetVerkey
+
+        v = DidVerifier(verkey, identifier=identifier)
+        if not v.verify(signature, ser):
             raise SignatureRejected
         else:
             return True
@@ -442,20 +446,13 @@ class Walleted:
     def _getLinkByTarget(self, target) -> Link:
         return self.wallet.getLinkInvitationByTarget(target)
 
-    def _syncLinkPostAvailableClaimsRcvd(self, li, newAvailableClaims):
-        if newAvailableClaims:
-            self.notifyMsgListener("    Available Claim(s): {}".
-                format(",".join(
-                [n for n, _, _ in newAvailableClaims])))
-        self._checkIfLinkIdentifierWrittenToSovrin(li, newAvailableClaims)
-
     def _checkIfLinkIdentifierWrittenToSovrin(self, li: Link, availableClaims):
-        req = self.getIdentity(li.verkey)
+        req = self.getIdentity(li.localIdentifier)
         self.notifyMsgListener("\nSynchronizing...")
 
         def getNymReply(reply, err, availableClaims, li: Link):
             if reply.get(DATA) and json.loads(reply[DATA])[TARGET_NYM] == \
-                    li.verkey:
+                    li.localIdentifier:
                 self.notifyMsgListener(
                     "    Confirmed identifier written to Sovrin.")
                 availableClaimNames = [n for n, _, _ in availableClaims]
@@ -470,126 +467,16 @@ class Walleted:
         self.loop.call_later(.2, ensureReqCompleted, self.loop, req.key,
                              self.client, getNymReply, (availableClaims, li))
 
-    def _reqClaim(self, msg):
-        body, (frm, ha) = msg
-        link = self.verifyAndGetLink(msg)
-        if link:
-            name = body[NAME]
-            if not self.isClaimAvailable(link, name):
-                self.notifyToRemoteCaller(
-                    EVENT_NOTIFY_MSG, "This claim is not yet available",
-                    self.wallet.defaultId, frm, origReqId=body.get(f.REQ_ID.nm))
-                return
-
-            version = body[VERSION]
-            origin = body[ORIGIN]
-            # TODO: Need to do validation
-            uValue = strToCryptoInteger(body['U'])
-            claimDef = self.wallet.getClaimDef(key=(name, version, origin))
-            attributes = self._getClaimsAttrsFor(link.internalId,
-                                                 claimDef.attrNames)
-            encodedAttrs = next(iter(getEncodedAttrs(link.verkey,
-                                                attributes).values()))
-            pk = self.wallet.getIssuerPublicKeyForClaimDef(link.localIdentifier,
-                                                           claimDef.seqNo)
-            sk = self.wallet.getClaimDefSk(claimDefSeqNo=claimDef.seqNo)
-            cred = Issuer.generateCredential(uValue, encodedAttrs, pk, sk)
-            claimDetails = {
-                NAME: claimDef.name,
-                VERSION: claimDef.version,
-                'attributes': attributes,
-                # TODO: the name should not be identifier but origin
-                f.IDENTIFIER.nm: claimDef.origin,
-                'A': str(cred[0]),
-                'e': str(cred[1]),
-                'vprimeprime': str(cred[2])
-            }
-            resp = self.createClaimMsg(claimDetails)
-            self.signAndSend(resp, link.localIdentifier, frm,
-                             origReqId=body.get(f.REQ_ID.nm))
-        else:
-            raise NotImplementedError
-
-    def verifyClaimProof(self, msg: Any):
-        body, (frm, ha) = msg
-        link = self.verifyAndGetLink(msg)
-        if link:
-            proof = body['proof']
-            encodedAttrs = body['encodedAttrs']
-            for iid, attrs in encodedAttrs.items():
-                encodedAttrs[iid] = stringDictToCharmDict(attrs)
-            revealedAttrs = body['revealedAttrs']
-            nonce = getNonceForProof(body[NONCE])
-            claimDefKeys = {iid: tuple(_)
-                            for iid, _ in body['claimDefKeys'].items()}
-
-            fetchedClaimDefs = 0
-
-            def verify(r, e):
-                # ASSUMPTION: This assumes that author of claimDef is same
-                # as the author of issuerPublicKey
-                # TODO: Do json validation
-                nonlocal proof, nonce, body, claimDefKeys, fetchedClaimDefs
-                # TODO: This is not thread safe, can lead to race condition
-                fetchedClaimDefs += 1
-                if fetchedClaimDefs < len(claimDefKeys):
-                    return
-
-                proof = ProofBuilder.prepareProofFromDict(proof)
-                issuerPks = {}
-                for issuerId, claimDefKey in claimDefKeys.items():
-                    # name, version, origin = claimDefKey
-                    claimDef = self.wallet.getClaimDef(key=claimDefKey)
-                    issuerKey = self.wallet.getIssuerPublicKeyForClaimDef(
-                        issuerId=issuerId, seqNo=claimDef.seqNo)
-                    issuerPks[issuerId] = issuerKey
-
-                claimName = body[NAME]
-
-                # REMOVE-LOG: Remove the next log
-                logger.debug("issuerPks, proof, nonce, encoded, revealed is "
-                             "{} {} {} {} {}".
-                             format(issuerPks, proof, nonce, encodedAttrs,
-                                    revealedAttrs))
-
-                result = Verifier.verifyProof(issuerPks, proof, nonce,
-                                              encodedAttrs,
-                                              revealedAttrs)
-
-                if result:
-                    logger.info("proof {} verified".format(claimName))
-                else:
-                    logger.warning("proof {} failed verification".
-                                   format(claimName))
-
-                status = 'verified' if result else 'failed verification'
-                resp = {
-                    TYPE: CLAIM_PROOF_STATUS,
-                    DATA: '    Your claim {} {} was received and {}\n'.
-                          format(body[NAME], body[VERSION], status),
-                }
-                self.signAndSend(resp, link.localIdentifier, frm,
-                                 origReqId=body.get(f.REQ_ID.nm))
-
-                if result:
-                    self._postClaimVerif(claimName, link, frm)
-
-            for claimDefKey in claimDefKeys.values():
-                getCredDefIsrKeyAndExecuteCallback(self.wallet,
-                                                   self.client,
-                                                   print,
-                                                   self.loop,
-                                                   claimDefKey,
-                                                   verify)
-
     def notifyResponseFromMsg(self, linkName, reqId=None):
         if reqId:
             # TODO: This logic assumes that the req id is time based
             curTimeBasedId = getTimeBasedId()
-            timeTakenInMillis = convertTimeBasedReqIdToMillis(curTimeBasedId - reqId)
+            timeTakenInMillis = convertTimeBasedReqIdToMillis(
+                curTimeBasedId - reqId)
 
             if timeTakenInMillis >= 1000:
-                responseTime = ' ({} sec)'.format(round(timeTakenInMillis/1000, 2))
+                responseTime = ' ({} sec)'.format(
+                    round(timeTakenInMillis / 1000, 2))
             else:
                 responseTime = ' ({} ms)'.format(round(timeTakenInMillis, 2))
         else:
@@ -598,23 +485,15 @@ class Walleted:
         self.notifyMsgListener("\nResponse from {}{}:".format(linkName,
                                                               responseTime))
 
-    def handleClaimProofStatus(self, msg: Any):
-        body, _ = msg
-        data = body.get(DATA)
-        identifier = body.get(IDENTIFIER)
-        li = self._getLinkByTarget(getCryptonym(identifier))
-        self.notifyResponseFromMsg(li.name, body.get(f.REQ_ID.nm))
-        self.notifyMsgListener(data)
-
-    def notifyToRemoteCaller(self, event, msg, signingIdr, frm, origReqId=None):
+    def notifyToRemoteCaller(self, event, msg, signingIdr, to, origReqId=None):
         resp = {
             TYPE: EVENT,
             EVENT_NAME: event,
             DATA: {'msg': msg}
         }
-        self.signAndSend(resp, signingIdr, frm, origReqId=origReqId)
+        self.signAndSend(resp, signingIdr, to, origReqId=origReqId)
 
-    def _acceptInvite(self, msg):
+    def _handleAcceptance(self, msg):
         body, (frm, ha) = msg
         link = self.verifyAndGetLink(msg)
         # TODO this is really kludgy code... needs refactoring
@@ -623,7 +502,9 @@ class Walleted:
             return
         logger.debug("proceeding with link: {}".format(link.name))
         identifier = body.get(f.IDENTIFIER.nm)
-        idy = Identity(identifier)
+        verkey = body.get(VERKEY)
+        idy = Identity(identifier, verkey=verkey)
+        link.targetVerkey = verkey
         try:
             pendingCount = self.wallet.addSponsoredIdentity(idy)
             logger.debug("pending request count {}".format(pendingCount))
@@ -652,33 +533,22 @@ class Walleted:
             #                       link.verkey, frm)
         else:
             logger.debug(
-                "not accepted, so add nym to sovrin "
+                "not added to the ledger, so add nym to the ledger "
                 "and then will send available claims")
             reqs = self.wallet.preparePending()
             # Assuming there was only one pending request
             logger.debug("sending to sovrin {}".format(reqs[0]))
             self._sendToSovrinAndDo(reqs[0], clbk=sendClaimList)
 
-        # TODO: If I have the below exception thrown, somehow the
-        # error msg which is sent in verifyAndGetLink is not being received
-        # on the other end, so for now, commented, need to come back to this
-        # else:
-        #     raise NotImplementedError
+            # TODO: If I have the below exception thrown, somehow the
+            # error msg which is sent in verifyAndGetLink is not being received
+            # on the other end, so for now, commented, need to come back to this
+            # else:
+            #     raise NotImplementedError
 
     def _sendToSovrinAndDo(self, req, clbk=None, *args):
         self.client.submitReqs(req)
         ensureReqCompleted(self.loop, req.key, self.client, clbk, *args)
-
-    def _getClaimsAttrsFor(self, internalId, attrNames):
-        res = {}
-        attributes = self.getAttributes(internalId)
-        if attributes:
-            for nm in attrNames:
-                res[nm] = attributes.get(nm)
-        return res
-
-    def getAttributes(self, nonce):
-        raise NotImplementedError
 
     def newAvailableClaimsPostClaimVerif(self, claimName):
         raise NotImplementedError
@@ -688,8 +558,19 @@ class Walleted:
             resp = self.createNewAvailableClaimsMsg(nac)
             self.signAndSend(resp, link.localIdentifier, frm)
 
-    def sendPing(self, name):
-        reqId = self.signAndSend({TYPE: 'ping'}, None, None, name)
+    def sendPing(self, linkName):
+        link = self.wallet.getLink(linkName, required=True)
+        self.connectTo(linkName)
+        ha = link.getRemoteEndpoint(required=True)
+        params = dict(ha=ha)
+        msg = {
+            TYPE: 'ping',
+            NONCE: link.invitationNonce,
+            f.REQ_ID.nm: getTimeBasedId(),
+            f.IDENTIFIER.nm: link.localIdentifier
+        }
+        reqId = self.sendMessage(msg, **params)
+
         self.notifyMsgListener("    Ping sent.")
         return reqId
 
@@ -711,25 +592,24 @@ class Walleted:
         if claimProofRequestsJson:
             for cr in claimProofRequestsJson:
                 claimProofRequests.append(
-                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES]))
+                    ClaimProofRequest(cr[NAME], cr[VERSION], cr[ATTRIBUTES],
+                                      cr['verifiableAttributes']))
 
         self.notifyMsgListener("1 link invitation found for {}.".
                                format(linkInvitationName))
-        # TODO: Assuming it is cryptographic identifier
-        alias = "cid-" + str(len(self.wallet.identifiers) + 1)
-        signer = SimpleSigner(alias=alias)
-        self.wallet.addIdentifier(signer=signer)
 
         self.notifyMsgListener("Creating Link for {}.".
                                format(linkInvitationName))
         self.notifyMsgListener("Generating Identifier and Signing key.")
         # TODO: Would we always have a trust anchor corresponding ot a link?
-        trustAnchor = linkInvitationName
-        li = Link(linkInvitationName,
-                  signer.alias + ":" + signer.identifier,
-                  trustAnchor, remoteIdentifier,
-                  remoteEndPoint, linkNonce,
-                  claimProofRequests, invitationData=invitationData)
+
+        li = Link(name=linkInvitationName,
+                  trustAnchor=linkInvitationName,
+                  remoteIdentifier=remoteIdentifier,
+                  remoteEndPoint=remoteEndPoint,
+                  invitationNonce=linkNonce,
+                  claimProofRequests=claimProofRequests)
+
         self.wallet.addLink(li)
         return li
 
@@ -741,7 +621,7 @@ class Walleted:
             if not linkInvitation:
                 raise LinkNotFound
             linkName = linkInvitation["name"]
-            existingLinkInvites = self.wallet.\
+            existingLinkInvites = self.wallet. \
                 getMatchingLinks(linkName)
             if len(existingLinkInvites) >= 1:
                 raise LinkAlreadyExists
@@ -749,15 +629,28 @@ class Walleted:
             link = self.loadInvitation(invitationData)
             return link
 
-    def acceptInvitation(self, linkName):
-        link = self.wallet.getLink(linkName, required=True)
-        idr = self.wallet._requiredIdr(link.localIdentifier)
+    def acceptInvitation(self, link: Union[str, Link]):
+        if isinstance(link, str):
+            link = self.wallet.getLink(link, required=True)
+        elif isinstance(link, Link):
+            pass
+        else:
+            raise TypeError("Type of link must be either string or Link but "
+                            "provided {}".format(type(link)))
+        # TODO should move to wallet in a method like accept(link)
+        if not link.localIdentifier:
+            signer = DidSigner()
+            self.wallet.addIdentifier(signer=signer)
+            link.localIdentifier = signer.identifier
         msg = {
             TYPE: ACCEPT_INVITE,
-            f.IDENTIFIER.nm: idr,
+            # TODO should not send this... because origin should be the sender
             NONCE: link.invitationNonce,
+            VERKEY: self.wallet.getVerkey(link.localIdentifier)
         }
-        self.signAndSend(msg, None, None, linkName)
+        logger.debug("{} accepting invitation from {} with id {}".
+                     format(self.name, link.name, link.localIdentifier))
+        self.signAndSend(msg, None, None, link.name)
 
     def _handleSyncResp(self, link, additionalCallback):
         def _(reply, err):
@@ -772,6 +665,7 @@ class Walleted:
                                      additionalCallback, reply, err)
             else:
                 additionalCallback(reply, err)
+
         return _
 
     def _updateLinkWithLatestInfo(self, link: Link, reply):
@@ -783,14 +677,16 @@ class Walleted:
 
         link.linkLastSynced = datetime.now()
         self.notifyMsgListener("    Link {} synced".format(link.name))
-        if link.remoteEndPoint:
-            reqId = self._pingToEndpoint(link.name, link.remoteEndPoint)
-            return reqId
+        # TODO need to move this to after acceptance,
+        # unless we want to support an anonymous ping
+        # if link.remoteEndPoint:
+        #     reqId = self._pingToEndpoint(link.name, link.remoteEndPoint)
+        #     return reqId
 
     def _pingToEndpoint(self, name, endpoint):
         self.notifyMsgListener("\nPinging target endpoint: {}".
                                format(endpoint))
-        reqId = self.sendPing(name=name)
+        reqId = self.sendPing(linkName=name)
         return reqId
 
     def sync(self, linkName, doneCallback=None):
@@ -802,8 +698,7 @@ class Walleted:
                            value=None,
                            dest=nym,
                            ledgerStore=LedgerStore.RAW)
-        req = self.wallet.requestAttribute(
-            attrib, sender=self.wallet.defaultId)
+        req = self.wallet.requestAttribute(attrib, sender=self.wallet.defaultId)
         self.client.submitReqs(req)
 
         if doneCallback:
@@ -819,9 +714,9 @@ class Walleted:
                                 checkIfLinkExists, clbk, *args):
 
         if isMaxCheckTimeExpired(startTime, maxCheckForMillis):
-           clbk(None, "No response received within specified time ({} mills). "
-                      "Retry the command and see if that works.\n".
-                format(maxCheckForMillis))
+            clbk(None, "No response received within specified time ({} mills). "
+                       "Retry the command and see if that works.\n".
+                 format(maxCheckForMillis))
         else:
             found = False
             rcvdResponses = self.rcvdMsgStore.get(reqId)
@@ -846,4 +741,3 @@ class Walleted:
                 loop.call_later(.2, self.executeWhenResponseRcvd,
                                 startTime, maxCheckForMillis, loop,
                                 reqId, respType, checkIfLinkExists, clbk, *args)
-

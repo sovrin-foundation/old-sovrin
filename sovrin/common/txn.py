@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME, \
-    RAW, ENC, HASH, NAME, VERSION, TYPE, KEYS, IP, PORT, POOL_TXN_TYPES, ALIAS, \
+    RAW, ENC, HASH, NAME, VERSION, TYPE, POOL_TXN_TYPES, ALIAS, \
     STEWARD, NYM, VERKEY
 from plenum.common.types import f
 
@@ -17,6 +17,8 @@ TXNS = "Txns"
 ENC_TYPE = "encType"
 SKEY = "secretKey"
 REF = "ref"
+PRIMARY = "primary"
+REVOCATION = "revocation"
 
 allOpKeys = (TXN_TYPE, TARGET_NYM, VERKEY, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
              ENC, HASH, ALIAS)
@@ -37,8 +39,8 @@ GET_ATTR = "GET_ATTR"
 GET_NYM = "GET_NYM"
 GET_TXNS = "GET_TXNS"
 GET_TXN = "GET_TXN"
-CRED_DEF = "CRED_DEF"
-GET_CRED_DEF = "GET_CRED_DEF"
+CLAIM_DEF = "CLAIM_DEF"
+GET_CLAIM_DEF = "GET_CLAIM_DEF"
 ADD_PKI = "ADD_PKI"
 REQ_CRED = "REQ_CRED"
 GET_NONCE = "GET_NONCE"
@@ -49,14 +51,14 @@ GET_ISSUER_KEY = "GET_ISSUER_KEY"
 # Temp for demo
 GEN_CRED = "GEN_CRED"
 
-openTxns = (GET_NYM, GET_ATTR, GET_CRED_DEF, GET_ISSUER_KEY)
+openTxns = (GET_NYM, GET_ATTR, GET_CLAIM_DEF, GET_ISSUER_KEY)
 
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {NYM: ([TARGET_NYM], [ROLE]),
           ATTRIB: ([], [RAW, ENC, HASH]),
-          CRED_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
-          GET_CRED_DEF: ([], []),
+          CLAIM_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
+          GET_CLAIM_DEF: ([], []),
           ISSUER_KEY: ([REF, DATA]),
           GET_ISSUER_KEY: ([REF, ORIGIN])
           }
@@ -69,8 +71,8 @@ validTxnTypes = {NYM,
                  GET_ATTR,
                  GET_NYM,
                  GET_TXNS,
-                 CRED_DEF,
-                 GET_CRED_DEF,
+                 CLAIM_DEF,
+                 GET_CLAIM_DEF,
                  ISSUER_KEY,
                  GET_ISSUER_KEY}
 validTxnTypes.update(POOL_TXN_TYPES)

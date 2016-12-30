@@ -1,6 +1,6 @@
 from plenum.test.eventually import eventually
-from sovrin.test.cli.conftest import notConnectedStatus
-from sovrin.test.cli.helper import checkConnectedToEnv, ensureNodesCreated
+
+from sovrin.test.cli.helper import checkConnectedToEnv
 
 
 def testConnectEnv(poolNodesCreated, looper, notConnectedStatus):

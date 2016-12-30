@@ -1,13 +1,13 @@
 import glob
+import os
 import shutil
 import sys
-import os
-from setuptools import setup, find_packages, __version__
-from pip.req import parse_requirements
 from shutil import copyfile
+
+from setuptools import setup, find_packages, __version__
+
 import data
 import sample
-
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -62,7 +62,11 @@ setup(
              '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL', '*.sovrin']},
     include_package_data=True,
     data_files=[(
-        (BASE_DIR, ['data/pool_transactions_sandbox', ])
+        (BASE_DIR, ['data/pool_transactions_sandbox',
+                    'data/pool_transactions_local',
+                    'data/transactions_sandbox',
+                    'data/transactions_local',
+                    ])
     )],
     install_requires=['base58', 'pyorient', 'plenum-dev', 'ledger-dev',
                       'semver', 'anoncreds-dev'],

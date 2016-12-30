@@ -1,17 +1,15 @@
 import json
-
 import os
-from plenum.test.eventually import eventually
-from sovrin.client.wallet.link import Link
 
-from sovrin.common.plugin_helper import writeAnonCredPlugin
-from sovrin.test.helper import TestNode, TestClient
-
+from plenum.common.txn import TARGET_NYM, ROLE
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \
     assertAllNodesCreated, checkAllNodesStarted, initDirWithGenesisTxns
+from plenum.test.eventually import eventually
 from plenum.test.testable import Spyable
-from plenum.common.txn import TARGET_NYM, ROLE
+
 from sovrin.cli.cli import SovrinCli
+from sovrin.client.wallet.link import Link
+from sovrin.test.helper import TestNode, TestClient
 
 
 @Spyable(methods=[SovrinCli.print, SovrinCli.printTokens])
@@ -24,7 +22,6 @@ def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
     tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
     if poolDir or domainDir:
         initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
-    writeAnonCredPlugin(tempDir, reloadTestModules=True)
     return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
                         nodeClass=TestNode, clientClass=TestClient, config=conf)
 
@@ -81,7 +78,7 @@ def ensureNymAdded(cli, nym, role=None):
     cli.enterCmd('send ATTRIB {dest}={nym} raw={raw}'.
                  format(dest=TARGET_NYM, nym=nym,
                         # raw='{\"attrName\":\"attrValue\"}'))
-                        raw=json.dumps({"attrName":"attrValue"})))
+                        raw=json.dumps({"attrName": "attrValue"})))
     cli.looper.run(eventually(checkAddAttr, cli, retryWait=1, timeout=10))
 
 

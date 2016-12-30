@@ -1,12 +1,7 @@
 import glob
 import os
-
-from shutil import copyfile
-
 import shutil
-
-import data
-import sample
+from shutil import copyfile
 
 
 class Setup:
@@ -19,6 +14,8 @@ class Setup:
         self.setupSampleInvites()
 
     def setupTxns(self):
+        import data
+
         pool_txn_file = os.path.join(self.base_dir, "pool_transactions_sandbox")
         pool_txn_local_file = os.path.join(self.base_dir, "pool_transactions_local")
         identity_txn_file = os.path.join(self.base_dir, "transactions_sandbox")
@@ -32,6 +29,7 @@ class Setup:
         return self
 
     def setupSampleInvites(self):
+        import sample
         sdir = os.path.dirname(sample.__file__)
         sidir = os.path.join(self.base_dir, "sample")
         os.makedirs(sidir, exist_ok=True)

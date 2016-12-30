@@ -1,6 +1,5 @@
 import json
 import traceback
-import uuid
 
 import plenum
 import pytest
@@ -16,7 +15,6 @@ plenum.common.util.loggingConfigured = False
 from plenum.common.looper import Looper
 from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
-from plenum.test.conftest import poolTxnStewardData, poolTxnStewardNames
 
 from sovrin.common.config_util import getConfig
 from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
@@ -25,8 +23,6 @@ from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
     acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
     thriftAgent
-
-from anoncreds.test.conftest import staticPrimes
 
 config = getConfig()
 
@@ -508,8 +504,7 @@ def jobCertificateClaimMap():
 @pytest.fixture(scope="module")
 def reqClaimOut():
     return ["Found claim {name} in link {inviter}",
-            "Requesting claim {name} from {inviter}...",
-            "Getting Keys for the Claim Definition from Sovrin"]
+            "Requesting claim {name} from {inviter}..."]
 
 
 # TODO Change name
@@ -517,7 +512,6 @@ def reqClaimOut():
 def reqClaimOut1():
     return ["Found claim {name} in link {inviter}",
             "Requesting claim {name} from {inviter}...",
-            "Getting Claim Definition from Sovrin",
             "Signature accepted.",
             'Received claim "{name}".']
 
@@ -812,7 +806,7 @@ def thriftIsRunning(emptyLooper, tdirWithPoolTxns, thriftWallet,
 
 
 @pytest.fixture(scope="module")
-def credDefAdded():
+def claimDefAdded():
     return ["credential definition is published"]
 
 

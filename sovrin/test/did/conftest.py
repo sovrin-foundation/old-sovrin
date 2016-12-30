@@ -1,3 +1,4 @@
+import base58
 import pytest
 
 from sovrin.client.wallet.wallet import Wallet
@@ -23,4 +24,11 @@ def abbrevVerkey(wallet, abbrevIdr):
 
 @pf
 def noKeyIdr(wallet):
-    return wallet.addIdentifier(vertype='none').identifier
+    idr = base58.b58encode(b'1'*16)
+    return wallet.addIdentifier(identifier=idr)[0]
+
+
+@pf
+def fullKeyIdr(wallet):
+    idr = base58.b58encode(b'2'*16)
+    return wallet.addIdentifier(identifier=idr)[0]

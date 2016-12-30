@@ -1,10 +1,10 @@
 import argparse
-
 import sys
 
 from plenum.common.signer_simple import SimpleSigner
 from plenum.test.eventually import eventually
 from plenum.test.test_stack import checkRemoteExists, CONNECTED
+
 from sovrin.client.wallet.wallet import Wallet
 
 

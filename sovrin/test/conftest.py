@@ -1,8 +1,9 @@
+from config.config import cmod
+
 from sovrin.common import strict_types
 
 # typecheck during tests
 strict_types.defaultShouldCheck = True
-
 
 import pytest
 
@@ -11,12 +12,10 @@ from ledger.ledger import Ledger
 from ledger.serializers.compact_serializer import CompactSerializer
 
 from plenum.common.looper import Looper
-from plenum.common.plugin_helper import loadPlugins
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import VERKEY
 from plenum.test.plugin.helper import getPluginPath
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.plugin_helper import writeAnonCredPlugin
 from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
@@ -25,19 +24,39 @@ from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import genTestClient, createNym, addUser, TestNode, \
     makePendingTxnsRequest, buildStewardClient
 
+primes = {
+    "prime1":
+        (cmod.integer(
+            157329491389375793912190594961134932804032426403110797476730107804356484516061051345332763141806005838436304922612495876180233509449197495032194146432047460167589034147716097417880503952139805241591622353828629383332869425029086898452227895418829799945650973848983901459733426212735979668835984691928193677469),
+         cmod.integer(
+             151323892648373196579515752826519683836764873607632072057591837216698622729557534035138587276594156320800768525825023728398410073692081011811496168877166664537052088207068061172594879398773872352920912390983199416927388688319207946493810449203702100559271439586753256728900713990097168484829574000438573295723))
+    , "prime2":
+        (cmod.integer(
+            150619677884468353208058156632953891431975271416620955614548039937246769610622017033385394658879484186852231469238992217246264205570458379437126692055331206248530723117202131739966737760399755490935589223401123762051823602343810554978803032803606907761937587101969193241921351011430750970746500680609001799529),
+         cmod.integer(
+             171590857568436644992359347719703764048501078398666061921719064395827496970696879481740311141148273607392657321103691543916274965279072000206208571551864201305434022165176563363954921183576230072812635744629337290242954699427160362586102068962285076213200828451838142959637006048439307273563604553818326766703))
+}
+
+
+@pytest.fixture(scope="module")
+def primes1():
+    P_PRIME1, Q_PRIME1 = primes.get("prime1")
+    return dict(p_prime=P_PRIME1, q_prime=Q_PRIME1)
+
+
+@pytest.fixture(scope="module")
+def primes2():
+    P_PRIME2, Q_PRIME2 = primes.get("prime2")
+    return dict(p_prime=P_PRIME2, q_prime=Q_PRIME2)
+
+
 # noinspection PyUnresolvedReferences
 from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
     whitelist, concerningLogLevels, logcapture, tconf, keySharedNodes, \
     startedNodes, tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, \
-    poolTxnNodeNames,allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
+    poolTxnNodeNames, allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
     poolTxnStewardData, poolTxnStewardNames, getValueFromModule, \
     txnPoolNodesLooper
-
-
-@pytest.fixture(scope="module", autouse=True)
-def anonCredPluginFileCreated(tdir):
-    writeAnonCredPlugin(tdir, reloadTestModules=True)
-    loadPlugins(tdir)
 
 
 @pytest.fixture(scope="module")
@@ -74,7 +93,7 @@ def genesisTxns(stewardWallet: Wallet):
         TXN_ID: "9c86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
         ROLE: STEWARD,
         VERKEY: stewardWallet.getVerkey()
-    },]
+    }, ]
 
 
 @pytest.fixture(scope="module")
@@ -174,12 +193,12 @@ def addedSponsor(nodeSet, steward, stewardWallet, looper,
 
 @pytest.fixture(scope="module")
 def userWalletA(nodeSet, addedSponsor, sponsorWallet, looper, sponsor):
-    return addUser(looper, sponsor, sponsorWallet, 'userA')
+    return addUser(looper, sponsor, sponsorWallet, 'userA', useDid=False)
 
 
 @pytest.fixture(scope="module")
 def userWalletB(nodeSet, addedSponsor, sponsorWallet, looper, sponsor):
-    return addUser(looper, sponsor, sponsorWallet, 'userB')
+    return addUser(looper, sponsor, sponsorWallet, 'userB', useDid=False)
 
 
 @pytest.fixture(scope="module")
@@ -199,6 +218,16 @@ def userClientA(nodeSet, userWalletA, looper, tdir):
     looper.add(u)
     looper.run(u.ensureConnectedToNodes())
     makePendingTxnsRequest(u, userWalletA)
+    return u
+
+
+@pytest.fixture(scope="module")
+def userClientB(nodeSet, userWalletB, looper, tdir):
+    u, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
+    u.registerObserver(userWalletB.handleIncomingReply)
+    looper.add(u)
+    looper.run(u.ensureConnectedToNodes())
+    makePendingTxnsRequest(u, userWalletB)
     return u
 
 

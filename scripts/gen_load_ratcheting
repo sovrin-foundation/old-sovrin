@@ -4,12 +4,12 @@
 import sys
 
 from jsonpickle import json
-
 from ledger.stores.text_file_store import TextFileStore
 from plenum.common.looper import Looper
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, NYM, ROLE, USER, NEW_NODE, DATA, ALIAS, CLIENT_IP, CLIENT_PORT
 from plenum.common.types import HA, CLIENT_STACK_SUFFIX
+
 from sovrin.client.client import Client
 from sovrin.common.config_util import getConfig
 
