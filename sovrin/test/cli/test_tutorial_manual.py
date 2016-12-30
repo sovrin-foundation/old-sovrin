@@ -69,9 +69,17 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     do('connect test', within=3, expect=connectedToTest)
 
     # Add nym and endpoint for Faber, Acme and Thrift
-    for nym, ep in [('FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB', '127.0.0.1:5555'),
-                    ('7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21', '127.0.0.1:6666'),
-                    ('9jegUr9vAMqoqQQUEAiCBYNQDnUbTktQY9nNspxfasZW', '127.0.0.1:7777')]:
+    agentIpAddress = "127.0.0.1"
+    faberAgentPort = 5555
+    acmeAgentPort = 6666
+    thriftAgentPort = 7777
+    faberEndpoint = "{}:{}".format(agentIpAddress, faberAgentPort)
+    acmeEndpoint = "{}:{}".format(agentIpAddress, acmeAgentPort)
+    thriftEndpoint = "{}:{}".format(agentIpAddress, thriftAgentPort)
+
+    for nym, ep in [('FuN98eH2eZybECWkofW6A9BKJxxnTatBCopfUiNxo6ZB', faberEndpoint),
+                    ('7YD5NKn3P4wVJLesAmA1rr7sLPqW9mR1nhFdKD518k21', acmeEndpoint),
+                    ('9jegUr9vAMqoqQQUEAiCBYNQDnUbTktQY9nNspxfasZW', thriftEndpoint)]:
         m = {'target': nym, 'endpoint': json.dumps({ENDPOINT: ep})}
         do('send NYM dest={target} role=SPONSOR',
            within=3, expect=nymAddedOut, mapper=m)
@@ -79,12 +87,10 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
            expect=attrAddedOut, mapper=m)
 
     # Start Faber Agent and Acme Agent
-    faberAgentPort = 5555
-    acmeAgentPort = 6666
-    thriftAgentPort = 7777
-    fMap = faberMap(faberAgentPort)
-    aMap = acmeMap(acmeAgentPort)
-    tMap = thriftMap(thriftAgentPort)
+
+    fMap = faberMap(agentIpAddress, faberAgentPort)
+    aMap = acmeMap(agentIpAddress, acmeAgentPort)
+    tMap = thriftMap(agentIpAddress, thriftAgentPort)
 
     agentParams = [
         (FaberAgent, "Faber College", faberAgentPort,
