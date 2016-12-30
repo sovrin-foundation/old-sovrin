@@ -185,8 +185,8 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
         # Passing some args as None since they are not used in the method
         jobApplicationClaimSent(be, do, userCLI, aMap, None, None, None)
         # Request new available claims Job-Certificate
-        jobCertClaimRequested(be, do, userCLI,
-                              jobCertificateClaimMap, reqClaimOut1, None, None)
+        jobCertClaimRequested(be, do, userCLI, None,
+                              jobCertificateClaimMap, reqClaimOut1, None)
 
         acmeClaimDefId = ID(ClaimDefinitionKey('Job-Certificate', '0.2', aMap['target']))
         acmeIssuerKey = userCLI.looper.run(getPublicKey(acmeAgent.issuer.wallet, acmeClaimDefId))

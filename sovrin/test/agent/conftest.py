@@ -123,6 +123,11 @@ def aliceAgentConnected(nodeSet,
 
 
 @pytest.fixture(scope="module")
+def agentIpAddress():
+    return "127.0.0.1"
+
+
+@pytest.fixture(scope="module")
 def faberAgentPort():
     return genHa()[1]
 

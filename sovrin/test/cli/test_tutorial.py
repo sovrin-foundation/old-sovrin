@@ -300,21 +300,21 @@ def testAcceptUnSyncedFaberInviteWhenNotConnected(be, do, aliceCli,
        mapper=faberMap)
 
 
-def testAcceptUnSyncedFaberInvite(be, do, aliceCli, preRequisite,
-                                  faberInviteLoadedByAlice,
-                                  acceptUnSyncedWithoutEndpointWhenConnected,
-                                  faberMap, connectedToTest):
-    be(aliceCli)
-    connectIfNotAlreadyConnected(do, connectedToTest, aliceCli, faberMap)
-
-    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
-                      totalClaimDefs=0, totalClaimsRcvd=0)
-    do('accept invitation from {inviter}',
-       within=3,
-       expect=acceptUnSyncedWithoutEndpointWhenConnected,
-       mapper=faberMap)
-    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
-                      totalClaimDefs=0, totalClaimsRcvd=0)
+# def testAcceptUnSyncedFaberInvite(be, do, aliceCli, preRequisite,
+#                                   faberInviteLoadedByAlice,
+#                                   acceptUnSyncedWithoutEndpointWhenConnected,
+#                                   faberMap, connectedToTest):
+#     be(aliceCli)
+#     connectIfNotAlreadyConnected(do, connectedToTest, aliceCli, faberMap)
+#
+#     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
+#                       totalClaimDefs=0, totalClaimsRcvd=0)
+#     do('accept invitation from {inviter}',
+#        within=13,
+#        expect=acceptUnSyncedWithoutEndpointWhenConnected,
+#        mapper=faberMap)
+#     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
+#                       totalClaimDefs=0, totalClaimsRcvd=0)
 
 
 @pytest.fixture(scope="module")
@@ -340,6 +340,7 @@ def testSyncFaberInviteWithoutEndpoint(faberInviteSyncedWithoutEndpoint):
 def testShowSyncedFaberInvite(be, do, aliceCli, faberMap, linkNotYetSynced,
                               faberInviteSyncedWithoutEndpoint,
                               showSyncedLinkWithoutEndpointOut):
+
     be(aliceCli)
 
     do('show link {inviter}', within=4,
@@ -406,12 +407,11 @@ def acceptInvitation(be, do, userCli, agentMap, expect):
 def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap,
                                  preRequisite,
                                  syncedInviteAcceptedWithClaimsOut,
-                                 # faberLinkAdded,
                                  faberInviteSyncedWithEndpoint):
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
                       totalClaimDefs=0, totalClaimsRcvd=0)
     acceptInvitation(be, do, aliceCli, faberMap,
-                     syncedInviteAcceptedWithClaimsOut)
+                 syncedInviteAcceptedWithClaimsOut)
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
                       totalClaimDefs=1, totalClaimsRcvd=0)
     return aliceCli

@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
 import pytest
 import os
 import sovrin.test.cli.test_tutorial as testTutorialMod
@@ -10,6 +12,11 @@ import shutil
 
 # default/common monkeypatching required for any env
 def performDefaultMonkeyPatching(config, monkeypatch):
+
+    @pytest.fixture(scope="module")
+    def mockedAgentIpAddress():
+        return config.get("agentIpAddress")
+
     @pytest.fixture(scope="module")
     def mockedFaberAgentPort():
         return config.get("faberAgentPort")
@@ -34,6 +41,7 @@ def performDefaultMonkeyPatching(config, monkeypatch):
     def mockedTdirWithPoolTxns(tdir, tconf):
         source = os.path.join(config.get("poolTxnFilePath"))
         target = os.path.join(tdir, tconf.poolTransactionsFile)
+        os.mkdir(tdir)
         shutil.copy(source, target)
         return tdir
 
@@ -47,6 +55,8 @@ def performDefaultMonkeyPatching(config, monkeypatch):
                         mockedPreRequisite)
 
     import sovrin.test.agent.conftest as sovrinAgentConfMod
+    monkeypatch.setattr(sovrinAgentConfMod, 'agentIpAddress',
+                        mockedAgentIpAddress)
     monkeypatch.setattr(sovrinAgentConfMod, 'faberAgentPort',
                         mockedFaberAgentPort)
     monkeypatch.setattr(sovrinAgentConfMod, 'acmeAgentPort',
@@ -66,6 +76,7 @@ sandboxConfig = {
     "testModulePaths": {
         'cli/test_tutorial.py': tutorialMonkeyPatching
     },
+    "agentIpAddress": "54.70.102.199",
     "faberAgentPort": "5555",
     "acmeAgentPort": "6666",
     "thriftAgentPort": "7777",

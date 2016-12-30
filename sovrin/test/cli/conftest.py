@@ -22,7 +22,7 @@ from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
     acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
     acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
-    thriftAgent
+    thriftAgent, agentIpAddress
 
 config = getConfig()
 
@@ -85,8 +85,8 @@ def susanMap():
 
 
 @pytest.fixture(scope="module")
-def faberMap(faberAgentPort):
-    endpoint = "127.0.0.1:{}".format(faberAgentPort)
+def faberMap(agentIpAddress, faberAgentPort):
+    endpoint = "{}:{}".format(agentIpAddress, faberAgentPort)
     return {'inviter': 'Faber College',
             'invite': "sample/faber-invitation.sovrin",
             'invite-not-exists': "sample/faber-invitation.sovrin.not.exists",
@@ -102,8 +102,8 @@ def faberMap(faberAgentPort):
 
 
 @pytest.fixture(scope="module")
-def acmeMap(acmeAgentPort):
-    endpoint = "127.0.0.1:{}".format(acmeAgentPort)
+def acmeMap(agentIpAddress, acmeAgentPort):
+    endpoint = "{}:{}".format(agentIpAddress, acmeAgentPort)
     return {'inviter': 'Acme Corp',
             'invite': "sample/acme-job-application.sovrin",
             'invite-not-exists': "sample/acme-job-application.sovrin.not.exists",
@@ -124,8 +124,8 @@ def acmeMap(acmeAgentPort):
 
 
 @pytest.fixture(scope="module")
-def thriftMap(thriftAgentPort):
-    endpoint = "127.0.0.1:{}".format(thriftAgentPort)
+def thriftMap(agentIpAddress, thriftAgentPort):
+    endpoint = "{}:{}".format(agentIpAddress, thriftAgentPort)
     return {'inviter': 'Thrift Bank',
             'invite': "sample/thrift-loan-application.sovrin",
             'invite-not-exists': "sample/thrift-loan-application.sovrin.not.exists",
@@ -180,8 +180,10 @@ def acceptWhenNotConnected(canNotAcceptMsg, connectUsage):
 
 
 @pytest.fixture(scope="module")
-def acceptUnSyncedWithoutEndpointWhenConnected(commonAcceptInvitationMsgs):
-    return commonAcceptInvitationMsgs
+def acceptUnSyncedWithoutEndpointWhenConnected(
+        commonAcceptInvitationMsgs, syncedInviteAcceptedOutWithoutClaims):
+    return commonAcceptInvitationMsgs + \
+        syncedInviteAcceptedOutWithoutClaims
 
 
 @pytest.fixture(scope="module")
