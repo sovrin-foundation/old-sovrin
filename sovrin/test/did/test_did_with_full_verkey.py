@@ -11,7 +11,7 @@ Full verkey tests
         { type: GET_NYM, dest: <id2> }
     Verify a signature from this identifier with the new verkey
 """
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf

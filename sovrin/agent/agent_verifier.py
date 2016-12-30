@@ -28,7 +28,8 @@ class AgentVerifier(Verifier):
         proofInput = ProofInput.fromStrDict(body[PROOF_INPUT_FIELD])
         revealedAttrs = fromDictWithStrValues(body[REVEALED_ATTRS_FIELD])
 
-        result = await self.verifier.verify(proofInput, proof, revealedAttrs, nonce)
+        result = await self.verifier.verify(proofInput, proof, revealedAttrs,
+                                            nonce)
 
         status = 'verified' if result else 'failed verification'
         resp = {

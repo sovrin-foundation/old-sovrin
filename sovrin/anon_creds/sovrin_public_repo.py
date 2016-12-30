@@ -1,9 +1,11 @@
 import json
 
 from ledger.util import F
+from plenum.common.eventually import eventually
+from plenum.common.exceptions import NoConsensusYet
+from plenum.common.log import getlogger
 from plenum.common.txn import TARGET_NYM, TXN_TYPE, DATA, NAME, VERSION, TYPE, \
     ORIGIN
-from plenum.test.eventually import eventually
 
 from anoncreds.protocol.repo.public_repo import PublicRepo
 from anoncreds.protocol.types import ClaimDefinition, ID, PublicKey, \
@@ -17,7 +19,7 @@ from sovrin.common.types import Request
 def _ensureReqCompleted(reqKey, client, clbk):
     reply, err = client.replyIfConsensus(*reqKey)
     if reply is None:
-        raise ValueError('not completed')
+        raise NoConsensusYet('not completed')
     return clbk(reply, err)
 
 
@@ -31,6 +33,9 @@ def _submitData(result, error):
     data = json.loads(result.get(DATA).replace("\'", '"'))
     seqNo = result.get(F.seqNo.name)
     return data, seqNo
+
+
+logger = getlogger()
 
 
 class SovrinPublicRepo(PublicRepo):
@@ -48,7 +53,11 @@ class SovrinPublicRepo(PublicRepo):
                 VERSION: id.claimDefKey.version,
             }
         }
-        data, seqNo = await self._sendGetReq(op)
+        try:
+            data, seqNo = await self._sendGetReq(op)
+        except TimeoutError:
+            logger.error('Operation timed out {}'.format(op))
+            return None
         return ClaimDefinition(name=data[NAME],
                                version=data[VERSION],
                                claimDefType=data[TYPE],
@@ -63,7 +72,12 @@ class SovrinPublicRepo(PublicRepo):
             ORIGIN: id.claimDefKey.issuerId
         }
 
-        data, seqNo = await self._sendGetReq(op)
+        try:
+            data, seqNo = await self._sendGetReq(op)
+        except TimeoutError:
+            logger.error('Operation timed out {}'.format(op))
+            return None
+
         if not data:
             return None
 
@@ -78,7 +92,12 @@ class SovrinPublicRepo(PublicRepo):
             ORIGIN: id.claimDefKey.issuerId
         }
 
-        data, seqNo = await self._sendGetReq(op)
+        try:
+            data, seqNo = await self._sendGetReq(op)
+        except TimeoutError:
+            logger.error('Operation timed out {}'.format(op))
+            return None
+
         if not data:
             return None
 
@@ -109,7 +128,12 @@ class SovrinPublicRepo(PublicRepo):
             }
         }
 
-        data, seqNo = await self._sendSubmitReq(op)
+        try:
+            data, seqNo = await self._sendSubmitReq(op)
+        except TimeoutError:
+            logger.error('Operation timed out {}'.format(op))
+            return None
+
         if not seqNo:
             return None
         claimDef = claimDef._replace(issuerId=self.wallet.defaultId,
@@ -127,12 +151,17 @@ class SovrinPublicRepo(PublicRepo):
             DATA: {PRIMARY: pkData, REVOCATION: pkRData}
         }
 
-        data, seqNo = await self._sendSubmitReq(op)
+        try:
+            data, seqNo = await self._sendSubmitReq(op)
+        except TimeoutError:
+            logger.error('Operation timed out {}'.format(op))
+            return None
+
         if not seqNo:
             return None
         pk = pk._replace(seqId=seqNo)
         pkR = pkR._replace(seqId=seqNo)
-        return (pk, pkR)
+        return pk, pkR
 
     async def submitAccumulator(self, id: ID, accumPK: AccumulatorPublicKey,
                                 accum: Accumulator, tails: TailsType):
@@ -152,7 +181,10 @@ class SovrinPublicRepo(PublicRepo):
         req = Request(identifier=self.wallet.defaultId, operation=op)
         req = self.wallet.prepReq(req)
         self.client.submitReqs(req)
-
-        return await eventually(_ensureReqCompleted,
-                                req.key, self.client, clbk,
-                                timeout=20, retryWait=0.5)
+        try:
+            resp = await eventually(_ensureReqCompleted,
+                                    req.key, self.client, clbk,
+                                    timeout=20, retryWait=0.5)
+        except NoConsensusYet:
+            raise TimeoutError('Request timed out')
+        return resp

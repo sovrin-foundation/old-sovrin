@@ -183,7 +183,8 @@ class WalletedAgent(Walleted, Agent, Caching):
             self._initIssuerProverVerifier()
 
     def _initIssuerProverVerifier(self):
-        self.issuer = SovrinIssuer(client=self.client, wallet=self._wallet, attrRepo=self._attrRepo)
+        self.issuer = SovrinIssuer(client=self.client, wallet=self._wallet,
+                                   attrRepo=self._attrRepo)
         self.prover = SovrinProver(client=self.client, wallet=self._wallet)
         self.verifier = SovrinVerifier(client=self.client, wallet=self._wallet)
 
@@ -194,7 +195,8 @@ class WalletedAgent(Walleted, Agent, Caching):
             self._initIssuerProverVerifier()
 
 
-def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None, loop=None, clientClass=Client):
+def createAgent(agentClass, name, wallet=None, basedirpath=None, port=None,
+                loop=None, clientClass=Client):
     config = getConfig()
 
     if not wallet:
@@ -234,6 +236,7 @@ def runAgent(agent, looper=None, bootstrap=True):
 def createAndRunAgent(agentClass, name, wallet=None, basedirpath=None,
                       port=None, looper=None, clientClass=Client, bootstrap=True):
     loop = looper.loop if looper else None
-    agent = createAgent(agentClass, name, wallet, basedirpath, port, loop, clientClass)
+    agent = createAgent(agentClass, name, wallet, basedirpath, port, loop,
+                        clientClass)
     runAgent(agent, looper, bootstrap)
     return agent

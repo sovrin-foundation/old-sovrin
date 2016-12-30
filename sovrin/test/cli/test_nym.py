@@ -1,7 +1,7 @@
 import pytest
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TARGET_NYM
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 
 from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
 

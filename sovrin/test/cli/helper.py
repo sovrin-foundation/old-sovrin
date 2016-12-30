@@ -4,7 +4,7 @@ import os
 from plenum.common.txn import TARGET_NYM, ROLE
 from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \
     assertAllNodesCreated, checkAllNodesStarted, initDirWithGenesisTxns
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 from plenum.test.testable import Spyable
 
 from sovrin.cli.cli import SovrinCli

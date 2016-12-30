@@ -7,7 +7,9 @@ from sovrin.client.wallet.wallet import Wallet
 
 
 class SovrinIssuer(Issuer):
-    def __init__(self, client, wallet: Wallet, attrRepo: AttributeRepo, publicRepo: PublicRepo = None):
-        publicRepo = publicRepo or SovrinPublicRepo(client=client, wallet=wallet)
+    def __init__(self, client, wallet: Wallet, attrRepo: AttributeRepo,
+                 publicRepo: PublicRepo = None):
+        publicRepo = publicRepo or SovrinPublicRepo(client=client,
+                                                    wallet=wallet)
         issuerWallet = IssuerWalletInMemory(wallet.name, publicRepo)
         super().__init__(issuerWallet, attrRepo)

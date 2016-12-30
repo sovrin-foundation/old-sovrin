@@ -5,7 +5,7 @@ from plenum.common.looper import Looper
 from plenum.common.script_helper import changeHA
 from plenum.common.types import HA
 from plenum.common.util import getMaxFailures
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 from plenum.test.helper import checkSufficientRepliesRecvd
 
 from sovrin.common.config_util import getConfig

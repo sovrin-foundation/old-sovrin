@@ -9,7 +9,7 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import REQNACK, ENC, DATA, REPLY, TXN_TIME
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore

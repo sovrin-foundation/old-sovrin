@@ -27,7 +27,7 @@ DID forms tests
     Any other forms are rejected.
 """
 
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 
 from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf

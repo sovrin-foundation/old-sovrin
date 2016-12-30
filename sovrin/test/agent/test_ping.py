@@ -1,4 +1,4 @@
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 
 
 def testPing(aliceAcceptedFaber, faberIsRunning, aliceAgent, emptyLooper):

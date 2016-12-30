@@ -3,7 +3,7 @@ import logging
 import re
 
 import pytest
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 
 from anoncreds.protocol.types import ClaimDefinitionKey, ID
 from sovrin.agent.agent import createAndRunAgent

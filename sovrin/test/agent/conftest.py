@@ -22,7 +22,7 @@ import pytest
 import sample
 from plenum.common.looper import Looper
 from plenum.common.util import randomString
-from plenum.test.eventually import eventually
+from plenum.common.eventually import eventually
 from plenum.test.helper import assertFunc
 from sovrin.agent.agent import runAgent
 from sovrin.agent.agent import WalletedAgent
