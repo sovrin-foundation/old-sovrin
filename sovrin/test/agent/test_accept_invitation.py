@@ -25,11 +25,11 @@ def testAliceSyncsFaberInvitationLink(aliceFaberInvitationLinkSynced):
     pass
 
 
-def testAliceAgentConnected(faberAdded, aliceAgentConnected):
+def testFaberAdded(faberAdded):
     pass
 
 
-def testFaberAdded(faberAdded):
+def testAliceAgentConnected(faberAdded, aliceAgentConnected):
     pass
 
 
@@ -76,4 +76,3 @@ def testMultipleAcceptance(aliceAcceptedFaber,
                           inviterAgentAndWallet=faberIsRunning, linkName=link.name)
 
     assert len(faberAgent.wallet._links) == 2
-

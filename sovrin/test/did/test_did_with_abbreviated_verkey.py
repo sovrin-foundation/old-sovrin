@@ -19,7 +19,7 @@ from sovrin.common.identity import Identity
 from sovrin.test.did.conftest import pf
 from sovrin.test.did.helper import chkVerifyForRetrievedIdentity, \
     updateWalletIdrWithFullKeySigner, updateSovrinIdrWithFullKey, \
-    fetchFullVerkeyFromSovrin, checkAbbrVerkeySize
+    fetchFullVerkeyFromSovrin, checkAbbrVerkeySize, checkDidSize
 from sovrin.test.helper import createNym
 
 
@@ -62,7 +62,7 @@ def newVerkeyFetched(didAddedWithAbbrvVerkey, looper, sponsor, sponsorWallet,
 
 
 def testNewIdentifierInWalletIsDid(abbrevIdr):
-    assertLength(abbrevIdr, 22)
+    checkDidSize(abbrevIdr)
 
 
 def testDefaultVerkeyIsAbbreviated(abbrevVerkey):

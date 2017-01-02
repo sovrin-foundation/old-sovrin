@@ -61,10 +61,18 @@ def fetchFullVerkeyFromSovrin(looper, senderWallet, senderClient, ownerWallet,
     looper.run(eventually(chk, retryWait=1, timeout=5))
 
 
+def checkDidSize(did):
+    # A base58 encoding of 32 bytes string can be either 44 bytes or 43 bytes,
+    # since the did takes first 16 bytes, base58 of did is either
+    # 21 or 22 characters
+    assert len(did) == 21 or len(did) == 22
+
+
 def checkAbbrVerkeySize(verkey):
     # A base58 encoding of 32 bytes string can be either 44 bytes or 43 bytes,
-    # since the did takes first 22 bytes,  abbreviated verkey will take
-    # remaining 22 or 21 characters
+    # since the abbreviated verkey takes last 16 bytes, base58 of abbreviated
+    # verkey is either 21 or 22 characters and since its prefixed by a `~` its
+    # length will be either 23 or 22
     assert len(verkey) == 23 or len(verkey) == 22
 
 
