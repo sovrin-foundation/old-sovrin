@@ -48,7 +48,7 @@ $ pip install sovrin
 ... or (if you are docker - centric):
 
 ```
-$ docker run-it sovrinfoundation/sovrin
+$ docker run -it sovrinfoundation/sovrin
 pip install -U --no-cache-dir sovrin
 ```
 
