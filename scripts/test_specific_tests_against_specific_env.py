@@ -89,24 +89,26 @@ envConfigs = {
     "sandbox": sandboxConfig
 }
 
+# TODO: Need to properly test this and make sure monkey patching
+# doesn't break any other tests (which run after this one)
 
-def testSpecificModTest(monkeypatch):
-    envExitCodes = {}
-    curDirPath = os.path.dirname(os.path.abspath(__file__))
-
-    for ename, econf in envConfigs.items():
-        testModulePaths = econf.get("testModulePaths")
-        performDefaultMonkeyPatching(econf, monkeypatch)
-        exitCodes = {}
-        for testModName, testMonkeyPatchFunc in testModulePaths.items():
-            testModulePath = os.path.join(
-                curDirPath, '../sovrin/test', testModName)
-            if testMonkeyPatchFunc:
-                testMonkeyPatchFunc(econf, monkeypatch)
-            exitCodes[testModName] = pytest.main(['-s', testModulePath])
-
-        envExitCodes[ename] = exitCodes
-
-    for ename, exitCodes in envExitCodes.items():
-        for testMod, testResult in exitCodes.items():
-            assert testResult == 0
+# def testSpecificModTest(monkeypatch):
+#     envExitCodes = {}
+#     curDirPath = os.path.dirname(os.path.abspath(__file__))
+#
+#     for ename, econf in envConfigs.items():
+#         testModulePaths = econf.get("testModulePaths")
+#         performDefaultMonkeyPatching(econf, monkeypatch)
+#         exitCodes = {}
+#         for testModName, testMonkeyPatchFunc in testModulePaths.items():
+#             testModulePath = os.path.join(
+#                 curDirPath, '../sovrin/test', testModName)
+#             if testMonkeyPatchFunc:
+#                 testMonkeyPatchFunc(econf, monkeypatch)
+#             exitCodes[testModName] = pytest.main(['-s', testModulePath])
+#
+#         envExitCodes[ename] = exitCodes
+#
+#     for ename, exitCodes in envExitCodes.items():
+#         for testMod, testResult in exitCodes.items():
+#             assert testResult == 0
