@@ -1,4 +1,11 @@
-# Sovrin -- identity for all
+# This package is not being developed any more. 
+There are three new packages which should be used instead:
+<br>[sovrin-common](https://github.com/sovrin-foundation/sovrin-common)
+<br>[sovrin-client](https://github.com/sovrin-foundation/sovrin-client)
+<br>[sovrin-node](https://github.com/sovrin-foundation/sovrin-node)
+
+
+### Sovrin -- identity for all
 
 Sovrin Identity Network public/permissioned distributed ledger
 
