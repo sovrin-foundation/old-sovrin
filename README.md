@@ -3,7 +3,7 @@ There are three new packages which should be used instead:
 <br>[sovrin-common](https://github.com/sovrin-foundation/sovrin-common)
 <br>[sovrin-client](https://github.com/sovrin-foundation/sovrin-client)
 <br>[sovrin-node](https://github.com/sovrin-foundation/sovrin-node)
-
+<br>**Tickets (github issues) be logged in the appropriate new repo, but the [wiki on sovrin-foundation/sovrin](https://github.com/sovrin-foundation/sovrin/wiki) will remain active.**
 
 ### Sovrin -- identity for all
 

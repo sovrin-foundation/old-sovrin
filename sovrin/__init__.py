@@ -18,6 +18,8 @@ sovrin-common (https://github.com/sovrin-foundation/sovrin-common)
 sovrin-client (https://github.com/sovrin-foundation/sovrin-client)
 sovrin-node (https://github.com/sovrin-foundation/sovrin-node)
 
+Tickets (github issues) be logged in the appropriate new repo, but the wiki on
+sovrinfoundation/sovrin (https://github.com/sovrin-foundation/sovrin/wiki) will remain active.
 ********************************************************************************
 """
 print(msg)
