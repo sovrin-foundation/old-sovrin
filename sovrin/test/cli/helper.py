@@ -1,29 +1,16 @@
 import json
-import os
 
-from plenum.common.txn import TARGET_NYM, ROLE
-from plenum.test.cli.helper import TestCliCore, newCLI as newPlenumCLI, \
-    assertAllNodesCreated, checkAllNodesStarted, initDirWithGenesisTxns
 from plenum.common.eventually import eventually
+from plenum.common.txn import TARGET_NYM, ROLE
+from plenum.test.cli.helper import TestCliCore, assertAllNodesCreated, checkAllNodesStarted
 from plenum.test.testable import Spyable
-
 from sovrin.cli.cli import SovrinCli
 from sovrin.client.wallet.link import Link
-from sovrin.test.helper import TestNode, TestClient
 
 
 @Spyable(methods=[SovrinCli.print, SovrinCli.printTokens])
 class TestCLI(SovrinCli, TestCliCore):
     pass
-
-
-def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
-           domainDir=None):
-    tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
-    if poolDir or domainDir:
-        initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
-    return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
-                        nodeClass=TestNode, clientClass=TestClient, config=conf)
 
 
 def sendNym(cli, nym, role):

@@ -8,7 +8,8 @@ from plenum.common.eventually import eventually
 
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.common.txn import SPONSOR, ENDPOINT
-from sovrin.test.helper import createNym, buildStewardClient
+from sovrin.test.helper import createNym, buildStewardClient, newCLI, \
+    getCliBuilder
 
 plenum.common.util.loggingConfigured = False
 
@@ -17,7 +18,7 @@ from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
 
 from sovrin.common.config_util import getConfig
-from sovrin.test.cli.helper import newCLI, ensureNodesCreated, getLinkInvitation
+from sovrin.test.cli.helper import ensureNodesCreated, getLinkInvitation
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
     acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
@@ -54,20 +55,7 @@ def newKeyPairCreated(cli):
 
 @pytest.fixture(scope="module")
 def CliBuilder(tdir, tdirWithPoolTxns, tdirWithDomainTxns, tconf):
-    def _(subdir, looper=None):
-        def new():
-            return newCLI(looper,
-                          tdir,
-                          subDirectory=subdir,
-                          conf=tconf,
-                          poolDir=tdirWithPoolTxns,
-                          domainDir=tdirWithDomainTxns)
-        if looper:
-            yield new()
-        else:
-            with Looper(debug=False) as looper:
-                yield new()
-    return _
+    return getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns)
 
 
 @pytest.fixture(scope="module")
@@ -682,6 +670,16 @@ def poolCLI(poolCLI_baby, poolTxnData, poolTxnNodeNames):
 def poolNodesCreated(poolCLI, poolTxnNodeNames):
     ensureNodesCreated(poolCLI, poolTxnNodeNames)
     return poolCLI
+
+
+@pytest.fixture(scope="module")
+def multiPoolNodesCreated(noOfPools=1):
+    poolClis=[]
+    for i in range(noOfPools):
+        poolCli = yield from getCliBuilder(
+            tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns)("pool-"+str(i))
+        poolClis.append(poolCli)
+    return poolClis
 
 
 @pytest.fixture("module")

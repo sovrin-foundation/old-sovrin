@@ -20,9 +20,8 @@ from sovrin.common.txn import STEWARD, NYM, SPONSOR
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, TXN_ID, ROLE, \
     getTxnOrderedFields
 from sovrin.common.config_util import getConfig
-from sovrin.test.cli.helper import newCLI
 from sovrin.test.helper import genTestClient, createNym, addUser, TestNode, \
-    makePendingTxnsRequest, buildStewardClient
+    makePendingTxnsRequest, buildStewardClient, newCLI
 
 primes = {
     "prime1":

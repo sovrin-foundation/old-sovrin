@@ -3,7 +3,8 @@ from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import TARGET_NYM
 from plenum.common.eventually import eventually
 
-from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
+from sovrin.test.cli.helper import checkGetNym, chkNymAddedOutput
+from sovrin.test.helper import newCLI
 
 
 @pytest.fixture("module")

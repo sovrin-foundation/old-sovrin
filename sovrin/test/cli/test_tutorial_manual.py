@@ -16,12 +16,11 @@ from sovrin.test.agent.helper import buildFaberWallet, buildAcmeWallet, \
 from sovrin.test.agent.thrift import ThriftAgent
 from sovrin.test.cli.conftest import faberMap, acmeMap, \
     thriftMap
-from sovrin.test.cli.helper import newCLI
 from sovrin.test.cli.test_tutorial import syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent, \
     jobCertClaimRequested, bankBasicClaimSent, bankKYCClaimSent, \
     setPromptAndKeyring, poolNodesStarted
-from sovrin.test.helper import TestClient
+from sovrin.test.helper import TestClient, newCLI
 
 concerningLogLevels = [logging.WARNING,
                        logging.ERROR,

@@ -16,7 +16,9 @@ from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
 from plenum.common.eventually import eventually
-from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
+from plenum.test.cli.helper import newCLI as newPlenumCLI
+from plenum.test.helper import TestNodeSet as PlenumTestNodeSet, \
+    initDirWithGenesisTxns
 from plenum.test.helper import checkSufficientRepliesRecvd, \
     checkLastClientReqForNode, buildCompletedTxnFromReply
 from plenum.test.test_client import genTestClient as genPlenumTestClient, \
@@ -33,6 +35,7 @@ from sovrin.common.config_util import getConfig
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM
 from sovrin.server.node import Node
+from sovrin.test.cli.helper import TestCLI
 
 logger = getlogger()
 
@@ -506,8 +509,6 @@ def addRawAttribute(looper, client, wallet, name, value, dest=None,
     addAttributeAndCheck(looper, client, wallet, attrib)
 
 
-
-
 def buildStewardClient(looper, tdir, stewardWallet):
     s, _ = genTestClient(tmpdir=tdir, usePoolLedger=True)
     s.registerObserver(stewardWallet.handleIncomingReply)
@@ -515,3 +516,28 @@ def buildStewardClient(looper, tdir, stewardWallet):
     looper.run(s.ensureConnectedToNodes())
     makePendingTxnsRequest(s, stewardWallet)
     return s
+
+
+def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
+           domainDir=None):
+    tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
+    if poolDir or domainDir:
+        initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
+    return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
+                        nodeClass=TestNode, clientClass=TestClient, config=conf)
+
+def getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns):
+    def _(subdir, looper=None):
+        def new():
+            return newCLI(looper,
+                          tdir,
+                          subDirectory=subdir,
+                          conf=tconf,
+                          poolDir=tdirWithPoolTxns,
+                          domainDir=tdirWithDomainTxns)
+        if looper:
+            yield new()
+        else:
+            with Looper(debug=False) as looper:
+                yield new()
+    return _

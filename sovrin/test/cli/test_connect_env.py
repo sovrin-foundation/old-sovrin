@@ -1,3 +1,4 @@
+import pytest
 from plenum.common.eventually import eventually
 
 from sovrin.test.cli.helper import checkConnectedToEnv
@@ -22,3 +23,8 @@ def testConnectEnv(poolNodesCreated, looper, notConnectedStatus):
                           timeout=10))
     poolCLI.enterCmd("status")
     assert "Connected to test Sovrin network" == poolCLI.lastCmdOutput
+
+
+# def testMultiPoolClis(multiPoolNodesCreated):
+#     poolClis = multiPoolNodesCreated(1)
+#     print(poolClis)
