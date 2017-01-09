@@ -1065,14 +1065,6 @@ class SovrinCli(PlenumCli):
                 self.print(envError, token=Token.Error)
                 self._printConnectUsage()
             else:
-                # TODO: Just for the time being that we cannot accidentally
-                # connect to live network even if we have a ledger for live
-                # nodes.Once we have `live` exposed to the world,
-                # this would be changed.
-                if envName == "live":
-                    self.print("Cannot connect to live environment. Contact"
-                               " Sovrin.org to find out more!")
-                    return True
                 # Using `_activeClient` instead of `activeClient` since using
                 # `_activeClient` will initialize a client if not done already
                 if self._activeClient:
@@ -1081,12 +1073,13 @@ class SovrinCli(PlenumCli):
                 config = getConfig()
                 config.poolTransactionsFile = self.envs[envName].poolLedger
                 config.domainTransactionsFile = \
-                    self.config.ENVS[envName].domainLedger
+                    self.envs[envName].domainLedger
+                oldEnv = self.activeEnv
                 self.activeEnv = envName
                 self._buildClientIfNotExists(config)
                 self.print("Connecting to {}...".format(envName), Token.BoldGreen)
                 # Prompt has to be changed, so it show the environment too
-                self._setPrompt(self.currPromptText)
+                self._setPrompt(self.currPromptText.replace("@{}".format(oldEnv), ""))
                 self.ensureClientConnected()
             return True
 
@@ -1103,9 +1096,10 @@ class SovrinCli(PlenumCli):
             self.print(msg)
 
     def _setPrompt(self, promptText):
-        if self.activeEnv and \
-                not promptText.endswith("@{}".format(self.activeClient)):
-            promptText = "{}@{}".format(promptText, self.activeEnv)
+        if self.activeEnv:
+            if not promptText.endswith("@{}".format(self.activeEnv)):
+                promptText = "{}@{}".format(promptText, self.activeEnv)
+
         super()._setPrompt(promptText)
 
     def _addGenesisAction(self, matchedVars):

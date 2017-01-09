@@ -8,7 +8,7 @@ from sovrin.agent.msg_constants import ACCEPT_INVITE
 from sovrin.client.wallet.link import Link, constant
 from sovrin.common.exceptions import InvalidLinkException
 from sovrin.common.txn import ENDPOINT
-from sovrin.test.cli.helper import getFileLines
+from sovrin.test.cli.helper import getFileLines, prompt_is
 
 
 def getSampleLinkInvitation():
@@ -34,13 +34,6 @@ def getSampleLinkInvitation():
         "sig": "KDkI4XUePwEu1K01u0DpDsbeEfBnnBfwuw8e4DEPK+MdYXv"
                "VsXdSmBJ7yEfQBm8bSJuj6/4CRNI39fFul6DcDA=="
     }
-
-
-def prompt_is(prompt):
-    def x(cli):
-        assert cli.currPromptText == prompt
-    return x
-
 
 @pytest.fixture(scope="module")
 def poolNodesStarted(be, do, poolCLI):

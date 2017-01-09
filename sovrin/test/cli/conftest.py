@@ -684,12 +684,11 @@ def poolNodesCreated(poolCLI, poolTxnNodeNames):
 
 
 class TestMultiNode:
-    def __init__(self, name, poolTxnNodeNames, tdir, conf, tconf,
+    def __init__(self, name, poolTxnNodeNames, tdir, tconf,
                  poolTxnData, tdirWithPoolTxns, tdirWithDomainTxns, poolCli):
         self.name = name
         self.poolTxnNodeNames = poolTxnNodeNames
         self.tdir = tdir
-        self.conf = conf
         self.tconf = tconf
         self.poolTxnData = poolTxnData
         self.tdirWithPoolTxns = tdirWithPoolTxns
@@ -698,29 +697,28 @@ class TestMultiNode:
 
 
 @pytest.yield_fixture(scope="module")
-def multiPoolNodesCreated(request, conf, looper, tdir, nodeAndClientInfoFilePath,
+def multiPoolNodesCreated(request, tconf, looper, tdir, nodeAndClientInfoFilePath,
                           namesOfPools=("pool1", "pool2")):
-    oldENVS = conf.ENVS
-    oldPoolTxnFile = conf.poolTransactionsFile
-    oldDomainTxnFile = conf.domainTransactionsFile
+    oldENVS = tconf.ENVS
+    oldPoolTxnFile = tconf.poolTransactionsFile
+    oldDomainTxnFile = tconf.domainTransactionsFile
 
     multiNodes=[]
     for poolName in namesOfPools:
         newPoolTxnNodeNames = [poolName + n for n
                                in ("Alpha", "Beta", "Gamma", "Delta")]
         newTdir = os.path.join(tdir, poolName + "basedir")
-        newConf = getConfig(newTdir)
         newPoolTxnData = getPoolTxnData(
             nodeAndClientInfoFilePath, poolName, newPoolTxnNodeNames)
-        newTdirWithPoolTxns = tdirWithPoolTxns(newPoolTxnData, newTdir, newConf)
+        newTdirWithPoolTxns = tdirWithPoolTxns(newPoolTxnData, newTdir, tconf)
         newTdirWithDomainTxns = tdirWithDomainTxns(
-            newPoolTxnData, newTdir, newConf, domainTxnOrderedFields())
+            newPoolTxnData, newTdir, tconf, domainTxnOrderedFields())
         testPoolNode = TestMultiNode(
-            poolName, newPoolTxnNodeNames, newTdir, newConf, newConf,
+            poolName, newPoolTxnNodeNames, newTdir, tconf,
             newPoolTxnData, newTdirWithPoolTxns, newTdirWithDomainTxns, None)
 
         poolCLIBabyGen = CliBuilder(newTdir, newTdirWithPoolTxns,
-                                       newTdirWithDomainTxns, newConf)
+                                       newTdirWithDomainTxns, tconf)
         poolCLIBaby = next(poolCLIBabyGen(poolName, looper))
         poolCli = poolCLI(poolCLIBaby, newPoolTxnData, newPoolTxnNodeNames)
         testPoolNode.poolCli = poolCli
@@ -728,9 +726,9 @@ def multiPoolNodesCreated(request, conf, looper, tdir, nodeAndClientInfoFilePath
         ensureNodesCreated(poolCli, newPoolTxnNodeNames)
 
     def reset():
-        conf.ENVS = oldENVS
-        conf.poolTransactionsFile = oldPoolTxnFile
-        conf.domainTransactionsFile = oldDomainTxnFile
+        tconf.ENVS = oldENVS
+        tconf.poolTransactionsFile = oldPoolTxnFile
+        tconf.domainTransactionsFile = oldDomainTxnFile
 
     request.addfinalizer(reset)
     return multiNodes

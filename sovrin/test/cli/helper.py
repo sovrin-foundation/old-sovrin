@@ -130,3 +130,9 @@ def getPoolTxnData(nodeAndClientInfoFilePath, poolId, newPoolTxnNodeNames):
                 "txnId": sha256("{}".format(nodeSigner.verkey).encode()).hexdigest()
         })
     return data
+
+
+def prompt_is(prompt):
+    def x(cli):
+        assert cli.currPromptText == prompt
+    return x

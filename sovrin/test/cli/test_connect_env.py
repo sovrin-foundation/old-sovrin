@@ -1,10 +1,7 @@
-import copy
-
 import pytest
 from plenum.common.eventually import eventually
-from sovrin.common.config_util import getConfig
 
-from sovrin.test.cli.helper import checkConnectedToEnv
+from sovrin.test.cli.helper import checkConnectedToEnv, prompt_is
 from sovrin.test.helper import getCliBuilder
 
 
@@ -44,24 +41,29 @@ def pool2(multiPoolNodesCreated):
 
 
 @pytest.yield_fixture(scope="module")
-def susanCliForMultiNode(request, multiPoolNodesCreated, tdir, conf,
+def susanCliForMultiNode(request, multiPoolNodesCreated, tdir, tconf,
                          tdirWithPoolTxns, tdirWithDomainTxns):
-    oldENVS = conf.ENVS
-    oldPoolTxnFile = conf.poolTransactionsFile
-    oldDomainTxnFile = conf.domainTransactionsFile
-    yield from getCliBuilder(tdir, conf, tdirWithPoolTxns, tdirWithDomainTxns,
+    oldENVS = tconf.ENVS
+    oldPoolTxnFile = tconf.poolTransactionsFile
+    oldDomainTxnFile = tconf.domainTransactionsFile
+
+    yield from getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns,
                              multiPoolNodesCreated) ("susan")
 
     def reset():
-        conf.ENVS = oldENVS
-        conf.poolTransactionsFile = oldPoolTxnFile
-        conf.domainTransactionsFile = oldDomainTxnFile
+        tconf.ENVS = oldENVS
+        tconf.poolTransactionsFile = oldPoolTxnFile
+        tconf.domainTransactionsFile = oldDomainTxnFile
 
     request.addfinalizer(reset)
 
-def testSusanConnectsToPool1(do, be, susanCliForMultiNode):
-    be(susanCliForMultiNode)
-    do('connect pool1', within=3, expect=["Connected to pool1"])
-    do('connect pool2', within=3, expect=["Connected to pool2"])
-    do('connect pool1', within=3, expect=["Connected to pool1"])
 
+def testSusanConnectsToDifferentPools(do, be, susanCliForMultiNode):
+    be(susanCliForMultiNode)
+    do(None, expect=prompt_is("sovrin"))
+    do('connect pool1', within=5, expect=["Connected to pool1"])
+    do(None, expect=prompt_is("sovrin@pool1"))
+    do('connect pool2', within=5, expect=["Connected to pool2"])
+    do(None, expect=prompt_is("sovrin@pool2"))
+    do('connect pool1', within=5, expect=["Connected to pool1"])
+    do(None, expect=prompt_is("sovrin@pool1"))
