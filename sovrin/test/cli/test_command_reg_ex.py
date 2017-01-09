@@ -14,16 +14,38 @@ def grammar():
 
 
 def testSendNymWithRole(grammar):
-    getMatchedVariables(grammar, 'send NYM dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= role=SPONSOR')
+    dest="LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU="
+    role="SPONSOR"
+    matchedVars = getMatchedVariables(
+        grammar, "send NYM dest={} role={}".format(dest, role))
+    assertCliTokens(matchedVars, {
+        "send_nym": "send NYM", "dest_id": dest, "role": role})
 
 
 def testSendNymWithoutRole(grammar):
-    getMatchedVariables(grammar, 'send NYM dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU=')
+    dest="LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU="
+    matchedVars = getMatchedVariables(grammar, 'send NYM dest={}'.format(dest))
+    assertCliTokens(matchedVars, {
+        "send_nym": "send NYM", "dest_id": dest})
+
+
+def testSendNymWithVerkey(grammar):
+    dest="LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU="
+    role="SPONSOR"
+    matchedVars = getMatchedVariables(
+        grammar, "send NYM dest={} role={}".format(dest, role))
+    assertCliTokens(matchedVars, {
+        "send_nym": "send NYM", "dest_id": dest, "role": role})
 
 
 def testSendAttribRegEx(grammar):
-    getMatchedVariables(grammar,
-                        'send ATTRIB dest=LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU= raw={"legal org": "BRIGHAM YOUNG UNIVERSITY, PROVO, UT", "email":"mail@byu.edu"}')
+    dest = "LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU="
+    raw = '{"legal org": "BRIGHAM YOUNG UNIVERSITY, PROVO, UT", ' \
+          '"email": "mail@byu.edu"}'
+    matchedVars = getMatchedVariables(grammar,
+                        'send ATTRIB dest={} raw={}'.format(dest, raw))
+    assertCliTokens(matchedVars, {
+        "send_attrib": "send ATTRIB", "dest_id": dest, "raw": raw})
 
 
 def testAddAttrRegEx(grammar):

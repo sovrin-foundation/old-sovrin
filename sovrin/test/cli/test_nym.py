@@ -1,14 +1,7 @@
 import pytest
-from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import TARGET_NYM
 from plenum.common.eventually import eventually
-
-from sovrin.test.cli.helper import newCLI, checkGetNym, chkNymAddedOutput
-
-
-@pytest.fixture("module")
-def stewardCli(nodeRegsForCLI, looper, tdir):
-    return newCLI(nodeRegsForCLI, looper, tdir)
+from plenum.common.signer_simple import SimpleSigner
+from sovrin.test.cli.test_tutorial import prompt_is
 
 
 @pytest.fixture("module")
@@ -16,52 +9,84 @@ def sponsorSigner():
     return SimpleSigner()
 
 
-@pytest.fixture("module")
-def attrib():
-    return '{"name": "Tyler"}'
+@pytest.fixture(scope="module")
+def poolNodesStarted(be, do, poolCLI):
+    be(poolCLI)
+
+    do('new node all', within=6,
+       expect=['Alpha now connected to Beta',
+               'Alpha now connected to Gamma',
+               'Alpha now connected to Delta',
+               'Beta now connected to Alpha',
+               'Beta now connected to Gamma',
+               'Beta now connected to Delta',
+               'Gamma now connected to Alpha',
+               'Gamma now connected to Beta',
+               'Gamma now connected to Delta',
+               'Delta now connected to Alpha',
+               'Delta now connected to Beta',
+               'Delta now connected to Gamma'])
+    return poolCLI
 
 
-@pytest.yield_fixture(scope="module")
-def sponsorCli(CliBuilder):
-    yield from CliBuilder("sponsor")
-
-
-@pytest.fixture("module")
-def nymAdded(nodesCli, looper, stewardCli, sponsorSigner):
-    """
-    Assume steward is created, create a sponsor an then from the sponsor cli
-    create a user
-    """
-    nym = sponsorSigner.verstr
-    stewardCli.enterCmd("send NYM dest={} role=SPONSOR".format(nym))
-    looper.run(eventually(chkNymAddedOutput, stewardCli, nym, retryWait=1,
-                          timeout=5))
-
-
-@pytest.mark.skipif(True, reason="Obsolete implemtation")
-def testSendNym(nymAdded):
+def testPoolNodesStarted(poolNodesStarted):
     pass
 
 
-@pytest.mark.skipif(True, reason="Obsolete implemtation")
-def testGetNym(nymAdded, stewardCli, looper, sponsorSigner):
-    nym = sponsorSigner.verstr
-    stewardCli.enterCmd("send GET_NYM {dest}={nym}".format(dest=TARGET_NYM,
-                                                           nym=nym))
-    looper.run(eventually(checkGetNym, stewardCli, nym,
-                          retryWait=1, timeout=5))
+@pytest.fixture(scope="module")
+def philCli(be, do, poolNodesStarted, philCLI, connectedToTest):
+    be(philCLI)
+    do('prompt Phil', expect=prompt_is('Phil'))
+
+    do('new keyring Phil', expect=['New keyring Phil created',
+                                   'Active keyring set to "Phil"'])
+
+    mapper = {
+        'seed': '11111111111111111111111111111111',
+        'idr': '5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC'}
+    do('new key with seed {seed}', expect=['Key created in keyring Phil',
+                                           'Identifier for key is {idr}',
+                                           'Current identifier set to {idr}'],
+       mapper=mapper)
+
+    do('connect test', within=3, expect=connectedToTest)
+    return philCLI
 
 
-@pytest.mark.skipif(True, reason="CLI command not implemented")
-def testSendAttrib(nodesCli, looper, stewardCli, sponsorSigner, attrib):
-    """
-    Assume steward is created, sponsor is created, steward adds attribute
-    for sponsor
-    """
-    stewardCli.enterCmd("send ATTRIB dest={} raw={}".format(
-        sponsorSigner.verstr, attrib))
+@pytest.fixture(scope="module")
+def nymAdded(be, do, philCli, sponsorSigner):
+    be(philCli)
 
-    def chk():
-        assert "Adding attrib" in stewardCli.lastCmdOutput
+    do('send NYM dest={} role=SPONSOR'.format(sponsorSigner.identifier),
+       within=3,
+       expect=["Nym {} added".format(sponsorSigner.identifier)]
+    )
+    return philCli
 
-    looper.run(eventually(chk, retryWait=1, timeout=5))
+
+def testAddNym(nymAdded):
+    pass
+
+
+@pytest.fixture(scope="module")
+def nymRetrieved(be, do, philCli, nymAdded, sponsorSigner):
+    be(philCli)
+
+    do('send GET_NYM dest={}'.format(sponsorSigner.identifier),
+       within=3,
+       expect=["Transaction id for NYM {} is".format(sponsorSigner.identifier)]
+    )
+
+
+def testGetNym(nymRetrieved):
+    pass
+
+
+def testSendAttrib(be, do, philCli, nymRetrieved, sponsorSigner):
+    raw = '{"name": "Alice"}'
+    be(philCli)
+    do('send ATTRIB dest={} raw={}'.format(sponsorSigner.identifier, raw),
+        within=3,
+       expect=["Attribute added for nym {}".format(sponsorSigner.identifier)])
+
+
