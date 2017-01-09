@@ -55,7 +55,7 @@ from plenum.test.conftest import tdir, counter, nodeReg, up, ready, \
     startedNodes, tdirWithDomainTxns, txnPoolNodeSet, poolTxnData, dirName, \
     poolTxnNodeNames, allPluginsPath, tdirWithNodeKeepInited, tdirWithPoolTxns, \
     poolTxnStewardData, poolTxnStewardNames, getValueFromModule, \
-    txnPoolNodesLooper
+    txnPoolNodesLooper, nodeAndClientInfoFilePath
 
 
 @pytest.fixture(scope="module")

@@ -1,13 +1,21 @@
 import json
+import os
 import traceback
+
+import itertools
+from time import sleep
 
 import plenum
 import pytest
 from plenum.common.raet import initLocalKeep
 from plenum.common.eventually import eventually
+from plenum.test.conftest import tconf, conf, tdirWithPoolTxns, poolTxnData, \
+    dirName, tdirWithDomainTxns, poolTxnNodeNames
+from plenum.test.helper import createTempDir
 
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.common.txn import SPONSOR, ENDPOINT
+from sovrin.test.conftest import domainTxnOrderedFields
 from sovrin.test.helper import createNym, buildStewardClient, newCLI, \
     getCliBuilder
 
@@ -18,12 +26,15 @@ from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
     checkCmdValid
 
 from sovrin.common.config_util import getConfig
-from sovrin.test.cli.helper import ensureNodesCreated, getLinkInvitation
+from sovrin.test.cli.helper import ensureNodesCreated, getLinkInvitation, \
+    getPoolTxnData
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
     acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \
     acmeAgent, thriftIsRunning as runningThrift, thriftAgentPort, thriftWallet,\
     thriftAgent, agentIpAddress
+
+from plenum.test.conftest import nodeAndClientInfoFilePath
 
 config = getConfig()
 
@@ -672,14 +683,57 @@ def poolNodesCreated(poolCLI, poolTxnNodeNames):
     return poolCLI
 
 
-@pytest.fixture(scope="module")
-def multiPoolNodesCreated(noOfPools=1):
-    poolClis=[]
-    for i in range(noOfPools):
-        poolCli = yield from getCliBuilder(
-            tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns)("pool-"+str(i))
-        poolClis.append(poolCli)
-    return poolClis
+class TestMultiNode:
+    def __init__(self, name, poolTxnNodeNames, tdir, conf, tconf,
+                 poolTxnData, tdirWithPoolTxns, tdirWithDomainTxns, poolCli):
+        self.name = name
+        self.poolTxnNodeNames = poolTxnNodeNames
+        self.tdir = tdir
+        self.conf = conf
+        self.tconf = tconf
+        self.poolTxnData = poolTxnData
+        self.tdirWithPoolTxns = tdirWithPoolTxns
+        self.tdirWithDomainTxns = tdirWithDomainTxns
+        self.poolCli = poolCli
+
+
+@pytest.yield_fixture(scope="module")
+def multiPoolNodesCreated(request, conf, looper, tdir, nodeAndClientInfoFilePath,
+                          namesOfPools=("pool1", "pool2")):
+    oldENVS = conf.ENVS
+    oldPoolTxnFile = conf.poolTransactionsFile
+    oldDomainTxnFile = conf.domainTransactionsFile
+
+    multiNodes=[]
+    for poolName in namesOfPools:
+        newPoolTxnNodeNames = [poolName + n for n
+                               in ("Alpha", "Beta", "Gamma", "Delta")]
+        newTdir = os.path.join(tdir, poolName + "basedir")
+        newConf = getConfig(newTdir)
+        newPoolTxnData = getPoolTxnData(
+            nodeAndClientInfoFilePath, poolName, newPoolTxnNodeNames)
+        newTdirWithPoolTxns = tdirWithPoolTxns(newPoolTxnData, newTdir, newConf)
+        newTdirWithDomainTxns = tdirWithDomainTxns(
+            newPoolTxnData, newTdir, newConf, domainTxnOrderedFields())
+        testPoolNode = TestMultiNode(
+            poolName, newPoolTxnNodeNames, newTdir, newConf, newConf,
+            newPoolTxnData, newTdirWithPoolTxns, newTdirWithDomainTxns, None)
+
+        poolCLIBabyGen = CliBuilder(newTdir, newTdirWithPoolTxns,
+                                       newTdirWithDomainTxns, newConf)
+        poolCLIBaby = next(poolCLIBabyGen(poolName, looper))
+        poolCli = poolCLI(poolCLIBaby, newPoolTxnData, newPoolTxnNodeNames)
+        testPoolNode.poolCli = poolCli
+        multiNodes.append(testPoolNode)
+        ensureNodesCreated(poolCli, newPoolTxnNodeNames)
+
+    def reset():
+        conf.ENVS = oldENVS
+        conf.poolTransactionsFile = oldPoolTxnFile
+        conf.domainTransactionsFile = oldDomainTxnFile
+
+    request.addfinalizer(reset)
+    return multiNodes
 
 
 @pytest.fixture("module")

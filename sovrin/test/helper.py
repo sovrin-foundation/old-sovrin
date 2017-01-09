@@ -6,6 +6,7 @@ from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
+from plenum.common.constants import Environment
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.signer_did import DidSigner
@@ -519,14 +520,29 @@ def buildStewardClient(looper, tdir, stewardWallet):
 
 
 def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
-           domainDir=None):
+           domainDir=None, multiPoolNodes=None):
     tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
     if poolDir or domainDir:
         initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
+
+    if multiPoolNodes:
+        conf.ENVS = {}
+        for pool in multiPoolNodes:
+            conf.poolTransactionsFile = "pool_transactions_{}".format(pool.name)
+            conf.domainTransactionsFile = "transactions_{}".format(pool.name)
+            conf.ENVS[pool.name] = \
+                Environment("pool_transactions_{}".format(pool.name),
+                                "transactions_{}".format(pool.name))
+            initDirWithGenesisTxns(
+                tempDir, conf, os.path.join(pool.tdirWithPoolTxns, pool.name),
+                os.path.join(pool.tdirWithDomainTxns, pool.name))
+
     return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
                         nodeClass=TestNode, clientClass=TestClient, config=conf)
 
-def getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns):
+
+def getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns,
+                  multiPoolNodes=None):
     def _(subdir, looper=None):
         def new():
             return newCLI(looper,
@@ -534,7 +550,8 @@ def getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns):
                           subDirectory=subdir,
                           conf=tconf,
                           poolDir=tdirWithPoolTxns,
-                          domainDir=tdirWithDomainTxns)
+                          domainDir=tdirWithDomainTxns,
+                          multiPoolNodes=multiPoolNodes)
         if looper:
             yield new()
         else:

@@ -10,7 +10,7 @@ from typing import Dict, Any, Tuple, Callable
 import asyncio
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
-from plenum.common.constants import ENVS
+from plenum.config import ENVS
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import NAME, VERSION, TYPE
 from plenum.common.txn_util import createGenesisTxnFile
@@ -69,11 +69,12 @@ class SovrinCli(PlenumCli):
         self.aliases = {}  # type: Dict[str, Signer]
         self.sponsors = set()
         self.users = set()
+        super().__init__(*args, **kwargs)
         # Available environments
-        self.envs = ENVS
+        self.envs = self.config.ENVS
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
-        super().__init__(*args, **kwargs)
+
         _, port = self.nextAvailableClientAddr()
         self.curContext = (None, None, {})  # Current Link, Current Claim Req,
         # set attributes
@@ -121,7 +122,7 @@ class SovrinCli(PlenumCli):
         completers["load_file"] = WordCompleter(["load"])
         completers["show_link"] = WordCompleter(["show", "link"])
         completers["conn"] = WordCompleter(["connect"])
-        completers["env_name"] = WordCompleter(list(self.envs.keys()))
+        completers["env_name"] = WordCompleter(list(self.config.ENVS.keys()))
         completers["sync_link"] = WordCompleter(["sync"])
         completers["ping_target"] = WordCompleter(["ping"])
         completers["show_claim"] = WordCompleter(["show", "claim"])
@@ -1080,7 +1081,7 @@ class SovrinCli(PlenumCli):
                 config = getConfig()
                 config.poolTransactionsFile = self.envs[envName].poolLedger
                 config.domainTransactionsFile = \
-                    self.envs[envName].domainLedger
+                    self.config.ENVS[envName].domainLedger
                 self.activeEnv = envName
                 self._buildClientIfNotExists(config)
                 self.print("Connecting to {}...".format(envName), Token.BoldGreen)

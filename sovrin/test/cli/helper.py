@@ -1,7 +1,11 @@
 import json
+from _sha256 import sha256
 
 from plenum.common.eventually import eventually
-from plenum.common.txn import TARGET_NYM, ROLE
+from plenum.common.port_dispenser import genHa
+from plenum.common.signer_simple import SimpleSigner
+from plenum.common.txn import TARGET_NYM, ROLE, TXN_TYPE, NEW_NODE, DATA, \
+    NODE_PORT, CLIENT_PORT
 from plenum.test.cli.helper import TestCliCore, assertAllNodesCreated, checkAllNodesStarted
 from plenum.test.testable import Spyable
 from sovrin.cli.cli import SovrinCli
@@ -90,3 +94,39 @@ def getLinkInvitation(name, wallet) -> Link:
     existingLinkInvites = wallet.getMatchingLinks(name)
     li = existingLinkInvites[0]
     return li
+
+
+def getPoolTxnData(nodeAndClientInfoFilePath, poolId, newPoolTxnNodeNames):
+    data={}
+    data["seeds"]={}
+    data["txns"]=[]
+    for index, n in enumerate(newPoolTxnNodeNames, start=1):
+        newStewardAlias = poolId + "Steward" + str(index)
+        stewardSeed = (newStewardAlias + "0" * (32 - len(newStewardAlias))).encode()
+        data["seeds"][newStewardAlias] = stewardSeed
+        stewardSigner = SimpleSigner(seed=stewardSeed)
+        data["txns"].append({
+                "dest": stewardSigner.verkey,
+                "role": "STEWARD", "type": "NYM",
+                "alias": poolId + "Steward" + str(index),
+                "txnId": sha256("{}".format(stewardSigner.verkey).encode()).hexdigest()
+        })
+
+        newNodeAlias = n
+        nodeSeed = (newNodeAlias + "0" * (32 - len(newNodeAlias))).encode()
+        data["seeds"][newNodeAlias] = nodeSeed
+        nodeSigner = SimpleSigner(seed=nodeSeed)
+        data["txns"].append({
+                "dest": nodeSigner.verkey,
+                "type": "NEW_NODE",
+                "identifier": stewardSigner.verkey,
+                "data": {
+                    "client_ip": "127.0.0.1",
+                    "alias": newNodeAlias,
+                    "node_ip": "127.0.0.1",
+                    "node_port": genHa()[1],
+                    "client_port": genHa()[1]
+                },
+                "txnId": sha256("{}".format(nodeSigner.verkey).encode()).hexdigest()
+        })
+    return data
