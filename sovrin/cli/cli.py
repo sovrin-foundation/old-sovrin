@@ -375,12 +375,11 @@ class SovrinCli(PlenumCli):
 
     def _addNym(self, nym, role, newVerKey=None, otherClientName=None):
         idy = Identity(nym, verkey=newVerKey, role=role)
-        idAlreadyAdded = False
         try:
             self.activeWallet.addSponsoredIdentity(idy)
         except Exception as e:
             if e.args[0] == 'identifier already added':
-                idAlreadyAdded = True
+                pass
             else:
                 raise e
         reqs = self.activeWallet.preparePending()
@@ -392,11 +391,7 @@ class SovrinCli(PlenumCli):
         self.print(printStr)
 
         def out(reply, error, *args, **kwargs):
-            if idAlreadyAdded:
-                self.print("Nym {} updated".format(reply[TARGET_NYM]),
-                           Token.BoldBlue)
-            else:
-                self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+            self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, out)
