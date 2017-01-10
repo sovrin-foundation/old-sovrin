@@ -1,7 +1,7 @@
 import pytest
-from plenum.common.eventually import eventually
 from plenum.common.signer_simple import SimpleSigner
 from sovrin.test.cli.test_tutorial import prompt_is
+from sovrin.test.did.conftest import wallet, abbrevVerkey, abbrevIdr
 
 
 @pytest.fixture("module")
@@ -54,12 +54,12 @@ def philCli(be, do, poolNodesStarted, philCLI, connectedToTest):
 
 
 @pytest.fixture(scope="module")
-def nymAdded(be, do, philCli, sponsorSigner):
+def nymAdded(be, do, philCli, abbrevIdr):
     be(philCli)
 
-    do('send NYM dest={} role=SPONSOR'.format(sponsorSigner.identifier),
+    do('send NYM dest={} role=SPONSOR'.format(abbrevIdr),
        within=3,
-       expect=["Nym {} added".format(sponsorSigner.identifier)]
+       expect=["Nym {} added".format(abbrevIdr)]
     )
     return philCli
 
@@ -69,12 +69,12 @@ def testAddNym(nymAdded):
 
 
 @pytest.fixture(scope="module")
-def nymRetrieved(be, do, philCli, nymAdded, sponsorSigner):
+def nymRetrieved(be, do, philCli, nymAdded, abbrevIdr):
     be(philCli)
 
-    do('send GET_NYM dest={}'.format(sponsorSigner.identifier),
+    do('send GET_NYM dest={}'.format(abbrevIdr),
        within=3,
-       expect=["Transaction id for NYM {} is".format(sponsorSigner.identifier)]
+       expect=["Transaction id for NYM {} is".format(abbrevIdr)]
     )
 
 
@@ -82,23 +82,43 @@ def testGetNym(nymRetrieved):
     pass
 
 
-def testAddVerkeyToExistingNym(be, do, philCli, sponsorSigner, nymAdded):
+def testSendAttrib(be, do, philCli, nymRetrieved, abbrevIdr):
+    raw = '{"name": "Alice"}'
+    be(philCli)
+    do('send ATTRIB dest={} raw={}'.format(abbrevIdr, raw),
+        within=3,
+       expect=["Attribute added for nym {}".format(abbrevIdr)])
+
+
+@pytest.fixture(scope="module")
+def verkeyAddedToExistingNym(be, do, philCli, nymAdded, abbrevIdr, abbrevVerkey):
     be(philCli)
 
     do('send NYM dest={} role=SPONSOR verkey={}'.format(
-        sponsorSigner.identifier, sponsorSigner.verkey),
+        abbrevIdr, abbrevVerkey),
        within=3,
-       expect=["Nym {} added".format(sponsorSigner.identifier)]
+       expect=["Nym {} added".format(abbrevIdr)]
     )
     return philCli
 
 
+def testAddVerkeyToExistingNym(verkeyAddedToExistingNym):
+    pass
 
-def testSendAttrib(be, do, philCli, nymRetrieved, sponsorSigner):
-    raw = '{"name": "Alice"}'
+
+@pytest.fixture(scope="module")
+def nymRetrievedWithVerkey(be, do, philCli, verkeyAddedToExistingNym,
+                           abbrevIdr, abbrevVerkey):
     be(philCli)
-    do('send ATTRIB dest={} raw={}'.format(sponsorSigner.identifier, raw),
-        within=3,
-       expect=["Attribute added for nym {}".format(sponsorSigner.identifier)])
+
+    do('send GET_NYM dest={}'.format(abbrevIdr),
+       within=3,
+       expect=[
+           "Transaction id for NYM {} is".format(abbrevIdr),
+           "Current verkey for NYM {} is {}".format(abbrevIdr, abbrevVerkey)
+       ]
+    )
 
 
+def testGetNymWithVerkey(nymRetrievedWithVerkey):
+    pass

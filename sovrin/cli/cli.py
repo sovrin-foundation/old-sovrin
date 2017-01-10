@@ -12,7 +12,7 @@ from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.common.constants import ENVS
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import NAME, VERSION, TYPE
+from plenum.common.txn import NAME, VERSION, TYPE, VERKEY, DATA
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -363,38 +363,43 @@ class SovrinCli(PlenumCli):
         def getNymReply(reply, err, *args):
             self.print("Transaction id for NYM {} is {}".
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
+            try:
+                data=json.loads(reply[DATA])
+                self.print("Current verkey for NYM {} is {}".
+                       format(nym, data[VERKEY]), Token.BoldBlue)
+            except BaseException as e:
+                self.print("Error during fetching verkey: {}".format(e))
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, getNymReply)
 
     def _addNym(self, nym, role, newVerKey=None, otherClientName=None):
-        idy = Identity(nym, role=role)
-        requestMade = False
+        idy = Identity(nym, verkey=newVerKey, role=role)
+        idAlreadyAdded = False
         try:
             self.activeWallet.addSponsoredIdentity(idy)
-            requestMade = True
         except Exception as e:
             if e.args[0] == 'identifier already added':
-                pass
+                idAlreadyAdded = True
             else:
                 raise e
-        if requestMade:
-            reqs = self.activeWallet.preparePending()
-            req, = self.activeClient.submitReqs(*reqs)
-            printStr = "Adding nym {}".format(nym)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
+        printStr = "Adding nym {}".format(nym)
 
-            if otherClientName:
-                printStr = printStr + " for " + otherClientName
-            self.print(printStr)
+        if otherClientName:
+            printStr = printStr + " for " + otherClientName
+        self.print(printStr)
 
-            def out(reply, error, *args, **kwargs):
+        def out(reply, error, *args, **kwargs):
+            if idAlreadyAdded:
+                self.print("Nym {} updated".format(reply[TARGET_NYM]),
+                           Token.BoldBlue)
+            else:
                 self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
 
-            self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.key, self.activeClient, out)
-        else:
-            self._printRequestAlreadyMade(extra=" Request made to add {}".
-                                          format(nym))
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                    req.key, self.activeClient, out)
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):

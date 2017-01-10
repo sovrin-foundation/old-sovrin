@@ -19,9 +19,6 @@ class Sponsoring:
         if idy.role and idy.role not in (SPONSOR, STEWARD):
             raise AttributeError("invalid role: {}".format(idy.role))
         if idy.identifier in self._sponsored:
-            # I had to remove throw exception (old logic) to support submitting
-            # NYM txn multiple times (mainly for giving/replacing new ver key)
-            # TODO: is below line ok?
             del self._sponsored[idy.identifier]
         self._sponsored[idy.identifier] = idy
         self._sendIdReq(idy)
