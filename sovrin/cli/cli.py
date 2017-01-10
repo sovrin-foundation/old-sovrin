@@ -338,11 +338,11 @@ class SovrinCli(PlenumCli):
                     return True
                 client_action = matchedVars.get('cli_action')
                 if client_action == 'add':
-                    other_client_name = matchedVars.get('other_client_name')
+                    otherClientName = matchedVars.get('other_client_name')
                     role = self._getRole(matchedVars)
                     signer = SimpleSigner()
                     nym = signer.verstr
-                    return self._addNym(nym, role, other_client_name)
+                    return self._addNym(nym, role, newVerKey=None, otherClientName=otherClientName)
 
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
@@ -367,7 +367,7 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, getNymReply)
 
-    def _addNym(self, nym, role, other_client_name=None):
+    def _addNym(self, nym, role, newVerKey=None, otherClientName=None):
         idy = Identity(nym, role=role)
         requestMade = False
         try:
@@ -383,8 +383,8 @@ class SovrinCli(PlenumCli):
             req, = self.activeClient.submitReqs(*reqs)
             printStr = "Adding nym {}".format(nym)
 
-            if other_client_name:
-                printStr = printStr + " for " + other_client_name
+            if otherClientName:
+                printStr = printStr + " for " + otherClientName
             self.print(printStr)
 
             def out(reply, error, *args, **kwargs):
@@ -443,7 +443,8 @@ class SovrinCli(PlenumCli):
                 return True
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
-            self._addNym(nym, role)
+            newVerKey = matchedVars.get('new_ver_key')
+            self._addNym(nym, role, newVerKey=newVerKey)
             return True
 
     def _sendGetNymAction(self, matchedVars):

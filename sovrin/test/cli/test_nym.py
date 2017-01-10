@@ -82,6 +82,18 @@ def testGetNym(nymRetrieved):
     pass
 
 
+def testAddVerkeyToExistingNym(be, do, philCli, sponsorSigner, nymAdded):
+    be(philCli)
+
+    do('send NYM dest={} role=SPONSOR verkey={}'.format(
+        sponsorSigner.identifier, sponsorSigner.verkey),
+       within=3,
+       expect=["Nym {} added".format(sponsorSigner.identifier)]
+    )
+    return philCli
+
+
+
 def testSendAttrib(be, do, philCli, nymRetrieved, sponsorSigner):
     raw = '{"name": "Alice"}'
     be(philCli)

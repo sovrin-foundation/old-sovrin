@@ -32,10 +32,14 @@ def testSendNymWithoutRole(grammar):
 def testSendNymWithVerkey(grammar):
     dest="LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU="
     role="SPONSOR"
+    verkey="LNAyBZUjvLF7duhrNtOWgdAKs18nHdbJUxJLT39iEGU="
     matchedVars = getMatchedVariables(
-        grammar, "send NYM dest={} role={}".format(dest, role))
+        grammar, "send NYM dest={} role={} verkey={}".
+            format(dest, role, verkey))
     assertCliTokens(matchedVars, {
-        "send_nym": "send NYM", "dest_id": dest, "role": role})
+        "send_nym": "send NYM", "dest_id": dest,
+        "role": role, "new_ver_key": verkey
+    })
 
 
 def testSendAttribRegEx(grammar):
