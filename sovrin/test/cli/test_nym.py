@@ -1,5 +1,6 @@
 import pytest
 from plenum.common.signer_simple import SimpleSigner
+from sovrin.client.wallet.wallet import Wallet
 from sovrin.test.cli.test_tutorial import prompt_is
 from sovrin.test.did.conftest import wallet, abbrevVerkey, abbrevIdr
 
@@ -53,72 +54,192 @@ def philCli(be, do, poolNodesStarted, philCLI, connectedToTest):
     return philCLI
 
 
-@pytest.fixture(scope="module")
-def nymAdded(be, do, philCli, abbrevIdr):
-    be(philCli)
-
-    do('send NYM dest={} role=SPONSOR'.format(abbrevIdr),
+def getNym(be, do, userCli, idr, expectedMsgs):
+    be(userCli)
+    do('send GET_NYM dest={}'.format(idr),
        within=3,
-       expect=["Nym {} added".format(abbrevIdr)]
+       expect=["Transaction id for NYM {} is".format(idr)] + expectedMsgs
     )
+
+
+def getNymNotFoundExpectedMsgs(idr):
+    return ["NYM {} not found".format(idr)]
+
+
+def testGetDIDNymWithoutAddingIt(be, do, philCli, abbrevIdr):
+    getNym(be, do, philCli, abbrevIdr,
+            getNymNotFoundExpectedMsgs(abbrevIdr))
+
+
+def testGetCIDNymWithoutAddingIt(be, do, philCli, sponsorSigner):
+    getNym(be, do, philCli, sponsorSigner.identifier,
+            getNymNotFoundExpectedMsgs(sponsorSigner.identifier))
+
+
+def addNym(be, do, userCli, idr, verkey=None):
+    be(userCli)
+    cmd='send NYM dest={} role=SPONSOR'.format(idr)
+    if verkey is not None:
+        cmd='{} verkey={}'.format(cmd, verkey)
+
+    do(cmd, within=3, expect=["Nym {} added".format(idr)])
+
+
+@pytest.fixture(scope="module")
+def didNymAdded(be, do, philCli, abbrevIdr):
+    addNym(be, do, philCli, abbrevIdr)
     return philCli
 
 
-def testAddNym(nymAdded):
+def testAddDIDNym(didNymAdded):
     pass
 
 
 @pytest.fixture(scope="module")
-def nymRetrieved(be, do, philCli, nymAdded, abbrevIdr):
-    be(philCli)
-
-    do('send GET_NYM dest={}'.format(abbrevIdr),
-       within=3,
-       expect=["Transaction id for NYM {} is".format(abbrevIdr)]
-    )
+def cidNymAdded(be, do, philCli, sponsorSigner):
+    addNym(be, do, philCli, sponsorSigner.identifier)
+    return philCli
 
 
-def testGetNym(nymRetrieved):
+def testAddCIDNym(cidNymAdded):
     pass
 
 
-def testSendAttrib(be, do, philCli, nymRetrieved, abbrevIdr):
+def getNoVerkeyEverAssignedMsgs(idr):
+    return ["No verkey ever assigned to the identifier {}".format(idr)]
+
+
+def testGetDIDNymWithoutVerkey(be, do, philCli, didNymAdded, abbrevIdr):
+    getNym(be, do, philCli, abbrevIdr,
+            getNoVerkeyEverAssignedMsgs(abbrevIdr))
+
+
+def getVerkeyIsSameAsIdentifierMsgs(idr):
+    return ["Current verkey is same as identifier {}".format(idr)]
+
+
+def testGetCIDNymWithoutVerkey(be, do, philCli, cidNymAdded, sponsorSigner):
+    getNym(be, do, philCli, sponsorSigner.identifier,
+                         getVerkeyIsSameAsIdentifierMsgs(sponsorSigner.identifier))
+
+
+
+@pytest.fixture(scope="module")
+def verkeyAddedToDIDNym(be, do, philCli, didNymAdded,
+                                  abbrevIdr, abbrevVerkey):
+    addNym(be, do, philCli, abbrevIdr, abbrevVerkey)
+
+
+def testAddVerkeyToExistingDIDNym(verkeyAddedToDIDNym):
+    pass
+
+
+@pytest.fixture(scope="module")
+def verkeyAddedToCIDNym(be, do, philCli, cidNymAdded, sponsorSigner):
+    newSigner = SimpleSigner()
+    addNym(be, do, philCli, sponsorSigner.identifier, newSigner.identifier)
+    return newSigner
+
+def testAddVerkeyToExistingCIDNym(verkeyAddedToCIDNym):
+    pass
+
+
+def getCurrentVerkeyIsgMsgs(idr, verkey):
+    return ["Current verkey for NYM {} is {}".format(idr, verkey)]
+
+
+def testGetDIDNymWithVerKey(be, do, philCli, verkeyAddedToDIDNym,
+                            abbrevIdr, abbrevVerkey):
+    getNym(be, do, philCli, abbrevIdr,
+           getCurrentVerkeyIsgMsgs(abbrevIdr, abbrevVerkey))
+
+
+def testGetCIDNymWithVerKey(be, do, philCli, verkeyAddedToCIDNym,
+                            sponsorSigner):
+    getNym(be, do, philCli, sponsorSigner.identifier,
+           getCurrentVerkeyIsgMsgs(sponsorSigner.identifier,
+                                   verkeyAddedToCIDNym.identifier))
+
+
+def getNoActiveVerkeyFoundMsgs(idr):
+    return ["No active verkey found for the identifier {}".format(idr)]
+
+
+@pytest.fixture(scope="module")
+def verkeyRemovedFromExistingDIDNym(be, do, philCli, verkeyAddedToDIDNym,
+                                 abbrevIdr):
+    be(philCli)
+    addNym(be, do, philCli, abbrevIdr, '')
+    getNym(be, do, philCli, abbrevIdr, getNoActiveVerkeyFoundMsgs(abbrevIdr))
+
+
+def testRemoveVerkeyFromDIDNym(verkeyRemovedFromExistingDIDNym):
+    pass
+
+
+@pytest.fixture(scope="module")
+def verkeyRemovedFromExistingCIDNym(be, do, philCli, verkeyAddedToCIDNym,
+                                 sponsorSigner):
+    be(philCli)
+    addNym(be, do, philCli, sponsorSigner.identifier, '')
+    getNym(be, do, philCli, sponsorSigner.identifier,
+           getNoActiveVerkeyFoundMsgs(sponsorSigner.identifier))
+
+
+def testRemoveVerkeyFromCIDNym(verkeyRemovedFromExistingCIDNym):
+    pass
+
+
+def testNewVerkeyAddedToDIDNym(be, do, philCli, abbrevIdr,
+                               verkeyRemovedFromExistingDIDNym):
+    newSigner = SimpleSigner()
+    addNym(be, do, philCli, abbrevIdr, newSigner.verkey)
+    getNym(be, do, philCli, abbrevIdr,
+           getCurrentVerkeyIsgMsgs(abbrevIdr, newSigner.verkey))
+
+
+def testNewVerkeyAddedToCIDNym(be, do, philCli, sponsorSigner,
+                               verkeyRemovedFromExistingCIDNym):
+    newSigner = SimpleSigner()
+    addNym(be, do, philCli, sponsorSigner.identifier, newSigner.verkey)
+    getNym(be, do, philCli, sponsorSigner.identifier,
+           getCurrentVerkeyIsgMsgs(sponsorSigner.identifier, newSigner.verkey))
+
+
+
+def testNewKeyChangesWalletsDefaultId(be, do, poolNodesStarted,
+                                      aliceCLI, connectedToTest):
+    mywallet = Wallet('my wallet')
+    keyseed='a'*32
+    idr, _ = mywallet.addIdentifier(seed=keyseed.encode("utf-8"))
+
+    be(aliceCLI)
+
+    do('connect test', within=3, expect=connectedToTest)
+
+    do('new key with seed {}'.format(keyseed))
+
+    do('send NYM dest={}'.format(idr))
+
+    do('new key with seed 11111111111111111111111111111111')
+
+    do('send NYM dest={}'.format(idr),
+       within=3,
+       expect=["Nym {} added".format(idr)]
+    )
+
+def addAttribToNym(be, do, userCli, idr, raw):
+    be(userCli)
+    do('send ATTRIB dest={} raw={}'.format(idr, raw),
+       within=3,
+       expect=["Attribute added for nym {}".format(idr)])
+
+
+def testSendAttribForDIDNym(be, do, philCli, didNymAdded, abbrevIdr):
     raw = '{"name": "Alice"}'
-    be(philCli)
-    do('send ATTRIB dest={} raw={}'.format(abbrevIdr, raw),
-        within=3,
-       expect=["Attribute added for nym {}".format(abbrevIdr)])
+    addAttribToNym(be, do, philCli, abbrevIdr, raw)
 
 
-@pytest.fixture(scope="module")
-def verkeyAddedToExistingNym(be, do, philCli, nymAdded, abbrevIdr, abbrevVerkey):
-    be(philCli)
-
-    do('send NYM dest={} role=SPONSOR verkey={}'.format(
-        abbrevIdr, abbrevVerkey),
-       within=3,
-       expect=["Nym {} added".format(abbrevIdr)]
-    )
-    return philCli
-
-
-def testAddVerkeyToExistingNym(verkeyAddedToExistingNym):
-    pass
-
-
-@pytest.fixture(scope="module")
-def nymRetrievedWithVerkey(be, do, philCli, verkeyAddedToExistingNym,
-                           abbrevIdr, abbrevVerkey):
-    be(philCli)
-
-    do('send GET_NYM dest={}'.format(abbrevIdr),
-       within=3,
-       expect=[
-           "Transaction id for NYM {} is".format(abbrevIdr),
-           "Current verkey for NYM {} is {}".format(abbrevIdr, abbrevVerkey)
-       ]
-    )
-
-
-def testGetNymWithVerkey(nymRetrievedWithVerkey):
-    pass
+def testSendAttribForCIDNym(be, do, philCli, cidNymAdded, sponsorSigner):
+    raw = '{"name": "Alice"}'
+    addAttribToNym(be, do, philCli, sponsorSigner.identifier, raw)

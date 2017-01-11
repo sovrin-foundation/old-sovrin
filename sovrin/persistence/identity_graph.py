@@ -198,12 +198,14 @@ class IdentityGraph(OrientDbGraphStore):
                seqNo=None):
         kwargs = {
             NYM: nym,
-            VERKEY: verkey,
             TXN_ID: txnId,  # # Need to have txnId as a property for cases
             # where we dont know the sponsor of this nym or its a genesis nym
             ROLE: role,    # Need to have role as a property of the vertex it
             # makes faster to query roles by vertex.
         }
+
+        if verkey:
+            kwargs[VERKEY] = verkey
 
         if not frm:
             # In case of genesis transaction
@@ -288,11 +290,14 @@ class IdentityGraph(OrientDbGraphStore):
         self.createEdge(Edges.HasIssuerKey, frm, vertex._rid, **kwargs)
 
     def updateNym(self, txnId, nym, verkey, seqNo):
-        self.updateEntityWithUniqueId(Vertices.Nym, NYM, nym, **{
+        kwargs = {
             TXN_ID: txnId,
-            VERKEY: verkey,
             F.seqNo.name: seqNo
-        })
+        }
+        if verkey is not None:
+            kwargs[VERKEY] = verkey
+
+        self.updateEntityWithUniqueId(Vertices.Nym, NYM, nym, **kwargs)
 
     def getRawAttrs(self, frm, *attrNames):
         cmd = 'select expand(outE("{}").inV("{}")) from {} where {}="{}"'.\
@@ -438,7 +443,9 @@ class IdentityGraph(OrientDbGraphStore):
                                                 edgeData['in'].get())
             result[f.IDENTIFIER.nm] = frm.oRecordData.get(NYM)
             result[TARGET_NYM] = to.oRecordData.get(NYM)
-            result[VERKEY] = to.oRecordData.get(VERKEY)
+            verkey = to.oRecordData.get(VERKEY)
+            if verkey is not None:
+                result[VERKEY] = verkey
             return result
 
     def getAddAttributeTxnIds(self, nym):
@@ -541,8 +548,7 @@ class IdentityGraph(OrientDbGraphStore):
             raise ValueError("Unknown role {} for nym, cannot add nym to graph"
                              .format(role))
         nym = txn[TARGET_NYM]
-        # Not using `txn.get(VERKEY, '') as txn might have VERKEY but set as None`
-        verkey = txn.get(VERKEY) or ''
+        verkey = txn.get(VERKEY)
         try:
             txnId = txn[TXN_ID]
             seqNo = txn.get(F.seqNo.name)

@@ -80,7 +80,7 @@ def getNonce(length=32):
 def ensureReqCompleted(loop, reqKey, client, clbk=None, pargs=None, kwargs=None,
                        cond=None):
     reply, err = client.replyIfConsensus(*reqKey)
-    if reply is None and (cond is None or not cond()):
+    if err is None and reply is None and (cond is None or not cond()):
         loop.call_later(.2, ensureReqCompleted, loop,
                         reqKey, client, clbk, pargs, kwargs, cond)
     elif clbk:

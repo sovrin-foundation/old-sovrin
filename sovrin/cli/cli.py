@@ -8,6 +8,8 @@ from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
 import asyncio
+
+import base58
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
 from plenum.common.constants import ENVS
@@ -342,7 +344,8 @@ class SovrinCli(PlenumCli):
                     role = self._getRole(matchedVars)
                     signer = SimpleSigner()
                     nym = signer.verstr
-                    return self._addNym(nym, role, newVerKey=None, otherClientName=otherClientName)
+                    return self._addNym(nym, role, newVerKey=None,
+                                        otherClientName=otherClientName)
 
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
@@ -355,8 +358,8 @@ class SovrinCli(PlenumCli):
 
     def _getNym(self, nym):
         identity = Identity(identifier=nym)
-        req = self.activeWallet.requestIdentity(identity,
-                                                sender=self.activeWallet.defaultId)
+        req = self.activeWallet.requestIdentity(
+            identity, sender=self.activeWallet.defaultId)
         self.activeClient.submitReqs(req)
         self.print("Getting nym {}".format(nym))
 
@@ -364,11 +367,31 @@ class SovrinCli(PlenumCli):
             self.print("Transaction id for NYM {} is {}".
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
             try:
-                data=json.loads(reply[DATA])
-                self.print("Current verkey for NYM {} is {}".
-                       format(nym, data[VERKEY]), Token.BoldBlue)
+                if reply[DATA]:
+                    data=json.loads(reply[DATA])
+                    if data:
+                        idr = base58.b58decode(nym)
+                        if data.get(VERKEY) is None:
+                            if len(idr) == 32:
+                                self.print(
+                                    "Current verkey is same as identifier {}"
+                                        .format(nym), Token.BoldBlue)
+                            else:
+                                self.print(
+                                    "No verkey ever assigned to the identifier {}".
+                                    format(nym), Token.BoldBlue)
+                            return
+                        if data.get(VERKEY) == '':
+                            self.print("No active verkey found for the identifier {}".
+                                       format(nym), Token.BoldBlue)
+                        else:
+                            self.print("Current verkey for NYM {} is {}".
+                               format(nym, data[VERKEY]), Token.BoldBlue)
+                else:
+                    self.print("NYM {} not found".format(nym), Token.BoldBlue)
             except BaseException as e:
-                self.print("Error during fetching verkey: {}".format(e))
+                self.print("Error during fetching verkey: {}".format(e),
+                           Token.BoldOrange)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, getNymReply)
@@ -391,7 +414,11 @@ class SovrinCli(PlenumCli):
         self.print(printStr)
 
         def out(reply, error, *args, **kwargs):
-            self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+            if error:
+                self.print("Error: {}".format(error), Token.BoldBlue)
+            else:
+                self.print("Nym {} added".format(reply[TARGET_NYM]),
+                           Token.BoldBlue)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, out)
@@ -421,6 +448,7 @@ class SovrinCli(PlenumCli):
         self.print("Adding attributes {} for {}".format(data, nym))
 
         def chk(reply, error, *args, **kwargs):
+
             assert self.activeWallet.getAttribute(attrib).seqNo is not None
             self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
                        Token.BoldBlue)
@@ -444,12 +472,16 @@ class SovrinCli(PlenumCli):
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
             newVerKey = matchedVars.get('new_ver_key')
+            if matchedVars.get('verkey') and newVerKey is None:
+                newVerKey = ''
             self._addNym(nym, role, newVerKey=newVerKey)
             return True
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
             if not self.hasAnyKey:
+                return True
+            if not self.canMakeSovrinRequest:
                 return True
             destId = matchedVars.get('dest_id')
             self._getNym(destId)
