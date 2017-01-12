@@ -76,7 +76,6 @@ class SovrinCli(PlenumCli):
         self.envs = self.config.ENVS
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
-        super().__init__(*args, **kwargs)
         self.print("Running Sovrin {}".format(__version__))
         _, port = self.nextAvailableClientAddr()
         self.curContext = (None, None, {})  # Current Link, Current Claim Req,
