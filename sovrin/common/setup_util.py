@@ -3,6 +3,9 @@ import os
 import shutil
 from shutil import copyfile
 
+from sovrin.common.constants import Environment
+from sovrin.config import ENVS
+
 
 class Setup:
 
@@ -15,17 +18,20 @@ class Setup:
 
     def setupTxns(self):
         import data
-
-        pool_txn_file = os.path.join(self.base_dir, "pool_transactions_sandbox")
-        pool_txn_local_file = os.path.join(self.base_dir, "pool_transactions_local")
-        identity_txn_file = os.path.join(self.base_dir, "transactions_sandbox")
-        identity_txn_local_file = os.path.join(self.base_dir, "transactions_local")
-
         dataDir = os.path.dirname(data.__file__)
-        copyfile(os.path.join(dataDir, "pool_transactions_sandbox"), pool_txn_file)
-        copyfile(os.path.join(dataDir, "pool_transactions_local"), pool_txn_local_file)
-        copyfile(os.path.join(dataDir, "transactions_sandbox"), identity_txn_file)
-        copyfile(os.path.join(dataDir, "transactions_local"), identity_txn_local_file)
+
+        tmpENVS = {
+            "local": Environment("pool_transactions_local",
+                                 "transactions_local"),
+        }
+        tmpENVS.update(ENVS)
+        for envName, env in tmpENVS.items():
+            for _, fileName in env._asdict().items():
+                sourceFilePath = os.path.join(dataDir, fileName)
+                if os.path.exists(sourceFilePath):
+                    destFilePath = os.path.join(self.base_dir, fileName)
+                    copyfile(sourceFilePath, destFilePath)
+
         return self
 
     def setupSampleInvites(self):

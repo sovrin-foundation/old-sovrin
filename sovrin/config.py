@@ -1,8 +1,8 @@
 import os
 from collections import OrderedDict
 
-from plenum.common.constants import Environment
 from plenum.common.txn import ClientBootStrategy
+from sovrin.common.constants import Environment
 
 nodeReg = OrderedDict([
     ('Alpha', ('127.0.0.1', 9701)),

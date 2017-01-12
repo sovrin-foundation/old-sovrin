@@ -6,7 +6,7 @@ from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
-from plenum.common.constants import Environment
+from plenum.common.eventually import eventually
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.signer_did import DidSigner
@@ -16,7 +16,6 @@ from plenum.common.types import HA, Identifier
 from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
-from plenum.common.eventually import eventually
 from plenum.test.cli.helper import newCLI as newPlenumCLI
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet, \
     initDirWithGenesisTxns
@@ -28,11 +27,11 @@ from plenum.test.test_node import checkNodesAreReady, TestNodeCore
 from plenum.test.test_node import checkNodesConnected
 from plenum.test.test_stack import StackedTester, TestStack
 from plenum.test.testable import Spyable
-
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
+from sovrin.common.constants import Environment
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM
 from sovrin.server.node import Node
