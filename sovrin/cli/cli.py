@@ -37,6 +37,7 @@ from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
     SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
 from sovrin.common.util import ensureReqCompleted
+from sovrin.__metadata__ import __version__
 
 try:
     nodeMod = importlib.import_module('sovrin.server.node')
@@ -75,7 +76,8 @@ class SovrinCli(PlenumCli):
         self.envs = self.config.ENVS
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
-
+        super().__init__(*args, **kwargs)
+        self.print("Running Sovrin {}".format(__version__))
         _, port = self.nextAvailableClientAddr()
         self.curContext = (None, None, {})  # Current Link, Current Claim Req,
         # set attributes
