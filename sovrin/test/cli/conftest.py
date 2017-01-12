@@ -279,8 +279,7 @@ def unsycedAlreadyAcceptedInviteAcceptedOut():
     return [
         "Invitation not yet verified",
         "Attempting to sync...",
-        "Synchronizing...",
-        "Already accepted"
+        "Synchronizing..."
     ]
 
 

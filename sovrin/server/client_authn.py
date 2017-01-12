@@ -34,5 +34,5 @@ class TxnBasedAuthNr(NaclAuthNr):
         nym = self.storage.getNym(identifier)
         if not nym:
             raise UnknownIdentifier(identifier)
-        verkey = nym.oRecordData['verkey']
+        verkey = nym.oRecordData.get('verkey') or ''
         return verkey

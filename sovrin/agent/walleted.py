@@ -363,8 +363,12 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
 
     @staticmethod
     def _getNewAvailableClaims(li, rcvdAvailableClaims):
-        return [(cl[NAME], cl[VERSION], li.remoteIdentifier) for cl in
-                rcvdAvailableClaims]
+        receivedClaims = [(cl[NAME], cl[VERSION], li.remoteIdentifier)
+                              for cl in rcvdAvailableClaims]
+        existingAvailableClaims = set(li.availableClaims)
+        newReceivedClaims = set(receivedClaims)
+        return list(newReceivedClaims - existingAvailableClaims)
+
 
     def _handleAcceptInviteResponse(self, msg):
         body, _ = msg
@@ -381,8 +385,6 @@ class Walleted(AgentIssuer, AgentProver, AgentVerifier):
                 self.notifyMsgListener("    Identifier created in Sovrin.")
 
                 li.linkStatus = constant.LINK_STATUS_ACCEPTED
-                # li.targetVerkey = constant.TARGET_VER_KEY_SAME_AS_ID
-
                 rcvdAvailableClaims = body[DATA][CLAIMS_LIST_FIELD]
                 newAvailableClaims = self._getNewAvailableClaims(
                     li, rcvdAvailableClaims)

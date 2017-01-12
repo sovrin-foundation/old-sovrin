@@ -162,7 +162,7 @@ def checkWalletStates(userCli,
                       totalAvailableClaims,
                       totalClaimDefs,
                       totalClaimsRcvd,
-                      within=None):
+                      within=1):
     async def check():
         assert totalLinks == len(userCli.activeWallet._links)
 
@@ -171,9 +171,11 @@ def checkWalletStates(userCli,
             tac += len(li.availableClaims)
         assert totalAvailableClaims == tac
 
-        assert totalClaimDefs == len(await userCli.agent.prover.wallet.getAllClaimDef())
+        assert (totalClaimDefs == 0 and userCli.agent.prover is None) or \
+               (totalClaimDefs == len(await userCli.agent.prover.wallet.getAllClaimDef()))
 
-        assert totalClaimsRcvd == len((await userCli.agent.prover.wallet.getAllClaims()).keys())
+        assert (totalClaimsRcvd == 0 and userCli.agent.prover is None) or \
+               (totalClaimsRcvd == len((await userCli.agent.prover.wallet.getAllClaims()).keys()))
 
     if within:
         userCli.looper.run(eventually(check, timeout=within))
@@ -401,12 +403,8 @@ def aliceAcceptedFaberInvitation(be, do, aliceCli, faberMap,
                                  preRequisite,
                                  syncedInviteAcceptedWithClaimsOut,
                                  faberInviteSyncedWithEndpoint):
-    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=0,
-                      totalClaimDefs=0, totalClaimsRcvd=0)
     acceptInvitation(be, do, aliceCli, faberMap,
                  syncedInviteAcceptedWithClaimsOut)
-    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
-                      totalClaimDefs=1, totalClaimsRcvd=0)
     return aliceCli
 
 
@@ -432,11 +430,11 @@ def testAliceAcceptFaberInvitationAgain(be, do, aliceCli, faberMap,
     li.linkStatus = None
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
-                      totalClaimDefs=1, totalClaimsRcvd=0)
+                      totalClaimDefs=0, totalClaimsRcvd=0)
     acceptInvitation(be, do, aliceCli, faberMap,
                      unsycedAlreadyAcceptedInviteAcceptedOut)
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
-                      totalClaimDefs=1, totalClaimsRcvd=0)
+                      totalClaimDefs=0, totalClaimsRcvd=0)
     li.linkStatus = constant.LINK_STATUS_ACCEPTED
 
 
@@ -467,12 +465,14 @@ def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
                             showTranscriptClaimOut,
                             aliceAcceptedFaberInvitation):
     be(aliceCli)
-
+    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
+                      totalClaimDefs=0, totalClaimsRcvd=0)
     do("show claim {name}",
        expect=showTranscriptClaimOut,
        mapper=transcriptClaimMap,
        within=3)
-
+    checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
+                      totalClaimDefs=1, totalClaimsRcvd=0)
 
 def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
                           aliceAcceptedFaberInvitation):
@@ -756,9 +756,8 @@ def jobApplicationClaimSent(be, do, aliceCli, acmeMap,
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=1,
                       totalClaimDefs=1, totalClaimsRcvd=1)
     sendClaim(be, do, aliceCli, acmeMap, "Job-Certificate")
-
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-                      totalClaimDefs=2, totalClaimsRcvd=1)
+                      totalClaimDefs=1, totalClaimsRcvd=1)
 
 
 def testAliceSendClaimProofToAcme(jobApplicationClaimSent):
@@ -787,7 +786,7 @@ def testShowJobCertClaim(be, do, aliceCli, jobCertificateClaimMap,
                          jobApplicationClaimSent):
     be(aliceCli)
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-                      totalClaimDefs=2, totalClaimsRcvd=1)
+                      totalClaimDefs=1, totalClaimsRcvd=1)
     do("show claim {name}",
        within=2,
        expect=showJobCertClaimOut,
@@ -817,7 +816,7 @@ def jobCertClaimRequested(be, do, aliceCli, preRequisite,
     be(aliceCli)
 
     checkWalletStates(aliceCli, totalLinks=2, totalAvailableClaims=2,
-                      totalClaimDefs=1, totalClaimsRcvd=1)
+                      totalClaimDefs=2, totalClaimsRcvd=1)
 
     do("request claim {name}", within=7,
        expect=reqClaimOut1,

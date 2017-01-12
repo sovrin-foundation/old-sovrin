@@ -223,8 +223,6 @@ class Wallet(PWallet, Sponsoring):
                 idy.verkey = data.get(VERKEY)
                 # TODO: THE GET_NYM reply should contain the sequence number of
                 # the NYM transaction
-        else:
-            raise ValueError("'DATA' in reply was None")
 
     def _getTxnsReply(self, result, preparedReq):
         # TODO

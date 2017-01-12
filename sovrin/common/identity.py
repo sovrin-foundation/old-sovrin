@@ -39,7 +39,7 @@ class Identity(GeneratesRequest):
             TXN_TYPE: NYM,
             TARGET_NYM: self.identifier
         }
-        if self.verkey:
+        if self.verkey is not None:
             op[VERKEY] = self.verkey
         if self.role:
             op[ROLE] = self.role

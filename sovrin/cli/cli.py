@@ -8,11 +8,12 @@ from hashlib import sha256
 from typing import Dict, Any, Tuple, Callable
 
 import asyncio
+
+import base58
 from plenum.cli.cli import Cli as PlenumCli
 from plenum.cli.helper import getClientGrams
-from plenum.config import ENVS
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import NAME, VERSION, TYPE
+from plenum.common.txn import NAME, VERSION, TYPE, VERKEY, DATA
 from plenum.common.txn_util import createGenesisTxnFile
 from plenum.common.util import randomString
 from prompt_toolkit.contrib.completers import WordCompleter
@@ -339,11 +340,12 @@ class SovrinCli(PlenumCli):
                     return True
                 client_action = matchedVars.get('cli_action')
                 if client_action == 'add':
-                    other_client_name = matchedVars.get('other_client_name')
+                    otherClientName = matchedVars.get('other_client_name')
                     role = self._getRole(matchedVars)
                     signer = SimpleSigner()
                     nym = signer.verstr
-                    return self._addNym(nym, role, other_client_name)
+                    return self._addNym(nym, role, newVerKey=None,
+                                        otherClientName=otherClientName)
 
     def _getRole(self, matchedVars):
         role = matchedVars.get("role")
@@ -356,46 +358,70 @@ class SovrinCli(PlenumCli):
 
     def _getNym(self, nym):
         identity = Identity(identifier=nym)
-        req = self.activeWallet.requestIdentity(identity,
-                                                sender=self.activeWallet.defaultId)
+        req = self.activeWallet.requestIdentity(
+            identity, sender=self.activeWallet.defaultId)
         self.activeClient.submitReqs(req)
         self.print("Getting nym {}".format(nym))
 
         def getNymReply(reply, err, *args):
             self.print("Transaction id for NYM {} is {}".
                        format(nym, reply[TXN_ID]), Token.BoldBlue)
+            try:
+                if reply[DATA]:
+                    data=json.loads(reply[DATA])
+                    if data:
+                        idr = base58.b58decode(nym)
+                        if data.get(VERKEY) is None:
+                            if len(idr) == 32:
+                                self.print(
+                                    "Current verkey is same as identifier {}"
+                                        .format(nym), Token.BoldBlue)
+                            else:
+                                self.print(
+                                    "No verkey ever assigned to the identifier {}".
+                                    format(nym), Token.BoldBlue)
+                            return
+                        if data.get(VERKEY) == '':
+                            self.print("No active verkey found for the identifier {}".
+                                       format(nym), Token.BoldBlue)
+                        else:
+                            self.print("Current verkey for NYM {} is {}".
+                               format(nym, data[VERKEY]), Token.BoldBlue)
+                else:
+                    self.print("NYM {} not found".format(nym), Token.BoldBlue)
+            except BaseException as e:
+                self.print("Error during fetching verkey: {}".format(e),
+                           Token.BoldOrange)
 
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, getNymReply)
 
-    def _addNym(self, nym, role, other_client_name=None):
-        idy = Identity(nym, role=role)
-        requestMade = False
+    def _addNym(self, nym, role, newVerKey=None, otherClientName=None):
+        idy = Identity(nym, verkey=newVerKey, role=role)
         try:
             self.activeWallet.addSponsoredIdentity(idy)
-            requestMade = True
         except Exception as e:
             if e.args[0] == 'identifier already added':
                 pass
             else:
                 raise e
-        if requestMade:
-            reqs = self.activeWallet.preparePending()
-            req, = self.activeClient.submitReqs(*reqs)
-            printStr = "Adding nym {}".format(nym)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
+        printStr = "Adding nym {}".format(nym)
 
-            if other_client_name:
-                printStr = printStr + " for " + other_client_name
-            self.print(printStr)
+        if otherClientName:
+            printStr = printStr + " for " + otherClientName
+        self.print(printStr)
 
-            def out(reply, error, *args, **kwargs):
-                self.print("Nym {} added".format(reply[TARGET_NYM]), Token.BoldBlue)
+        def out(reply, error, *args, **kwargs):
+            if error:
+                self.print("Error: {}".format(error), Token.BoldBlue)
+            else:
+                self.print("Nym {} added".format(reply[TARGET_NYM]),
+                           Token.BoldBlue)
 
-            self.looper.loop.call_later(.2, self._ensureReqCompleted,
-                                        req.key, self.activeClient, out)
-        else:
-            self._printRequestAlreadyMade(extra=" Request made to add {}".
-                                          format(nym))
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                    req.key, self.activeClient, out)
         return True
 
     def _addAttribToNym(self, nym, raw, enc, hsh):
@@ -422,6 +448,7 @@ class SovrinCli(PlenumCli):
         self.print("Adding attributes {} for {}".format(data, nym))
 
         def chk(reply, error, *args, **kwargs):
+
             assert self.activeWallet.getAttribute(attrib).seqNo is not None
             self.print("Attribute added for nym {}".format(reply[TARGET_NYM]),
                        Token.BoldBlue)
@@ -444,12 +471,17 @@ class SovrinCli(PlenumCli):
                 return True
             nym = matchedVars.get('dest_id')
             role = self._getRole(matchedVars)
-            self._addNym(nym, role)
+            newVerKey = matchedVars.get('new_ver_key')
+            if matchedVars.get('verkey') and newVerKey is None:
+                newVerKey = ''
+            self._addNym(nym, role, newVerKey=newVerKey)
             return True
 
     def _sendGetNymAction(self, matchedVars):
         if matchedVars.get('send_get_nym') == 'send GET_NYM':
             if not self.hasAnyKey:
+                return True
+            if not self.canMakeSovrinRequest:
                 return True
             destId = matchedVars.get('dest_id')
             self._getNym(destId)

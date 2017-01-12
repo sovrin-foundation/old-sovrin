@@ -19,7 +19,7 @@ class Sponsoring:
         if idy.role and idy.role not in (SPONSOR, STEWARD):
             raise AttributeError("invalid role: {}".format(idy.role))
         if idy.identifier in self._sponsored:
-            raise RuntimeError("identifier already added")
+            del self._sponsored[idy.identifier]
         self._sponsored[idy.identifier] = idy
         self._sendIdReq(idy)
 

@@ -1,6 +1,7 @@
 import os
 from collections import OrderedDict
 
+from plenum.common.constants import Environment
 from plenum.common.txn import ClientBootStrategy
 
 nodeReg = OrderedDict([
@@ -70,3 +71,8 @@ RAETMessageTimeout = 30
 
 
 PluginsToLoad = []
+
+ENVS = {
+    "test": Environment("pool_transactions_sandbox", "transactions_sandbox"),
+    "live": Environment("pool_transactions_live", "transactions_live")
+}

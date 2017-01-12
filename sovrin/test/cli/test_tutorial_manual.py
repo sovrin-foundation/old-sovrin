@@ -189,6 +189,7 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
         do('show claim request Job-Application')
         # Passing some args as None since they are not used in the method
         jobApplicationClaimSent(be, do, userCLI, aMap, None, None, None)
+        do('show claim Job-Certificate')
         # Request new available claims Job-Certificate
         jobCertClaimRequested(be, do, userCLI, None,
                               jobCertificateClaimMap, reqClaimOut1, None)
