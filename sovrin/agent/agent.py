@@ -88,6 +88,13 @@ class Agent(Motor, AgentNet):
         if self.endpoint:
             self.endpoint.start()
 
+    def stop(self, *args, **kwargs):
+        super().stop(*args, **kwargs)
+        if self.client:
+            self.client.stop()
+        if self.endpoint:
+            self.endpoint.stop()
+
     def _statusChanged(self, old, new):
         pass
 
@@ -174,11 +181,12 @@ class WalletedAgent(Walleted, Agent, Caching):
                  wallet: Wallet = None,
                  port: int = None,
                  loop=None,
-                 attrRepo=None):
+                 attrRepo=None,
+                 agentLogger=None):
         Agent.__init__(self, name, basedirpath, client, port, loop=loop)
         self._wallet = wallet or Wallet(name)
         self._attrRepo = attrRepo or AttributeRepoInMemory()
-        Walleted.__init__(self)
+        Walleted.__init__(self, agentLogger=(agentLogger or None))
         if self.client:
             self._initIssuerProverVerifier()
 

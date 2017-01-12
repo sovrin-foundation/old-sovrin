@@ -1,0 +1,9 @@
+{
+  "link-invitation": {
+    "name": "Bulldog",
+    "identifier": "6do9CsML8QWFd125gNo958a35nSnjzdtJBsBRvgS9dfJ",
+    "nonce": "2e9882ea71976ddf9",
+    "endpoint": "127.0.0.1:8787"
+  },
+  "sig": "oeGeMdt5HRjRsbaXybGpRmkkijhHrGT82syxofEJQbkjTCLW63tM3jMn1boaf62vCSEEDyTaVJZnrpfDXAHtLZ9"
+}

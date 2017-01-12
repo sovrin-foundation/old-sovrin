@@ -1,0 +1,26 @@
+{
+  "link-invitation": {
+    "name": "Bulldog",
+    "identifier": "6do9CsML8QWFd125gNo958a35nSnjzdtJBsBRvgS9dfJ",
+    "nonce": "2e9882ea71976ddf9",
+    "endpoint": "127.0.0.1:8787"
+  },
+  "claim-requests": [{
+    "name": "Proof-of-name-and-address",
+    "version": "0.1",
+    "attributes": {
+        "title": "string",
+        "first_name": "string",
+        "last_name": "string",
+        "address_1": "string",
+        "address_2": "string",
+        "address_3": "string",
+        "postcode_zip": "string"
+    },
+    "verifiableAttributes": [
+        "title", "first_name", "last_name", "address_1",
+        "address_2", "address_3", "postcode_zip"
+    ]
+  }],
+  "sig": "oeGeMdt5HRjRsbaXybGpRmkkijhHrGT82syxofEJQbkjTCLW63tM3jMn1boaf62vCSEEDyTaVJZnrpfDXAHtLZ9"
+}
