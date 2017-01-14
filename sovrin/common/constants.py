@@ -4,5 +4,3 @@ Environment = NamedTuple("Environment", [
     ("poolLedger", str),
     ("domainLedger", str)
 ])
-
-

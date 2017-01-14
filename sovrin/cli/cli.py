@@ -11,6 +11,7 @@ import asyncio
 
 import base58
 from plenum.cli.cli import Cli as PlenumCli
+from plenum.cli.constants import PROMPT_ENV_SEPARATOR
 from plenum.cli.helper import getClientGrams
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import NAME, VERSION, TYPE, VERKEY, DATA
@@ -31,7 +32,6 @@ from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.link import Link, ClaimProofRequest
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.config_util import getConfig
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
     LinkNotFound, NotConnectedToNetwork, ClaimDefNotFound
 from sovrin.common.identity import Identity
@@ -266,9 +266,8 @@ class SovrinCli(PlenumCli):
         self._genesisTransactions = []
 
     def newNode(self, nodeName: str):
-        config = getConfig()
         createGenesisTxnFile(self.genesisTransactions, self.basedirpath,
-                             config.domainTransactionsFile,
+                             self.config.domainTransactionsFile,
                              getTxnOrderedFields(), reset=False)
         nodesAdded = super().newNode(nodeName)
         return nodesAdded
@@ -1106,22 +1105,27 @@ class SovrinCli(PlenumCli):
                 self.print(envError, token=Token.Error)
                 self._printConnectUsage()
             else:
+                oldEnv = self.activeEnv
+                if oldEnv:
+                    self._saveActiveWallet()
                 # Using `_activeClient` instead of `activeClient` since using
                 # `_activeClient` will initialize a client if not done already
                 if self._activeClient:
                     self.print("Disconnecting from {}".format(envName))
                     self._activeClient = None
-                config = getConfig()
-                config.poolTransactionsFile = self.envs[envName].poolLedger
-                config.domainTransactionsFile = \
+                self.config.poolTransactionsFile = self.envs[envName].poolLedger
+                self.config.domainTransactionsFile = \
                     self.envs[envName].domainLedger
-                oldEnv = self.activeEnv
+
                 self.activeEnv = envName
-                self._buildClientIfNotExists(config)
+                self._buildClientIfNotExists(self.config)
                 self.print("Connecting to {}...".format(envName), Token.BoldGreen)
                 # Prompt has to be changed, so it show the environment too
-                self._setPrompt(self.currPromptText.replace("@{}".format(oldEnv), ""))
+                self._setPrompt(self.currPromptText.replace("{}{}".format(
+                    PROMPT_ENV_SEPARATOR, oldEnv), ""))
                 self.ensureClientConnected()
+                # if oldEnv:
+                #     self.restoreWallet()
             return True
 
     def getStatus(self):
@@ -1138,8 +1142,10 @@ class SovrinCli(PlenumCli):
 
     def _setPrompt(self, promptText):
         if self.activeEnv:
-            if not promptText.endswith("@{}".format(self.activeEnv)):
-                promptText = "{}@{}".format(promptText, self.activeEnv)
+            if not promptText.endswith("{}{}".format(PROMPT_ENV_SEPARATOR,
+                                                     self.activeEnv)):
+                promptText = "{}{}{}".format(promptText, PROMPT_ENV_SEPARATOR,
+                                             self.activeEnv)
 
         super()._setPrompt(promptText)
 

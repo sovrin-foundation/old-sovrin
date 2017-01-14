@@ -4,9 +4,9 @@ from _sha256 import sha256
 from plenum.common.eventually import eventually
 from plenum.common.port_dispenser import genHa
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import TARGET_NYM, ROLE, TXN_TYPE, NEW_NODE, DATA, \
-    NODE_PORT, CLIENT_PORT
-from plenum.test.cli.helper import TestCliCore, assertAllNodesCreated, checkAllNodesStarted
+from plenum.common.txn import TARGET_NYM, ROLE
+from plenum.test.cli.helper import TestCliCore, assertAllNodesCreated, \
+    checkAllNodesStarted
 from plenum.test.testable import Spyable
 from sovrin.cli.cli import SovrinCli
 from sovrin.client.wallet.link import Link

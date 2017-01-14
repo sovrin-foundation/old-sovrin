@@ -474,6 +474,7 @@ def testShowTranscriptClaim(be, do, aliceCli, transcriptClaimMap,
     checkWalletStates(aliceCli, totalLinks=1, totalAvailableClaims=1,
                       totalClaimDefs=1, totalClaimsRcvd=0)
 
+
 def testReqClaimNotExists(be, do, aliceCli, faberMap, showClaimNotFoundOut,
                           aliceAcceptedFaberInvitation):
     be(aliceCli)

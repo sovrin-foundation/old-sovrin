@@ -2,7 +2,6 @@ import pytest
 from plenum.common.eventually import eventually
 
 from sovrin.test.cli.helper import checkConnectedToEnv, prompt_is
-from sovrin.test.helper import getCliBuilder
 
 
 def testConnectEnv(poolNodesCreated, looper, notConnectedStatus):
@@ -40,26 +39,8 @@ def pool2(multiPoolNodesCreated):
     return multiPoolNodesCreated[1]
 
 
-@pytest.yield_fixture(scope="module")
-def susanCliForMultiNode(request, multiPoolNodesCreated, tdir, tconf,
-                         tdirWithPoolTxns, tdirWithDomainTxns):
-    oldENVS = tconf.ENVS
-    oldPoolTxnFile = tconf.poolTransactionsFile
-    oldDomainTxnFile = tconf.domainTransactionsFile
-
-    yield from getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns,
-                             multiPoolNodesCreated) ("susan")
-
-    def reset():
-        tconf.ENVS = oldENVS
-        tconf.poolTransactionsFile = oldPoolTxnFile
-        tconf.domainTransactionsFile = oldDomainTxnFile
-
-    request.addfinalizer(reset)
-
-
-def testSusanConnectsToDifferentPools(do, be, susanCliForMultiNode):
-    be(susanCliForMultiNode)
+def testSusanConnectsToDifferentPools(do, be, cliForMultiNodePools):
+    be(cliForMultiNodePools)
     do(None, expect=prompt_is("sovrin"))
     do('connect pool1', within=5, expect=["Connected to pool1"])
     do(None, expect=prompt_is("sovrin@pool1"))

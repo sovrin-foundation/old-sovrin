@@ -30,11 +30,6 @@ def testCliExitCommand(be, do, poolNodesStarted, aliceCLI, CliBuilder,
 
 
 @pytest.fixture(scope='module')
-def savedKeyringRestored():
-    return ['Saved keyring {keyring-name} restored']
-
-
-@pytest.fixture(scope='module')
 def aliceKeyringMap():
     return {
         'keyring-name': 'Alice'

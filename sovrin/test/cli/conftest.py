@@ -1099,3 +1099,26 @@ def claimDefAdded():
 @pytest.fixture(scope="module")
 def issuerKeyAdded():
     return ["issuer key is published"]
+
+
+@pytest.fixture(scope='module')
+def savedKeyringRestored():
+    return ['Saved keyring {keyring-name} restored']
+
+
+@pytest.yield_fixture(scope="module")
+def cliForMultiNodePools(request, multiPoolNodesCreated, tdir,
+                         tdirWithPoolTxns, tdirWithDomainTxns, tconf):
+    oldENVS = tconf.ENVS
+    oldPoolTxnFile = tconf.poolTransactionsFile
+    oldDomainTxnFile = tconf.domainTransactionsFile
+
+    yield from getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns,
+                             multiPoolNodesCreated) ("susan")
+
+    def reset():
+        tconf.ENVS = oldENVS
+        tconf.poolTransactionsFile = oldPoolTxnFile
+        tconf.domainTransactionsFile = oldDomainTxnFile
+
+    request.addfinalizer(reset)
