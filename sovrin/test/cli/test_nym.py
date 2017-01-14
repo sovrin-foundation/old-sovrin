@@ -123,7 +123,6 @@ def testGetCIDNymWithoutVerkey(be, do, philCli, cidNymAdded, sponsorSigner):
                          getVerkeyIsSameAsIdentifierMsgs(sponsorSigner.identifier))
 
 
-
 @pytest.fixture(scope="module")
 def verkeyAddedToDIDNym(be, do, philCli, didNymAdded,
                                   abbrevIdr, abbrevVerkey):
@@ -139,6 +138,7 @@ def verkeyAddedToCIDNym(be, do, philCli, cidNymAdded, sponsorSigner):
     newSigner = SimpleSigner()
     addNym(be, do, philCli, sponsorSigner.identifier, newSigner.identifier)
     return newSigner
+
 
 def testAddVerkeyToExistingCIDNym(verkeyAddedToCIDNym):
     pass

@@ -1009,7 +1009,11 @@ def do(ctx):
                         except AssertionError as e:
                             extraMsg = ""
                             if not within:
-                                extraMsg = "NOTE: 'within' parameter was not provided, if test should wait for sometime before considering this check failed, then provide that parameter with appropriate value"
+                                extraMsg = "NOTE: 'within' parameter was not " \
+                                           "provided, if test should wait for" \
+                                           " sometime before considering this" \
+                                           " check failed, then provide that" \
+                                           " parameter with appropriate value"
                                 separator="-"*len(extraMsg)
                                 extraMsg="\n\n{}\n{}\n{}".format(separator, extraMsg, separator)
                             raise (AssertionError("{}{}".format(e, extraMsg)))

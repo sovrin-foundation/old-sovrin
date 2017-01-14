@@ -1108,6 +1108,8 @@ class SovrinCli(PlenumCli):
                 oldEnv = self.activeEnv
                 if oldEnv:
                     self._saveActiveWallet()
+                    self._wallets = {}
+                    self._activeWallet = None
                 # Using `_activeClient` instead of `activeClient` since using
                 # `_activeClient` will initialize a client if not done already
                 if self._activeClient:
@@ -1124,8 +1126,8 @@ class SovrinCli(PlenumCli):
                 self._setPrompt(self.currPromptText.replace("{}{}".format(
                     PROMPT_ENV_SEPARATOR, oldEnv), ""))
                 self.ensureClientConnected()
-                # if oldEnv:
-                #     self.restoreWallet()
+                if oldEnv:
+                    self.restoreWallet()
             return True
 
     def getStatus(self):
