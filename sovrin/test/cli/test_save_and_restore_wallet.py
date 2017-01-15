@@ -23,14 +23,14 @@ def testPersistentWalletName():
     # New default wallet (keyring) gets created
     walletFileName = Cli.getPersistentWalletFileName(
         cliName=cliName, currPromptText="sovrin@test",
-        activeWalletName="Default")
+        walletName="Default")
     assert "keyring_Default_test" == walletFileName
     assert "Default" == Cli.getWalletKeyName(walletFileName)
 
     # User creates new wallet (keyring)
     walletFileName = Cli.getPersistentWalletFileName(
         cliName=cliName, currPromptText="sovrin@test",
-        activeWalletName="MyVault")
+        walletName="MyVault")
     assert "keyring_MyVault_test" == walletFileName
     assert "MyVault" == Cli.getWalletKeyName(walletFileName)
 
@@ -39,10 +39,13 @@ def checkWalletFilePersisted(filePath):
     assert os.path.exists(filePath)
 
 
-def checkWalletRestored(expectedWalletKeyName, cliForMultiNodePools,
+def checkWalletRestored(expectedWalletKeyName, cli,
                        expectedIdentifiers):
-    assert cliForMultiNodePools._activeWallet.name == expectedWalletKeyName
-    assert len(cliForMultiNodePools._activeWallet.identifiers) == \
+
+    cli.lastCmdOutput == "Saved keyring {} restored".format(
+        expectedWalletKeyName)
+    assert cli._activeWallet.name == expectedWalletKeyName
+    assert len(cli._activeWallet.identifiers) == \
            expectedIdentifiers
 
 
@@ -51,7 +54,7 @@ def getWalletFilePath(cli):
     activeWalletName = cli._activeWallet.name if cli._activeWallet else ""
     fileName = Cli.getPersistentWalletFileName(
         cli.name, cli.currPromptText, activeWalletName)
-    return Cli.getWalletFilePath(cli.config.baseDir, fileName)
+    return Cli.getWalletFilePath(cli.getKeyringsBaseDir(), fileName)
 
 
 def getOldIdentifiersForActiveWallet(cli):
@@ -69,12 +72,18 @@ def createNewKey(do, cli, keyringName):
 
 
 def createNewKeyring(name, do):
-    do (
+    do(
         'new keyring {}'.format(name),
         expect=[
            'Active keyring set to "{}"'.format(name),
            'New keyring {} created'.format(name)
         ]
+    )
+
+
+def useKeyring(name, do):
+    do('use keyring {}'.format(name),
+       expect=['Active keyring set to "{}"'.format(name)]
     )
 
 
@@ -106,21 +115,23 @@ def testSaveAndRestoreWallet(do, be, cliForMultiNodePools):
 
     connectTo("pool1", do, cliForMultiNodePools,
               activeWalletPresents=True, identifiers=0)
-
     createNewKey(do, cliForMultiNodePools, keyringName="Default")
 
     switchEnv("pool2", do, cliForMultiNodePools, checkIfWalletRestored=False)
-
     createNewKey(do, cliForMultiNodePools, keyringName="Default")
+    createNewKeyring("mykr0", do)
+    createNewKey(do, cliForMultiNodePools, keyringName="mykr0")
+    createNewKey(do, cliForMultiNodePools, keyringName="mykr0")
 
     switchEnv("pool1", do, cliForMultiNodePools, checkIfWalletRestored=True,
               restoredWalletKeyName="Default", restoredIdentifiers=1)
-
     createNewKeyring("mykr1", do)
     createNewKey(do, cliForMultiNodePools, keyringName="mykr1")
 
     switchEnv("pool2", do, cliForMultiNodePools, checkIfWalletRestored=True,
               restoredWalletKeyName="Default", restoredIdentifiers=1)
+    useKeyring("mykr0", do)
 
-
-
+    filePath = Cli.getWalletFilePath(cliForMultiNodePools.config.baseDir,
+                                     cliForMultiNodePools.walletFileName)
+    print(filePath)
