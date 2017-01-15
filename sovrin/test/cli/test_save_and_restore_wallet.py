@@ -1,4 +1,5 @@
 import os
+from os.path import basename
 
 import pytest
 from plenum.cli.cli import Exit, Cli
@@ -49,7 +50,6 @@ def checkWalletRestored(expectedWalletKeyName, cli,
            expectedIdentifiers
 
 
-
 def getWalletFilePath(cli):
     activeWalletName = cli._activeWallet.name if cli._activeWallet else ""
     fileName = Cli.getPersistentWalletFileName(
@@ -81,9 +81,12 @@ def createNewKeyring(name, do):
     )
 
 
-def useKeyring(name, do):
+def useKeyring(name, do, expectedName=None, expectedMsgs=None):
+    keyringName = expectedName or name
+    finalExpectedMsgs = expectedMsgs or \
+                        ['Active keyring set to "{}"'.format(keyringName)]
     do('use keyring {}'.format(name),
-       expect=['Active keyring set to "{}"'.format(name)]
+       expect=finalExpectedMsgs
     )
 
 
@@ -132,6 +135,10 @@ def testSaveAndRestoreWallet(do, be, cliForMultiNodePools):
               restoredWalletKeyName="Default", restoredIdentifiers=1)
     useKeyring("mykr0", do)
 
-    filePath = Cli.getWalletFilePath(cliForMultiNodePools.config.baseDir,
+    filePath = Cli.getWalletFilePath(cliForMultiNodePools.getKeyringsBaseDir(),
                                      cliForMultiNodePools.walletFileName)
-    print(filePath)
+    switchEnv("pool1", do, cliForMultiNodePools, checkIfWalletRestored=True,
+              restoredWalletKeyName="Default", restoredIdentifiers=1)
+    baseName = basename(filePath)
+    useKeyring(filePath, do, expectedName="mykr0",
+               expectedMsgs=["Saved keyring {} restored".format(baseName)])
