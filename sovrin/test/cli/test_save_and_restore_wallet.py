@@ -3,7 +3,6 @@ from os.path import basename
 
 import pytest
 from plenum.cli.cli import Exit, Cli
-from sovrin.test.cli.conftest import savedKeyringRestored
 from sovrin.test.cli.helper import prompt_is
 
 
@@ -90,9 +89,14 @@ def useKeyring(name, do, expectedName=None, expectedMsgs=None):
     )
 
 
-def connectTo(envName, do, cli, activeWalletPresents, identifiers):
-    do('connect {}'.format(envName), within=5,
+def _connectTo(envName, do, cli):
+    do('connect {}'.format(envName), within=10,
        expect=["Connected to {}".format(envName)])
+    prompt_is("{}@{}".format(cli.name, envName))
+
+
+def connectTo(envName, do, cli, activeWalletPresents, identifiers):
+    _connectTo(envName, do, cli)
     if activeWalletPresents:
         assert cli._activeWallet is not None
         assert len(cli._activeWallet.identifiers) == identifiers
@@ -103,9 +107,9 @@ def connectTo(envName, do, cli, activeWalletPresents, identifiers):
 def switchEnv(newEnvName, do, cli, checkIfWalletRestored=False,
               restoredWalletKeyName=None, restoredIdentifiers=0):
     walletFilePath = getWalletFilePath(cli)
-    do('connect {}'.format(newEnvName), within=5,
-       expect=["Connected to {}".format(newEnvName)])
+    _connectTo(newEnvName, do, cli)
     # check wallet should have been persisted
+
     checkWalletFilePersisted(walletFilePath)
     if checkIfWalletRestored:
         checkWalletRestored(restoredWalletKeyName, cli, restoredIdentifiers)
@@ -132,13 +136,13 @@ def testSaveAndRestoreWallet(do, be, cliForMultiNodePools):
     createNewKey(do, cliForMultiNodePools, keyringName="mykr1")
 
     switchEnv("pool2", do, cliForMultiNodePools, checkIfWalletRestored=True,
-              restoredWalletKeyName="Default", restoredIdentifiers=1)
+              restoredWalletKeyName="mykr0", restoredIdentifiers=2)
     useKeyring("mykr0", do)
 
     filePath = Cli.getWalletFilePath(cliForMultiNodePools.getKeyringsBaseDir(),
                                      cliForMultiNodePools.walletFileName)
     switchEnv("pool1", do, cliForMultiNodePools, checkIfWalletRestored=True,
-              restoredWalletKeyName="Default", restoredIdentifiers=1)
+              restoredWalletKeyName="mykr1", restoredIdentifiers=1)
     baseName = basename(filePath)
     useKeyring(filePath, do, expectedName="mykr0",
                expectedMsgs=["Saved keyring {} restored".format(baseName)])

@@ -77,11 +77,13 @@ class SovrinCli(PlenumCli):
         self.envs = self.config.ENVS
         # This specifies which environment the cli is connected to test or live
         self.activeEnv = None
-        self.print("Running Sovrin {}".format(__version__))
         _, port = self.nextAvailableClientAddr()
         self.curContext = (None, None, {})  # Current Link, Current Claim Req,
         # set attributes
         self._agent = None
+
+    def getCliVersion(self):
+        return __version__
 
     @property
     def lexers(self):
@@ -1119,15 +1121,19 @@ class SovrinCli(PlenumCli):
                 self.config.domainTransactionsFile = \
                     self.envs[envName].domainLedger
 
-                self.activeEnv = envName
-                self._buildClientIfNotExists(self.config)
-                self.print("Connecting to {}...".format(envName), Token.BoldGreen)
                 # Prompt has to be changed, so it show the environment too
+                self.activeEnv = envName
                 self._setPrompt(self.currPromptText.replace("{}{}".format(
                     PROMPT_ENV_SEPARATOR, oldEnv), ""))
-                self.ensureClientConnected()
+
                 if oldEnv:
-                    self.restoreWallet()
+                    self.restoreLastActiveWallet("*{}".format(envName))
+
+                self._buildClientIfNotExists(self.config)
+                self.print("Connecting to {}...".format(envName), Token.BoldGreen)
+
+                self.ensureClientConnected()
+
             return True
 
     def getStatus(self):
