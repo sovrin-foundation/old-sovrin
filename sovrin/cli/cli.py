@@ -11,7 +11,7 @@ import asyncio
 
 import base58
 from plenum.cli.cli import Cli as PlenumCli
-from plenum.cli.constants import PROMPT_ENV_SEPARATOR
+from plenum.cli.constants import PROMPT_ENV_SEPARATOR, WALLET_FILE_NAME_PREFIX
 from plenum.cli.helper import getClientGrams
 from plenum.common.signer_simple import SimpleSigner
 from plenum.common.txn import NAME, VERSION, TYPE, VERKEY, DATA
@@ -1127,7 +1127,8 @@ class SovrinCli(PlenumCli):
                     PROMPT_ENV_SEPARATOR, oldEnv), ""))
 
                 if oldEnv:
-                    self.restoreLastActiveWallet("*{}".format(envName))
+                    self.restoreLastActiveWallet("{}*{}".format(
+                        WALLET_FILE_NAME_PREFIX, envName))
 
                 self._buildClientIfNotExists(self.config)
                 self.print("Connecting to {}...".format(envName), Token.BoldGreen)

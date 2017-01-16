@@ -77,7 +77,7 @@ def preRequisite(poolNodesStarted, bulldogAddedByPhil, bulldogIsRunning):
 
 
 @pytest.fixture(scope="module")
-def earlCli(preRequisite, be, do, earlCLI, newKeyringOut, earlMap):
+def earlCli(be, do, earlCLI, newKeyringOut, earlMap):
     be(earlCLI)
     setPromptAndKeyring(do, "Earl", newKeyringOut, earlMap)
     return earlCLI
