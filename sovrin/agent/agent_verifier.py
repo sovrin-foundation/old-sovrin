@@ -31,6 +31,10 @@ class AgentVerifier(Verifier):
         result = await self.verifier.verify(proofInput, proof, revealedAttrs,
                                             nonce)
 
+        self.agentLogger.info('Claim request accepted with nonce {}'
+                              .format(nonce))
+        self.agentLogger.info('Verifying claim proof request from {}'
+                              .format(link.name))
         status = 'verified' if result else 'failed verification'
         resp = {
             TYPE: CLAIM_PROOF_STATUS,
@@ -41,4 +45,7 @@ class AgentVerifier(Verifier):
                          origReqId=body.get(f.REQ_ID.nm))
 
         if result:
+            for attribute in proofInput.revealedAttrs:
+                # Log attributes that were verified
+                self.agentLogger.info('{}: verified'.format(attribute))
             await self._postClaimVerif(claimName, link, frm)

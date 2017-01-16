@@ -23,7 +23,8 @@ from pygments.token import Token
 from anoncreds.protocol.globals import KEYS
 from anoncreds.protocol.types import ClaimDefinition, ID
 from sovrin.agent.agent import WalletedAgent
-from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE
+from sovrin.agent.constants import EVENT_NOTIFY_MSG, EVENT_POST_ACCEPT_INVITE, \
+    EVENT_NOT_CONNECTED_TO_ANY_ENV
 from sovrin.cli.helper import getNewClientGrams, \
     USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.client.client import Client
@@ -323,8 +324,15 @@ class SovrinCli(PlenumCli):
             self._agent.registerEventListener(EVENT_NOTIFY_MSG, self._printMsg)
             self._agent.registerEventListener(EVENT_POST_ACCEPT_INVITE,
                                               self._printSuggestionPostAcceptLink)
+            self._agent.registerEventListener(EVENT_NOT_CONNECTED_TO_ANY_ENV,
+                                              self._handleNotConnectedToAnyEnv)
             self.looper.add(self._agent)
         return self._agent
+
+
+    def _handleNotConnectedToAnyEnv(self, notifier, msg):
+        self.print("\n{}\n".format(msg))
+        self._printNotConnectedEnvMessage()
 
     @staticmethod
     def bootstrapClientKeys(idr, verkey, nodes):
@@ -624,8 +632,8 @@ class SovrinCli(PlenumCli):
         #           "Default": [linkWithExactName],
         #           "WalletOne" : [linkWithExactName],
         #     }, "likelyMatched": {
-        #           "Default": [similatMatches1, similarMatches2],
-        #           "WalletOne": [similatMatches2, similarMatches3]
+        #           "Default": [similarMatches1, similarMatches2],
+        #           "WalletOne": [similarMatches2, similarMatches3]
         #     }
         # }
         return {
@@ -1145,6 +1153,7 @@ class SovrinCli(PlenumCli):
                 TXN_ID: sha256(randomString(6).encode()).hexdigest(),
                 ROLE: role.upper()
             }
+            # TODO: need to check if this needs to persist as well
             self.genesisTransactions.append(txn)
             self.print('Genesis transaction added.')
             return True

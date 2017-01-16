@@ -129,8 +129,8 @@ SHOW_CLAIM_REQ_REG_EX = '(\s*(?P<show_claim_req>show \s+ claim \s+ request) ' \
                     '\s*)'
 
 SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
-                    '\s+ (?P<attr_name>[A-Za-z-_]+) '\
-                    '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_./]+)' \
+                    '\s+ (?P<attr_name>[A-Za-z-_0-9]+) '\
+                    '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_,." /]+)' \
                     '\s*)'
 
 SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) ' \
