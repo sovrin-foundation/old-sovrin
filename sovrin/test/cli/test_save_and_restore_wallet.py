@@ -70,13 +70,14 @@ def createNewKey(do, cli, keyringName):
     assert len(cli._activeWallet.identifiers) == oldIdentifiers + 1
 
 
-def createNewKeyring(name, do):
-    do(
-        'new keyring {}'.format(name),
-        expect=[
+def createNewKeyring(name, do, expectedMsgs=None):
+    finalExpectedMsgs = expectedMsgs if expectedMsgs else [
            'Active keyring set to "{}"'.format(name),
            'New keyring {} created'.format(name)
         ]
+    do(
+        'new keyring {}'.format(name),
+        expect=finalExpectedMsgs
     )
 
 
@@ -129,6 +130,8 @@ def testSaveAndRestoreWallet(do, be, cliForMultiNodePools):
     createNewKeyring("mykr0", do)
     createNewKey(do, cliForMultiNodePools, keyringName="mykr0")
     createNewKey(do, cliForMultiNodePools, keyringName="mykr0")
+    useKeyring("Default", do)
+    createNewKey(do, cliForMultiNodePools, keyringName="Default")
 
     switchEnv("pool1", do, cliForMultiNodePools, checkIfWalletRestored=True,
               restoredWalletKeyName="Default", restoredIdentifiers=1)
@@ -136,8 +139,11 @@ def testSaveAndRestoreWallet(do, be, cliForMultiNodePools):
     createNewKey(do, cliForMultiNodePools, keyringName="mykr1")
 
     switchEnv("pool2", do, cliForMultiNodePools, checkIfWalletRestored=True,
-              restoredWalletKeyName="mykr0", restoredIdentifiers=2)
-    useKeyring("mykr0", do)
+              restoredWalletKeyName="Default", restoredIdentifiers=2)
+    createNewKeyring("mykr0", do,
+                     expectedMsgs = [
+                         "mykr0 conflicts with an existing keyring name",
+                         "Please choose a new name"])
 
     filePath = Cli.getWalletFilePath(cliForMultiNodePools.getKeyringsBaseDir(),
                                      cliForMultiNodePools.walletFileName)
