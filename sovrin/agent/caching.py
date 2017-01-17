@@ -1,4 +1,4 @@
-from plenum.test.exceptions import NotConnectedToAny
+from plenum.common.exceptions import NotConnectedToAny
 from sovrin.common.identity import Identity
 
 
