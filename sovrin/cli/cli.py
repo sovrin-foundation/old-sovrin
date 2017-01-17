@@ -1114,8 +1114,8 @@ class SovrinCli(PlenumCli):
                     self._activeWallet = None
                 # Using `_activeClient` instead of `activeClient` since using
                 # `_activeClient` will initialize a client if not done already
-                if self._activeClient:
-                    self.print("Disconnecting from {}".format(envName))
+                if self.activeEnv:
+                    self.print("Disconnecting from {}".format(self.activeEnv))
                     self._activeClient = None
                 self.config.poolTransactionsFile = self.envs[envName].poolLedger
                 self.config.domainTransactionsFile = \
@@ -1126,7 +1126,7 @@ class SovrinCli(PlenumCli):
                 self._setPrompt(self.currPromptText.replace("{}{}".format(
                     PROMPT_ENV_SEPARATOR, oldEnv), ""))
 
-                if oldEnv:
+                if oldEnv or not self._activeWallet:
                     self.restoreLastActiveWallet("{}*{}".format(
                         WALLET_FILE_NAME_PREFIX, envName))
 
