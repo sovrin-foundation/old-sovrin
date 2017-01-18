@@ -256,6 +256,7 @@ def testEarlAcceptBulldogInvitation(earlAcceptedBulldogInvitation):
     pass
 
 
+@pytest.mark.skipif(True, reason="Incorrect implementation")
 def testLogsFilePresentForBulldogAgent(earlAcceptedBulldogInvitation):
     config = getConfig()
     path = expanduser('{}'.format(config.baseDir))
