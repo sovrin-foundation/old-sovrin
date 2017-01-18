@@ -69,7 +69,7 @@ setup(
                     ])
     )],
     install_requires=['base58', 'pyorient', 'plenum-dev', 'ledger-dev',
-                      'semver', 'anoncreds-dev'],
+                      'semver', 'anoncreds-dev', 'python-dateutil'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',
