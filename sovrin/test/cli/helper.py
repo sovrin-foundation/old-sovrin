@@ -1,15 +1,25 @@
 import json
+import os
 from _sha256 import sha256
 
 from plenum.common.eventually import eventually
+from plenum.common.looper import Looper
 from plenum.common.port_dispenser import genHa
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import TARGET_NYM, ROLE
+from plenum.common.txn import TARGET_NYM, ROLE, NODE, TXN_TYPE, DATA, \
+    CLIENT_PORT, NODE_PORT, NODE_IP, ALIAS, CLIENT_IP, TXN_ID, SERVICES, \
+    VALIDATOR
+from plenum.common.types import f
 from plenum.test.cli.helper import TestCliCore, assertAllNodesCreated, \
-    checkAllNodesStarted
+    checkAllNodesStarted, newCLI as newPlenumCLI
+from plenum.test.helper import initDirWithGenesisTxns
 from plenum.test.testable import Spyable
 from sovrin.cli.cli import SovrinCli
 from sovrin.client.wallet.link import Link
+from sovrin.common.constants import Environment
+from sovrin.common.txn import NYM
+from sovrin.common.txn import STEWARD
+from sovrin.test.helper import TestNode, TestClient
 
 
 @Spyable(methods=[SovrinCli.print, SovrinCli.printTokens])
@@ -106,10 +116,10 @@ def getPoolTxnData(nodeAndClientInfoFilePath, poolId, newPoolTxnNodeNames):
         data["seeds"][newStewardAlias] = stewardSeed
         stewardSigner = SimpleSigner(seed=stewardSeed)
         data["txns"].append({
-                "dest": stewardSigner.verkey,
-                "role": "STEWARD", "type": "NYM",
-                "alias": poolId + "Steward" + str(index),
-                "txnId": sha256("{}".format(stewardSigner.verkey).encode()).hexdigest()
+                TARGET_NYM: stewardSigner.verkey,
+                ROLE: STEWARD, TXN_TYPE: NYM,
+                ALIAS: poolId + "Steward" + str(index),
+                TXN_ID: sha256("{}".format(stewardSigner.verkey).encode()).hexdigest()
         })
 
         newNodeAlias = n
@@ -117,17 +127,18 @@ def getPoolTxnData(nodeAndClientInfoFilePath, poolId, newPoolTxnNodeNames):
         data["seeds"][newNodeAlias] = nodeSeed
         nodeSigner = SimpleSigner(seed=nodeSeed)
         data["txns"].append({
-                "dest": nodeSigner.verkey,
-                "type": "NEW_NODE",
-                "identifier": stewardSigner.verkey,
-                "data": {
-                    "client_ip": "127.0.0.1",
-                    "alias": newNodeAlias,
-                    "node_ip": "127.0.0.1",
-                    "node_port": genHa()[1],
-                    "client_port": genHa()[1]
+                TARGET_NYM: nodeSigner.verkey,
+                TXN_TYPE: NODE,
+                f.IDENTIFIER.nm: stewardSigner.verkey,
+                DATA: {
+                    CLIENT_IP: "127.0.0.1",
+                    ALIAS: newNodeAlias,
+                    NODE_IP: "127.0.0.1",
+                    NODE_PORT: genHa()[1],
+                    CLIENT_PORT: genHa()[1],
+                    SERVICES: [VALIDATOR],
                 },
-                "txnId": sha256("{}".format(nodeSigner.verkey).encode()).hexdigest()
+                TXN_ID: sha256("{}".format(nodeSigner.verkey).encode()).hexdigest()
         })
     return data
 
@@ -136,3 +147,44 @@ def prompt_is(prompt):
     def x(cli):
         assert cli.currPromptText == prompt
     return x
+
+
+def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
+           domainDir=None, multiPoolNodes=None):
+    tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
+    if poolDir or domainDir:
+        initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
+
+    if multiPoolNodes:
+        conf.ENVS = {}
+        for pool in multiPoolNodes:
+            conf.poolTransactionsFile = "pool_transactions_{}".format(pool.name)
+            conf.domainTransactionsFile = "transactions_{}".format(pool.name)
+            conf.ENVS[pool.name] = \
+                Environment("pool_transactions_{}".format(pool.name),
+                                "transactions_{}".format(pool.name))
+            initDirWithGenesisTxns(
+                tempDir, conf, os.path.join(pool.tdirWithPoolTxns, pool.name),
+                os.path.join(pool.tdirWithDomainTxns, pool.name))
+
+    return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
+                        nodeClass=TestNode, clientClass=TestClient, config=conf)
+
+
+def getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns,
+                  multiPoolNodes=None):
+    def _(subdir, looper=None):
+        def new():
+            return newCLI(looper,
+                          tdir,
+                          subDirectory=subdir,
+                          conf=tconf,
+                          poolDir=tdirWithPoolTxns,
+                          domainDir=tdirWithDomainTxns,
+                          multiPoolNodes=multiPoolNodes)
+        if looper:
+            yield new()
+        else:
+            with Looper(debug=False) as looper:
+                yield new()
+    return _

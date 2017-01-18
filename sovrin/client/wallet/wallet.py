@@ -2,7 +2,7 @@ import datetime
 import json
 import operator
 from collections import deque
-from typing import Dict
+from typing import Dict, List
 from typing import Optional
 
 from ledger.util import F
@@ -10,16 +10,18 @@ from plenum.client.wallet import Wallet as PWallet
 from plenum.common.did_method import DidMethods
 from plenum.common.log import getlogger
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, DATA, \
-    IDENTIFIER, NYM, ROLE, VERKEY
+    IDENTIFIER, NYM, ROLE, VERKEY, NODE
 from plenum.common.types import Identifier, f
 
 from sovrin.client.wallet.attribute import Attribute, AttributeKey
 from sovrin.client.wallet.link import Link
+from sovrin.client.wallet.node import Node
 from sovrin.client.wallet.sponsoring import Sponsoring
+from sovrin.client.wallet.upgrade import Upgrade
 from sovrin.common.did_method import DefaultDidMethods
 from sovrin.common.exceptions import LinkNotFound
 from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, GET_NYM
+from sovrin.common.txn import ATTRIB, GET_TXNS, GET_ATTR, GET_NYM, POOL_UPGRADE
 
 ENCODING = "utf-8"
 
@@ -40,6 +42,9 @@ class Wallet(PWallet, Sponsoring):
         self._attributes = {}  # type: Dict[(str, Identifier,
         # Optional[Identifier]), Attribute]
 
+        self._nodes = {}
+        self._upgrades = {}
+
         self._links = {}  # type: Dict[str, Link]
         self.knownIds = {}  # type: Dict[str, Identifier]
 
@@ -57,6 +62,8 @@ class Wallet(PWallet, Sponsoring):
             NYM: self._nymReply,
             GET_NYM: self._getNymReply,
             GET_TXNS: self._getTxnsReply,
+            NODE: self._nodeReply,
+            POOL_UPGRADE: self._poolUpgradeReply
         }
 
     @property
@@ -103,16 +110,47 @@ class Wallet(PWallet, Sponsoring):
             self.pendRequest(req, attrib.key())
         return len(self._pending)
 
+    def addNode(self, node: Node):
+        """
+        Used to add a new node on Sovrin
+        :param node: Node
+        :return: number of pending txns
+        """
+        self._nodes[node.id] = node
+        req = node.ledgerRequest()
+        if req:
+            self.pendRequest(req, node.id)
+        return len(self._pending)
+
+    def doPoolUpgrade(self, upgrade: Upgrade):
+        """
+        Used to send a new code upgrade
+        :param upgrade: upgrade data
+        :return: number of pending txns
+        """
+        key = upgrade.key
+        self._upgrades[key] = upgrade
+        req = upgrade.ledgerRequest()
+        if req:
+            self.pendRequest(req, key)
+        return len(self._pending)
+
     def hasAttribute(self, key: AttributeKey) -> bool:
         """
         Checks if attribute is present in the wallet
-        @param name: Name of the attribute
+        @param key: Attribute unique key
         @return:
         """
         return bool(self.getAttribute(key))
 
     def getAttribute(self, key: AttributeKey):
         return self._attributes.get(key.key())
+
+    def getNode(self, id: Identifier):
+        return self._nodes.get(id)
+
+    def getPoolUpgrade(self, key: str):
+        return self._upgrades.get(key)
 
     def getAttributesForNym(self, idr: Identifier):
         return [a for a in self._attributes.values() if a.dest == idr]
@@ -207,8 +245,17 @@ class Wallet(PWallet, Sponsoring):
         if idy:
             idy.seqNo = result[F.seqNo.name]
         else:
-            logger.error("Target {} not found in sponsored".format(target))
-            raise KeyError
+            logger.warn("Target {} not found in sponsored".format(target))
+
+    def _nodeReply(self, result, preparedReq):
+        _, nodeKey = preparedReq
+        node = self.getNode(nodeKey)
+        node.seqNo = result[F.seqNo.name]
+
+    def _poolUpgradeReply(self, result, preparedReq):
+        _, upgKey = preparedReq
+        upgrade = self.getPoolUpgrade(upgKey)
+        upgrade.seqNo = result[F.seqNo.name]
 
     def _getNymReply(self, result, preparedReq):
         jsonData = result.get(DATA)
@@ -239,7 +286,7 @@ class Wallet(PWallet, Sponsoring):
     def getLinkInvitation(self, name: str):
         return self._links.get(name)
 
-    def getMatchingLinks(self, name: str):
+    def getMatchingLinks(self, name: str) -> List[Link]:
         allMatched = []
         for k, v in self._links.items():
             if self._isMatchingName(name, k):

@@ -20,7 +20,8 @@ from sovrin.test.cli.test_tutorial import syncInvite, acceptInvitation, \
     aliceRequestedTranscriptClaim, jobApplicationClaimSent, \
     jobCertClaimRequested, bankBasicClaimSent, bankKYCClaimSent, \
     setPromptAndKeyring, poolNodesStarted
-from sovrin.test.helper import TestClient, newCLI
+from sovrin.test.helper import TestClient
+from sovrin.test.cli.helper import newCLI
 
 concerningLogLevels = [logging.WARNING,
                        logging.ERROR,
@@ -103,7 +104,8 @@ def testManual(do, be, poolNodesStarted, poolTxnStewardData, philCLI,
     for agentCls, agentName, agentPort, buildAgentWalletFunc in \
             agentParams:
         agentCls.getPassedArgs = lambda _: (agentPort,)
-        createAndRunAgent(agentCls, agentName, buildAgentWalletFunc(), tdir, agentPort, philCLI.looper, TestClient)
+        createAndRunAgent(agentCls, agentName, buildAgentWalletFunc(), tdir,
+                          agentPort, philCLI.looper, TestClient)
 
     for p in philCLI.looper.prodables:
         if p.name == 'Faber College':

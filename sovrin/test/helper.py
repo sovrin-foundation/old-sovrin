@@ -6,19 +6,18 @@ from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
+
 from plenum.common.eventually import eventually
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
 from plenum.common.signer_did import DidSigner
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import REQACK
-from plenum.common.types import HA, Identifier
+from plenum.common.txn import REQACK, REQNACK
+from plenum.common.types import HA, Identifier, OP_FIELD_NAME, f
 from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
-from plenum.test.cli.helper import newCLI as newPlenumCLI
-from plenum.test.helper import TestNodeSet as PlenumTestNodeSet, \
-    initDirWithGenesisTxns
+from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkSufficientRepliesRecvd, \
     checkLastClientReqForNode, buildCompletedTxnFromReply
 from plenum.test.test_client import genTestClient as genPlenumTestClient, \
@@ -29,13 +28,13 @@ from plenum.test.test_stack import StackedTester, TestStack
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
+from sovrin.client.wallet.upgrade import Upgrade
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.config_util import getConfig
-from sovrin.common.constants import Environment
 from sovrin.common.identity import Identity
 from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM
 from sovrin.server.node import Node
-from sovrin.test.cli.helper import TestCLI
+from sovrin.server.upgrader import Upgrader
 
 logger = getlogger()
 
@@ -246,6 +245,11 @@ class TempStorage:
                                                                  ex))
 
 
+@Spyable(methods=[Upgrader.processLedger])
+class TestUpgrader(Upgrader):
+    pass
+
+
 # noinspection PyShadowingNames,PyShadowingNames
 @Spyable(
     methods=[Node.handleOneNodeMsg, Node.processRequest, Node.processOrdered,
@@ -259,6 +263,11 @@ class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)
         TestNodeCore.__init__(self, *args, **kwargs)
+        self.cleanupOnStopping = True
+
+    def getUpgrader(self):
+        return TestUpgrader(self.id, self.config,
+                            self.dataLocation, self.configLedger)
 
     def _getOrientDbStore(self, name, dbType):
         if not hasattr(self, '_orientDbStore'):
@@ -267,13 +276,14 @@ class TestNode(TempStorage, TestNodeCore, Node):
         return self._orientDbStore
 
     def onStopping(self, *args, **kwargs):
-        self.cleanupDataLocation()
-        try:
-            self.graphStore.client.db_drop(self.name)
-            logger.debug("Dropped db {}".format(self.name))
-        except Exception as ex:
-            logger.debug("Error while dropping db {}: {}".format(self.name,
-                                                                 ex))
+        if self.cleanupOnStopping:
+            self.cleanupDataLocation()
+            try:
+                self.graphStore.client.db_drop(self.name)
+                logger.debug("Dropped db {}".format(self.name))
+            except Exception as ex:
+                logger.debug("Error while dropping db {}: {}".format(self.name,
+                                                                     ex))
         super().onStopping(*args, **kwargs)
 
 
@@ -368,7 +378,7 @@ def genConnectedTestClient(looper,
                            tmpdir=None,
                            identifier: Identifier = None,
                            verkey: str = None
-                           ) -> TestClient:
+                           ) -> (TestClient, Wallet):
     c, w = genTestClient(nodes, nodeReg=nodeReg, tmpdir=tmpdir,
                       identifier=identifier, verkey=verkey)
     looper.add(c)
@@ -407,14 +417,44 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
     looper.run(eventually(check, timeout=10))
 
 
-def addUser(looper, creatorClient, creatorWallet, name, useDid=True,
-            addVerkey=True):
+def addRole(looper, creatorClient, creatorWallet, name, useDid=True,
+            addVerkey=True, role=None):
     wallet = Wallet(name)
     signer = DidSigner() if useDid else SimpleSigner()
     idr, _ = wallet.addIdentifier(signer=signer)
     verkey = wallet.getVerkey(idr) if addVerkey else None
-    createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
+    createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey,
+              role=role)
     return wallet
+
+
+def suspendRole(looper, actingClient, actingWallet, did):
+    idy = Identity(identifier=did, role=None)
+    if actingWallet.getSponsoredIdentity(did):
+        actingWallet.updateSponsoredIdentity(idy)
+    else:
+        actingWallet.addSponsoredIdentity(idy)
+    reqs = actingWallet.preparePending()
+    actingClient.submitReqs(*reqs)
+
+    def chk():
+        assert actingWallet.getSponsoredIdentity(did).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+
+
+def submitPoolUpgrade(looper, senderClient, senderWallet, name, action, version,
+                      schedule, timeout, sha256):
+    upgrade = Upgrade(name, action, schedule, version, sha256, timeout,
+                      senderWallet.defaultId)
+    senderWallet.doPoolUpgrade(upgrade)
+    reqs = senderWallet.preparePending()
+    senderClient.submitReqs(*reqs)
+
+    def check():
+        assert senderWallet._upgrades[upgrade.key].seqNo
+
+    looper.run(eventually(check, timeout=4))
 
 
 def checkSubmitted(looper, client, optype, txnsBefore):
@@ -518,42 +558,35 @@ def buildStewardClient(looper, tdir, stewardWallet):
     return s
 
 
-def newCLI(looper, tdir, subDirectory=None, conf=None, poolDir=None,
-           domainDir=None, multiPoolNodes=None):
-    tempDir = os.path.join(tdir, subDirectory) if subDirectory else tdir
-    if poolDir or domainDir:
-        initDirWithGenesisTxns(tempDir, conf, poolDir, domainDir)
-
-    if multiPoolNodes:
-        conf.ENVS = {}
-        for pool in multiPoolNodes:
-            conf.poolTransactionsFile = "pool_transactions_{}".format(pool.name)
-            conf.domainTransactionsFile = "transactions_{}".format(pool.name)
-            conf.ENVS[pool.name] = \
-                Environment("pool_transactions_{}".format(pool.name),
-                                "transactions_{}".format(pool.name))
-            initDirWithGenesisTxns(
-                tempDir, conf, os.path.join(pool.tdirWithPoolTxns, pool.name),
-                os.path.join(pool.tdirWithDomainTxns, pool.name))
-
-    return newPlenumCLI(looper, tempDir, cliClass=TestCLI,
-                        nodeClass=TestNode, clientClass=TestClient, config=conf)
+# TODO Ordering of parameters is bad
+def checkNacks(client, reqId, contains='', nodeCount=4):
+    logger.debug("looking for :{}".format(reqId))
+    reqs = [x for x, _ in client.inBox if x[OP_FIELD_NAME] == REQNACK and
+            x[f.REQ_ID.nm] == reqId]
+    for r in reqs:
+        logger.debug("printing r :{}".format(r))
+        assert f.REASON.nm in r
+        assert contains in r[f.REASON.nm], '{} not in {}'.format(contains,
+                                                                 r[f.REASON.nm])
+    assert len(reqs) == nodeCount
 
 
-def getCliBuilder(tdir, tconf, tdirWithPoolTxns, tdirWithDomainTxns,
-                  multiPoolNodes=None):
-    def _(subdir, looper=None):
-        def new():
-            return newCLI(looper,
-                          tdir,
-                          subDirectory=subdir,
-                          conf=tconf,
-                          poolDir=tdirWithPoolTxns,
-                          domainDir=tdirWithDomainTxns,
-                          multiPoolNodes=multiPoolNodes)
-        if looper:
-            yield new()
-        else:
-            with Looper(debug=False) as looper:
-                yield new()
-    return _
+def submitAndCheckNacks(looper, client, wallet, op, identifier,
+                        contains='UnauthorizedClientRequest'):
+    req = wallet.signOp(op, identifier=identifier)
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
+    looper.run(eventually(checkNacks,
+                          client,
+                          req.reqId,
+                          contains, retryWait=1, timeout=15))
+
+
+def getClientAddedWithRole(nodeSet, tdir, looper, client, wallet, name, role):
+    newWallet = addRole(looper, client, wallet, name=name, role=role)
+    c, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
+    looper.add(c)
+    looper.run(c.ensureConnectedToNodes())
+    c.registerObserver(newWallet.handleIncomingReply)
+    return c, newWallet

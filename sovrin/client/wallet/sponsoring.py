@@ -4,7 +4,7 @@ from plenum.common.txn import STEWARD
 from plenum.common.types import Identifier
 
 from sovrin.common.identity import Identity
-from sovrin.common.txn import SPONSOR
+from sovrin.server.auth import Authoriser
 
 
 class Sponsoring:
@@ -16,7 +16,7 @@ class Sponsoring:
         self._sponsored = {}  # type: Dict[Identifier, Identity]
 
     def addSponsoredIdentity(self, idy: Identity):
-        if idy.role and idy.role not in (SPONSOR, STEWARD):
+        if idy.role and not Authoriser.isValidRole(idy.role ):
             raise AttributeError("invalid role: {}".format(idy.role))
         if idy.identifier in self._sponsored:
             del self._sponsored[idy.identifier]

@@ -37,7 +37,7 @@ looper.add(client)
 looper.runFor(3)
 
 # Steward that will be used to create a new node by submitting a
-# NEW_NODE transaction. This steward is like the owner of this node.
+# NODE transaction. This steward is like the owner of this node.
 # TODO: Make this name configurable
 name = "Steward5"
 # This is the seed i want to use for creating keys for the new steward.

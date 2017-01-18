@@ -16,9 +16,10 @@ from plenum.common.util import error
 from plenum.persistence.orientdb_graph_store import OrientDbGraphStore
 from plenum.server.node import Node
 
-from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, USER, SPONSOR, \
-    STEWARD, ROLE, REF, TXN_TIME, ATTRIB, CLAIM_DEF, isValidRole, \
-    ATTR_NAMES, ISSUER_KEY
+from sovrin.common.txn import NYM, TXN_ID, TARGET_NYM, SPONSOR, \
+    STEWARD, ROLE, REF, TXN_TIME, ATTRIB, CLAIM_DEF, ATTR_NAMES, ISSUER_KEY, TGB, \
+    TRUSTEE
+from sovrin.server.auth import Authoriser
 
 logger = getlogger()
 
@@ -200,9 +201,12 @@ class IdentityGraph(OrientDbGraphStore):
             NYM: nym,
             TXN_ID: txnId,  # # Need to have txnId as a property for cases
             # where we dont know the sponsor of this nym or its a genesis nym
-            ROLE: role,    # Need to have role as a property of the vertex it
-            # makes faster to query roles by vertex.
         }
+
+        # Need to have role as a property of the vertex it
+        # makes faster to query roles by vertex. Also used for genesis txns
+        if role:
+            kwargs[ROLE] = role
 
         if verkey:
             kwargs[VERKEY] = verkey
@@ -289,10 +293,11 @@ class IdentityGraph(OrientDbGraphStore):
         }
         self.createEdge(Edges.HasIssuerKey, frm, vertex._rid, **kwargs)
 
-    def updateNym(self, txnId, nym, verkey, seqNo):
+    def updateNym(self, txnId, nym, verkey, seqNo, role):
         kwargs = {
             TXN_ID: txnId,
-            F.seqNo.name: seqNo
+            F.seqNo.name: seqNo,
+            ROLE: role,
         }
         if verkey is not None:
             kwargs[VERKEY] = verkey
@@ -381,14 +386,26 @@ class IdentityGraph(OrientDbGraphStore):
                 ROLE: role
             })
 
+    def getTrustee(self, nym):
+        return self.getNym(nym, TRUSTEE)
+
+    def getTGB(self, nym):
+        return self.getNym(nym, TGB)
+
     def getSteward(self, nym):
         return self.getNym(nym, STEWARD)
 
     def getSponsor(self, nym):
         return self.getNym(nym, SPONSOR)
 
-    def getUser(self, nym):
-        return self.getNym(nym, USER)
+    # def getUser(self, nym):
+    #     return self.getNym(nym, USER)
+
+    def hasTrustee(self, nym):
+        return bool(self.getTrustee(nym))
+
+    def hasTGB(self, nym):
+        return bool(self.getTGB(nym))
 
     def hasSteward(self, nym):
         return bool(self.getSteward(nym))
@@ -396,8 +413,8 @@ class IdentityGraph(OrientDbGraphStore):
     def hasSponsor(self, nym):
         return bool(self.getSponsor(nym))
 
-    def hasUser(self, nym):
-        return bool(self.getUser(nym))
+    # def hasUser(self, nym):
+    #     return bool(self.getUser(nym))
 
     def hasNym(self, nym):
         return bool(self.getNym(nym))
@@ -437,7 +454,7 @@ class IdentityGraph(OrientDbGraphStore):
             edgeData = nymEdge.oRecordData
             result = {
                 TXN_ID: edgeData.get(TXN_ID),
-                ROLE: edgeData.get(ROLE) or USER
+                ROLE: edgeData.get(ROLE)
             }
             frm, to = self.store.getByRecordIds(edgeData['out'].get(),
                                                 edgeData['in'].get())
@@ -543,8 +560,8 @@ class IdentityGraph(OrientDbGraphStore):
 
     def addNymTxnToGraph(self, txn):
         origin = txn.get(f.IDENTIFIER.nm)
-        role = txn.get(ROLE) or USER
-        if not isValidRole(role):
+        role = txn.get(ROLE)
+        if not Authoriser.isValidRole(role):
             raise ValueError("Unknown role {} for nym, cannot add nym to graph"
                              .format(role))
         nym = txn[TARGET_NYM]
@@ -563,7 +580,7 @@ class IdentityGraph(OrientDbGraphStore):
                             frm=origin, reference=txn.get(REF),
                             seqNo=seqNo)
             except pyorient.PyOrientORecordDuplicatedException:
-                self.updateNym(txnId, nym, verkey, seqNo)
+                self.updateNym(txnId, nym, verkey, seqNo, role)
             else:
                 # Only update edge in case of new NYM transaction
                 self._updateTxnIdEdgeWithTxn(txnId, Edges.AddsNym, txn)

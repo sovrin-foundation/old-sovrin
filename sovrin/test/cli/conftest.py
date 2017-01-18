@@ -16,8 +16,7 @@ from plenum.test.helper import createTempDir
 from sovrin.cli.helper import USAGE_TEXT, NEXT_COMMANDS_TO_TRY_TEXT
 from sovrin.common.txn import SPONSOR, ENDPOINT
 from sovrin.test.conftest import domainTxnOrderedFields
-from sovrin.test.helper import createNym, buildStewardClient, newCLI, \
-    getCliBuilder
+from sovrin.test.helper import createNym, buildStewardClient
 
 plenum.common.util.loggingConfigured = False
 
@@ -27,7 +26,7 @@ from plenum.test.cli.helper import newKeyPair, checkAllNodesStarted, \
 
 from sovrin.common.config_util import getConfig
 from sovrin.test.cli.helper import ensureNodesCreated, getLinkInvitation, \
-    getPoolTxnData
+    getPoolTxnData, newCLI, getCliBuilder
 from sovrin.test.agent.conftest import faberIsRunning as runningFaber, \
     emptyLooper, faberWallet, faberLinkAdded, acmeWallet, acmeLinkAdded, \
     acmeIsRunning as runningAcme, faberAgentPort, acmeAgentPort, faberAgent, \

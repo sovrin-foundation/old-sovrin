@@ -137,6 +137,10 @@ SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) ' \
                     '\s+ (?P<claim_name>[A-Za-z0-9-." ]+) ' \
                     '\s+ to (?P<link_name>[A-Za-z0-9-." ]+) \s*)'
 
+SEND_NODE_REG_EX = "(\s* (?P<send_node>send\s+NODE) " \
+    "\s+ dest=\s*(?P<dest_id>[A-Za-z0-9+/]+) " \
+    "\s+ data=(?P<data>\{\s*.*\}) \s*) "
+
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
@@ -166,3 +170,4 @@ SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
 SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)
 PING_TARGET_FORMATTED_REG_EX = getPipedRegEx(PING_TARGET_REG_EX)
 SEND_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)
+SEND_NODE_FORMATTED_REG_EX = getPipedRegEx(SEND_NODE_REG_EX)

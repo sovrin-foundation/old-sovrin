@@ -31,12 +31,13 @@ from sovrin.cli.helper import getNewClientGrams, \
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.link import Link, ClaimProofRequest
+from sovrin.client.wallet.node import Node
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
     LinkNotFound, NotConnectedToNetwork, ClaimDefNotFound
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
-    SPONSOR, TXN_ID, REF, USER, getTxnOrderedFields
+    SPONSOR, TXN_ID, REF, getTxnOrderedFields
 from sovrin.common.util import ensureReqCompleted
 from sovrin.__metadata__ import __version__
 
@@ -93,6 +94,7 @@ class SovrinCli(PlenumCli):
             'send_attrib',
             'send_cred_def',
             'send_isr_key',
+            'send_node',
             'add_genesis',
             'show_file',
             'conn'
@@ -121,6 +123,7 @@ class SovrinCli(PlenumCli):
         completers["send_attrib"] = WordCompleter(["send", "ATTRIB"])
         completers["send_cred_def"] = WordCompleter(["send", "CLAIM_DEF"])
         completers["send_isr_key"] = WordCompleter(["send", "ISSUER_KEY"])
+        completers["send_node"] = WordCompleter(["send", "NODE"])
         completers["add_genesis"] = WordCompleter(
             ["add", "genesis", "transaction"])
         completers["show_file"] = WordCompleter(["show"])
@@ -152,6 +155,7 @@ class SovrinCli(PlenumCli):
         actions.extend([self._sendNymAction,
                         self._sendGetNymAction,
                         self._sendAttribAction,
+                        self._sendNodeAction,
                         self._sendClaimDefAction,
                         self._sendIssuerKeyAction,
                         self._addGenesisAction,
@@ -466,6 +470,22 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, chk)
 
+    def _sendNodeTxn(self, nym, data):
+        node = Node(nym, data, self.activeIdentifier)
+        self.activeWallet.addNode(node)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
+        self.print("Sending node request {} by {}".format(nym,
+                                                          self.activeIdentifier))
+
+        def chk(reply, error, *args, **kwargs):
+            assert self.activeWallet.getNode(node.id).seqNo is not None
+            self.print("Node request complete {}".format(reply[TARGET_NYM]),
+                       Token.BoldBlue)
+
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                    req.key, self.activeClient, chk)
+
     @staticmethod
     def parseAttributeString(attrs):
         attrInput = {}
@@ -511,6 +531,19 @@ class SovrinCli(PlenumCli):
             hsh = matchedVars.get('hash') \
                 if matchedVars.get('hash') else None
             self._addAttribToNym(nym, raw, enc, hsh)
+            return True
+
+    def _sendNodeAction(self, matchedVars):
+        if matchedVars.get('send_node') == 'send NODE':
+            if not self.canMakeSovrinRequest:
+                return True
+            nym = matchedVars.get('dest_id')
+            data = matchedVars.get('data').strip()
+            try:
+                data = ast.literal_eval(data)
+                self._sendNodeTxn(nym, data)
+            except:
+                self.print('"data" must be in proper format', Token.Error)
             return True
 
     def _sendClaimDefAction(self, matchedVars):
@@ -1074,7 +1107,8 @@ class SovrinCli(PlenumCli):
         if matchedVars.get('show_claim') == 'show claim':
             claimName = SovrinCli.removeSpecialChars(
                 matchedVars.get('claim_name'))
-            self.agent.loop.call_soon(asyncio.ensure_future, self._showReceivedOrAvailableClaim(claimName))
+            self.agent.loop.call_soon(asyncio.ensure_future,
+                                      self._showReceivedOrAvailableClaim(claimName))
 
             return True
 
@@ -1214,8 +1248,7 @@ class SovrinCli(PlenumCli):
             TXN_TYPE: NYM,
             # TODO: Should REFERENCE be symmetrically encrypted and the key
             # should then be disclosed in another transaction
-            REF: txnId,
-            ROLE: USER
+            REF: txnId
         }
         self.print("Adding alias {}".format(alias), Token.BoldBlue)
         self.aliases[alias] = signer
