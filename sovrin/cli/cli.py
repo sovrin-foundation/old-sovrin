@@ -484,6 +484,8 @@ class SovrinCli(PlenumCli):
             newVerKey = matchedVars.get('new_ver_key')
             if matchedVars.get('verkey') and newVerKey is None:
                 newVerKey = ''
+            elif newVerKey is not None:
+                newVerKey = newVerKey.strip()
             self._addNym(nym, role, newVerKey=newVerKey)
             return True
 
