@@ -145,6 +145,15 @@ class Node(PlenumNode, HasPoolManager):
         else:
             return super().getLedgerStatus(ledgerType)
 
+    def postPoolLedgerCaughtUp(self):
+        # The only reason to override this is to set the correct node id in
+        # the upgrader since when the upgrader is initialized, node might not
+        # have its id since it maybe missing the complete pool ledger.
+        # TODO: Maybe a cleaner way is to initialize upgrader only when pool
+        # ledger has caught up.
+        super().postPoolLedgerCaughtUp()
+        self.upgrader.nodeId = self.id
+
     def postConfigLedgerCaughtUp(self):
         self.upgrader.processLedger()
         op = None

@@ -139,9 +139,8 @@ def stewardWallet(poolTxnStewardData):
 
 
 @pytest.fixture(scope="module")
-def looper():
-    with Looper() as l:
-        yield l
+def looper(txnPoolNodesLooper):
+    return txnPoolNodesLooper
 
 
 @pytest.fixture(scope="module")

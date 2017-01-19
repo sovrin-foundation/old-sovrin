@@ -21,12 +21,10 @@ def txnPoolNodeSet(tconf, nodeSet):
     return nodeSet
 
 
-@pytest.mark.skipif(True, reason="Implementation pending")
 def testUpgradeLatestUncancelledVersion(looper,
                                         txnPoolNodeSet, tconf, nodeThetaAdded,
-                                        validUpgrade, trustee,
-                                        trusteeWallet, tdirWithPoolTxns,
-                                        allPluginsPath):
+                                        validUpgrade, trustee, trusteeWallet,
+                                        tdirWithPoolTxns, allPluginsPath):
     """
     A node starts and finds several upgrades but selects the latest one which
     is not cancelled, eg node is on version 1.2 but finds 1.3, 1.4 and 1.5 but
@@ -34,6 +32,9 @@ def testUpgradeLatestUncancelledVersion(looper,
     """
     nodeSet = txnPoolNodeSet
     newSteward, newStewardWallet, newNode = nodeThetaAdded
+    for node in nodeSet[:-1]:
+        node.nodestack.removeRemoteByName(newNode.nodestack.name)
+        newNode.nodestack.removeRemoteByName(node.nodestack.name)
     newNode.stop()
     nodeSet = nodeSet[:-1]
     looper.removeProdable(newNode)
@@ -69,30 +70,16 @@ def testUpgradeLatestUncancelledVersion(looper,
     looper.run(eventually(checkUpgradeScheduled, nodeSet[:-1], upgr2[VERSION],
                           retryWait=1, timeout=5))
 
-    # trustee.expectingAcksFor = {}
-    # trustee.expectingRepliesFor = {}
-
-    # TODO: Fix this
-    # OrientDB times out on node Theta
     trustee.stopRetrying()
-    looper.runFor(30)
 
-    nodeTheta = TestNode(newNode.name, basedirpath=tdirWithPoolTxns,
-                         config=tconf, pluginPaths=allPluginsPath,
-                         ha=newNode.nodestack.ha, cliha=newNode.clientstack.ha)
+    newNode = TestNode(newNode.name, basedirpath=tdirWithPoolTxns,
+                       config=tconf, pluginPaths=allPluginsPath,
+                       ha=newNode.nodestack.ha, cliha=newNode.clientstack.ha)
     looper.add(newNode)
-    nodeSet.append(nodeTheta)
-    looper.run(checkNodesConnected(nodeSet, overrideTimeout=15))
+    nodeSet.append(newNode)
+    looper.run(checkNodesConnected(nodeSet, overrideTimeout=30))
+
     looper.run(eventually(checkUpgradeScheduled, [newNode, ], upgr2[VERSION],
                           retryWait=1, timeout=10))
 
-
-def testDoNotScheduleUpgradeForALowerVersion():
-    """
-    A node starts at version 1.2 running has scheduled upgrade for version 1.5
-    but get a txn for upgrade 1.4, it will not schedule it. To upgrade send
-    cancel for 1.5
-    """
-    # TODO:
-    pass
 
