@@ -58,7 +58,7 @@ allRepoParentDir=`pwd`
 
 suffix="-priv"
 if [ "$usesetupfile" == "Y" ]; then
-    suffix = "-pub"
+    suffix="-pub"
 fi;
 
 export IFS=","
