@@ -1144,10 +1144,13 @@ class SovrinCli(PlenumCli):
                 self._printConnectUsage()
             else:
                 oldEnv = self.activeEnv
-                if oldEnv:
+                isAnyWalletExistsForNewEnv = \
+                    self.isAnyWalletFileExistsForEnv(envName)
+                if oldEnv or isAnyWalletExistsForNewEnv:
                     self._saveActiveWallet()
                     self._wallets = {}
                     self._activeWallet = None
+
                 # Using `_activeClient` instead of `activeClient` since using
                 # `_activeClient` will initialize a client if not done already
                 if self.activeEnv:
@@ -1162,7 +1165,7 @@ class SovrinCli(PlenumCli):
                 self._setPrompt(self.currPromptText.replace("{}{}".format(
                     PROMPT_ENV_SEPARATOR, oldEnv), ""))
 
-                if oldEnv or not self._activeWallet:
+                if isAnyWalletExistsForNewEnv:
                     self.restoreLastActiveWallet("{}*{}".format(
                         WALLET_FILE_NAME_PREFIX, envName))
 
