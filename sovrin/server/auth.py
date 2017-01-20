@@ -19,8 +19,8 @@ class Authoriser:
         'NYM_role_SPONSOR_': {TRUSTEE: []},
         'NODE_services__[VALIDATOR]': {STEWARD: [OWNER, ]},
         'NODE_services_[VALIDATOR]_[]': {TRUSTEE: [], STEWARD: [OWNER, ]},
-        'POOL_UPGRADE_action__start': {TRUSTEE: []},
-        'POOL_UPGRADE_action_start_cancel': {TRUSTEE: []}
+        'POOL_UPGRADE_action__start': {TRUSTEE: [], TGB: []},
+        'POOL_UPGRADE_action_start_cancel': {TRUSTEE: [], TGB: []}
     }
 
     @staticmethod

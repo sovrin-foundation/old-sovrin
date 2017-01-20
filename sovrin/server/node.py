@@ -309,13 +309,14 @@ class Node(PlenumNode, HasPoolManager):
                 raise InvalidClientRequest(identifier, reqId,
                                            "{} not a valid action".
                                            format(action))
-            schedule = operation.get(SCHEDULE, {})
-            isValid, msg = self.upgrader.isScheduleValid(schedule,
-                                                         self.poolManager.nodeIds)
-            if not isValid:
-                raise InvalidClientRequest(identifier, reqId,
-                                           "{} not a valid schedule since {}".
-                                           format(schedule, msg))
+            if action == START:
+                schedule = operation.get(SCHEDULE, {})
+                isValid, msg = self.upgrader.isScheduleValid(schedule,
+                                                             self.poolManager.nodeIds)
+                if not isValid:
+                    raise InvalidClientRequest(identifier, reqId,
+                                               "{} not a valid schedule since {}".
+                                               format(schedule, msg))
 
             # TODO: Check if cancel is submitted before start
 

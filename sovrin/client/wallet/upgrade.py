@@ -6,8 +6,8 @@ from sovrin.common.types import Request
 
 
 class Upgrade(GeneratesRequest):
-    def __init__(self, name: str, version: str, action: str, schedule: dict,
-                 sha256: str, timeout, trustee: Identifier):
+    def __init__(self, name: str, version: str, action: str, sha256: str,
+                 trustee: Identifier, schedule: dict=None, timeout=None):
         self.name = name
         self.version = version
         self.action = action

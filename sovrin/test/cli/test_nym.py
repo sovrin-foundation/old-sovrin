@@ -206,7 +206,6 @@ def testNewVerkeyAddedToCIDNym(be, do, philCli, sponsorSigner,
            getCurrentVerkeyIsgMsgs(sponsorSigner.identifier, newSigner.verkey))
 
 
-
 def testNewKeyChangesWalletsDefaultId(be, do, poolNodesStarted,
                                       aliceCLI, connectedToTest):
     mywallet = Wallet('my wallet')
@@ -227,6 +226,7 @@ def testNewKeyChangesWalletsDefaultId(be, do, poolNodesStarted,
        within=3,
        expect=["Nym {} added".format(idr)]
     )
+
 
 def addAttribToNym(be, do, userCli, idr, raw):
     be(userCli)

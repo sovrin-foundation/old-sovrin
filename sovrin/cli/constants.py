@@ -142,6 +142,15 @@ SEND_NODE_REG_EX = "(\s* (?P<send_node>send\s+NODE) " \
     "\s+ data=(?P<data>\{\s*.*\}) \s*) "
 
 
+SEND_POOL_UPG_REG_EX = "(\s*(?P<send_pool_upg>send\s+POOL_UPGRADE)" \
+                       "\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)" \
+                       "\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)" \
+                       "\s*(?P<sha256_key>sha256=)\s*(?P<sha256>[a-f0-9]+)" \
+                       "(\s+ (?P<action_key>action=)\s*(?P<action>start|cancel))" \
+                       "(\s+ (?P<schedule_key>schedule=)\s*(?P<schedule>\{\s*.*\}) \s*)? " \
+                       "(\s+ (?P<timeout_key>timeout=) \s* (?P<timeout>[0-9+]+))?)"
+
+
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
 ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
@@ -171,3 +180,4 @@ SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)
 PING_TARGET_FORMATTED_REG_EX = getPipedRegEx(PING_TARGET_REG_EX)
 SEND_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)
 SEND_NODE_FORMATTED_REG_EX = getPipedRegEx(SEND_NODE_REG_EX)
+SEND_POOL_UPG_FORMATTED_REG_EX = getPipedRegEx(SEND_POOL_UPG_REG_EX)

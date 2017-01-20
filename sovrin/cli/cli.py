@@ -32,12 +32,14 @@ from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.link import Link, ClaimProofRequest
 from sovrin.client.wallet.node import Node
+from sovrin.client.wallet.upgrade import Upgrade
 from sovrin.client.wallet.wallet import Wallet
 from sovrin.common.exceptions import InvalidLinkException, LinkAlreadyExists, \
     LinkNotFound, NotConnectedToNetwork, ClaimDefNotFound
 from sovrin.common.identity import Identity
 from sovrin.common.txn import TARGET_NYM, STEWARD, ROLE, TXN_TYPE, NYM, \
-    SPONSOR, TXN_ID, REF, getTxnOrderedFields
+    SPONSOR, TXN_ID, REF, getTxnOrderedFields, SCHEDULE, SHA256, ACTION, TIMEOUT, \
+    START
 from sovrin.common.util import ensureReqCompleted
 from sovrin.__metadata__ import __version__
 
@@ -95,6 +97,7 @@ class SovrinCli(PlenumCli):
             'send_cred_def',
             'send_isr_key',
             'send_node',
+            'send_pool_upg',
             'add_genesis',
             'show_file',
             'conn'
@@ -124,6 +127,7 @@ class SovrinCli(PlenumCli):
         completers["send_cred_def"] = WordCompleter(["send", "CLAIM_DEF"])
         completers["send_isr_key"] = WordCompleter(["send", "ISSUER_KEY"])
         completers["send_node"] = WordCompleter(["send", "NODE"])
+        completers["send_pool_upg"] = WordCompleter(["send", "POOL_UPGRADE"])
         completers["add_genesis"] = WordCompleter(
             ["add", "genesis", "transaction"])
         completers["show_file"] = WordCompleter(["show"])
@@ -156,6 +160,7 @@ class SovrinCli(PlenumCli):
                         self._sendGetNymAction,
                         self._sendAttribAction,
                         self._sendNodeAction,
+                        self._sendPoolUpgAction,
                         self._sendClaimDefAction,
                         self._sendIssuerKeyAction,
                         self._addGenesisAction,
@@ -486,6 +491,23 @@ class SovrinCli(PlenumCli):
         self.looper.loop.call_later(.2, self._ensureReqCompleted,
                                     req.key, self.activeClient, chk)
 
+    def _sendPoolUpgTxn(self, name, version, action, sha256, schedule=None,
+                        timeout=None):
+        upgrade = Upgrade(name, version, action, sha256, schedule=schedule,
+                          trustee=self.activeIdentifier)
+        self.activeWallet.doPoolUpgrade(upgrade)
+        reqs = self.activeWallet.preparePending()
+        req, = self.activeClient.submitReqs(*reqs)
+        self.print("Sending pool upgrade {} for version {}".
+                   format(name, version))
+
+        def chk(reply, error, *args, **kwargs):
+            assert self.activeWallet.getPoolUpgrade(upgrade.key).seqNo is not None
+            self.print("Pool upgrade successful",  Token.BoldBlue)
+
+        self.looper.loop.call_later(.2, self._ensureReqCompleted,
+                                    req.key, self.activeClient, chk)
+
     @staticmethod
     def parseAttributeString(attrs):
         attrInput = {}
@@ -544,6 +566,37 @@ class SovrinCli(PlenumCli):
                 self._sendNodeTxn(nym, data)
             except:
                 self.print('"data" must be in proper format', Token.Error)
+            return True
+
+    def _sendPoolUpgAction(self, matchedVars):
+        if matchedVars.get('send_pool_upg') == 'send POOL_UPGRADE':
+            if not self.canMakeSovrinRequest:
+                return True
+            name = matchedVars.get(NAME).strip()
+            version = matchedVars.get(VERSION).strip()
+            action = matchedVars.get(ACTION).strip()
+            sha256 = matchedVars.get(SHA256).strip()
+            timeout = matchedVars.get(TIMEOUT)
+            schedule = matchedVars.get(SCHEDULE)
+            if action == START:
+                if not schedule:
+                    self.print('{} need to be provided'.format(SCHEDULE),
+                               Token.Error)
+                    return True
+                if not timeout:
+                    self.print('{} need to be provided'.format(TIMEOUT),
+                               Token.Error)
+                    return True
+            try:
+                if schedule:
+                    schedule = ast.literal_eval(schedule.strip())
+            except:
+                self.print('"schedule" must be in proper format', Token.Error)
+                return True
+            if timeout:
+                timeout = int(timeout.strip())
+            self._sendPoolUpgTxn(name, version, action, sha256,
+                                 schedule=schedule, timeout=timeout)
             return True
 
     def _sendClaimDefAction(self, matchedVars):

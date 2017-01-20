@@ -18,7 +18,7 @@ def ensureUpgradeSent(looper, trustee, trusteeWallet, upgradeData):
                                       timeoutPerReq=10)
 
     def check():
-        assert trusteeWallet._upgrades[upgrade.key].seqNo
+        assert trusteeWallet.getPoolUpgrade(upgrade.key).seqNo
 
     looper.run(eventually(check, retryWait=1, timeout=5))
     return upgrade
