@@ -14,6 +14,7 @@ from collections import OrderedDict
 from tempfile import TemporaryDirectory
 
 from plenum.common.looper import Looper
+
 from sovrin.server.node import Node
 
 

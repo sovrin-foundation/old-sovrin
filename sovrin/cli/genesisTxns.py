@@ -1,4 +1,5 @@
 from plenum.common.types import f
+
 from sovrin.common.txn import TXN_TYPE, TARGET_NYM, ROLE, TXN_ID, NYM,\
     STEWARD, SPONSOR
 

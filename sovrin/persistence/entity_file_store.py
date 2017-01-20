@@ -1,4 +1,5 @@
 from ledger.stores.text_file_store import TextFileStore
+
 from sovrin.persistence.entity_store import EntityStore
 
 

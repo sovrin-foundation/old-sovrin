@@ -16,9 +16,10 @@ $ sovrin "new nodes all"
 # Do not remove this import
 import plenum.cli.ensure_logging_not_setup
 
+import logging
 import os
 import sys
-import logging
+
 logging.root.handlers = []
 logger = logging.getLogger()
 logger.propagate = False
@@ -44,12 +45,15 @@ def run_cli():
 
     commands = sys.argv[1:]
 
+    withNode = True if '--with-node' in commands else True
+
     with Looper(debug=False) as looper:
         curDir = os.getcwd()
         logFilePath = os.path.join(curDir, config.logFilePath)
         cli = SovrinCli(looper=looper,
                         basedirpath=baseDir,
-                        logFileName=logFilePath
+                        logFileName=logFilePath,
+                        withNode=withNode
                         )
 
         looper.run(cli.shell(*commands))

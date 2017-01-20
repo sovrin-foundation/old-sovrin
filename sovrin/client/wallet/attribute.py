@@ -3,6 +3,7 @@ from typing import Optional, TypeVar
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, RAW, ORIGIN
 from plenum.common.types import Identifier
+
 from sovrin.common.generates_request import GeneratesRequest
 from sovrin.common.txn import ATTRIB, GET_ATTR
 from sovrin.common.types import Request

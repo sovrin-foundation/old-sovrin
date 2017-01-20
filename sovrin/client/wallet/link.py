@@ -1,11 +1,9 @@
-from typing import Dict
-
 from plenum.common.txn import NAME, NONCE
 from plenum.common.types import f
 from plenum.common.util import prettyDateDifference
+
 from sovrin.common.exceptions import InvalidLinkException, \
     RemoteEndpointNotFound
-from sovrin.common.util import getNonce, verifySig, getMsgWithoutSig
 
 
 class constant:
@@ -36,21 +34,25 @@ class constant:
 
     NOT_AVAILABLE = "Not Available"
 
+    NOT_ASSIGNED = "Not Assigned yet"
+
 
 class Link:
-    def __init__(self, name, localIdentifier, trustAnchor=None,
-                 remoteIdentifier=None, remoteEndPoint=None, invitationNonce=None,
-                 claimProofRequests=None, invitationData: Dict=None,
+    def __init__(self,
+                 name,
+                 localIdentifier=None,
+                 trustAnchor=None,
+                 remoteIdentifier=None,
+                 remoteEndPoint=None,
+                 invitationNonce=None,
+                 claimProofRequests=None,
                  internalId=None):
         self.name = name
         self.localIdentifier = localIdentifier
-        self.verkey = self.localIdentifier.split(":")[-1]
-
         self.trustAnchor = trustAnchor
         self.remoteIdentifier = remoteIdentifier
         self.remoteEndPoint = remoteEndPoint
         self.invitationNonce = invitationNonce
-        self.invitationData = invitationData
 
         # for optionally storing a reference to an identifier in another system
         # for example, a college may already have a student ID for a particular
@@ -59,7 +61,7 @@ class Link:
 
         self.claimProofRequests = claimProofRequests or []
         self.verifiedClaimProofs = []
-        self.availableClaims = []      # type: List[tupe(name, version, origin)]
+        self.availableClaims = []  # type: List[tupe(name, version, origin)]
         self.targetVerkey = None
         self.linkStatus = None
         self.linkLastSynced = None
@@ -82,6 +84,8 @@ class Link:
         return self.linkStatus == constant.LINK_STATUS_ACCEPTED
 
     def __str__(self):
+        localIdr = self.localIdentifier if self.localIdentifier \
+            else constant.NOT_ASSIGNED
         trustAnchor = self.trustAnchor or ""
         trustAnchorStatus = '(not yet written to Sovrin)'
         targetVerKey = constant.UNKNOWN_WAITING_FOR_SYNC
@@ -104,6 +108,8 @@ class Link:
 
         # TODO: The verkey would be same as the local identifier until we
         # support key rotation
+        # TODO: This should be set as verkey in case of DID but need it from
+        # wallet
         verKey = constant.SIGNER_VER_KEY_SAME_AS_ID
         fixedLinkHeading = "Link "
         if not self.isAccepted:
@@ -114,7 +120,7 @@ class Link:
         fixedLinkItems = \
             '\n' \
             'Name: ' + self.name + '\n' \
-            'Identifier: ' + self.localIdentifier + '\n' \
+            'Identifier: ' + localIdr + '\n' \
             'Trust anchor: ' + trustAnchor + ' ' + trustAnchorStatus + '\n' \
             'Verification key: ' + verKey + '\n' \
             'Signing key: <hidden>' '\n' \
@@ -131,13 +137,13 @@ class Link:
         optionalLinkItems = ""
         if len(self.claimProofRequests) > 0:
             optionalLinkItems += "Claim Request(s): {}". \
-                format(", ".join([cr.name for cr in self.claimProofRequests])) \
+                                     format(", ".join([cr.name for cr in self.claimProofRequests])) \
                                  + '\n'
 
         if self.availableClaims:
-            optionalLinkItems += "Available Claim(s): {}".\
-                format(", ".join([name
-                                 for name, _, _ in self.availableClaims])) \
+            optionalLinkItems += "Available Claim(s): {}". \
+                                     format(", ".join([name
+                                                       for name, _, _ in self.availableClaims])) \
                                  + '\n'
 
         if self.linkLastSyncNo:
@@ -175,3 +181,43 @@ class Link:
         else:
             ip, port = self.remoteEndPoint.split(":")
             return ip, int(port)
+
+
+class ClaimProofRequest:
+    def __init__(self, name, version, attributes, verifiableAttributes):
+        self.name = name
+        self.version = version
+        self.attributes = attributes
+        self.verifiableAttributes = verifiableAttributes
+
+    @property
+    def toDict(self):
+        return {
+            "name": self.name,
+            "version": self.version,
+            "attributes": self.attributes
+        }
+
+    @property
+    def attributeValues(self):
+        return \
+            'Attributes:' + '\n    ' + \
+            format("\n    ".join(
+                ['{}: {}'.format(k, v)
+                 for k, v in self.attributes.items()])) + '\n'
+
+    @property
+    def verifiableAttributeValues(self):
+        return \
+            'Verifiable Attributes:' + '\n    ' + \
+            format("\n    ".join(
+                ['{}'.format(v)
+                 for v in self.verifiableAttributes])) + '\n'
+
+    def __str__(self):
+        fixedInfo = \
+            'Status: Requested' + '\n' \
+                                  'Name: ' + self.name + '\n' \
+                                                         'Version: ' + self.version + '\n'
+
+        return fixedInfo + self.attributeValues + self.verifiableAttributeValues

@@ -16,9 +16,11 @@ CLIENT_GRAMS_USE_KEYPAIR_FORMATTED_REG_EX = getPipedRegEx(
     CLIENT_GRAMS_USE_KEYPAIR_REG_EX)
 
 # TODO we can genericize the other TXN types in the same way
-TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) \s+ (?P<dest>dest=) " \
-          "\s* (?P<dest_id>[A-Za-z0-9+=/]*) (\s+ (?P<role_key>role=) " \
-          "\s* (?P<role>USER|SPONSOR|STEWARD))?)"
+TXN_NYM = "(\s* (?P<{cmdName}>{cmd}\s+NYM) " \
+          "\s+ (?P<dest>dest=) \s* (?P<dest_id>[A-Za-z0-9+=/]*)" \
+          "(\s+ (?P<role_key>role=) \s* (?P<role>TRUSTEE|TGB|SPONSOR|STEWARD))?" \
+          "(\s+ (?P<ver_key>verkey=) \s* (?P<new_ver_key>[~A-Za-z0-9+=/]*))?)"
+
 SEND_NYM_REG_EX = TXN_NYM.format(cmdName='send_nym', cmd='send')
 ADD_GENESIS_NYM_REG_EX = TXN_NYM.format(cmdName='add_genesis',
                                         cmd='add \s+ genesis \s+ transaction')
@@ -32,7 +34,7 @@ ADD_ATTRIB_REG_EX = \
     "\s+ dest=\s*(?P<dest_id>[A-Za-z0-9+=/]+) " \
     "\s+ raw=(?P<raw>\{\s*.*\}) \s*) "
 
-SEND_CRED_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CRED_DEF)" \
+SEND_CLAIM_DEF_REG_EX = "(\s*(?P<send_cred_def>send\s+CLAIM_DEF)" \
                        "\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)" \
                        "\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)" \
                        "\s*(?P<type_key>type=)\s*(?P<type>[A-Z0-9]+)" \
@@ -127,19 +129,32 @@ SHOW_CLAIM_REQ_REG_EX = '(\s*(?P<show_claim_req>show \s+ claim \s+ request) ' \
                     '\s*)'
 
 SET_ATTRIBUTE_REG_EX = '(\s*(?P<set_attr>set) ' \
-                    '\s+ (?P<attr_name>[A-Za-z-_]+) '\
-                    '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_./]+)' \
+                    '\s+ (?P<attr_name>[A-Za-z-_0-9]+) '\
+                    '\s+ to \s+ (?P<attr_value>[A-Za-z0-9+-_,." /]+)' \
                     '\s*)'
 
 SEND_CLAIM_REG_EX = '(\s*(?P<send_claim>send \s+ claim) ' \
                     '\s+ (?P<claim_name>[A-Za-z0-9-." ]+) ' \
                     '\s+ to (?P<link_name>[A-Za-z0-9-." ]+) \s*)'
 
+SEND_NODE_REG_EX = "(\s* (?P<send_node>send\s+NODE) " \
+    "\s+ dest=\s*(?P<dest_id>[A-Za-z0-9+/]+) " \
+    "\s+ data=(?P<data>\{\s*.*\}) \s*) "
+
+
+SEND_POOL_UPG_REG_EX = "(\s*(?P<send_pool_upg>send\s+POOL_UPGRADE)" \
+                       "\s+(?P<name_key>name=)\s*(?P<name>[A-Za-z0-9-_]+)" \
+                       "\s*(?P<version_key>version=)\s*(?P<version>[0-9.]+)" \
+                       "\s*(?P<sha256_key>sha256=)\s*(?P<sha256>[a-f0-9]+)" \
+                       "(\s+ (?P<action_key>action=)\s*(?P<action>start|cancel))" \
+                       "(\s+ (?P<schedule_key>schedule=)\s*(?P<schedule>\{\s*.*\}) \s*)? " \
+                       "(\s+ (?P<timeout_key>timeout=) \s* (?P<timeout>[0-9+]+))?)"
+
 
 SEND_NYM_FORMATTED_REG_EX = getPipedRegEx(SEND_NYM_REG_EX)
 GET_NYM_FORMATTED_REG_EX = getPipedRegEx(GET_NYM_REG_EX)
 ADD_ATTRIB_FORMATTED_REG_EX = getPipedRegEx(ADD_ATTRIB_REG_EX)
-SEND_CRED_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CRED_DEF_REG_EX)
+SEND_CLAIM_DEF_FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_DEF_REG_EX)
 SEND_ISSUER_KEY_FORMATTED_REG_EX = getPipedRegEx(SEND_ISSUER_KEY_REG_EX)
 REQ_CRED_FORMATTED_REG_EX = getPipedRegEx(REQ_CRED_REG_EX)
 LIST_CREDS_FORMATTED_REG_EX = getPipedRegEx(LIST_CREDS_REG_EX)
@@ -164,3 +179,5 @@ SHOW_CLAIM_REQ_FORMATTED_REG_EX = getPipedRegEx(SHOW_CLAIM_REQ_REG_EX)
 SET_ATTRIBUTE_FORMATTED_REG_EX = getPipedRegEx(SET_ATTRIBUTE_REG_EX)
 PING_TARGET_FORMATTED_REG_EX = getPipedRegEx(PING_TARGET_REG_EX)
 SEND_CLAIM_FORMATTED_REG_EX = getPipedRegEx(SEND_CLAIM_REG_EX)
+SEND_NODE_FORMATTED_REG_EX = getPipedRegEx(SEND_NODE_REG_EX)
+SEND_POOL_UPG_FORMATTED_REG_EX = getPipedRegEx(SEND_POOL_UPG_REG_EX)

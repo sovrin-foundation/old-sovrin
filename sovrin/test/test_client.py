@@ -4,13 +4,13 @@ from contextlib import contextmanager
 import base58
 import libnacl.public
 import pytest
+
+from plenum.common.eventually import eventually
 from plenum.common.log import getlogger
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import REQNACK, ENC, DATA, REPLY, TXN_TIME
+from plenum.common.txn import ENC, DATA, REPLY, TXN_TIME
 from plenum.common.types import f, OP_FIELD_NAME
 from plenum.common.util import adict
-from plenum.test.eventually import eventually
-
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import Attribute, LedgerStore
 from sovrin.client.wallet.wallet import Wallet
@@ -19,7 +19,8 @@ from sovrin.common.txn import ATTRIB, NYM, TARGET_NYM, TXN_TYPE, ROLE, \
     SPONSOR, TXN_ID, NONCE, SKEY
 from sovrin.common.util import getSymmetricallyEncryptedVal
 from sovrin.test.helper import genTestClient, createNym, submitAndCheck, \
-    makeAttribRequest, makeGetNymRequest, addAttributeAndCheck, TestNode
+    makeAttribRequest, makeGetNymRequest, addAttributeAndCheck, TestNode, \
+    checkNacks, submitAndCheckNacks
 
 logger = getlogger()
 
@@ -28,30 +29,6 @@ whitelistArray = []
 
 def whitelist():
     return whitelistArray
-
-
-def checkNacks(client, reqId, contains='', nodeCount=4):
-    logger.debug("looking for :{}".format(reqId))
-    reqs = [x for x, _ in client.inBox if x[OP_FIELD_NAME] == REQNACK and
-            x[f.REQ_ID.nm] == reqId]
-    for r in reqs:
-        logger.debug("printing r :{}".format(r))
-        assert f.REASON.nm in r
-        assert contains in r[f.REASON.nm]
-    assert len(reqs) == nodeCount
-
-
-# TODO Ordering of parameters is bad
-def submitAndCheckNacks(looper, client, wallet, op, identifier,
-                        contains='UnauthorizedClientRequest'):
-    req = wallet.signOp(op, identifier=identifier)
-    wallet.pendRequest(req)
-    reqs = wallet.preparePending()
-    client.submitReqs(*reqs)
-    looper.run(eventually(checkNacks,
-                          client,
-                          req.reqId,
-                          contains, retryWait=1, timeout=15))
 
 
 @pytest.fixture(scope="module")
@@ -225,6 +202,7 @@ def nymsAddedInQuickSuccession(nodeSet, addedSponsor, looper,
     assert(count == len(nodeSet))
 
 
+@pytest.mark.skipif(True, reason="NYM transaction now used to update too")
 def testAddNymsInQuickSuccession(nymsAddedInQuickSuccession):
     pass
 

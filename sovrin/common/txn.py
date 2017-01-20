@@ -2,14 +2,25 @@ import json
 from collections import OrderedDict
 
 from plenum.common.txn import TXN_TYPE, TARGET_NYM, ORIGIN, DATA, TXN_ID, TXN_TIME, \
-    RAW, ENC, HASH, NAME, VERSION, TYPE, KEYS, IP, PORT, POOL_TXN_TYPES, ALIAS, \
+    RAW, ENC, HASH, NAME, VERSION, TYPE, POOL_TXN_TYPES, ALIAS, \
     STEWARD, NYM, VERKEY
-from plenum.common.types import f
+from plenum.common.types import f, TaggedTuple
 
 ROLE = 'role'
 NONCE = 'nonce'
 ATTRIBUTES = "attributes"
 ATTR_NAMES = "attr_names"
+ACTION = 'action'
+SCHEDULE = 'schedule'
+TIMEOUT = 'timeout'
+SHA256 = 'sha256'
+START = 'start'
+CANCEL = 'cancel'
+COMPLETE = 'complete'
+FAIL = 'fail'
+
+NIL = '<nil>'
+OWNER = '<owner>'
 
 LAST_TXN = "lastTxn"
 TXNS = "Txns"
@@ -17,9 +28,13 @@ TXNS = "Txns"
 ENC_TYPE = "encType"
 SKEY = "secretKey"
 REF = "ref"
+PRIMARY = "primary"
+REVOCATION = "revocation"
 
 allOpKeys = (TXN_TYPE, TARGET_NYM, VERKEY, ORIGIN, ROLE, DATA, NONCE, REF, RAW,
-             ENC, HASH, ALIAS)
+             ENC, HASH, ALIAS, ACTION, SCHEDULE, TIMEOUT, SHA256, START, CANCEL,
+             NAME, VERSION)
+
 reqOpKeys = (TXN_TYPE,)
 
 # Attribute Names
@@ -37,57 +52,50 @@ GET_ATTR = "GET_ATTR"
 GET_NYM = "GET_NYM"
 GET_TXNS = "GET_TXNS"
 GET_TXN = "GET_TXN"
-CRED_DEF = "CRED_DEF"
-GET_CRED_DEF = "GET_CRED_DEF"
+CLAIM_DEF = "CLAIM_DEF"
+GET_CLAIM_DEF = "GET_CLAIM_DEF"
 ADD_PKI = "ADD_PKI"
 REQ_CRED = "REQ_CRED"
 GET_NONCE = "GET_NONCE"
 VER_PRF = "VER_PRF"
 ISSUER_KEY = "ISSUER_KEY"
 GET_ISSUER_KEY = "GET_ISSUER_KEY"
+POOL_UPGRADE = 'POOL_UPGRADE'
+NODE_UPGRADE = 'NODE_UPGRADE'
+
 
 # Temp for demo
 GEN_CRED = "GEN_CRED"
 
-openTxns = (GET_NYM, GET_ATTR, GET_CRED_DEF, GET_ISSUER_KEY)
+openTxns = (GET_NYM, GET_ATTR, GET_CLAIM_DEF, GET_ISSUER_KEY)
 
 
 # TXN_TYPE -> (requireds, optionals)
 fields = {NYM: ([TARGET_NYM], [ROLE]),
           ATTRIB: ([], [RAW, ENC, HASH]),
-          CRED_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
-          GET_CRED_DEF: ([], []),
+          CLAIM_DEF: ([NAME, VERSION, ATTR_NAMES], [TYPE, ]),
+          GET_CLAIM_DEF: ([], []),
           ISSUER_KEY: ([REF, DATA]),
           GET_ISSUER_KEY: ([REF, ORIGIN])
           }
 
-validTxnTypes = {NYM,
-                 ATTRIB,
-                 IDPROOF,
-                 ASSIGN_AGENT,
-                 DISCLO,
-                 GET_ATTR,
-                 GET_NYM,
-                 GET_TXNS,
-                 CRED_DEF,
-                 GET_CRED_DEF,
-                 ISSUER_KEY,
-                 GET_ISSUER_KEY}
+CONFIG_TXN_TYPES = {POOL_UPGRADE, NODE_UPGRADE}
+IDENTITY_TXN_TYPES = {NYM,
+                     ATTRIB,
+                     IDPROOF,
+                     DISCLO,
+                     GET_ATTR,
+                     GET_NYM,
+                     GET_TXNS,
+                     CLAIM_DEF,
+                     GET_CLAIM_DEF,
+                     ISSUER_KEY,
+                     GET_ISSUER_KEY}
+
+validTxnTypes = set()
 validTxnTypes.update(POOL_TXN_TYPES)
-
-
-# def txn(txnType,
-#         targetNym,
-#         origin=None,
-#         data=None,
-#         role=None):
-#     return {
-#         TXN_TYPE: txnType,
-#         TARGET_NYM: targetNym,
-#         ORIGIN: origin,
-#         DATA: data,
-#         ROLE: role
-#     }
+validTxnTypes.update(IDENTITY_TXN_TYPES)
+validTxnTypes.update(CONFIG_TXN_TYPES)
 
 
 def AddNym(target, role=None):
@@ -125,15 +133,18 @@ def newTxn(txnType, target=None, data=None, enc=None, raw=None,
         txn[ROLE] = role
     return txn
 
+
 # TODO: Move them to a separate file
 # ROLE types
 STEWARD = STEWARD
 SPONSOR = "SPONSOR"
-USER = "USER"
+TRUSTEE = "TRUSTEE"
+TGB = "TGB"
 
 
 def getGenesisTxns():
     return [
+        {ALIAS: "Trustee1", TARGET_NYM: "9XNVHKtucEZWh7GrS9S8nRWtVuFQwYLfzGD7pQ7Scjtc", TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4a", TXN_TYPE: NYM, ROLE: TRUSTEE},
         {ALIAS: "Steward1", TARGET_NYM: "5rArie7XKukPCaEwq5XGQJnM9Fc5aZE3M9HAPVfMU2xC", TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b", TXN_TYPE: NYM, ROLE: STEWARD},
         {ALIAS: "Steward2", TARGET_NYM: "2btLJAAb1S3x6hZYdVyAePjqtQYi2ZBSRGy4569RZu8h", TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4c", TXN_TYPE: NYM, ROLE: STEWARD},
         {ALIAS: "Steward3", TARGET_NYM: "CECeGXDi6EHuhpwz19uyjjEnsRGNXodFYqCRgdLmLRkt", TXN_ID: "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4d", TXN_TYPE: NYM, ROLE: STEWARD},
@@ -147,6 +158,7 @@ def getGenesisTxns():
         {TXN_TYPE: NYM, TARGET_NYM: 'adityastaging', TXN_ID: '77c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: '4qU9QRZ79CbWuDKUtTvpDUnUiDnkLkwd1i8p2B3gJNU3'},
         {TXN_TYPE: NYM, TARGET_NYM: 'iosstaging', TXN_ID: '91c2f66f7fda2ece684d1befc667e894b4460cb782f5387d864fa7d5f14c4066', f.IDENTIFIER.nm: '4qU9QRZ79CbWuDKUtTvpDUnUiDnkLkwd1i8p2B3gJNU3'},
         {ALIAS: "Steward8", TARGET_NYM: "6vAQkuCgTm7Jeki3vVhZm1FTAQYCeLE5mSvVRQdiwt1w", TXN_ID: "4770beb7e45bf623bd9987af4bd6d6d8eb8b68a4d00fa2a4c6b6f3f0c1c036f8", TXN_TYPE: NYM, ROLE: STEWARD},
+        {ALIAS: "Steward9", TARGET_NYM: "6hbecbh36EMK6yAi5NZ9bLZEuRsWFt6qLa2SyMQGXs7H", TXN_ID: "4770beb7e45bf623bd9987af4bd6d6d8eb8b68a4d00fa2a4c6b6f3f0c1c036f9", TXN_TYPE: NYM, ROLE: STEWARD},
     ]
 
 
@@ -214,6 +226,3 @@ def getTxnOrderedFields():
         (REF, (str, str))
     ])
 
-
-def isValidRole(role):
-    return role in (STEWARD, SPONSOR, USER)
