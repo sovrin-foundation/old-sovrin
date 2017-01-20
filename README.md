@@ -1,5 +1,4 @@
-# This package has been superseded by 3 packages that manage sovrin
-dependencies better:
+# This package has been superseded by 3 packages that manage sovrin dependencies better:
 <br>[sovrin-common](https://github.com/sovrin-foundation/sovrin-common)
 <br>[sovrin-client](https://github.com/sovrin-foundation/sovrin-client)
 <br>[sovrin-node](https://github.com/sovrin-foundation/sovrin-node)
