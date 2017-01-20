@@ -3,13 +3,11 @@
 import os
 import sys
 
-from plenum.common.types import HA
-
-
-from plenum.common.raet import initRemoteKeep
 from ioflo.aid.consoling import Console
 from plenum.common.log import setupLogging, TRACE_LOG_LEVEL, \
     getRAETLogLevelFromConfig
+from plenum.common.types import HA
+
 from sovrin.common.config_util import getConfig
 
 config = getConfig()

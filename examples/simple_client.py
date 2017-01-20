@@ -13,6 +13,7 @@ from collections import OrderedDict
 
 from plenum.common.looper import Looper
 from plenum.common.signer_simple import SimpleSigner
+
 from sovrin.client.client import Client
 from sovrin.common.txn import TXN_TYPE, NYM
 

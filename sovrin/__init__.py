@@ -1,7 +1,8 @@
 import os
 
-import sovrin
 from plenum.common.pkg_util import check_deps
+
+import sovrin
 
 check_deps(sovrin)
 

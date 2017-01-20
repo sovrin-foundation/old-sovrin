@@ -1,17 +1,10 @@
-import glob
-import shutil
-import sys
 import os
-
-import data
-from setuptools import setup, find_packages, __version__
-from setuptools.command.install import install
-from setuptools.command.develop import develop
-from pip.req import parse_requirements
-from shutil import copyfile
 import subprocess
+import sys
 
-import sample
+from setuptools import setup, find_packages, __version__
+from setuptools.command.develop import develop
+from setuptools.command.install import install
 
 v = sys.version_info
 if sys.version_info < (3, 5):
@@ -51,13 +44,13 @@ def post_install():
 
 
 class PostInstall(install):
-    def run(self):
+    def do_egg_install(self):
         install.run(self)
         post_install()
 
 
 class PostInstallDev(develop):
-    def run(self):
+    def do_egg_install(self):
         develop.run(self)
         post_install()
 
@@ -79,10 +72,14 @@ setup(
              '*.css', '*.ico', '*.png', 'LICENSE', 'LEGAL', '*.sovrin']},
     include_package_data=True,
     data_files=[(
-        (BASE_DIR, ['data/pool_transactions_sandbox', ])
+        (BASE_DIR, ['data/pool_transactions_sandbox',
+                    'data/pool_transactions_local',
+                    'data/transactions_sandbox',
+                    'data/transactions_local',
+                    ])
     )],
     install_requires=['base58', 'pyorient', 'plenum', 'ledger', 'semver',
-                      'anoncreds'],
+                      'anoncreds', 'python-dateutil'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     scripts=['scripts/sovrin', 'scripts/init_sovrin_raet_keep',

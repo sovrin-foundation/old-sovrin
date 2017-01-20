@@ -1,4 +1,5 @@
 from plenum.test.cli.helper import checkCmdValid
+
 from sovrin.common.txn import STEWARD, NYM
 from sovrin.common.txn import TARGET_NYM, ROLE
 

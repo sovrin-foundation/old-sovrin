@@ -11,7 +11,8 @@
       "attributes": {
             "salary_bracket": "string",
             "employee_status": "string"
-       }
+       },
+       "verifiableAttributes": ["salary_bracket", "employee_status"]
     }, {
       "name": "Loan-Application-KYC",
       "version": "0.1",
@@ -19,7 +20,8 @@
             "first_name": "string",
             "last_name": "string",
             "ssn": "string"
-      }
+      },
+      "verifiableAttributes": ["first_name", "last_name", "ssn"]
     }],
   "sig": "D1vU5fbtJbqWKdCoVJgqHBLLhh5CYspikuEXdnBVVyCnLHiYC9ZsZrDWpz3GkFFGvfC4RQ4kuB64vUFLo3F7Xk6"
 }

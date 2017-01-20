@@ -1,5 +1,6 @@
 from plenum.common.startable import Status
 from pytest import fixture
+
 from sovrin.agent.agent import Agent
 
 

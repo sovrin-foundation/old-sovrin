@@ -2,43 +2,39 @@ import inspect
 import json
 import os
 import shutil
-import uuid
 from contextlib import ExitStack
 from typing import Iterable, Union, Tuple
 
 import pyorient
-from plenum.test.test_node import checkNodesAreReady, TestNodeCore
-from plenum.test.test_node import checkNodesConnected
-from plenum.test.test_stack import StackedTester, TestStack
 
-from anoncreds.protocol.cred_def_secret_key import CredDefSecretKey
-from anoncreds.protocol.issuer_secret_key import IssuerSecretKey
-from anoncreds.test.conftest import staticPrimes
+from plenum.common.eventually import eventually
 from plenum.common.log import getlogger
 from plenum.common.looper import Looper
+from plenum.common.signer_did import DidSigner
 from plenum.common.signer_simple import SimpleSigner
-from plenum.common.txn import REQACK, NAME, VERSION, TYPE
-from plenum.common.types import HA, Identifier
+from plenum.common.txn import REQACK, REQNACK
+from plenum.common.types import HA, Identifier, OP_FIELD_NAME, f
 from plenum.common.util import getMaxFailures, runall
 from plenum.persistence import orientdb_store
 from plenum.persistence.orientdb_store import OrientDbStore
-from plenum.test.eventually import eventually
 from plenum.test.helper import TestNodeSet as PlenumTestNodeSet
 from plenum.test.helper import checkSufficientRepliesRecvd, \
     checkLastClientReqForNode, buildCompletedTxnFromReply
 from plenum.test.test_client import genTestClient as genPlenumTestClient, \
     genTestClientProvider as genPlenumTestClientProvider
-from plenum.test.pool_transactions.helper import buildPoolClientAndWallet
+from plenum.test.test_node import checkNodesAreReady, TestNodeCore
+from plenum.test.test_node import checkNodesConnected
+from plenum.test.test_stack import StackedTester, TestStack
 from plenum.test.testable import Spyable
 from sovrin.client.client import Client
 from sovrin.client.wallet.attribute import LedgerStore, Attribute
-from sovrin.client.wallet.claim_def import ClaimDef, IssuerPubKey
+from sovrin.client.wallet.upgrade import Upgrade
 from sovrin.client.wallet.wallet import Wallet
-from sovrin.common.identity import Identity
-from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM, \
-    ATTR_NAMES
 from sovrin.common.config_util import getConfig
+from sovrin.common.identity import Identity
+from sovrin.common.txn import ATTRIB, TARGET_NYM, TXN_TYPE, TXN_ID, GET_NYM
 from sovrin.server.node import Node
+from sovrin.server.upgrader import Upgrader
 
 logger = getlogger()
 
@@ -249,6 +245,11 @@ class TempStorage:
                                                                  ex))
 
 
+@Spyable(methods=[Upgrader.processLedger])
+class TestUpgrader(Upgrader):
+    pass
+
+
 # noinspection PyShadowingNames,PyShadowingNames
 @Spyable(
     methods=[Node.handleOneNodeMsg, Node.processRequest, Node.processOrdered,
@@ -262,6 +263,11 @@ class TestNode(TempStorage, TestNodeCore, Node):
     def __init__(self, *args, **kwargs):
         Node.__init__(self, *args, **kwargs)
         TestNodeCore.__init__(self, *args, **kwargs)
+        self.cleanupOnStopping = True
+
+    def getUpgrader(self):
+        return TestUpgrader(self.id, self.config,
+                            self.dataLocation, self.configLedger)
 
     def _getOrientDbStore(self, name, dbType):
         if not hasattr(self, '_orientDbStore'):
@@ -270,13 +276,14 @@ class TestNode(TempStorage, TestNodeCore, Node):
         return self._orientDbStore
 
     def onStopping(self, *args, **kwargs):
-        self.cleanupDataLocation()
-        try:
-            self.graphStore.client.db_drop(self.name)
-            logger.debug("Dropped db {}".format(self.name))
-        except Exception as ex:
-            logger.debug("Error while dropping db {}: {}".format(self.name,
-                                                                 ex))
+        if self.cleanupOnStopping:
+            self.cleanupDataLocation()
+            try:
+                self.graphStore.client.db_drop(self.name)
+                logger.debug("Dropped db {}".format(self.name))
+            except Exception as ex:
+                logger.debug("Error while dropping db {}: {}".format(self.name,
+                                                                     ex))
         super().onStopping(*args, **kwargs)
 
 
@@ -371,7 +378,7 @@ def genConnectedTestClient(looper,
                            tmpdir=None,
                            identifier: Identifier = None,
                            verkey: str = None
-                           ) -> TestClient:
+                           ) -> (TestClient, Wallet):
     c, w = genTestClient(nodes, nodeReg=nodeReg, tmpdir=tmpdir,
                       identifier=identifier, verkey=verkey)
     looper.add(c)
@@ -407,15 +414,47 @@ def createNym(looper, nym, creatorClient, creatorWallet: Wallet, role=None,
     def check():
         assert creatorWallet._sponsored[nym].seqNo
 
-    looper.run(eventually(check, timeout=4))
+    looper.run(eventually(check, retryWait=1, timeout=10))
 
 
-def addUser(looper, creatorClient, creatorWallet, name):
+def addRole(looper, creatorClient, creatorWallet, name, useDid=True,
+            addVerkey=True, role=None):
     wallet = Wallet(name)
-    idr, _ = wallet.addIdentifier()
-    verkey = wallet.getVerkey(idr)
-    createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey)
+    signer = DidSigner() if useDid else SimpleSigner()
+    idr, _ = wallet.addIdentifier(signer=signer)
+    verkey = wallet.getVerkey(idr) if addVerkey else None
+    createNym(looper, idr, creatorClient, creatorWallet, verkey=verkey,
+              role=role)
     return wallet
+
+
+def suspendRole(looper, actingClient, actingWallet, did):
+    idy = Identity(identifier=did, role=None)
+    if actingWallet.getSponsoredIdentity(did):
+        actingWallet.updateSponsoredIdentity(idy)
+    else:
+        actingWallet.addSponsoredIdentity(idy)
+    reqs = actingWallet.preparePending()
+    actingClient.submitReqs(*reqs)
+
+    def chk():
+        assert actingWallet.getSponsoredIdentity(did).seqNo is not None
+
+    looper.run(eventually(chk, retryWait=1, timeout=5))
+
+
+def submitPoolUpgrade(looper, senderClient, senderWallet, name, action, version,
+                      schedule, timeout, sha256):
+    upgrade = Upgrade(name, action, schedule, version, sha256, timeout,
+                      senderWallet.defaultId)
+    senderWallet.doPoolUpgrade(upgrade)
+    reqs = senderWallet.preparePending()
+    senderClient.submitReqs(*reqs)
+
+    def check():
+        assert senderWallet._upgrades[upgrade.key].seqNo
+
+    looper.run(eventually(check, timeout=4))
 
 
 def checkSubmitted(looper, client, optype, txnsBefore):
@@ -510,42 +549,6 @@ def addRawAttribute(looper, client, wallet, name, value, dest=None,
     addAttributeAndCheck(looper, client, wallet, attrib)
 
 
-def addClaimDefAndIssuerKeys(looper, agent, claimDefToBeAdded):
-    csk = CredDefSecretKey(*staticPrimes().get("prime1"))
-    sid = agent.wallet.addClaimDefSk(str(csk))
-    claimDef = ClaimDef(seqNo=None,
-                       attrNames=claimDefToBeAdded[ATTR_NAMES],
-                       name=claimDefToBeAdded[NAME],
-                       version=claimDefToBeAdded[VERSION],
-                       origin=agent.wallet.defaultId,
-                       typ=claimDefToBeAdded[TYPE])
-    agent.wallet.addClaimDef(claimDef)
-    reqs = agent.wallet.preparePending()
-    agent.client.submitReqs(*reqs)
-
-    def chk():
-        assert claimDef.seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-
-    isk = IssuerSecretKey(claimDef, csk, uid=str(uuid.uuid4()))
-    agent.wallet.addIssuerSecretKey(isk)
-    ipk = IssuerPubKey(N=isk.PK.N, R=isk.PK.R, S=isk.PK.S, Z=isk.PK.Z,
-                       claimDefSeqNo=claimDef.seqNo,
-                       secretKeyUid=isk.pubkey.uid, origin=agent.wallet.defaultId)
-    agent.wallet.addIssuerPublicKey(ipk)
-    reqs = agent.wallet.preparePending()
-    agent.client.submitReqs(*reqs)
-
-    key = (agent.wallet.defaultId, claimDef.seqNo)
-
-    def chk():
-        assert agent.wallet.getIssuerPublicKey(key).seqNo is not None
-
-    looper.run(eventually(chk, retryWait=1, timeout=10))
-    return claimDef.seqNo, ipk.seqNo
-
-
 def buildStewardClient(looper, tdir, stewardWallet):
     s, _ = genTestClient(tmpdir=tdir, usePoolLedger=True)
     s.registerObserver(stewardWallet.handleIncomingReply)
@@ -553,3 +556,37 @@ def buildStewardClient(looper, tdir, stewardWallet):
     looper.run(s.ensureConnectedToNodes())
     makePendingTxnsRequest(s, stewardWallet)
     return s
+
+
+# TODO Ordering of parameters is bad
+def checkNacks(client, reqId, contains='', nodeCount=4):
+    logger.debug("looking for :{}".format(reqId))
+    reqs = [x for x, _ in client.inBox if x[OP_FIELD_NAME] == REQNACK and
+            x[f.REQ_ID.nm] == reqId]
+    for r in reqs:
+        logger.debug("printing r :{}".format(r))
+        assert f.REASON.nm in r
+        assert contains in r[f.REASON.nm], '{} not in {}'.format(contains,
+                                                                 r[f.REASON.nm])
+    assert len(reqs) == nodeCount
+
+
+def submitAndCheckNacks(looper, client, wallet, op, identifier,
+                        contains='UnauthorizedClientRequest'):
+    req = wallet.signOp(op, identifier=identifier)
+    wallet.pendRequest(req)
+    reqs = wallet.preparePending()
+    client.submitReqs(*reqs)
+    looper.run(eventually(checkNacks,
+                          client,
+                          req.reqId,
+                          contains, retryWait=1, timeout=15))
+
+
+def getClientAddedWithRole(nodeSet, tdir, looper, client, wallet, name, role):
+    newWallet = addRole(looper, client, wallet, name=name, role=role)
+    c, _ = genTestClient(nodeSet, tmpdir=tdir, usePoolLedger=True)
+    looper.add(c)
+    looper.run(c.ensureConnectedToNodes())
+    c.registerObserver(newWallet.handleIncomingReply)
+    return c, newWallet

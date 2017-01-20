@@ -2,6 +2,7 @@ import os
 from collections import OrderedDict
 
 from plenum.common.txn import ClientBootStrategy
+from sovrin.common.constants import Environment
 
 nodeReg = OrderedDict([
     ('Alpha', ('127.0.0.1', 9701)),
@@ -22,6 +23,7 @@ baseDir = "~/.sovrin"
 # TODO: Rename `transactions_sandbox` to `domain_transactions_sandbox`
 domainTransactionsFile = "transactions_sandbox"
 poolTransactionsFile = "pool_transactions_sandbox"
+configTransactionsFile = "config_transactions"
 
 logFilePath = "cli.log"
 
@@ -69,4 +71,23 @@ RAETLogFilePathCli = None
 RAETMessageTimeout = 30
 
 
-PluginsToLoad = ["anoncreds"]
+PluginsToLoad = []
+
+ENVS = {
+    "test": Environment("pool_transactions_sandbox", "transactions_sandbox"),
+    "live": Environment("pool_transactions_live", "transactions_live")
+}
+
+# File that stores the version of the Node ran the last time it started. (It
+# might be incorrect sometimes if Node failed to update the file and crashed)
+lastRunVersionFile = 'last_version'
+
+
+# File that stores the version of the code to which the update has to be made.
+# This is used to detect if there was an error while upgrading. Once it has
+# been found out that there was error while upgrading, then it can be upgraded.
+nextVersionFile = 'next_version'
+
+
+# Minimum time difference (seconds) between the code update of 2 nodes
+MinSepBetweenNodeUpgrades = 300
