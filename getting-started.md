@@ -4,7 +4,21 @@
 
 ![image alt text](banner.png)
 
-## What Sovrin is, and Why it Matters
+* [Getting Started with Sovrin](#getting-started-with-sovrin)
+  * [What Sovrin Is, and Why it Matters](#what-sovrin-is-and-why-it-matters)
+  * [What We'll Cover](#what-well-cover)
+  * [Alice Gets a Transcript](#alice-gets-a-transcript)
+  * [Install Sovrin](#install-sovrin)
+  * [Evaluate the Invitation](#evaluate-the-invitation)
+  * [Accept the Invitation](#accept-the-invitation)
+  * [Test Secure Interaction](#test-secure-interaction)
+  * [Apply for a Job](#apply-for-a-job)
+  * [Apply for a Loan](#apply-for-a-loan)
+* [Appendix](#appendix)
+  * [Faber College Configures Transcripts](#faber-college-configures-transcripts)
+  * [Acme Corp Defines a Job-Application](#acme-corp-defines-a-job-application)
+
+## What Sovrin Is, and Why it Matters
 
 Sovrin is a software ecosystem for private, secure, and powerful identity. It puts people — not the organizations that traditionally centralize identity — in charge of decisions about their own privacy and disclosure. This enables all kinds of rich innovation: link contracts, revocation, novel payment workflows, asset and document management features, creative forms of escrow, curated reputation, integrations with other cool technologies, and so on.
 
@@ -395,7 +409,7 @@ Attributes:
     degree: Bachelor of Science, Marketing
 ```
 
-# Apply for a job
+## Apply for a Job
 
 Alice would like to work for Acme Corp. Normally she would browse to acmecorp.com, where she would click on a hyperlink to apply for a job. Her browser would download a link invitation which her Sovrin app would open; this would trigger a prompt to Alice, asking her to accept the link with Acme Corp. Because we’re using a CLI, the interface is different, but the steps are the same. We do approximately the same things that we did when Alice was accepting Faber College’s link invitation:
 
@@ -598,7 +612,7 @@ Try Next:
     show claim request "<claim-request-name>"
 ```
 
-## Apply for a loan
+## Apply for a Loan
 
 Now that Alice has a job, she’d like to apply for a loan. That will require proof of employment. She can get this from the Job-Certificate claim offered by Acme. Alice goes through a familiar sequence of interactions. First she inspects the claim:
 
